@@ -1,0 +1,16 @@
+bridges = []
+
+[[instances]]
+name = "snapmail"
+id = "__snapmail"
+dna_hash = "QmVUGcceLHJm24BGRR6PFLe94XfgrQogddMBe1kwReg5Aq"
+uri = "file:./snapmail-dna.dna.json"
+
+[[UIs]]
+name = "SnapMail Web"
+id = "snapmail_web_ui"
+uri = "file:./snapmail-ui.zip"
+
+[[UIs.instance_references]]
+ui_handle = "test-instance"
+instance_id = "__snapmail"
