@@ -3,13 +3,13 @@ bridges = []
 [[instances]]
 name = "snapmail"
 id = "__snapmail"
-dna_hash = "QmVUGcceLHJm24BGRR6PFLe94XfgrQogddMBe1kwReg5Aq"
-uri = "file:./snapmail-dna.dna.json"
+dna_hash = "QmYx3ZQTV2jf4jadD2dfw35CeP7QN7onSKsRwHj3bpywji"
+uri = "file:./dist/snapmail-dna.dna.json"
 
 [[UIs]]
 name = "SnapMail Web"
 id = "snapmail_web_ui"
-uri = "file:./snapmail-ui.zip"
+uri = "dir:./../snapmail-ui/dist"
 
 [[UIs.instance_references]]
 ui_handle = "test-instance"
