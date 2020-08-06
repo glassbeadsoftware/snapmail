@@ -1,4 +1,4 @@
-const SNAPMAIL_DNA_ADDRESS_FILE = 'snapmail_dna_address'
+const SNAPMAIL_DNA_HASH_FILE = 'snapmail-dna.hash'
 module.exports = {
-  SNAPMAIL_DNA_ADDRESS_FILE,
+  SNAPMAIL_DNA_HASH_FILE: SNAPMAIL_DNA_HASH_FILE,
 }

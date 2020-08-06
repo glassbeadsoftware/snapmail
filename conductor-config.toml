@@ -1,0 +1,82 @@
+
+bridges = []
+# to replace
+persistence_dir = ''
+
+[[agents]]
+id = 'snapmail-instance-agent'
+# to replace
+keystore_file = ''
+name = 'Agent1'
+# to replace
+public_address = ''
+[[dnas]]
+# to replace
+file = 'dna'
+# to replace
+hash = ''
+id = 'snapmail-dna'
+
+[[instances]]
+agent = 'snapmail-instance-agent'
+dna = 'snapmail-dna'
+# Must match value in ui client
+id = 'test-instance'
+
+[instances.storage]
+type = 'lmdb'
+# to replace
+path = 'picklepath'
+
+[[interfaces]]
+admin = true
+id = 'Snapmail-interface'
+
+[[interfaces.instances]]
+# Must match value in ui client
+id = 'test-instance'
+
+[interfaces.driver]
+port = 8889
+type = 'websocket'
+
+[logger]
+state_dump = false
+type = 'info'
+[[logger.rules.rules]]
+exclude = true
+pattern = '^holochain_core::wasm_engine::api'
+[[logger.rules.rules]]
+exclude = true
+pattern = '^holochain_core::nucleus::reducers::trace_return_hdk_function'
+[[logger.rules.rules]]
+exclude = true
+pattern = '^ws'
+
+[passphrase_service]
+type = 'cmd'
+
+[signals]
+consistency = false
+trace = false
+
+[network]
+type = "sim2h"
+# last two digits of port here
+# are a hidden reference to associated holochain/sim2h
+# release number, e.g. 9044 = 0.0.44
+sim2h_url = "ws://sim2h.harris-braun.com:9050/"
+
+[[ui_bundles]]
+hash = 'QmTT6oSPHNFn4x9ssBM14M1HznLVGjrFKCyBcsTyBudzfg'
+id = 'dna-connections'
+root_dir = './irrelevant'
+
+[[ui_interfaces]]
+bind_address = '127.0.0.1'
+bundle = 'dna-connections'
+dna_interface = 'Snapmail-interface'
+id = 'Snapmail-interface'
+# needs to match snapmail-dna
+port = 3111
+reroute_to_root = true
