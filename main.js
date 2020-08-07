@@ -42,21 +42,20 @@ if (!fs.existsSync(STORAGE_PATH)) {
 }
 
 /** GLOBALS **/
-/**
- * Keep a global reference of the ELECTRON window object, if you don't,
- * the window will be closed automatically when the JavaScript object is garbage collected.
- */
+
+// Keep a global reference of the ELECTRON window object, if you don't,
+// the window will be closed automatically when the JavaScript object is garbage collected.
 let g_mainWindow;
 let g_canQuit = false;
 let g_holochain_proc;
+const g_canDebug = true;
 
 /**
  * We want to be able to use localStorage/sessionStorage but Chromium doesn't allow that for every source.
  * Since we are using custom URI schemes to redirect UIs' resources specific URI schemes here to be privileged.
  */
 console.log('Registering scheme as privileged:', SNAPMAIL_PROTOCOL_SCHEME);
-protocol.registerSchemesAsPrivileged([
-  {
+protocol.registerSchemesAsPrivileged([{
     scheme: SNAPMAIL_PROTOCOL_SCHEME,
     privileges: { standard: true, supportFetchAPI: true, secure: true },
   },
@@ -90,7 +89,14 @@ function createWindow() {
     webPreferences: {
       nodeIntegration: true,
     },
-  })
+    icon: __dirname + `/assets/favicon.png`,
+    webgl: false,
+    enableWebSQL: false,
+    webPreferences: {
+      devTools: true
+    },
+    //autoHideMenuBar: true,
+  });
 
   // and load the index.html of the app.
   g_mainWindow.loadURL(`${SNAPMAIL_PROTOCOL_SCHEME}://root`)
@@ -167,13 +173,6 @@ function updateConductorConfig(publicAddress) {
     /path = 'picklepath'/g,
     `path = "${wslPath(STORAGE_PATH)}"`
   );
-
-  // // replace ui dir path
-  // const uiPath = path.join(__dirname, UI_DIR);
-  // newConductorConfig = newConductorConfig.replace(
-  //   /root_dir = ''/g,
-  //   `root_dir = "${wslPath(uiPath)}"`
-  // );
 
   // write to a folder we can write to
   fs.writeFileSync(NEW_CONDUCTOR_CONFIG_PATH, newConductorConfig)
@@ -316,7 +315,7 @@ app.on('window-all-closed', function () {
   // On macOS it is common for applications and their menu bar
   // to stay active until the user quits explicitly with Cmd + Q
   if (process.platform !== 'darwin') app.quit()
-})
+});
 
 /**
  *
@@ -325,7 +324,7 @@ app.on('activate', function () {
   // On macOS it's common to re-create a window in the app when the
   // dock icon is clicked and there are no other windows open.
   if (g_mainWindow === null) createWindow()
-})
+});
 
 
 /**
@@ -338,17 +337,27 @@ const menutemplate = [
   {
     label: 'File',
     submenu: [
-      // { label: 'About Application', selector: 'orderFrontStandardAboutPanel:' },
+      { label: 'Dump logs', click: function()
+        {
+          console.log({process})
+        }},
       {
         label: 'Open Config Folder',
         click: function () {
           shell.openItem(CONFIG_PATH)
         },
+        //icon: 'assets/icon.png'
       },
       {
         label: 'Open Log File',
         click: function () {
           shell.openItem(logger.transports.file.file)
+        },
+      },
+      {
+        label: 'devTools',
+        click: function () {
+          g_mainWindow.webContents.openDevTools()
         },
       },
       { type: 'separator' },

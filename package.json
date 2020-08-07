@@ -4,7 +4,8 @@
   "description": "A Holochain simple email application",
   "main": "main.js",
   "scripts": {
-    "start": "electron ."
+    "start": "electron .",
+    "build-windows": "electron-packager . Snapmail --platform=win32 --overwrite"
   },
   "repository": "https://github.com/glassbeadsoftware/snapmail-release",
   "keywords": [
@@ -27,6 +28,6 @@
     "tree-kill": "^1.2.2"
   },
   "devDependencies": {
-    "electron": "^8.2.4"
+    "electron": "^8.4.1"
   }
 }
