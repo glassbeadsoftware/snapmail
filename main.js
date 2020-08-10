@@ -1,6 +1,7 @@
 /** Modules to control application life and create native browser window **/
 const { app, BrowserWindow, Menu, protocol, shell } = require('electron');
 const spawn = require('child_process').spawn;
+const assert = require('assert');
 const fs = require('fs');
 const path = require('path');
 const kill = require('tree-kill');
@@ -17,11 +18,17 @@ require('fix-path')();
 require('electron-debug')({ isEnabled: true })
 
 /** CONSTS **/
-const HC_BIN = './hc';
-const HOLOCHAIN_BIN = './holochain';
+var HC_BIN = './hc';
+if (process.platform === "win32") {
+  HC_BIN = 'hc-linux';
+}
+var HOLOCHAIN_BIN = './holochain';
+if (process.platform === "win32") {
+  HOLOCHAIN_BIN = 'holochain-linux';
+}
 const SNAPMAIL_PROTOCOL_SCHEME = 'snapmail-protocol';
 
-const UI_DIR = "snapmail-ui";
+const UI_DIR = "ui";
 const CONFIG_PATH = path.join(app.getPath('appData'), 'Snapmail');
 const KEYSTORE_FILE = 'keystore.key';
 const CONDUCTOR_CONFIG_FILE = 'conductor-config.toml';
@@ -45,10 +52,13 @@ if (!fs.existsSync(STORAGE_PATH)) {
 
 // Keep a global reference of the ELECTRON window object, if you don't,
 // the window will be closed automatically when the JavaScript object is garbage collected.
-let g_mainWindow;
+let g_mainWindow = undefined;
 let g_canQuit = false;
 let g_holochain_proc;
 const g_canDebug = true;
+
+killAllWsl(HC_BIN);
+killAllWsl(HOLOCHAIN_BIN);
 
 /**
  * We want to be able to use localStorage/sessionStorage but Chromium doesn't allow that for every source.
@@ -59,24 +69,24 @@ protocol.registerSchemesAsPrivileged([{
     scheme: SNAPMAIL_PROTOCOL_SCHEME,
     privileges: { standard: true, supportFetchAPI: true, secure: true },
   },
-])
+]);
 const snapmailFileProtocolCallback = (request, callback) => {
   // remove 'snapmail-protocol://'
   let url = request.url.substr(SNAPMAIL_PROTOCOL_SCHEME.length + 3);
   log('info', 'request url: ' + url);
   // /#/ because of react router
   if (url === 'root/' || url.includes('/#/')) {
-    url = 'ui/index.html'
+    url = ''+ UI_DIR + '/index.html'
   } else if (url.includes('root')) {
-    url = url.replace('root', 'ui')
+    url = url.replace('root', UI_DIR)
   }
-  if (url === 'ui/_dna_connections.json') {
+  if (url === '' + UI_DIR + '/_dna_connections.json') {
     newpath = DNA_CONNECTIONS_FILE_PATH
   } else {
     newpath = path.normalize(`${__dirname}/${url}`)
   }
   callback({ path: newpath })
-}
+};
 
 /**
  * Create the main window global
@@ -99,13 +109,13 @@ function createWindow() {
   });
 
   // and load the index.html of the app.
-  g_mainWindow.loadURL(`${SNAPMAIL_PROTOCOL_SCHEME}://root`)
+  g_mainWindow.loadURL(`${SNAPMAIL_PROTOCOL_SCHEME}://root`);
 
   // Open <a href='' target='_blank'> with default system browser
   g_mainWindow.webContents.on('new-window', function (event, url) {
     event.preventDefault()
     shell.openExternal(url)
-  })
+  });
 
   // Open the DevTools.
   //g_mainWindow.webContents.openDevTools()
@@ -116,7 +126,7 @@ function createWindow() {
     // in an array if your app supports multi windows, this is the time
     // when you should delete the corresponding element.
     g_mainWindow = null
-  })
+  });
 }
 
 /**
@@ -188,7 +198,7 @@ function startConductorProc() {
   let args = ['-c', wslPath(NEW_CONDUCTOR_CONFIG_PATH)];
   if (process.platform === "win32") {
     bin = process.env.comspec;
-    args.unshift("/c", "wsl", "holochain-linux");
+    args.unshift("/c", "wsl", HOLOCHAIN_BIN);
   }
   // spawn subprocess
   g_holochain_proc = spawn(bin, args, {
@@ -208,9 +218,9 @@ function startConductorProc() {
         'http://127.0.0.1:3111/_dna_connections.json',
         { json: true },
         (err, res, body) => {
-          fs.writeFileSync(DNA_CONNECTIONS_FILE_PATH, JSON.stringify(body))
-          // trigger refresh once we know
-          // interfaces have booted up
+          fs.writeFileSync(DNA_CONNECTIONS_FILE_PATH, JSON.stringify(body));
+          // trigger refresh once we know interfaces have booted up
+          assert(g_mainWindow !== undefined);
           g_mainWindow.loadURL(`${SNAPMAIL_PROTOCOL_SCHEME}://root`)
         }
       )
@@ -263,7 +273,7 @@ app.on('ready', function () {
   let args = ['keygen', '--path', wslPath(KEYSTORE_FILE_PATH), '--nullpass', '--quiet'];
   if (process.platform === "win32") {
     bin = process.env.comspec;
-    args.unshift("/c", "wsl", "hc-linux");
+    args.unshift("/c", "wsl", HC_BIN);
   }
   log('info', 'could not find existing public key or conductor config, creating one and running setup...');
   const hc_proc = spawn(bin, args, {
@@ -292,6 +302,36 @@ app.on('ready', function () {
       log('error', 'failed to perform setup')
     }
   })
+});
+
+
+/**
+ * Make sure there is no outstanding holochain process in wsl by calling `killall` command
+ */
+function killAllWsl(psname) {
+  if (process.platform !== "win32") {
+    return;
+  }
+  log('info', 'killAllWsl:' + psname);
+  const killall_proc = spawn(
+    process.env.comspec,
+    ["/c", "wsl", "killall", psname],
+    { cwd: __dirname, }
+  );
+  killall_proc.stderr.on('data', (err) => {
+    log('error', err.toString())
+  });
+  killall_proc.on('exit', (code) => {
+    log('info', code);
+  })
+}
+
+/**
+ * This event will be emitted inside the primary instance of your application when a second instance has been executed
+ * and calls app.requestSingleInstanceLock().
+ */
+app.on('second-instance', (event) => {
+  // FIXME
 });
 
 /**

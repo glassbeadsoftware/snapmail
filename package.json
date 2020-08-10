@@ -1,11 +1,15 @@
 {
   "name": "Snapmail",
   "version": "0.0.2",
-  "description": "A Holochain simple email application",
+  "description": "A simple email application on holochain",
   "main": "main.js",
   "scripts": {
     "start": "electron .",
-    "build-windows": "electron-packager . Snapmail --platform=win32 --overwrite"
+    "package-windows": "electron-packager . Snapmail --platform=win32 --out=../build --overwrite",
+    "package-osx": "electron-packager . Snapmail --platform=darwin --arch=x64 --out=../build --overwrite",
+    "package-mac": "electron-packager . Snapmail --platform=darwin --arch=x64 --prune=true --overwrite --out=../build",
+    "package-linux": "electron-packager . Snapmail --overwrite --asar=true --platform=linux --arch=x64 --prune=true --out=../build"
+
   },
   "repository": "https://github.com/glassbeadsoftware/snapmail-release",
   "keywords": [
