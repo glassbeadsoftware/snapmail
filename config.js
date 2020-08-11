@@ -37,6 +37,9 @@ function createConductorConfig(hc_bin, sim2hUrl, callback) {
   log('info', 'could not find existing public key or conductor config, creating one and running setup...');
   const hc_proc = spawn(bin, args, {
     cwd: __dirname,
+    env: {
+      ...process.env,
+    },
   });
   hc_proc.stdout.once('data', (data) => {
     // first line out of two is the public address

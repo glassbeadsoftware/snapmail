@@ -33,7 +33,13 @@ const SNAPMAIL_PROTOCOL_SCHEME = 'snapmail-protocol';
 const UI_DIR = "ui";
 
 
-// -- Startup stuff -- //
+// -- Start-up stuff -- //
+
+/** Add Holochain bins to PATH for WSL */
+const BIN_DIR = "bin";
+const BIN_PATH = path.join(__dirname, BIN_DIR);
+process.env.Path += BIN_PATH;
+
 /** Create missing dirs */
 if (!fs.existsSync(CONFIG_PATH)) {
   fs.mkdirSync(CONFIG_PATH)
