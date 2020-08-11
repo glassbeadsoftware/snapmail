@@ -5,17 +5,19 @@ const assert = require('assert');
 const fs = require('fs');
 const path = require('path');
 const kill = require('tree-kill');
+//const { dialog } = require('electron');
 const request = require('request');
+const prompt = require('electron-prompt');
 
 const { log, logger } = require('./logger');
-const { wslPath } = require('./cli');
-const { SNAPMAIL_DNA_HASH_FILE } = require('./dna-address-config');
+const { wslPath, killAllWsl } = require('./cli');
+const {updateConductorConfig, createConductorConfig, CONDUCTOR_CONFIG_PATH, KEYSTORE_FILE_PATH,
+  CONFIG_PATH, STORAGE_PATH, DNA_CONNECTIONS_FILE_PATH} = require('./config')
 
 require('electron-context-menu')();
 require('fix-path')();
-
 // enables the devtools window automatically
-require('electron-debug')({ isEnabled: true })
+require('electron-debug')({ isEnabled: true });
 
 /** CONSTS **/
 var HC_BIN = './hc';
@@ -26,20 +28,12 @@ var HOLOCHAIN_BIN = './holochain';
 if (process.platform === "win32") {
   HOLOCHAIN_BIN = 'holochain-linux';
 }
+
 const SNAPMAIL_PROTOCOL_SCHEME = 'snapmail-protocol';
-
 const UI_DIR = "ui";
-const CONFIG_PATH = path.join(app.getPath('appData'), 'Snapmail');
-const KEYSTORE_FILE = 'keystore.key';
-const CONDUCTOR_CONFIG_FILE = 'conductor-config.toml';
-const DNA_CONNECTIONS_FILE = '_dna_connections.json';
-const SNAPMAIL_DNA_FILE = 'snapmail-dna.dna.json';
-const STORAGE_PATH = path.join(CONFIG_PATH, 'storage');
-const DNA_FOLDER_PATH = path.join(CONFIG_PATH, 'dna');
-const NEW_CONDUCTOR_CONFIG_PATH = path.join(CONFIG_PATH, CONDUCTOR_CONFIG_FILE);
-const KEYSTORE_FILE_PATH = path.join(CONFIG_PATH, KEYSTORE_FILE);
-const DNA_CONNECTIONS_FILE_PATH = path.join(CONFIG_PATH, DNA_CONNECTIONS_FILE);
 
+
+// -- Startup stuff -- //
 /** Create missing dirs */
 if (!fs.existsSync(CONFIG_PATH)) {
   fs.mkdirSync(CONFIG_PATH)
@@ -55,10 +49,32 @@ if (!fs.existsSync(STORAGE_PATH)) {
 let g_mainWindow = undefined;
 let g_canQuit = false;
 let g_holochain_proc;
-const g_canDebug = true;
+//const g_canDebug = true;
+let g_sim2hUrl = "";
+let g_pubKey = '';
 
-killAllWsl(HC_BIN);
-killAllWsl(HOLOCHAIN_BIN);
+
+// -- Set Globals from current conductor config --/
+{
+  try {
+    const conductorConfigBuffer = fs.readFileSync(CONDUCTOR_CONFIG_PATH);
+    const conductorConfig = conductorConfigBuffer.toString();
+    //console.log({conductorConfig})
+    // replace persistence_dir
+    let regex = /sim2h_url = "(.*)"/g;
+    let match = regex.exec(conductorConfig);
+    g_sim2hUrl = match[1];
+    console.log({g_sim2hUrl});
+    regex = /public_address = "(.*)"/g;
+    match = regex.exec(conductorConfig);
+    g_pubKey = match[1];
+    console.log({g_pubKey});
+  } catch (err) {
+    if (err.code === 'ENOENT') {
+      console.log('File not found!');
+    }
+  }
+}
 
 /**
  * We want to be able to use localStorage/sessionStorage but Chromium doesn't allow that for every source.
@@ -93,7 +109,7 @@ const snapmailFileProtocolCallback = (request, callback) => {
  */
 function createWindow() {
   // Create the browser window.
-  g_mainWindow = new BrowserWindow({
+  let mainWindow = new BrowserWindow({
     width: 1000,
     height: 800,
     webPreferences: {
@@ -109,93 +125,34 @@ function createWindow() {
   });
 
   // and load the index.html of the app.
-  g_mainWindow.loadURL(`${SNAPMAIL_PROTOCOL_SCHEME}://root`);
+  mainWindow.loadURL(`${SNAPMAIL_PROTOCOL_SCHEME}://root`);
 
   // Open <a href='' target='_blank'> with default system browser
-  g_mainWindow.webContents.on('new-window', function (event, url) {
+  mainWindow.webContents.on('new-window', function (event, url) {
     event.preventDefault()
     shell.openExternal(url)
   });
 
   // Open the DevTools.
-  //g_mainWindow.webContents.openDevTools()
+  //mainWindow.webContents.openDevTools()
 
   // Emitted when the window is closed.
-  g_mainWindow.on('closed', function () {
+  mainWindow.on('closed', function () {
     // Dereference the window object, usually you would store windows
     // in an array if your app supports multi windows, this is the time
     // when you should delete the corresponding element.
     g_mainWindow = null
   });
+  return mainWindow;
 }
-
-/**
- * Overwrite the DNA hash address in the conductor-config with the up to date one
- * @param publicAddress the agent public key
- */
-function updateConductorConfig(publicAddress) {
-  // do this step of moving the snapmail dna over into the AppData folder
-  // and naming it by its hash/address
-  // for the sake of mirroring holoscape behaviour
-  const snapmailDnaHash = fs.readFileSync(
-    path.join(__dirname, SNAPMAIL_DNA_HASH_FILE)
-  );
-  log('info', 'snapmailDnaHash: ' + snapmailDnaHash);
-  if (!fs.existsSync(DNA_FOLDER_PATH)) {
-    fs.mkdirSync(DNA_FOLDER_PATH);
-  }
-  const newDnaFilePath = path.join(DNA_FOLDER_PATH, `${snapmailDnaHash}.dna.json`);
-  fs.copyFileSync(
-    path.join(__dirname, SNAPMAIL_DNA_FILE), // source
-    newDnaFilePath // destination
-  );
-
-  // read from the local template
-  const origConductorConfigPath = path.join(__dirname, CONDUCTOR_CONFIG_FILE);
-  const conductorConfig = fs.readFileSync(origConductorConfigPath).toString();
-
-  // replace persistence_dir
-  let newConductorConfig = conductorConfig.replace(
-    /persistence_dir = ''/g,
-    `persistence_dir = "${wslPath(CONFIG_PATH)}"`
-  );
-  // replace dna
-  newConductorConfig = newConductorConfig.replace(
-    /file = 'dna'/g,
-    `file = "${wslPath(newDnaFilePath)}"`
-  );
-  newConductorConfig = newConductorConfig.replace(
-    /hash = ''/g,
-    `hash = "${snapmailDnaHash}"`
-  );
-  // replace agent public key
-  newConductorConfig = newConductorConfig.replace(
-    /public_address = ''/g,
-    `public_address = "${publicAddress}"`
-  );
-  // replace key path
-  newConductorConfig = newConductorConfig.replace(
-    /keystore_file = ''/g,
-    `keystore_file = "${wslPath(KEYSTORE_FILE_PATH)}"`
-  );
-  // replace pickle db storage path
-  newConductorConfig = newConductorConfig.replace(
-    /path = 'picklepath'/g,
-    `path = "${wslPath(STORAGE_PATH)}"`
-  );
-
-  // write to a folder we can write to
-  fs.writeFileSync(NEW_CONDUCTOR_CONFIG_PATH, newConductorConfig)
-}
-
 
 /**
  *
  */
-function startConductorProc() {
+function startHolochainProc() {
   // spawn "holochain"
   let bin = HOLOCHAIN_BIN;
-  let args = ['-c', wslPath(NEW_CONDUCTOR_CONFIG_PATH)];
+  let args = ['-c', wslPath(CONDUCTOR_CONFIG_PATH)];
   if (process.platform === "win32") {
     bin = process.env.comspec;
     args.unshift("/c", "wsl", HOLOCHAIN_BIN);
@@ -250,81 +207,41 @@ function startConductorProc() {
  * Some APIs can only be used after this event occurs.
  */
 app.on('ready', function () {
-
   // Register the Snapmail protocol
-  protocol.registerFileProtocol(
-    SNAPMAIL_PROTOCOL_SCHEME,
-    snapmailFileProtocolCallback
-  );
-
+  protocol.registerFileProtocol(SNAPMAIL_PROTOCOL_SCHEME, snapmailFileProtocolCallback);
   // Create main window
-  createWindow();
-
-  // check if config and keys exist, if they don't, create one.
-  if (fs.existsSync(KEYSTORE_FILE_PATH) && fs.existsSync(NEW_CONDUCTOR_CONFIG_PATH)) {
-    log('info', 'Public key found. Launching conductor...');
-    startConductorProc();
-    return
+  g_mainWindow = createWindow();
+  // Start Conductor if sim2hUrl is set otherwise prompt it.
+  if(g_sim2hUrl === "") {
+    promptSim2hUrl(function(sim2hUrl) {
+      updateConductorConfig(g_pubKey, sim2hUrl);
+      startConductor(sim2hUrl);
+    });
+  } else {
+    startConductor(g_sim2hUrl);
   }
-
-  // Call "hc keygen" to create public key.
-  // Once done, spawn the conductor.
-  let bin = HC_BIN;
-  let args = ['keygen', '--path', wslPath(KEYSTORE_FILE_PATH), '--nullpass', '--quiet'];
-  if (process.platform === "win32") {
-    bin = process.env.comspec;
-    args.unshift("/c", "wsl", HC_BIN);
-  }
-  log('info', 'could not find existing public key or conductor config, creating one and running setup...');
-  const hc_proc = spawn(bin, args, {
-      cwd: __dirname,
-    }
-  );
-  let publicAddress;
-  hc_proc.stdout.once('data', (data) => {
-    // first line out of two is the public address
-    publicAddress = data.toString().split('\n')[0]
-  });
-  hc_proc.stderr.on('data', (err) => {
-    log('error', err.toString())
-  });
-  hc_proc.on('exit', (code) => {
-    log('info', code);
-    if (code === 0 || code === 127) {
-      // to avoid rebuilding key-config-gen
-      // all the time, according to new DNA address
-      // we can just update it after the fact this way
-      updateConductorConfig(publicAddress);
-      log('info', 'Conductor config updated with new public key. Launching conductor...');
-
-      startConductorProc();
-    } else {
-      log('error', 'failed to perform setup')
-    }
-  })
 });
 
 
 /**
- * Make sure there is no outstanding holochain process in wsl by calling `killall` command
+ *
  */
-function killAllWsl(psname) {
-  if (process.platform !== "win32") {
-    return;
+function startConductor(sim2hUrl) {
+  // Make sure there is no outstanding holochain procs
+  killAllWsl(HC_BIN);
+  killAllWsl(HOLOCHAIN_BIN);
+  // check if config and keys exist, if they don't, create one.
+  if (!fs.existsSync(KEYSTORE_FILE_PATH) || !fs.existsSync(CONDUCTOR_CONFIG_PATH)) {
+    createConductorConfig(HC_BIN, sim2hUrl, function(pubKey) {
+      g_pubKey = pubKey;
+      startHolochainProc();
+    });
+  } else {
+    log('info', 'Public key found. Launching conductor...');
+    startHolochainProc();
   }
-  log('info', 'killAllWsl:' + psname);
-  const killall_proc = spawn(
-    process.env.comspec,
-    ["/c", "wsl", "killall", psname],
-    { cwd: __dirname, }
-  );
-  killall_proc.stderr.on('data', (err) => {
-    log('error', err.toString())
-  });
-  killall_proc.on('exit', (code) => {
-    log('info', code);
-  })
 }
+
 
 /**
  * This event will be emitted inside the primary instance of your application when a second instance has been executed
@@ -339,12 +256,14 @@ app.on('second-instance', (event) => {
  */
 app.on('will-quit', (event) => {
   if (!g_canQuit) {
-    event.preventDefault()
+    event.preventDefault();
     // SIGTERM by default
-    g_holochain_proc &&
-      kill(g_holochain_proc.pid, function (err) {
+    if (g_holochain_proc) {
+      killAllWsl(HOLOCHAIN_BIN);
+      kill(g_holochain_proc.pid, function(err) {
         log('info', 'killed all sub processes')
-      })
+      });
+    }
   }
 });
 
@@ -363,15 +282,38 @@ app.on('window-all-closed', function () {
 app.on('activate', function () {
   // On macOS it's common to re-create a window in the app when the
   // dock icon is clicked and there are no other windows open.
-  if (g_mainWindow === null) createWindow()
+  if (g_mainWindow === null) {
+    g_mainWindow = createWindow();
+  }
 });
 
-
+function promptSim2hUrl(callback) {
+  prompt({
+    title: 'Sim2h URL',
+    height: 180,
+    width: 400,
+    alwaysOnTop: true,
+    label: 'URL:',
+    value: g_sim2hUrl,
+    inputAttrs: {
+      type: 'url'
+    },
+    type: 'input'
+  }).then((r) => {
+      if(r === null) {
+        console.log('user cancelled');
+      } else {
+        console.log('result', r);
+        g_sim2hUrl = r;
+        callback(r);
+      }
+    })
+    .catch(console.error);
+}
 /**
  * In this file you can include the rest of your app's specific main process code.
  * You can also put them in separate files and require them here.
  */
-
 
 const menutemplate = [
   {
@@ -410,22 +352,27 @@ const menutemplate = [
       },
     ],
   },
-  // {
-  //   label: 'Edit',
-  //   submenu: [
-  //     { label: 'Undo', accelerator: 'CmdOrCtrl+Z', selector: 'undo:' },
-  //     { label: 'Redo', accelerator: 'Shift+CmdOrCtrl+Z', selector: 'redo:' },
-  //     { type: 'separator' },
-  //     { label: 'Cut', accelerator: 'CmdOrCtrl+X', selector: 'cut:' },
-  //     { label: 'Copy', accelerator: 'CmdOrCtrl+C', selector: 'copy:' },
-  //     { label: 'Paste', accelerator: 'CmdOrCtrl+V', selector: 'paste:' },
-  //     {
-  //       label: 'Select All',
-  //       accelerator: 'CmdOrCtrl+A',
-  //       selector: 'selectAll:',
-  //     },
-  //   ],
-  // },
+  {
+    label: 'Edit',
+    submenu: [
+      {
+        label: 'Change Sim2h URL', click: function () { promptSim2hUrl(function(sim2hUrl) {
+          updateConductorConfig(g_pubKey, sim2hUrl);
+          startConductor(sim2hUrl);
+        });}}
+      // { label: 'Undo', accelerator: 'CmdOrCtrl+Z', selector: 'undo:' },
+      // { label: 'Redo', accelerator: 'Shift+CmdOrCtrl+Z', selector: 'redo:' },
+      // { type: 'separator' },
+      // { label: 'Cut', accelerator: 'CmdOrCtrl+X', selector: 'cut:' },
+      // { label: 'Copy', accelerator: 'CmdOrCtrl+C', selector: 'copy:' },
+      // { label: 'Paste', accelerator: 'CmdOrCtrl+V', selector: 'paste:' },
+      // {
+      //   label: 'Select All',
+      //   accelerator: 'CmdOrCtrl+A',
+      //   selector: 'selectAll:',
+      // },
+    ],
+  },
 ]
 
 Menu.setApplicationMenu(Menu.buildFromTemplate(menutemplate))

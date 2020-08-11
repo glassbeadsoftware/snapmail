@@ -1,6 +1,6 @@
-const { spawnSync } = require('child_process');
+const { spawn, spawnSync } = require('child_process');
 const path = require('path');
-
+const { log } = require('./logger');
 
 /**
  *
@@ -22,7 +22,6 @@ function executablePath() {
   return path.join(__dirname, executable)
 }
 module.exports.executablePath = executablePath;
-
 
 /**
  * On windows, call `wsl wslpath` on filePath to convert it to a wsl compatible filepath usable within wsl
@@ -49,3 +48,25 @@ function wslPath(filePath) {
   return fp
 }
 module.exports.wslPath = wslPath;
+
+/**
+ * Make sure there is no outstanding holochain process in wsl by calling `killall` command
+ */
+function killAllWsl(psname) {
+  if (process.platform !== "win32") {
+    return;
+  }
+  log('info', 'killAllWsl:' + psname);
+  const killall_proc = spawn(
+    process.env.comspec,
+    ["/c", "wsl", "killall", psname],
+    { cwd: __dirname, }
+  );
+  killall_proc.stderr.on('data', (err) => {
+    log('error', err.toString())
+  });
+  killall_proc.on('exit', (code) => {
+    log('info', code);
+  })
+}
+module.exports.killAllWsl = killAllWsl;

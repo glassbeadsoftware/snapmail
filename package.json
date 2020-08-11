@@ -9,7 +9,6 @@
     "package-osx": "electron-packager . Snapmail --platform=darwin --arch=x64 --out=../build --overwrite",
     "package-mac": "electron-packager . Snapmail --platform=darwin --arch=x64 --prune=true --overwrite --out=../build",
     "package-linux": "electron-packager . Snapmail --overwrite --asar=true --platform=linux --arch=x64 --prune=true --out=../build"
-
   },
   "repository": "https://github.com/glassbeadsoftware/snapmail-release",
   "keywords": [
@@ -20,14 +19,17 @@
   "license": "CAL-1.0 Beta 4",
   "dependencies": {
     "command-exists": "^1.2.8",
+    "dialogs": "^2.0.1",
     "electron-context-menu": "^0.12.1",
     "electron-debug": "^3.0.1",
     "electron-log": "^3.0.9",
     "electron-osx-sign": "^0.4.14",
     "electron-packager": "^14.1.0",
+    "electron-prompt": "^1.6.0",
     "fix-path": "^2.1.0",
     "open": "^6.3.0",
     "request": "^2.88.2",
+    "smalltalk": "^4.0.6",
     "sudo-prompt": "^9.0.0",
     "tree-kill": "^1.2.2"
   },

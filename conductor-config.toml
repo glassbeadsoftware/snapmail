@@ -65,7 +65,7 @@ type = "sim2h"
 # last two digits of port here
 # are a hidden reference to associated holochain/sim2h
 # release number, e.g. 9044 = 0.0.44
-sim2h_url = "ws://sim2h.harris-braun.com:9050/"
+sim2h_url = "ws://sim2h.harris-braun.com:9049/"
 
 [[ui_bundles]]
 hash = 'QmTT6oSPHNFn4x9ssBM14M1HznLVGjrFKCyBcsTyBudzfg'
