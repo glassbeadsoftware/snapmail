@@ -56,6 +56,7 @@ function createConductorConfig(hc_bin, sim2hUrl, callback) {
       // to avoid rebuilding key-config-gen
       // all the time, according to new DNA address
       // we can just update it after the fact this way
+      log('info', 'new pubKey: ' + pubKey);
       updateConductorConfig(pubKey, sim2hUrl);
       log('info', 'Conductor config updated with new public key.');
       callback(pubKey);
@@ -74,20 +75,25 @@ module.exports.createConductorConfig = createConductorConfig;
 function updateConductorConfig(publicAddress, sim2hUrl) {
   //console.log('updateConductorConfig:\n - ' + publicAddress + '\n - ' + sim2hUrl);
   // do this step of moving the snapmail dna over into the AppData folder
-  // and naming it by its hash/address
-  // for the sake of mirroring holoscape behaviour
-  const snapmailDnaHash = fs.readFileSync(
-    path.join(__dirname, SNAPMAIL_DNA_HASH_FILE)
-  );
-  log('info', 'snapmailDnaHash: ' + snapmailDnaHash);
+  // and naming it by its hash/address for the sake of mirroring holoscape behaviour
+  let snapmailDnaHash = fs.readFileSync(path.join(__dirname, SNAPMAIL_DNA_HASH_FILE)).toString();
+  // Make sure there is no trailing end of line
+  let regex = /(Qm[a-zA-Z0-9]*)/;
+  let match = regex.exec(snapmailDnaHash);
+  snapmailDnaHash = match[1];
+  console.log({ snapmailDnaHash });
+  //let snapmailDnaHash = 'QmaTQtGajbgbnwLhj5LdMs3SwC3XXuktviL25YFbtZmKJF';
+  log('info', 'snapmailDnaHash: `' + snapmailDnaHash + '`| done');
+
   if (!fs.existsSync(DNA_FOLDER_PATH)) {
     fs.mkdirSync(DNA_FOLDER_PATH);
   }
+  const oldDnaFilePath = path.join(__dirname, SNAPMAIL_DNA_FILE);
   const newDnaFilePath = path.join(DNA_FOLDER_PATH, `${snapmailDnaHash}.dna.json`);
-  fs.copyFileSync(
-    path.join(__dirname, SNAPMAIL_DNA_FILE), // source
-    newDnaFilePath // destination
-  );
+  log('info', 'oldDnaFilePath: ' + oldDnaFilePath);
+  log('info', 'newDnaFilePath: ' + newDnaFilePath);
+
+  fs.copyFileSync(oldDnaFilePath, newDnaFilePath);
 
   // read from the local template
   const conductorConfig = fs.readFileSync(path.join(__dirname, CONDUCTOR_CONFIG_FILENAME)).toString();
