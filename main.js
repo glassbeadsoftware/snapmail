@@ -5,7 +5,7 @@ const assert = require('assert');
 const fs = require('fs');
 const path = require('path');
 const kill = require('tree-kill');
-//const { dialog } = require('electron');
+const { dialog } = require('electron');
 const request = require('request');
 const prompt = require('electron-prompt');
 
@@ -14,10 +14,14 @@ const { wslPath, killAllWsl } = require('./cli');
 const {updateConductorConfig, createConductorConfig, CONDUCTOR_CONFIG_PATH, KEYSTORE_FILE_PATH,
   CONFIG_PATH, STORAGE_PATH, DNA_CONNECTIONS_FILE_PATH} = require('./config')
 
+const g_canDebug = false;
+
 require('electron-context-menu')();
 require('fix-path')();
 // enables the devtools window automatically
-require('electron-debug')({ isEnabled: true });
+if (g_canDebug) {
+  require('electron-debug')({ isEnabled: true });
+}
 
 /** CONSTS **/
 var HC_BIN = './hc';
@@ -38,7 +42,10 @@ const UI_DIR = "ui";
 /** Add Holochain bins to PATH for WSL */
 const BIN_DIR = "bin";
 const BIN_PATH = path.join(__dirname, BIN_DIR);
-process.env.Path += BIN_PATH;
+if (process.platform === "win32") {
+  log('info', 'BIN_PATH = ' + BIN_PATH);
+  process.env.Path += ';' + BIN_PATH;
+}
 
 /** Create missing dirs */
 if (!fs.existsSync(CONFIG_PATH)) {
@@ -55,13 +62,13 @@ if (!fs.existsSync(STORAGE_PATH)) {
 let g_mainWindow = undefined;
 let g_canQuit = false;
 let g_holochain_proc;
-//const g_canDebug = true;
 let g_sim2hUrl = "";
 let g_pubKey = '';
 
+tryLoadingConfig();
 
 // -- Set Globals from current conductor config --/
-{
+function tryLoadingConfig() {
   try {
     const conductorConfigBuffer = fs.readFileSync(CONDUCTOR_CONFIG_PATH);
     const conductorConfig = conductorConfigBuffer.toString();
@@ -70,18 +77,18 @@ let g_pubKey = '';
     let regex = /sim2h_url = "(.*)"/g;
     let match = regex.exec(conductorConfig);
     g_sim2hUrl = match[1];
-    console.log({g_sim2hUrl});
+    console.log({ g_sim2hUrl });
     regex = /public_address = "(.*)"/g;
     match = regex.exec(conductorConfig);
     g_pubKey = match[1];
-    console.log({g_pubKey});
-  } catch (err) {
-    if (err.code === 'ENOENT') {
-      console.log('File not found!');
+    console.log({ g_pubKey });
+  } catch(err) {
+    if(err.code === 'ENOENT')
+    {
+      console.error('File not found: conductor-config.toml');
     }
   }
 }
-
 /**
  * We want to be able to use localStorage/sessionStorage but Chromium doesn't allow that for every source.
  * Since we are using custom URI schemes to redirect UIs' resources specific URI schemes here to be privileged.
@@ -172,7 +179,7 @@ function startHolochainProc() {
     },
   });
 
-  // We need the _dna_connections.json to be a file readable by the UI, over the SNAPMAIL_PROTOCOL_SCHEME.
+  // We need the `_dna_connections.json` to be a file readable by the UI, over the SNAPMAIL_PROTOCOL_SCHEME.
   // So we request it from the conductor and write the response to a file.
   g_holochain_proc.stdout.on('data', (data) => {
     log('info', data.toString());
@@ -196,15 +203,12 @@ function startHolochainProc() {
   // if "holochain" exits, close the app
   g_holochain_proc.on('exit', (code, signal) => {
     if (signal) {
-      log(
-        'info',
-        `holochain process terminated due to receipt of signal ${signal}`
-      )
+      log('info', `holochain process terminated due to receipt of signal ${signal}`)
     } else {
       log('info', `holochain process terminated with exit code ${code}`)
     }
     g_canQuit = true;
-    app.quit();
+    //app.quit();
   })
 }
 
@@ -217,36 +221,41 @@ app.on('ready', function () {
   protocol.registerFileProtocol(SNAPMAIL_PROTOCOL_SCHEME, snapmailFileProtocolCallback);
   // Create main window
   g_mainWindow = createWindow();
-  // Start Conductor if sim2hUrl is set otherwise prompt it.
+  // if sim2hUrl not set prompt it, otherwise Start Conductor
   if(g_sim2hUrl === "") {
-    promptSim2hUrl(function(sim2hUrl) {
-      updateConductorConfig(g_pubKey, sim2hUrl);
-      startConductor(sim2hUrl);
+    promptSim2hUrl(function() {
+      startConductor(true);
     });
   } else {
-    startConductor(g_sim2hUrl);
+    startConductor(false);
   }
 });
 
 
 /**
- *
+ * Prepare conductor config and start holochain process
+ * @param canUpdate
  */
-function startConductor(sim2hUrl) {
+function startConductor(canUpdate) {
   // Make sure there is no outstanding holochain procs
   killAllWsl(HC_BIN);
   killAllWsl(HOLOCHAIN_BIN);
   // check if config and keys exist, if they don't, create one.
   if (!fs.existsSync(KEYSTORE_FILE_PATH) || !fs.existsSync(CONDUCTOR_CONFIG_PATH)) {
-    createConductorConfig(HC_BIN, sim2hUrl, function(pubKey) {
+    createConductorConfig(HC_BIN, g_sim2hUrl, function(pubKey) {
       g_pubKey = pubKey;
       startHolochainProc();
     });
   } else {
+    if (canUpdate) {
+      log('info', 'Updating ConductorConfig with new sim2hUrl.');
+      updateConductorConfig(g_pubKey, g_sim2hUrl);
+    }
     log('info', 'Public key found. Launching conductor...');
     startHolochainProc();
   }
 }
+
 
 
 /**
@@ -265,11 +274,13 @@ app.on('will-quit', (event) => {
     event.preventDefault();
     // SIGTERM by default
     if (g_holochain_proc) {
-      killAllWsl(HOLOCHAIN_BIN);
       kill(g_holochain_proc.pid, function(err) {
         log('info', 'killed all sub processes')
       });
     }
+    // Make sure there is no outstanding holochain procs
+    killAllWsl(HC_BIN);
+    killAllWsl(HOLOCHAIN_BIN);
   }
 });
 
@@ -279,7 +290,9 @@ app.on('will-quit', (event) => {
 app.on('window-all-closed', function () {
   // On macOS it is common for applications and their menu bar
   // to stay active until the user quits explicitly with Cmd + Q
-  if (process.platform !== 'darwin') app.quit()
+  if (process.platform !== 'darwin') {
+    app.quit();
+  }
 });
 
 /**
@@ -308,10 +321,13 @@ function promptSim2hUrl(callback) {
   }).then((r) => {
       if(r === null) {
         console.log('user cancelled');
+        if (g_sim2hUrl === "") {
+          app.quit();
+        }
       } else {
         console.log('result', r);
         g_sim2hUrl = r;
-        callback(r);
+        callback();
       }
     })
     .catch(console.error);
@@ -323,12 +339,38 @@ function promptSim2hUrl(callback) {
 
 const menutemplate = [
   {
-    label: 'File',
+    label: 'File', submenu: [{
+      label: 'Quit',
+      accelerator: 'Command+Q',
+      click: function () {
+        app.quit()
+      },
+    },],
+  },
+  {
+    label: 'Edit',
     submenu: [
-      { label: 'Dump logs', click: function()
-        {
-          console.log({process})
-        }},
+      {
+        label: 'Change Sim2h URL', click: function () { promptSim2hUrl(function() {
+          startConductor(true);
+          });
+        }
+      },
+      {
+        label: 'Restart Conductor', click: function () {
+          startConductor(false);
+        }
+      },
+    ],
+  },
+  {
+    label: 'Debug',
+    submenu: [
+      // {
+      //   label: 'Dump logs', click: function() {
+      //     console.log({process})
+      //   }
+      // },
       {
         label: 'Open Config Folder',
         click: function () {
@@ -348,37 +390,18 @@ const menutemplate = [
           g_mainWindow.webContents.openDevTools()
         },
       },
-      { type: 'separator' },
       {
-        label: 'Quit',
-        accelerator: 'Command+Q',
+        label: 'Show PATHS',
         click: function () {
-          app.quit()
+          dialog.showMessageBoxSync(g_mainWindow, {
+            type: 'info',
+            title: 'Constants',
+            message: 'BIN_PATH: ' + BIN_PATH + '\n' + 'process.env.Path: ' + process.env.Path,
+          });
         },
       },
     ],
   },
-  {
-    label: 'Edit',
-    submenu: [
-      {
-        label: 'Change Sim2h URL', click: function () { promptSim2hUrl(function(sim2hUrl) {
-          updateConductorConfig(g_pubKey, sim2hUrl);
-          startConductor(sim2hUrl);
-        });}}
-      // { label: 'Undo', accelerator: 'CmdOrCtrl+Z', selector: 'undo:' },
-      // { label: 'Redo', accelerator: 'Shift+CmdOrCtrl+Z', selector: 'redo:' },
-      // { type: 'separator' },
-      // { label: 'Cut', accelerator: 'CmdOrCtrl+X', selector: 'cut:' },
-      // { label: 'Copy', accelerator: 'CmdOrCtrl+C', selector: 'copy:' },
-      // { label: 'Paste', accelerator: 'CmdOrCtrl+V', selector: 'paste:' },
-      // {
-      //   label: 'Select All',
-      //   accelerator: 'CmdOrCtrl+A',
-      //   selector: 'selectAll:',
-      // },
-    ],
-  },
-]
+];
 
 Menu.setApplicationMenu(Menu.buildFromTemplate(menutemplate))

@@ -1,27 +1,26 @@
-const { spawn, spawnSync } = require('child_process');
-const path = require('path');
+const { spawnSync } = require('child_process');
+//const path = require('path');
 const { log } = require('./logger');
 
-/**
- *
- * @returns {string}
- */
-function executablePath() {
-  let executable;
-  if (process.platform === "win32") {
-    return process.env.comspec;
-  }
-  if (process.platform === "darwin") {
-    executable = "./hc-darwin"
-  } else if (process.platform === "linux") {
-    executable = "./hc-linux"
-  } else {
-    log('error', "unsupported platform: " + process.platform);
-    return
-  }
-  return path.join(__dirname, executable)
-}
-module.exports.executablePath = executablePath;
+// /**
+//  *
+//  */
+// function executablePath() {
+//   let executable;
+//   if (process.platform === "win32") {
+//     return process.env.comspec;
+//   }
+//   if (process.platform === "darwin") {
+//     executable = "./hc-darwin"
+//   } else if (process.platform === "linux") {
+//     executable = "./hc-linux"
+//   } else {
+//     log('error', "unsupported platform: " + process.platform);
+//     return
+//   }
+//   return path.join(__dirname, executable)
+// }
+// module.exports.executablePath = executablePath;
 
 /**
  * On windows, call `wsl wslpath` on filePath to convert it to a wsl compatible filepath usable within wsl
@@ -39,11 +38,14 @@ function wslPath(filePath) {
     wslparams,
     {cwd: __dirname}
   );
-  stderr = stderr? stderr.toString() : "";
+  if (stderr) {
+    log('error', stderr.toString());
+  }
+  if (error) {
+    log('error', error.toString());
+  }
   stdout = stdout? stdout.toString() : "";
-  // console.log("CLI wslPath; got results:");
-  // console.log("stdout:", stdout);
-  // console.log("stderr:", stderr);
+  console.log("CLI wslPath; got results: " + stdout);
   fp = stdout.substring(0, stdout.length - 1); // remove 'return' char
   return fp
 }
@@ -57,16 +59,19 @@ function killAllWsl(psname) {
     return;
   }
   log('info', 'killAllWsl:' + psname);
-  const killall_proc = spawn(
+  let { stdout, stderr, error } = spawnSync(
     process.env.comspec,
     ["/c", "wsl", "killall", psname],
-    { cwd: __dirname, }
+    {cwd: __dirname},
   );
-  killall_proc.stderr.on('data', (err) => {
-    log('error', err.toString())
-  });
-  killall_proc.on('exit', (code) => {
-    log('info', code);
-  })
+  if (stdout) {
+    log('info', stdout.toString());
+  }
+  if (stderr) {
+    log('error', stderr.toString());
+  }
+  if (error) {
+    log('error', error.toString());
+  }
 }
 module.exports.killAllWsl = killAllWsl;

@@ -72,7 +72,7 @@ module.exports.createConductorConfig = createConductorConfig;
  * * @param sim2hUrl the sim2h server address
  */
 function updateConductorConfig(publicAddress, sim2hUrl) {
-  console.log('updateConductorConfig:\n - ' + publicAddress + '\n - ' + sim2hUrl);
+  //console.log('updateConductorConfig:\n - ' + publicAddress + '\n - ' + sim2hUrl);
   // do this step of moving the snapmail dna over into the AppData folder
   // and naming it by its hash/address
   // for the sake of mirroring holoscape behaviour

@@ -13,6 +13,7 @@
   "repository": "https://github.com/glassbeadsoftware/snapmail-release",
   "keywords": [
     "Electron",
+    "Holochain",
     "Snapmail"
   ],
   "author": "Harris-Braun Enterprises, LLC and contributors",
