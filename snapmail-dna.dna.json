@@ -15,22 +15,6 @@
     "holochain": {},
     "release": {}
   },
-  "source_chain_billy": {
-    "cas": {
-      "cas.db": {}
-    },
-    "eav": {
-      "EAV.db": {}
-    }
-  },
-  "source_chain_camille": {
-    "cas": {
-      "cas.db": {}
-    },
-    "eav": {
-      "EAV.db": {}
-    }
-  },
   "spec": {},
   "zomes": {
     "snapmail": {
