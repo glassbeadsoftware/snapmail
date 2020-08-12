@@ -44,7 +44,7 @@ const BIN_DIR = "bin";
 const BIN_PATH = path.join(__dirname, BIN_DIR);
 if (process.platform === "win32") {
   log('info', 'BIN_PATH = ' + BIN_PATH);
-  process.env.Path += ';' + BIN_PATH;
+  process.env.PATH += ';' + BIN_PATH;
 }
 
 /** Create missing dirs */
@@ -396,7 +396,7 @@ const menutemplate = [
           dialog.showMessageBoxSync(g_mainWindow, {
             type: 'info',
             title: 'Constants',
-            message: 'BIN_PATH: ' + BIN_PATH + '\n' + 'process.env.Path: ' + process.env.Path,
+            message: 'BIN_PATH: ' + BIN_PATH + '\n' + 'process.env.path: ' + JSON.stringify(process.env.PATH),
           });
         },
       },
