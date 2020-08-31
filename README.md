@@ -23,6 +23,12 @@ Use your own or the public one provided by Holo `ws://public-v4.sim2h.net:9000`
 1. Set your username in the top input box.
 1. Other users on the same sim2h network will appear in the bottom right list box after hitting the refresh button.
 
+#### Troubleshoot
+
+##### Linux
+- Make sure the following executables have execution rights: `Snapmail`, `hc`, `holochain`.
+- If you get `spawn ./hc ENOENT` error message, this means you need to [install nix-shell](https://developer.holochain.org/docs/install/) on your system.
+
 ## Installation on Holoscape
 
 1. Download repo from github.
