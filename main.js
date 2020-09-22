@@ -1,4 +1,4 @@
-/** Modules to control application life and create native browser window **/
+// Modules to control application life and create native browser window
 const { app, BrowserWindow, Menu, protocol, shell } = require('electron');
 const spawn = require('child_process').spawn;
 const assert = require('assert');
@@ -9,11 +9,14 @@ const { dialog } = require('electron');
 const request = require('request');
 const prompt = require('electron-prompt');
 
+// My Modules
 const { log, logger } = require('./logger');
 const { wslPath, killAllWsl } = require('./cli');
-const {updateConductorConfig, createConductorConfig, CONDUCTOR_CONFIG_PATH, KEYSTORE_FILE_PATH,
-  CONFIG_PATH, STORAGE_PATH, DNA_CONNECTIONS_FILE_PATH} = require('./config')
+const {generateConductorConfig, createKeysAndConfig, CONDUCTOR_CONFIG_PATH, KEYSTORE_FILE_PATH, CONFIG_PATH, STORAGE_PATH, DNA_CONNECTIONS_FILE_PATH} = require('./config');
 
+// -- Code -- //
+
+// Toggle this for debug / release mode
 const g_canDebug = false;
 
 require('electron-context-menu')();
@@ -35,7 +38,6 @@ if (process.platform === "win32") {
 
 const SNAPMAIL_PROTOCOL_SCHEME = 'snapmail-protocol';
 const UI_DIR = "ui";
-
 
 // -- Start-up stuff -- //
 
@@ -60,20 +62,18 @@ if (!fs.existsSync(STORAGE_PATH)) {
 // Keep a global reference of the ELECTRON window object, if you don't,
 // the window will be closed automatically when the JavaScript object is garbage collected.
 let g_mainWindow = undefined;
+let g_holochain_proc = undefined;
 let g_canQuit = false;
-let g_holochain_proc;
 let g_sim2hUrl = "";
 let g_pubKey = '';
 
-tryLoadingConfig();
-
 // -- Set Globals from current conductor config --/
-function tryLoadingConfig() {
+// tryLoadingConfig()
+{
   try {
     const conductorConfigBuffer = fs.readFileSync(CONDUCTOR_CONFIG_PATH);
     const conductorConfig = conductorConfigBuffer.toString();
     //console.log({conductorConfig})
-    // replace persistence_dir
     let regex = /sim2h_url = "(.*)"/g;
     let match = regex.exec(conductorConfig);
     g_sim2hUrl = match[1];
@@ -86,9 +86,12 @@ function tryLoadingConfig() {
     if(err.code === 'ENOENT')
     {
       console.error('File not found: conductor-config.toml');
+    } else {
+      console.error('Loading config file failed: ' + err.code);
     }
   }
 }
+
 /**
  * We want to be able to use localStorage/sessionStorage but Chromium doesn't allow that for every source.
  * Since we are using custom URI schemes to redirect UIs' resources specific URI schemes here to be privileged.
@@ -99,6 +102,7 @@ protocol.registerSchemesAsPrivileged([{
     privileges: { standard: true, supportFetchAPI: true, secure: true },
   },
 ]);
+
 const snapmailFileProtocolCallback = (request, callback) => {
   // remove 'snapmail-protocol://'
   let url = request.url.substr(SNAPMAIL_PROTOCOL_SCHEME.length + 3);
@@ -142,8 +146,8 @@ function createWindow() {
 
   // Open <a href='' target='_blank'> with default system browser
   mainWindow.webContents.on('new-window', function (event, url) {
-    event.preventDefault()
-    shell.openExternal(url)
+    event.preventDefault();
+    shell.openExternal(url);
   });
 
   // Open the DevTools.
@@ -159,29 +163,30 @@ function createWindow() {
   return mainWindow;
 }
 
+
 /**
- *
+ * Return holochain ChildProcess
  */
-function startHolochainProc() {
-  // spawn "holochain"
+function spawnHolochainProc() {
+  // adapt to WSL if needed
   let bin = HOLOCHAIN_BIN;
   let args = ['-c', wslPath(CONDUCTOR_CONFIG_PATH)];
   if (process.platform === "win32") {
     bin = process.env.comspec;
     args.unshift("/c", "wsl", HOLOCHAIN_BIN);
   }
-  // spawn subprocess
-  g_holochain_proc = spawn(bin, args, {
-      cwd: __dirname,
-      env: {
-        ...process.env,
-        RUST_BACKTRACE: 'full',
+  // spawn "holochain" subprocess
+  let holochain_proc = spawn(bin, args, {
+    cwd: __dirname,
+    env: {
+      ...process.env,
+      RUST_BACKTRACE: 'full',
     },
   });
 
   // We need the `_dna_connections.json` to be a file readable by the UI, over the SNAPMAIL_PROTOCOL_SCHEME.
   // So we request it from the conductor and write the response to a file.
-  g_holochain_proc.stdout.on('data', (data) => {
+  holochain_proc.stdout.on('data', (data) => {
     log('info', data.toString());
     if (data.toString().indexOf('Listening on http://127.0.0.1:3111') > -1) {
       request(
@@ -195,13 +200,11 @@ function startHolochainProc() {
         }
       )
     }
-  })
-
-  // log errors
-  g_holochain_proc.stderr.on('data', (data) => log('error', data.toString()));
+  });
+  holochain_proc.stderr.on('data', (data) => log('error', data.toString()));
 
   // if "holochain" exits, close the app
-  g_holochain_proc.on('exit', (code, signal) => {
+  holochain_proc.on('exit', (code, signal) => {
     if (signal) {
       log('info', `holochain process terminated due to receipt of signal ${signal}`)
     } else {
@@ -209,7 +212,50 @@ function startHolochainProc() {
     }
     g_canQuit = true;
     //app.quit();
-  })
+  });
+
+  // Done
+  return holochain_proc;
+}
+
+/**
+ *
+ * @param holochain_proc
+ */
+function killHolochain() {
+  // SIGTERM by default
+  if (g_holochain_proc) {
+    kill(g_holochain_proc.pid, function(err) {
+      log('info', 'killed all sub processes')
+    });
+  }
+  // Make sure there is no outstanding holochain procs
+  killAllWsl(HC_BIN);
+  killAllWsl(HOLOCHAIN_BIN);
+}
+
+/**
+ * Prepare conductor config and spawn holochain subprocess
+ * @param canRegenerateConfig - Regenerate the conductor config before relaunching the holochain process.
+ */
+function startConductor(canRegenerateConfig) {
+  // Make sure there is no outstanding holochain procs
+  killHolochain();
+
+  // check if config and keys exist, if they don't, create one.
+  if (!fs.existsSync(KEYSTORE_FILE_PATH) || !fs.existsSync(CONDUCTOR_CONFIG_PATH)) {
+    createKeysAndConfig(HC_BIN, g_sim2hUrl, function(pubKey) {
+      g_pubKey = pubKey;
+      g_holochain_proc = spawnHolochainProc();
+    });
+  } else {
+    if (canRegenerateConfig) {
+      log('info', 'Updating ConductorConfig with new sim2hUrl.');
+      generateConductorConfig(g_pubKey, g_sim2hUrl);
+    }
+    log('info', 'Public key and config found. Launching conductor...');
+    g_holochain_proc = spawnHolochainProc();
+  }
 }
 
 /**
@@ -221,7 +267,7 @@ app.on('ready', function () {
   protocol.registerFileProtocol(SNAPMAIL_PROTOCOL_SCHEME, snapmailFileProtocolCallback);
   // Create main window
   g_mainWindow = createWindow();
-  // if sim2hUrl not set prompt it, otherwise Start Conductor
+  // if sim2hUrl not set, prompt it, otherwise Start Conductor
   if(g_sim2hUrl === "") {
     promptSim2hUrl(function() {
       startConductor(true);
@@ -230,33 +276,6 @@ app.on('ready', function () {
     startConductor(false);
   }
 });
-
-
-/**
- * Prepare conductor config and start holochain process
- * @param canUpdate
- */
-function startConductor(canUpdate) {
-  // Make sure there is no outstanding holochain procs
-  killAllWsl(HC_BIN);
-  killAllWsl(HOLOCHAIN_BIN);
-  // check if config and keys exist, if they don't, create one.
-  if (!fs.existsSync(KEYSTORE_FILE_PATH) || !fs.existsSync(CONDUCTOR_CONFIG_PATH)) {
-    createConductorConfig(HC_BIN, g_sim2hUrl, function(pubKey) {
-      g_pubKey = pubKey;
-      startHolochainProc();
-    });
-  } else {
-    if (canUpdate) {
-      log('info', 'Updating ConductorConfig with new sim2hUrl.');
-      updateConductorConfig(g_pubKey, g_sim2hUrl);
-    }
-    log('info', 'Public key found. Launching conductor...');
-    startHolochainProc();
-  }
-}
-
-
 
 /**
  * This event will be emitted inside the primary instance of your application when a second instance has been executed
@@ -272,15 +291,7 @@ app.on('second-instance', (event) => {
 app.on('will-quit', (event) => {
   if (!g_canQuit) {
     event.preventDefault();
-    // SIGTERM by default
-    if (g_holochain_proc) {
-      kill(g_holochain_proc.pid, function(err) {
-        log('info', 'killed all sub processes')
-      });
-    }
-    // Make sure there is no outstanding holochain procs
-    killAllWsl(HC_BIN);
-    killAllWsl(HOLOCHAIN_BIN);
+    killHolochain();
   }
 });
 
@@ -332,6 +343,7 @@ function promptSim2hUrl(callback) {
     })
     .catch(console.error);
 }
+
 /**
  * In this file you can include the rest of your app's specific main process code.
  * You can also put them in separate files and require them here.

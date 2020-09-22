@@ -23,10 +23,11 @@ module.exports.CONDUCTOR_CONFIG_PATH = CONDUCTOR_CONFIG_PATH;
 module.exports.KEYSTORE_FILE_PATH = KEYSTORE_FILE_PATH;
 module.exports.DNA_CONNECTIONS_FILE_PATH = DNA_CONNECTIONS_FILE_PATH;
 
-
-function createConductorConfig(hc_bin, sim2hUrl, callback) {
-  // Call "hc keygen" to create public key.
-  // Once done, spawn the conductor.
+/**
+ * Call "hc keygen" to create public key.
+ * Once done, generate the conductor config.
+ */
+function createKeysAndConfig(hc_bin, sim2hUrl, callback) {
   let bin = hc_bin;
   let pubKey;
   let args = ['keygen', '--path', wslPath(KEYSTORE_FILE_PATH), '--nullpass', '--quiet'];
@@ -57,7 +58,7 @@ function createConductorConfig(hc_bin, sim2hUrl, callback) {
       // all the time, according to new DNA address
       // we can just update it after the fact this way
       log('info', 'new pubKey: ' + pubKey);
-      updateConductorConfig(pubKey, sim2hUrl);
+      generateConductorConfig(pubKey, sim2hUrl);
       log('info', 'Conductor config updated with new public key.');
       callback(pubKey);
     } else {
@@ -65,19 +66,19 @@ function createConductorConfig(hc_bin, sim2hUrl, callback) {
     }
   })
 }
-module.exports.createConductorConfig = createConductorConfig;
+module.exports.createKeysAndConfig = createKeysAndConfig;
 
 /**
- * Overwrite the DNA hash address in the conductor-config with the up to date one in SNAPMAIL_DNA_HASH_FILE
- * @param publicAddress the agent public key
- * * @param sim2hUrl the sim2h server address
+ * Generate a conductor-config from the template and DNA_HASH_FILE, and put it in appData folder.
+ * @param publicAddress - The agent public key to use
+ * @param sim2hUrl  - The sim2h server address to use
  */
-function updateConductorConfig(publicAddress, sim2hUrl) {
-  //console.log('updateConductorConfig:\n - ' + publicAddress + '\n - ' + sim2hUrl);
-  // do this step of moving the snapmail dna over into the AppData folder
-  // and naming it by its hash/address for the sake of mirroring holoscape behaviour
+function generateConductorConfig(publicAddress, sim2hUrl) {
+  //console.log('generateConductorConfig:\n - ' + publicAddress + '\n - ' + sim2hUrl);
+
+  // Overwrite the DNA hash address in the conductor-config with the up to date one in SNAPMAIL_DNA_HASH_FILE
   let snapmailDnaHash = fs.readFileSync(path.join(__dirname, SNAPMAIL_DNA_HASH_FILE)).toString();
-  // Make sure there is no trailing end of line
+  // Make sure there is no trailing end of line after reading the hash from the file
   let regex = /(Qm[a-zA-Z0-9]*)/;
   let match = regex.exec(snapmailDnaHash);
   snapmailDnaHash = match[1];
@@ -88,6 +89,8 @@ function updateConductorConfig(publicAddress, sim2hUrl) {
   if (!fs.existsSync(DNA_FOLDER_PATH)) {
     fs.mkdirSync(DNA_FOLDER_PATH);
   }
+  // For the sake of mirroring holoscape behaviour, do this step of moving the snapmail dna over into the AppData folder
+  // and naming it by its hash/address.
   const oldDnaFilePath = path.join(__dirname, SNAPMAIL_DNA_FILE);
   const newDnaFilePath = path.join(DNA_FOLDER_PATH, `${snapmailDnaHash}.dna.json`);
   log('info', 'oldDnaFilePath: ' + oldDnaFilePath);
@@ -95,7 +98,7 @@ function updateConductorConfig(publicAddress, sim2hUrl) {
 
   fs.copyFileSync(oldDnaFilePath, newDnaFilePath);
 
-  // read from the local template
+  // read the template config
   const conductorConfig = fs.readFileSync(path.join(__dirname, CONDUCTOR_CONFIG_FILENAME)).toString();
 
   // replace persistence_dir
@@ -134,7 +137,7 @@ function updateConductorConfig(publicAddress, sim2hUrl) {
     `sim2h_url = "${sim2hUrl}"`
   );
 
-  // write to a folder we can write to
+  // write to the destination folder (appData)
   fs.writeFileSync(CONDUCTOR_CONFIG_PATH, newConductorConfig)
 }
-module.exports.updateConductorConfig = updateConductorConfig;
+module.exports.generateConductorConfig = generateConductorConfig;
