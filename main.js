@@ -117,7 +117,7 @@ if (!fs.existsSync(STORAGE_PATH)) {
 function createWindow() {
   // Create the browser window.
   let mainWindow = new BrowserWindow({
-    width: 1200,
+    width: 1400,
     height: 1000,
     webPreferences: {
       nodeIntegration: true,
