@@ -1,18 +1,22 @@
 // Modules to control application life and create native browser window
-const { app, BrowserWindow, Menu, protocol, shell } = require('electron');
+const { app, BrowserWindow, Menu, shell } = require('electron');
 const spawn = require('child_process').spawn;
 const assert = require('assert');
 const fs = require('fs');
 const path = require('path');
 const kill = require('tree-kill');
 const { dialog } = require('electron');
-const request = require('request');
+//const request = require('request');
 const prompt = require('electron-prompt');
+
+// Holochain Modules
+const { AdminWebsocket } = require('@holochain/conductor-api');
 
 // My Modules
 const { log, logger } = require('./logger');
 const { wslPath, killAllWsl } = require('./cli');
-const {generateConductorConfig, createKeysAndConfig, CONDUCTOR_CONFIG_PATH, KEYSTORE_FILE_PATH, CONFIG_PATH, STORAGE_PATH, DNA_CONNECTIONS_FILE_PATH} = require('./config');
+const {SNAPMAIL_APP_ID, generateConductorConfig, spawnKeystore, DEFAULT_BOOTSTRAP_URL,
+  CONDUCTOR_CONFIG_PATH, CONFIG_PATH, STORAGE_PATH, APP_PORT, ADMIN_PORT} = require('./config');
 
 // -- Code -- //
 
@@ -36,8 +40,18 @@ if (process.platform === "win32") {
   HOLOCHAIN_BIN = 'holochain-linux';
 }
 
-const SNAPMAIL_PROTOCOL_SCHEME = 'snapmail-protocol';
-const UI_DIR = "ui";
+var LAIR_KEYSTORE_BIN = './lair-keystore';
+if (process.platform === "win32") {
+   LAIR_KEYSTORE_BIN = 'lair-keystore-linux';
+ }
+
+// a special log from the conductor, specifying
+// that the interfaces are ready to receive incoming
+// connections
+const MAGIC_READY_STRING = 'Conductor ready.';
+
+//const SNAPMAIL_PROTOCOL_SCHEME = 'snapmail-protocol';
+//const UI_DIR = "ui";
 
 // -- Start-up stuff -- //
 
@@ -49,7 +63,18 @@ if (process.platform === "win32") {
   process.env.PATH += ';' + BIN_PATH;
 }
 
-/** Create missing dirs */
+// --  GLOBALS  -- //
+
+// Keep a global reference of the ELECTRON window object, if you don't,
+// the window will be closed automatically when the JavaScript object is garbage collected.
+let g_mainWindow = undefined;
+let g_holochain_proc = undefined;
+let g_keystore_proc = undefined;
+let g_canQuit = false;
+let g_bootstrapUrl = '';
+
+// --  Create missing dirs -- //
+
 if (!fs.existsSync(CONFIG_PATH)) {
   fs.mkdirSync(CONFIG_PATH)
 }
@@ -57,69 +82,34 @@ if (!fs.existsSync(STORAGE_PATH)) {
   fs.mkdirSync(STORAGE_PATH)
 }
 
-/** GLOBALS **/
-
-// Keep a global reference of the ELECTRON window object, if you don't,
-// the window will be closed automatically when the JavaScript object is garbage collected.
-let g_mainWindow = undefined;
-let g_holochain_proc = undefined;
-let g_canQuit = false;
-let g_sim2hUrl = "";
-let g_pubKey = '';
 
 // -- Set Globals from current conductor config --/
+
 // tryLoadingConfig()
 {
   try {
     const conductorConfigBuffer = fs.readFileSync(CONDUCTOR_CONFIG_PATH);
     const conductorConfig = conductorConfigBuffer.toString();
     //console.log({conductorConfig})
-    let regex = /sim2h_url = "(.*)"/g;
+    let regex = /bootstrap_service = "(.*)"/g;
     let match = regex.exec(conductorConfig);
-    g_sim2hUrl = match[1];
-    console.log({ g_sim2hUrl });
-    regex = /public_address = "(.*)"/g;
-    match = regex.exec(conductorConfig);
-    g_pubKey = match[1];
-    console.log({ g_pubKey });
+    g_bootstrapUrl = match[1];
+    console.log({ g_bootstrapUrl });
+    //regex = /public_address = "(.*)"/g;
+    //match = regex.exec(conductorConfig);
+    //g_pubKey = match[1];
+    //console.log({ g_pubKey });
   } catch(err) {
     if(err.code === 'ENOENT')
     {
-      console.error('File not found: conductor-config.toml');
+      console.error('File not found: ' + CONDUCTOR_CONFIG_PATH);
     } else {
       console.error('Loading config file failed: ' + err.code);
     }
+    console.error('continuing...');
   }
 }
 
-/**
- * We want to be able to use localStorage/sessionStorage but Chromium doesn't allow that for every source.
- * Since we are using custom URI schemes to redirect UIs' resources specific URI schemes here to be privileged.
- */
-console.log('Registering scheme as privileged:', SNAPMAIL_PROTOCOL_SCHEME);
-protocol.registerSchemesAsPrivileged([{
-    scheme: SNAPMAIL_PROTOCOL_SCHEME,
-    privileges: { standard: true, supportFetchAPI: true, secure: true },
-  },
-]);
-
-const snapmailFileProtocolCallback = (request, callback) => {
-  // remove 'snapmail-protocol://'
-  let url = request.url.substr(SNAPMAIL_PROTOCOL_SCHEME.length + 3);
-  log('info', 'request url: ' + url);
-  // /#/ because of react router
-  if (url === 'root/' || url.includes('/#/')) {
-    url = ''+ UI_DIR + '/index.html'
-  } else if (url.includes('root')) {
-    url = url.replace('root', UI_DIR)
-  }
-  if (url === '' + UI_DIR + '/_dna_connections.json') {
-    newpath = DNA_CONNECTIONS_FILE_PATH
-  } else {
-    newpath = path.normalize(`${__dirname}/${url}`)
-  }
-  callback({ path: newpath })
-};
 
 /**
  * Create the main window global
@@ -127,8 +117,8 @@ const snapmailFileProtocolCallback = (request, callback) => {
 function createWindow() {
   // Create the browser window.
   let mainWindow = new BrowserWindow({
-    width: 1000,
-    height: 800,
+    width: 1200,
+    height: 1000,
     webPreferences: {
       nodeIntegration: true,
     },
@@ -142,7 +132,7 @@ function createWindow() {
   });
 
   // and load the index.html of the app.
-  mainWindow.loadURL(`${SNAPMAIL_PROTOCOL_SCHEME}://root`);
+  mainWindow.loadURL('file://' + __dirname + '/ui/index.html')
 
   // Open <a href='' target='_blank'> with default system browser
   mainWindow.webContents.on('new-window', function (event, url) {
@@ -165,9 +155,9 @@ function createWindow() {
 
 
 /**
- * Return holochain ChildProcess
+ *
  */
-function spawnHolochainProc() {
+async function spawnHolochainProc() {
   // adapt to WSL if needed
   let bin = HOLOCHAIN_BIN;
   let args = ['-c', wslPath(CONDUCTOR_CONFIG_PATH)];
@@ -180,29 +170,11 @@ function spawnHolochainProc() {
     cwd: __dirname,
     env: {
       ...process.env,
-      RUST_BACKTRACE: 'full',
+      RUST_BACKTRACE: 1,
     },
   });
-
-  // We need the `_dna_connections.json` to be a file readable by the UI, over the SNAPMAIL_PROTOCOL_SCHEME.
-  // So we request it from the conductor and write the response to a file.
-  holochain_proc.stdout.on('data', (data) => {
-    log('info', data.toString());
-    if (data.toString().indexOf('Listening on http://127.0.0.1:3111') > -1) {
-      request(
-        'http://127.0.0.1:3111/_dna_connections.json',
-        { json: true },
-        (err, res, body) => {
-          fs.writeFileSync(DNA_CONNECTIONS_FILE_PATH, JSON.stringify(body));
-          // trigger refresh once we know interfaces have booted up
-          assert(g_mainWindow !== undefined);
-          g_mainWindow.loadURL(`${SNAPMAIL_PROTOCOL_SCHEME}://root`)
-        }
-      )
-    }
-  });
-  holochain_proc.stderr.on('data', (data) => log('error', data.toString()));
-
+  // Handle error output
+  holochain_proc.stderr.on('data', (data) => log('error', 'holochain> ' + data.toString()));
   // if "holochain" exits, close the app
   holochain_proc.on('exit', (code, signal) => {
     if (signal) {
@@ -213,68 +185,119 @@ function spawnHolochainProc() {
     g_canQuit = true;
     //app.quit();
   });
-
+  // Wait for holochain to boot up
+  await new Promise((resolve, _reject) => {
+    holochain_proc.stdout.on('data', (data) => {
+      log('info', 'holochain: ' + data.toString())
+      if(data.toString().indexOf(MAGIC_READY_STRING) > -1) {
+        resolve();
+      }
+    });
+  });
   // Done
-  return holochain_proc;
+  g_holochain_proc = holochain_proc;
+}
+
+
+async function installIfFirstLaunch(adminWs) {
+  const dnas = await adminWs.listDnas();
+  console.log('Found ' + dnas.length + ' dnas');
+  // const activeAppIds = await adminWs.listActiveApps();
+  if (dnas.length === 0) {
+    let myPubKey = await adminWs.generateAgentPubKey();
+    await adminWs.installApp({
+      agent_key: myPubKey,
+      installed_app_id: SNAPMAIL_APP_ID,
+      dnas: [
+        {
+          nick: 'snapmail.dna.gz',
+          path: './dna/snapmail.dna.gz',
+        },
+      ],
+    });
+    console.log('App installed');
+    await adminWs.activateApp({ installed_app_id: SNAPMAIL_APP_ID });
+    await adminWs.attachAppInterface({ port: APP_PORT });
+    console.log('App activated');
+  }
 }
 
 /**
  *
- * @param holochain_proc
  */
 function killHolochain() {
   // SIGTERM by default
   if (g_holochain_proc) {
     kill(g_holochain_proc.pid, function(err) {
-      log('info', 'killed all sub processes')
+      if (!err) {
+        log('info', 'killed all holochain sub processes');
+      } else {
+        log('error', err)
+      }
+    });
+  }
+  if (g_keystore_proc) {
+    kill(g_keystore_proc.pid, function(err) {
+      if (!err) {
+      log('info', 'killed all lair_keystore sub processes');
+      } else {
+        log('error', err)
+      }
     });
   }
   // Make sure there is no outstanding holochain procs
-  killAllWsl(HC_BIN);
   killAllWsl(HOLOCHAIN_BIN);
+  killAllWsl(LAIR_KEYSTORE_BIN);
 }
 
 /**
  * Prepare conductor config and spawn holochain subprocess
  * @param canRegenerateConfig - Regenerate the conductor config before relaunching the holochain process.
  */
-function startConductor(canRegenerateConfig) {
-  // Make sure there is no outstanding holochain procs
+async function startConductor(canRegenerateConfig) {
+  // Make sure there is no outstanding Holochain & keystore procs
   killHolochain();
-
-  // check if config and keys exist, if they don't, create one.
-  if (!fs.existsSync(KEYSTORE_FILE_PATH) || !fs.existsSync(CONDUCTOR_CONFIG_PATH)) {
-    createKeysAndConfig(HC_BIN, g_sim2hUrl, function(pubKey) {
-      g_pubKey = pubKey;
-      g_holochain_proc = spawnHolochainProc();
-    });
+  // Spawn Keystore
+  spawnKeystore(LAIR_KEYSTORE_BIN);
+  // check if config exist, if not, create one.
+  if (!fs.existsSync(CONDUCTOR_CONFIG_PATH)) {
+    generateConductorConfig(g_bootstrapUrl);
   } else {
     if (canRegenerateConfig) {
-      log('info', 'Updating ConductorConfig with new sim2hUrl.');
-      generateConductorConfig(g_pubKey, g_sim2hUrl);
+      log('info', 'Updating ConductorConfig with latest Bootstrap Url.');
+      generateConductorConfig(g_bootstrapUrl);
+    } else {
+      log('info', 'Public key and config found.');
     }
-    log('info', 'Public key and config found. Launching conductor...');
-    g_holochain_proc = spawnHolochainProc();
   }
+  // Spawn Holochain
+  log('info', 'Launching conductor...');
+  await spawnHolochainProc();
+  //log('info', {g_holochain_proc});
 }
 
 /**
  * This method will be called when Electron has finished initialization and is ready to create browser windows.
  * Some APIs can only be used after this event occurs.
  */
-app.on('ready', function () {
-  // Register the Snapmail protocol
-  protocol.registerFileProtocol(SNAPMAIL_PROTOCOL_SCHEME, snapmailFileProtocolCallback);
+app.on('ready', async function () {
+  console.error('App ready ... ' + APP_PORT + ' (' + ADMIN_PORT + ')');
+
   // Create main window
   g_mainWindow = createWindow();
-  // if sim2hUrl not set, prompt it, otherwise Start Conductor
-  if(g_sim2hUrl === "") {
-    promptSim2hUrl(function() {
-      startConductor(true);
-    });
+  // if bootstrapUrl not set, prompt it, otherwise Start Conductor
+  if(g_bootstrapUrl === "") {
+    g_bootstrapUrl = DEFAULT_BOOTSTRAP_URL;
+    await promptBootstrapUrl();
+    await startConductor(true);
   } else {
-    startConductor(false);
+    await startConductor(false);
   }
+  const adminWs = await AdminWebsocket.connect(`ws://localhost:${ADMIN_PORT}`);
+  console.log('Connected to admin')
+  await installIfFirstLaunch(adminWs);
+  // trigger refresh once we know interfaces have booted up
+  g_mainWindow.loadURL('file://' + __dirname + '/ui/index.html')
 });
 
 /**
@@ -317,31 +340,28 @@ app.on('activate', function () {
   }
 });
 
-function promptSim2hUrl(callback) {
-  prompt({
-    title: 'Sim2h URL',
+async function promptBootstrapUrl() {
+  let r = await prompt({
+    title: 'Bootstrap Server URL',
     height: 180,
     width: 400,
     alwaysOnTop: true,
     label: 'URL:',
-    value: g_sim2hUrl,
+    value: g_bootstrapUrl,
     inputAttrs: {
       type: 'url'
     },
     type: 'input'
-  }).then((r) => {
-      if(r === null) {
-        console.log('user cancelled');
-        if (g_sim2hUrl === "") {
-          app.quit();
-        }
-      } else {
-        console.log('result', r);
-        g_sim2hUrl = r;
-        callback();
-      }
-    })
-    .catch(console.error);
+  });
+  if(r === null) {
+    console.log('user cancelled');
+    if (g_bootstrapUrl === "") {
+      app.quit();
+    }
+  } else {
+    console.log('result', r);
+    g_bootstrapUrl = r;
+  }
 }
 
 /**
@@ -363,14 +383,14 @@ const menutemplate = [
     label: 'Edit',
     submenu: [
       {
-        label: 'Change Sim2h URL', click: function () { promptSim2hUrl(function() {
-          startConductor(true);
-          });
+        label: 'Change Bootstrap URL', click: async function () {
+          await promptBootstrapUrl();
+          await startConductor(true);
         }
       },
       {
-        label: 'Restart Conductor', click: function () {
-          startConductor(false);
+        label: 'Restart Conductor', click: async function () {
+          await startConductor(false);
         }
       },
     ],

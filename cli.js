@@ -2,26 +2,6 @@ const { spawnSync } = require('child_process');
 //const path = require('path');
 const { log } = require('./logger');
 
-// /**
-//  *
-//  */
-// function executablePath() {
-//   let executable;
-//   if (process.platform === "win32") {
-//     return process.env.comspec;
-//   }
-//   if (process.platform === "darwin") {
-//     executable = "./hc-darwin"
-//   } else if (process.platform === "linux") {
-//     executable = "./hc-linux"
-//   } else {
-//     log('error', "unsupported platform: " + process.platform);
-//     return
-//   }
-//   return path.join(__dirname, executable)
-// }
-// module.exports.executablePath = executablePath;
-
 /**
  * On windows, call `wsl wslpath` on filePath to convert it to a wsl compatible filepath usable within wsl
  * @param filePath
@@ -75,3 +55,24 @@ function killAllWsl(psname) {
   }
 }
 module.exports.killAllWsl = killAllWsl;
+
+
+// /**
+//  *
+//  */
+// function executablePath() {
+//   let executable;
+//   if (process.platform === "win32") {
+//     return process.env.comspec;
+//   }
+//   if (process.platform === "darwin") {
+//     executable = "./hc-darwin"
+//   } else if (process.platform === "linux") {
+//     executable = "./hc-linux"
+//   } else {
+//     log('error', "unsupported platform: " + process.platform);
+//     return
+//   }
+//   return path.join(__dirname, executable)
+// }
+// module.exports.executablePath = executablePath;

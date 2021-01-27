@@ -18,10 +18,10 @@ See [snapmail-dna](https://github.com/ddd-mtl/snapmail-dna) for holochain backen
 1. Download the latest release file for your platform
 1. Unzip the file somewhere on your disk
 1. Launch the `Snapmail` executable.  
-1. You will be prompted to select a sim2h url. This is required for networking to work.
-Use your own or the public one provided by Holo `ws://public-v4.sim2h.net:9000`
+1. You will be prompted to select a bootstrap server url. This is required for discovering other peers on the network.
+Use your own or the public one provided by Holo `bootstrap.holo.net`
 1. Set your username in the top input box.
-1. Other users on the same sim2h network will appear in the bottom right list box after hitting the refresh button.
+1. Other users on the same bootstrap server will appear in the bottom right list box after hitting the refresh button.
 
 #### Troubleshoot
 

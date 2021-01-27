@@ -16,6 +16,7 @@ snapmail-*
 
 # copied binaries
 hc
+lair-keystore
 holochain
 
 .DS_Store
