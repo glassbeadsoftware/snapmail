@@ -5,8 +5,8 @@ It is the latest iteration of [Snapmail](http://www.glassbead.com/snapmail/index
 
 ![sshot](https://github.com/ddd-mtl/snapmail-release/blob/master/snapmail-ui.png)
 
-This is the release repo for the native application (Electron) and [Holoscape](https://github.com/holochain/holoscape) bundle.  
-See [snapmail-dna](https://github.com/ddd-mtl/snapmail-dna) for holochain backend or [snapmail-ui](https://github.com/ddd-mtl/snapmail-ui) for web frontend source code.
+This is the release repo for the native application (Electron).  
+See [snapmail-rsm](https://github.com/ddd-mtl/snapmail-rsm) for holochain backend or [snapmail-ui](https://github.com/ddd-mtl/snapmail-ui) for web frontend source code.
 
 (CI and NIX configs are not set up for the moment.)
 
@@ -26,14 +26,6 @@ Use your own or the public one provided by Holo `bootstrap.holo.net`
 #### Troubleshoot
 
 ##### Linux
-- Make sure the following executables have execution rights: `Snapmail`, `hc`, `holochain`.
-- If you get `spawn ./hc ENOENT` error message, this means you need to [install nix-shell](https://developer.holochain.org/docs/install/) on your system.
+- Make sure the following executables have execution rights: `Snapmail`, `lair-keystore`, `holochain`.
+- If you get `spawn ENOENT` error message, this means you need to [install nix-shell](https://developer.holochain.org/docs/install/) on your system.
 
-## Installation on Holoscape
-
-1. Download repo from github.
-1. Launch Holoscape
-1. Right-click Holoscape system-tray icon and select 'install local happ'
-1. Select `bundle.toml` file from this repo.
-1. Wait for everything to appear green, then click install
-1. SnapMail should be available as an install happ on the left-hand side.

@@ -31,10 +31,10 @@ if (g_canDebug) {
 }
 
 /** CONSTS **/
-var HC_BIN = './hc';
-if (process.platform === "win32") {
-  HC_BIN = 'hc-linux';
-}
+// var HC_BIN = './hc';
+// if (process.platform === "win32") {
+//   HC_BIN = 'hc-linux';
+// }
 var HOLOCHAIN_BIN = './holochain';
 if (process.platform === "win32") {
   HOLOCHAIN_BIN = 'holochain-linux';
@@ -166,6 +166,7 @@ async function spawnHolochainProc() {
     args.unshift("/c", "wsl", HOLOCHAIN_BIN);
   }
   // spawn "holochain" subprocess
+  console.log('Spawning ' + bin);
   let holochain_proc = spawn(bin, args, {
     cwd: __dirname,
     env: {

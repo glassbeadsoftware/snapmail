@@ -23,7 +23,7 @@ module.exports.CONDUCTOR_CONFIG_PATH = CONDUCTOR_CONFIG_PATH;
 
 //const DNA_FOLDER_PATH = path.join(CONFIG_PATH, 'dna');
 
-const DEFAULT_BOOTSTRAP_URL = 'https://bootstrap.holo.host'
+const DEFAULT_BOOTSTRAP_URL = 'https://bootstrap.holo.host';
 const APP_PORT = 8889; // MUST MATCH SNAPMAIL_UI config
 const ADMIN_PORT = 1235; // MUST MATCH SNAPMAIL_UI config
 const SNAPMAIL_APP_ID = 'snapmail-app'; // MUST MATCH SNAPMAIL_UI config
@@ -46,6 +46,7 @@ function spawnKeystore(keystore_bin) {
     bin = process.env.comspec;
     args.unshift("/c", "wsl", keystore_bin);
   }
+  console.log('Spawning ' + bin + ' (dirname: ' + __dirname + ')');
   const keystore_proc = spawn(bin, args, {
     cwd: __dirname,
     env: {
@@ -98,27 +99,6 @@ function generateConductorConfig(bootstrapUrl) {
   if (bootstrapUrl === undefined) {
     bootstrapUrl = DEFAULT_BOOTSTRAP_URL
   }
-//   const config =
-//     `environment_path: ${STORAGE_PATH}
-// use_dangerous_test_keystore: false
-// passphrase_service:
-//   type: cmd
-// admin_interfaces:
-//   - driver:
-//       type: websocket
-//       port: ${ADMIN_PORT}
-// network:
-//   bootstrap_service: ${bootstrapUrl}
-//   transport_pool:
-//     - type: proxy
-//       sub_transport:
-//         type: quic
-//         bind_to: kitsune-quic://0.0.0.0:0
-//       proxy_config:
-//         type: remote_proxy_client
-//         proxy_url: kitsune-proxy://VYgwCrh2ZCKL1lpnMM1VVUee7ks-9BkmW47C_ys4nqg/kitsune-quic/h/kitsune-proxy.harris-braun.com/p/4010/--`
-//   ;
-
   const config =
     `environment_path: ${STORAGE_PATH}
 use_dangerous_test_keystore: false
@@ -129,15 +109,36 @@ admin_interfaces:
       type: websocket
       port: ${ADMIN_PORT}
 network:
-  bootstrap_service: https://bootstrap.holo.host
+  bootstrap_service: ${bootstrapUrl}
   transport_pool:
     - type: proxy
       sub_transport:
         type: quic
+        bind_to: kitsune-quic://0.0.0.0:0
       proxy_config:
         type: remote_proxy_client
         proxy_url: kitsune-proxy://VYgwCrh2ZCKL1lpnMM1VVUee7ks-9BkmW47C_ys4nqg/kitsune-quic/h/kitsune-proxy.harris-braun.com/p/4010/--`
   ;
+
+//   const config =
+//     `environment_path: ${STORAGE_PATH}
+// use_dangerous_test_keystore: false
+// passphrase_service:
+//   type: cmd
+// admin_interfaces:
+//   - driver:
+//       type: websocket
+//       port: ${ADMIN_PORT}
+// network:
+//   bootstrap_service: https://bootstrap.holo.host
+//   transport_pool:
+//     - type: proxy
+//       sub_transport:
+//         type: quic
+//       proxy_config:
+//         type: remote_proxy_client
+//         proxy_url: kitsune-proxy://VYgwCrh2ZCKL1lpnMM1VVUee7ks-9BkmW47C_ys4nqg/kitsune-quic/h/kitsune-proxy.harris-braun.com/p/4010/--`
+//   ;
 
   fs.writeFileSync(CONDUCTOR_CONFIG_PATH, config);
 }

@@ -9,8 +9,8 @@
     "package-windows": "electron-packager . Snapmail --platform=win32 --out=../build --overwrite",
     "package-osx": "electron-packager . Snapmail --platform=darwin --arch=x64 --out=../build --overwrite",
     "package-mac": "electron-packager . Snapmail --platform=darwin --arch=x64 --prune=true --overwrite --out=../build",
-    "package-linux": "electron-packager . Snapmail --platform=linux --arch=x64 --asar --prune=true --overwrite --out=../build",
-    "package-linux2": "electron-packager . Snapmail --platform=linux --arch=x64 --overwrite --out=../build"
+    "package-linux-asar": "electron-packager . Snapmail --platform=linux --arch=x64 --asar --prune=true --overwrite --out=../build",
+    "package-linux": "electron-packager . Snapmail --platform=linux --arch=x64 --overwrite --out=../build"
   },
   "repository": "https://github.com/glassbeadsoftware/snapmail-release",
   "keywords": [
@@ -38,6 +38,6 @@
     "tree-kill": "^1.2.2"
   },
   "devDependencies": {
-    "electron": "^8.4.1"
+    "electron": "^8.5.5"
   }
 }
