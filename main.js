@@ -35,12 +35,12 @@ if (g_canDebug) {
 // if (process.platform === "win32") {
 //   HC_BIN = 'hc-linux';
 // }
-var HOLOCHAIN_BIN = './holochain';
+var HOLOCHAIN_BIN = './bin/holochain-linux';
 if (process.platform === "win32") {
   HOLOCHAIN_BIN = 'holochain-linux';
 }
 
-var LAIR_KEYSTORE_BIN = './lair-keystore';
+var LAIR_KEYSTORE_BIN = './bin/lair-keystore-linux';
 if (process.platform === "win32") {
    LAIR_KEYSTORE_BIN = 'lair-keystore-linux';
  }
@@ -262,11 +262,11 @@ async function startConductor(canRegenerateConfig) {
   spawnKeystore(LAIR_KEYSTORE_BIN);
   // check if config exist, if not, create one.
   if (!fs.existsSync(CONDUCTOR_CONFIG_PATH)) {
-    generateConductorConfig(g_bootstrapUrl);
+    generateConductorConfig(g_bootstrapUrl, STORAGE_PATH);
   } else {
     if (canRegenerateConfig) {
       log('info', 'Updating ConductorConfig with latest Bootstrap Url.');
-      generateConductorConfig(g_bootstrapUrl);
+      generateConductorConfig(g_bootstrapUrl, STORAGE_PATH);
     } else {
       log('info', 'Public key and config found.');
     }

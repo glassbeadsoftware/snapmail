@@ -94,13 +94,13 @@ module.exports.spawnKeystore = spawnKeystore;
  * @param publicAddress
  * @param sim2hUrl
  */
-function generateConductorConfig(bootstrapUrl) {
+function generateConductorConfig(bootstrapUrl, storagePath) {
 
   if (bootstrapUrl === undefined) {
     bootstrapUrl = DEFAULT_BOOTSTRAP_URL
   }
   const config =
-    `environment_path: ${STORAGE_PATH}
+    `environment_path: ${storagePath}
 use_dangerous_test_keystore: false
 passphrase_service:
   type: cmd
