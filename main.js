@@ -31,10 +31,7 @@ if (g_canDebug) {
 }
 
 /** CONSTS **/
-// var HC_BIN = './hc';
-// if (process.platform === "win32") {
-//   HC_BIN = 'hc-linux';
-// }
+
 var HOLOCHAIN_BIN = './bin/holochain-linux';
 if (process.platform === "win32") {
   HOLOCHAIN_BIN = 'holochain-linux';
@@ -45,13 +42,9 @@ if (process.platform === "win32") {
    LAIR_KEYSTORE_BIN = 'lair-keystore-linux';
  }
 
-// a special log from the conductor, specifying
-// that the interfaces are ready to receive incoming
-// connections
+// a special log from the conductor,
+// specifying that the interfaces are ready to receive incoming connections
 const MAGIC_READY_STRING = 'Conductor ready.';
-
-//const SNAPMAIL_PROTOCOL_SCHEME = 'snapmail-protocol';
-//const UI_DIR = "ui";
 
 // -- Start-up stuff -- //
 
@@ -72,16 +65,25 @@ let g_holochain_proc = undefined;
 let g_keystore_proc = undefined;
 let g_canQuit = false;
 let g_bootstrapUrl = '';
+let g_proxyUrl = '';
+let g_storagePath = STORAGE_PATH;
 
 // --  Create missing dirs -- //
 
 if (!fs.existsSync(CONFIG_PATH)) {
+  console.log('CONFIG_PATH = ' + CONFIG_PATH)
   fs.mkdirSync(CONFIG_PATH)
 }
-if (!fs.existsSync(STORAGE_PATH)) {
-  fs.mkdirSync(STORAGE_PATH)
-}
 
+// get specific storage folder from argv
+if (process.argv.length > 2) {
+  g_storagePath = path.join(CONFIG_PATH, process.argv[2]);
+  console.log({g_storagePath});
+}
+if (!fs.existsSync(g_storagePath)) {
+  console.log('CONFIG_PATH2 = ' + CONFIG_PATH)
+  fs.mkdirSync(g_storagePath)
+}
 
 // -- Set Globals from current conductor config --/
 
@@ -91,20 +93,20 @@ if (!fs.existsSync(STORAGE_PATH)) {
     const conductorConfigBuffer = fs.readFileSync(CONDUCTOR_CONFIG_PATH);
     const conductorConfig = conductorConfigBuffer.toString();
     //console.log({conductorConfig})
-    let regex = /bootstrap_service = "(.*)"/g;
+    let regex = /bootstrap_service: (.*)$/gm;
     let match = regex.exec(conductorConfig);
+    //console.log({match})
     g_bootstrapUrl = match[1];
-    console.log({ g_bootstrapUrl });
-    //regex = /public_address = "(.*)"/g;
-    //match = regex.exec(conductorConfig);
-    //g_pubKey = match[1];
-    //console.log({ g_pubKey });
+    regex = /proxy_url: (.*)$/gm;
+    match = regex.exec(conductorConfig);
+    g_proxyUrl = match[1];
+    //console.log({ g_proxyUrl });
   } catch(err) {
     if(err.code === 'ENOENT')
     {
       console.error('File not found: ' + CONDUCTOR_CONFIG_PATH);
     } else {
-      console.error('Loading config file failed: ' + err.code);
+      console.error('Loading config file failed: ' + err);
     }
     console.error('continuing...');
   }
@@ -132,7 +134,7 @@ function createWindow() {
   });
 
   // and load the index.html of the app.
-  mainWindow.loadURL('file://' + __dirname + '/ui/index.html')
+  mainWindow.loadURL('file://' + __dirname + '/ui/index.html');
 
   // Open <a href='' target='_blank'> with default system browser
   mainWindow.webContents.on('new-window', function (event, url) {
@@ -145,6 +147,8 @@ function createWindow() {
 
   // Emitted when the window is closed.
   mainWindow.on('closed', function () {
+    console.log('*** mainWindow Closed');
+    killHolochain();
     // Dereference the window object, usually you would store windows
     // in an array if your app supports multi windows, this is the time
     // when you should delete the corresponding element.
@@ -158,14 +162,14 @@ function createWindow() {
  *
  */
 async function spawnHolochainProc() {
-  // adapt to WSL if needed
+  // Adapt to WSL if needed
   let bin = HOLOCHAIN_BIN;
   let args = ['-c', wslPath(CONDUCTOR_CONFIG_PATH)];
   if (process.platform === "win32") {
     bin = process.env.comspec;
     args.unshift("/c", "wsl", HOLOCHAIN_BIN);
   }
-  // spawn "holochain" subprocess
+  // Spawn "holochain" subprocess
   console.log('Spawning ' + bin);
   let holochain_proc = spawn(bin, args, {
     cwd: __dirname,
@@ -176,7 +180,7 @@ async function spawnHolochainProc() {
   });
   // Handle error output
   holochain_proc.stderr.on('data', (data) => log('error', 'holochain> ' + data.toString()));
-  // if "holochain" exits, close the app
+  // if "holochain" exit, close the app
   holochain_proc.on('exit', (code, signal) => {
     if (signal) {
       log('info', `holochain process terminated due to receipt of signal ${signal}`)
@@ -199,7 +203,11 @@ async function spawnHolochainProc() {
   g_holochain_proc = holochain_proc;
 }
 
-
+/**
+ *
+ * @param adminWs Websocket to the admin interface on the conductor
+ * @returns {Promise<void>}
+ */
 async function installIfFirstLaunch(adminWs) {
   const dnas = await adminWs.listDnas();
   console.log('Found ' + dnas.length + ' dnas');
@@ -261,12 +269,13 @@ async function startConductor(canRegenerateConfig) {
   // Spawn Keystore
   spawnKeystore(LAIR_KEYSTORE_BIN);
   // check if config exist, if not, create one.
+  console.log({CONDUCTOR_CONFIG_PATH});
   if (!fs.existsSync(CONDUCTOR_CONFIG_PATH)) {
-    generateConductorConfig(g_bootstrapUrl, STORAGE_PATH);
+    generateConductorConfig(g_bootstrapUrl, g_storagePath);
   } else {
     if (canRegenerateConfig) {
       log('info', 'Updating ConductorConfig with latest Bootstrap Url.');
-      generateConductorConfig(g_bootstrapUrl, STORAGE_PATH);
+      generateConductorConfig(g_bootstrapUrl, g_storagePath);
     } else {
       log('info', 'Public key and config found.');
     }
@@ -283,19 +292,18 @@ async function startConductor(canRegenerateConfig) {
  */
 app.on('ready', async function () {
   console.error('App ready ... ' + APP_PORT + ' (' + ADMIN_PORT + ')');
-
   // Create main window
   g_mainWindow = createWindow();
   // if bootstrapUrl not set, prompt it, otherwise Start Conductor
   if(g_bootstrapUrl === "") {
     g_bootstrapUrl = DEFAULT_BOOTSTRAP_URL;
-    await promptBootstrapUrl();
-    await startConductor(true);
+      await promptBootstrapUrl(true);
+      await startConductor(true);
   } else {
     await startConductor(false);
   }
   const adminWs = await AdminWebsocket.connect(`ws://localhost:${ADMIN_PORT}`);
-  console.log('Connected to admin')
+  console.log('Connected to admin');
   await installIfFirstLaunch(adminWs);
   // trigger refresh once we know interfaces have booted up
   g_mainWindow.loadURL('file://' + __dirname + '/ui/index.html')
@@ -306,6 +314,7 @@ app.on('ready', async function () {
  * and calls app.requestSingleInstanceLock().
  */
 app.on('second-instance', (event) => {
+  console.log('\n\n second-instance detected !!! \n\n')
   // FIXME
 });
 
@@ -313,9 +322,10 @@ app.on('second-instance', (event) => {
  * When main window has been closed and the application will quit, destroy conductor subprocess
  */
 app.on('will-quit', (event) => {
+  console.log('*** App will-quit');
   if (!g_canQuit) {
     event.preventDefault();
-    killHolochain();
+    //killHolochain();
   }
 });
 
@@ -323,9 +333,11 @@ app.on('will-quit', (event) => {
  * Quit when all windows are closed.
  */
 app.on('window-all-closed', function () {
+  console.log('*** App window-all-closed');
   // On macOS it is common for applications and their menu bar
   // to stay active until the user quits explicitly with Cmd + Q
   if (process.platform !== 'darwin') {
+    //g_canQuit = true;
     app.quit();
   }
 });
@@ -341,7 +353,11 @@ app.on('activate', function () {
   }
 });
 
-async function promptBootstrapUrl() {
+
+/**
+ * @returns false if user cancelled
+ */
+async function promptBootstrapUrl(canExitOnCancel) {
   let r = await prompt({
     title: 'Bootstrap Server URL',
     height: 180,
@@ -355,14 +371,16 @@ async function promptBootstrapUrl() {
     type: 'input'
   });
   if(r === null) {
-    console.log('user cancelled');
-    if (g_bootstrapUrl === "") {
+    console.log('user cancelled. Can exit: ' + canExitOnCancel);
+    if (canExitOnCancel) {
+      g_canQuit = true;
       app.quit();
     }
   } else {
     console.log('result', r);
     g_bootstrapUrl = r;
   }
+  return r !== null
 }
 
 /**
@@ -376,6 +394,7 @@ const menutemplate = [
       label: 'Quit',
       accelerator: 'Command+Q',
       click: function () {
+        g_canQuit = true;
         app.quit()
       },
     },],
@@ -385,8 +404,10 @@ const menutemplate = [
     submenu: [
       {
         label: 'Change Bootstrap URL', click: async function () {
-          await promptBootstrapUrl();
-          await startConductor(true);
+          let changed = await promptBootstrapUrl(false);
+          if (changed) {
+            await startConductor(true);
+          }
         }
       },
       {
