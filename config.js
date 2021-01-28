@@ -5,6 +5,9 @@ const fs = require('fs');
 const { wslPath } = require('./cli');
 const { spawn } = require('child_process');
 
+// Holochain Modules
+const { AdminWebsocket } = require('@holochain/conductor-api');
+
 const CONFIG_PATH = path.join(app.getPath('appData'), 'Snapmail');
 const STORAGE_PATH = path.join(CONFIG_PATH, 'storage');
 const CONDUCTOR_CONFIG_PATH = path.join(CONFIG_PATH, 'conductor-config.yaml');
@@ -12,15 +15,12 @@ module.exports.CONFIG_PATH = CONFIG_PATH;
 module.exports.STORAGE_PATH = STORAGE_PATH;
 module.exports.CONDUCTOR_CONFIG_PATH = CONDUCTOR_CONFIG_PATH;
 
+const DEFAULT_PROXY_URL ='kitsune-proxy://VYgwCrh2ZCKL1lpnMM1VVUee7ks-9BkmW47C_ys4nqg/kitsune-quic/h/kitsune-proxy.harris-braun.com/p/4010/--';
 const DEFAULT_BOOTSTRAP_URL = 'https://bootstrap.holo.host';
-const ADMIN_PORT = 1235; // MUST MATCH SNAPMAIL_UI config
-const APP_PORT = 8889; // MUST MATCH SNAPMAIL_UI config
 const SNAPMAIL_APP_ID = 'snapmail-app'; // MUST MATCH SNAPMAIL_UI config
-
+//const ADMIN_PORT = 1235;
+const ADMIN_PORT = 1200 + Math.floor(Math.random() * 100);
 module.exports.DEFAULT_BOOTSTRAP_URL = DEFAULT_BOOTSTRAP_URL;
-module.exports.ADMIN_PORT = ADMIN_PORT;
-module.exports.APP_PORT = APP_PORT;
-module.exports.SNAPMAIL_APP_ID = SNAPMAIL_APP_ID;
 
 /**
  * Call "hc keygen" to create public key.
@@ -52,27 +52,16 @@ function spawnKeystore(keystore_bin) {
   // -- Handle Termination
   keystore_proc.on('exit', (code) => {
      log('info', code);
-  //   if(code === 0 || code === 127)
-  //   {
-  //     // to avoid rebuilding key-config-gen
-  //     // all the time, according to new DNA address
-  //     // we can just update it after the fact this way
-  //     log('info', 'new pubKey: ' + pubKey);
-  //     generateConductorConfig(pubKey, sim2hUrl);
-  //     log('info', 'Conductor config updated with new public key.');
-  //     callback(pubKey);
-  //   } else {
-  //     log('error', 'failed to perform setup')
-  //   }
-  //   kill(holochain_handle.pid, function (err) {
-  //     if (!err) {
-  //       log('info', 'killed all holochain sub processes')
-  //     } else {
-  //       log('error', err)
-  //     }
-  //   })
-  //   quit = true
-  //   app.quit()
+    // TODO: Figure out if must kill app if keystore crashes
+    // kill(holochain_handle.pid, function (err) {
+    //   if (!err) {
+    //     log('info', 'killed all holochain sub processes');
+    //   } else {
+    //     log('error', err);
+    //   }
+    // });
+    // quit = true;
+    // app.quit();
   });
 }
 module.exports.spawnKeystore = spawnKeystore;
@@ -83,7 +72,10 @@ module.exports.spawnKeystore = spawnKeystore;
  * @param publicAddress
  * @param sim2hUrl
  */
-function generateConductorConfig(bootstrapUrl, storagePath) {
+function generateConductorConfig(bootstrapUrl, storagePath, proxyUrl) {
+  if (proxyUrl === undefined || proxyUrl === '') {
+    proxyUrl = DEFAULT_PROXY_URL;
+  }
   let environment_path = wslPath(storagePath);
   console.log({environment_path});
   if (bootstrapUrl === undefined) {
@@ -107,29 +99,41 @@ network:
         bind_to: kitsune-quic://0.0.0.0:0
       proxy_config:
         type: remote_proxy_client
-        proxy_url: kitsune-proxy://VYgwCrh2ZCKL1lpnMM1VVUee7ks-9BkmW47C_ys4nqg/kitsune-quic/h/kitsune-proxy.harris-braun.com/p/4010/--`
+        proxy_url: ${proxyUrl}`
   ;
-
-//   const config =
-//     `environment_path: ${STORAGE_PATH}
-// use_dangerous_test_keystore: false
-// passphrase_service:
-//   type: cmd
-// admin_interfaces:
-//   - driver:
-//       type: websocket
-//       port: ${ADMIN_PORT}
-// network:
-//   bootstrap_service: https://bootstrap.holo.host
-//   transport_pool:
-//     - type: proxy
-//       sub_transport:
-//         type: quic
-//       proxy_config:
-//         type: remote_proxy_client
-//         proxy_url: kitsune-proxy://VYgwCrh2ZCKL1lpnMM1VVUee7ks-9BkmW47C_ys4nqg/kitsune-quic/h/kitsune-proxy.harris-braun.com/p/4010/--`
-//   ;
 
   fs.writeFileSync(CONDUCTOR_CONFIG_PATH, config);
 }
 module.exports.generateConductorConfig = generateConductorConfig;
+
+/**
+ *
+ * @param adminWs Websocket to the admin interface on the conductor
+ * @returns {Promise<void>}
+ */
+async function connectAndInstallApp(appPort) {
+  const adminWs = await AdminWebsocket.connect(`ws://localhost:${ADMIN_PORT}`);
+  console.log('Connected to admin at ' + ADMIN_PORT);
+  const dnas = await adminWs.listDnas();
+  console.log('Found ' + dnas.length + ' dnas');
+  // const activeAppIds = await adminWs.listActiveApps();
+  if (dnas.length === 0) {
+    let myPubKey = await adminWs.generateAgentPubKey();
+    await adminWs.installApp({
+      agent_key: myPubKey,
+      installed_app_id: SNAPMAIL_APP_ID,
+      dnas: [
+        {
+          nick: 'snapmail.dna.gz',
+          path: './dna/snapmail.dna.gz',
+        },
+      ],
+    });
+    console.log('App installed');
+    await adminWs.activateApp({ installed_app_id: SNAPMAIL_APP_ID });
+    console.log('App activated');
+  }
+  await adminWs.attachAppInterface({ port: appPort });
+  console.log('App Interface attached');
+}
+module.exports.connectAndInstallApp = connectAndInstallApp;

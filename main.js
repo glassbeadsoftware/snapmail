@@ -9,14 +9,11 @@ const { dialog } = require('electron');
 //const request = require('request');
 const prompt = require('electron-prompt');
 
-// Holochain Modules
-const { AdminWebsocket } = require('@holochain/conductor-api');
-
 // My Modules
 const { log, logger } = require('./logger');
 const { wslPath, killAllWsl } = require('./cli');
-const {SNAPMAIL_APP_ID, generateConductorConfig, spawnKeystore, DEFAULT_BOOTSTRAP_URL,
-  CONDUCTOR_CONFIG_PATH, CONFIG_PATH, STORAGE_PATH, APP_PORT, ADMIN_PORT} = require('./config');
+const {generateConductorConfig, spawnKeystore, DEFAULT_BOOTSTRAP_URL,
+  CONDUCTOR_CONFIG_PATH, CONFIG_PATH, STORAGE_PATH, connectAndInstallApp} = require('./config');
 
 // -- Code -- //
 
@@ -46,6 +43,10 @@ if (process.platform === "win32") {
 // specifying that the interfaces are ready to receive incoming connections
 const MAGIC_READY_STRING = 'Conductor ready.';
 
+const APP_PORT = 8900 + Math.floor(Math.random() * 100);
+console.log({APP_PORT});
+const g_indexUrl = 'file://' + __dirname + '/ui/index.html?APP=' + APP_PORT;
+
 // -- Start-up stuff -- //
 
 /** Add Holochain bins to PATH for WSL */
@@ -71,7 +72,6 @@ let g_storagePath = STORAGE_PATH;
 // --  Create missing dirs -- //
 
 if (!fs.existsSync(CONFIG_PATH)) {
-  console.log('CONFIG_PATH = ' + CONFIG_PATH)
   fs.mkdirSync(CONFIG_PATH)
 }
 
@@ -81,7 +81,6 @@ if (process.argv.length > 2) {
   console.log({g_storagePath});
 }
 if (!fs.existsSync(g_storagePath)) {
-  console.log('CONFIG_PATH2 = ' + CONFIG_PATH)
   fs.mkdirSync(g_storagePath)
 }
 
@@ -134,7 +133,7 @@ function createWindow() {
   });
 
   // and load the index.html of the app.
-  mainWindow.loadURL('file://' + __dirname + '/ui/index.html');
+  mainWindow.loadURL(g_indexUrl);
 
   // Open <a href='' target='_blank'> with default system browser
   mainWindow.webContents.on('new-window', function (event, url) {
@@ -205,34 +204,6 @@ async function spawnHolochainProc() {
 
 /**
  *
- * @param adminWs Websocket to the admin interface on the conductor
- * @returns {Promise<void>}
- */
-async function installIfFirstLaunch(adminWs) {
-  const dnas = await adminWs.listDnas();
-  console.log('Found ' + dnas.length + ' dnas');
-  // const activeAppIds = await adminWs.listActiveApps();
-  if (dnas.length === 0) {
-    let myPubKey = await adminWs.generateAgentPubKey();
-    await adminWs.installApp({
-      agent_key: myPubKey,
-      installed_app_id: SNAPMAIL_APP_ID,
-      dnas: [
-        {
-          nick: 'snapmail.dna.gz',
-          path: './dna/snapmail.dna.gz',
-        },
-      ],
-    });
-    console.log('App installed');
-    await adminWs.activateApp({ installed_app_id: SNAPMAIL_APP_ID });
-    await adminWs.attachAppInterface({ port: APP_PORT });
-    console.log('App activated');
-  }
-}
-
-/**
- *
  */
 function killHolochain() {
   // SIGTERM by default
@@ -265,17 +236,17 @@ function killHolochain() {
  */
 async function startConductor(canRegenerateConfig) {
   // Make sure there is no outstanding Holochain & keystore procs
-  killHolochain();
+  // FIXME killHolochain();
   // Spawn Keystore
   spawnKeystore(LAIR_KEYSTORE_BIN);
   // check if config exist, if not, create one.
-  console.log({CONDUCTOR_CONFIG_PATH});
+  //console.log({CONDUCTOR_CONFIG_PATH});
   if (!fs.existsSync(CONDUCTOR_CONFIG_PATH)) {
-    generateConductorConfig(g_bootstrapUrl, g_storagePath);
+    generateConductorConfig(g_bootstrapUrl, g_storagePath, g_proxyUrl);
   } else {
     if (canRegenerateConfig) {
       log('info', 'Updating ConductorConfig with latest Bootstrap Url.');
-      generateConductorConfig(g_bootstrapUrl, g_storagePath);
+      generateConductorConfig(g_bootstrapUrl, g_storagePath, g_proxyUrl);
     } else {
       log('info', 'Public key and config found.');
     }
@@ -291,7 +262,7 @@ async function startConductor(canRegenerateConfig) {
  * Some APIs can only be used after this event occurs.
  */
 app.on('ready', async function () {
-  console.error('App ready ... ' + APP_PORT + ' (' + ADMIN_PORT + ')');
+  console.error('App ready ... ' + APP_PORT + '');
   // Create main window
   g_mainWindow = createWindow();
   // if bootstrapUrl not set, prompt it, otherwise Start Conductor
@@ -300,13 +271,11 @@ app.on('ready', async function () {
       await promptBootstrapUrl(true);
       await startConductor(true);
   } else {
-    await startConductor(false);
+    await startConductor(true);
   }
-  const adminWs = await AdminWebsocket.connect(`ws://localhost:${ADMIN_PORT}`);
-  console.log('Connected to admin');
-  await installIfFirstLaunch(adminWs);
+  await connectAndInstallApp(APP_PORT);
   // trigger refresh once we know interfaces have booted up
-  g_mainWindow.loadURL('file://' + __dirname + '/ui/index.html')
+  g_mainWindow.loadURL(g_indexUrl)
 });
 
 /**
@@ -361,7 +330,7 @@ async function promptBootstrapUrl(canExitOnCancel) {
   let r = await prompt({
     title: 'Bootstrap Server URL',
     height: 180,
-    width: 400,
+    width: 600,
     alwaysOnTop: true,
     label: 'URL:',
     value: g_bootstrapUrl,
@@ -379,6 +348,35 @@ async function promptBootstrapUrl(canExitOnCancel) {
   } else {
     console.log('result', r);
     g_bootstrapUrl = r;
+  }
+  return r !== null
+}
+
+/**
+ * @returns false if user cancelled
+ */
+async function promptProxyUrl(canExitOnCancel) {
+  let r = await prompt({
+    title: 'Proxy Server URL',
+    height: 180,
+    width: 800,
+    alwaysOnTop: true,
+    label: 'URL:',
+    value: g_proxyUrl,
+    inputAttrs: {
+      type: 'url'
+    },
+    type: 'input'
+  });
+  if(r === null) {
+    console.log('user cancelled. Can exit: ' + canExitOnCancel);
+    if (canExitOnCancel) {
+      g_canQuit = true;
+      app.quit();
+    }
+  } else {
+    console.log('result', r);
+    g_proxyUrl = r;
   }
   return r !== null
 }
@@ -405,6 +403,14 @@ const menutemplate = [
       {
         label: 'Change Bootstrap URL', click: async function () {
           let changed = await promptBootstrapUrl(false);
+          if (changed) {
+            await startConductor(true);
+          }
+        }
+      },
+      {
+        label: 'Change Proxy URL', click: async function () {
+          let changed = await promptProxyUrl(false);
           if (changed) {
             await startConductor(true);
           }

@@ -53,7 +53,7 @@ function killAllWsl(psname) {
   if (error) {
     log('error', error.toString());
   }
-  log('info', 'killAllWsl:' + psname + ' - DONE');
+  //log('info', 'killAllWsl:' + psname + ' - DONE');
 }
 module.exports.killAllWsl = killAllWsl;
 
