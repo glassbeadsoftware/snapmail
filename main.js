@@ -1,7 +1,7 @@
 // Modules to control application life and create native browser window
 const { app, BrowserWindow, Menu, shell } = require('electron');
 const spawn = require('child_process').spawn;
-const assert = require('assert');
+//const assert = require('assert');
 const fs = require('fs');
 const path = require('path');
 const kill = require('tree-kill');
@@ -43,7 +43,7 @@ if (process.platform === "win32") {
 // specifying that the interfaces are ready to receive incoming connections
 const MAGIC_READY_STRING = 'Conductor ready.';
 
-const APP_PORT = 8900 + Math.floor(Math.random() * 100);
+const APP_PORT = 8900 + Math.floor(Math.random() * 100); // Randomized port on each launch
 console.log({APP_PORT});
 const g_indexUrl = 'file://' + __dirname + '/ui/index.html?APP=' + APP_PORT;
 
@@ -236,7 +236,7 @@ function killHolochain() {
  */
 async function startConductor(canRegenerateConfig) {
   // Make sure there is no outstanding Holochain & keystore procs
-  // FIXME killHolochain();
+  killHolochain();
   // Spawn Keystore
   spawnKeystore(LAIR_KEYSTORE_BIN);
   // check if config exist, if not, create one.
@@ -284,7 +284,6 @@ app.on('ready', async function () {
  */
 app.on('second-instance', (event) => {
   console.log('\n\n second-instance detected !!! \n\n')
-  // FIXME
 });
 
 /**

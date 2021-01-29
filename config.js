@@ -4,27 +4,27 @@ const { log } = require('./logger');
 const fs = require('fs');
 const { wslPath } = require('./cli');
 const { spawn } = require('child_process');
-
-// Holochain Modules
 const { AdminWebsocket } = require('@holochain/conductor-api');
+
+// -- CONSTS -- //
 
 const CONFIG_PATH = path.join(app.getPath('appData'), 'Snapmail');
 const STORAGE_PATH = path.join(CONFIG_PATH, 'storage');
 const CONDUCTOR_CONFIG_PATH = path.join(CONFIG_PATH, 'conductor-config.yaml');
-module.exports.CONFIG_PATH = CONFIG_PATH;
-module.exports.STORAGE_PATH = STORAGE_PATH;
-module.exports.CONDUCTOR_CONFIG_PATH = CONDUCTOR_CONFIG_PATH;
-
 const DEFAULT_PROXY_URL ='kitsune-proxy://VYgwCrh2ZCKL1lpnMM1VVUee7ks-9BkmW47C_ys4nqg/kitsune-quic/h/kitsune-proxy.harris-braun.com/p/4010/--';
 const DEFAULT_BOOTSTRAP_URL = 'https://bootstrap.holo.host';
 const SNAPMAIL_APP_ID = 'snapmail-app'; // MUST MATCH SNAPMAIL_UI config
 //const ADMIN_PORT = 1235;
-const ADMIN_PORT = 1200 + Math.floor(Math.random() * 100);
+const ADMIN_PORT = 1200 + Math.floor(Math.random() * 100); // Randomized admin port on each launch
+
 module.exports.DEFAULT_BOOTSTRAP_URL = DEFAULT_BOOTSTRAP_URL;
+module.exports.CONFIG_PATH = CONFIG_PATH;
+module.exports.STORAGE_PATH = STORAGE_PATH;
+module.exports.CONDUCTOR_CONFIG_PATH = CONDUCTOR_CONFIG_PATH;
+
 
 /**
- * Call "hc keygen" to create public key.
- * Once done, generate the conductor config.
+ * Spawn 'lair-keystore' process
  */
 function spawnKeystore(keystore_bin) {
   // -- Spawn Keystore -- //
@@ -68,9 +68,8 @@ module.exports.spawnKeystore = spawnKeystore;
 
 
 /**
- *
- * @param publicAddress
- * @param sim2hUrl
+ * Write the conductor config to storage path
+ * Using proxy and bootstrap server
  */
 function generateConductorConfig(bootstrapUrl, storagePath, proxyUrl) {
   if (proxyUrl === undefined || proxyUrl === '') {
@@ -107,8 +106,7 @@ network:
 module.exports.generateConductorConfig = generateConductorConfig;
 
 /**
- *
- * @param adminWs Websocket to the admin interface on the conductor
+ * Connect to Admin interface, install App and attach a port
  * @returns {Promise<void>}
  */
 async function connectAndInstallApp(appPort) {
