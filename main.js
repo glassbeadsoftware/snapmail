@@ -32,12 +32,16 @@ if (g_canDebug) {
 var HOLOCHAIN_BIN = './bin/holochain-linux';
 if (process.platform === "win32") {
   HOLOCHAIN_BIN = 'holochain-linux';
+} else if (process.platform === 'darwin') {
+  HOLOCHAIN_BIN = 'holochain';
 }
 
 var LAIR_KEYSTORE_BIN = './bin/lair-keystore-linux';
 if (process.platform === "win32") {
    LAIR_KEYSTORE_BIN = 'lair-keystore-linux';
- }
+} else if (process.platform === 'darwin') {
+  HOLOCHAIN_BIN = 'lair-keystore';
+}
 
 // a special log from the conductor,
 // specifying that the interfaces are ready to receive incoming connections
