@@ -40,7 +40,7 @@ var LAIR_KEYSTORE_BIN = './bin/lair-keystore-linux';
 if (process.platform === "win32") {
    LAIR_KEYSTORE_BIN = 'lair-keystore-linux';
 } else if (process.platform === 'darwin') {
-  HOLOCHAIN_BIN = 'lair-keystore';
+  LAIR_KEYSTORE_BIN = 'lair-keystore';
 }
 
 // a special log from the conductor,
