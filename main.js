@@ -29,19 +29,18 @@ if (g_canDebug) {
 
 /** CONSTS **/
 
-var HOLOCHAIN_BIN = './bin/holochain-linux';
+// default for linux
+var HOLOCHAIN_BIN     = './bin/holochain-linux';
+var LAIR_KEYSTORE_BIN = './bin/lair-keystore-linux';
+
 if (process.platform === "win32") {
-  HOLOCHAIN_BIN = 'holochain-linux';
+  HOLOCHAIN_BIN     = 'holochain-linux';
+  LAIR_KEYSTORE_BIN = 'lair-keystore-linux';
 } else if (process.platform === 'darwin') {
-  HOLOCHAIN_BIN = 'holochain';
+  HOLOCHAIN_BIN     = './holochain';
+  LAIR_KEYSTORE_BIN = './lair-keystore';
 }
 
-var LAIR_KEYSTORE_BIN = './bin/lair-keystore-linux';
-if (process.platform === "win32") {
-   LAIR_KEYSTORE_BIN = 'lair-keystore-linux';
-} else if (process.platform === 'darwin') {
-  LAIR_KEYSTORE_BIN = 'lair-keystore';
-}
 
 // a special log from the conductor,
 // specifying that the interfaces are ready to receive incoming connections
@@ -50,14 +49,14 @@ const MAGIC_READY_STRING = 'Conductor ready.';
 const APP_PORT = 8900 + Math.floor(Math.random() * 100); // Randomized port on each launch
 console.log({APP_PORT});
 const g_indexUrl = 'file://' + __dirname + '/ui/index.html?APP=' + APP_PORT;
-
+log('info', 'g_indexUrl = ' + g_indexUrl)
 // -- Start-up stuff -- //
 
 /** Add Holochain bins to PATH for WSL */
 const BIN_DIR = "bin";
 const BIN_PATH = path.join(__dirname, BIN_DIR);
+log('info', 'BIN_PATH = ' + BIN_PATH);
 if (process.platform === "win32") {
-  log('info', 'BIN_PATH = ' + BIN_PATH);
   process.env.PATH += ';' + BIN_PATH;
 }
 
@@ -173,7 +172,7 @@ async function spawnHolochainProc() {
     args.unshift("/c", "wsl", HOLOCHAIN_BIN);
   }
   // Spawn "holochain" subprocess
-  console.log('Spawning ' + bin);
+  log('info', 'Spawning ' + bin);
   let holochain_proc = spawn(bin, args, {
     cwd: __dirname,
     env: {
@@ -243,18 +242,19 @@ async function startConductor(canRegenerateConfig) {
   killHolochain();
   // Spawn Keystore
   spawnKeystore(LAIR_KEYSTORE_BIN);
-  // check if config exist, if not, create one.
-  //console.log({CONDUCTOR_CONFIG_PATH});
-  if (!fs.existsSync(CONDUCTOR_CONFIG_PATH)) {
-    generateConductorConfig(g_bootstrapUrl, g_storagePath, g_proxyUrl);
-  } else {
-    if (canRegenerateConfig) {
-      log('info', 'Updating ConductorConfig with latest Bootstrap Url.');
-      generateConductorConfig(g_bootstrapUrl, g_storagePath, g_proxyUrl);
-    } else {
-      log('info', 'Public key and config found.');
-    }
-  }
+  // // check if config exist, if not, create one.
+  // //console.log({CONDUCTOR_CONFIG_PATH});
+  // if (!fs.existsSync(CONDUCTOR_CONFIG_PATH)) {
+  //   generateConductorConfig(g_bootstrapUrl, g_storagePath, g_proxyUrl);
+  // } else {
+  //   if (canRegenerateConfig) {
+  //     log('info', 'Updating ConductorConfig with latest Bootstrap Url.');
+  //     generateConductorConfig(g_bootstrapUrl, g_storagePath, g_proxyUrl);
+  //   } else {
+  //     log('info', 'Public key and config found.');
+  //   }
+  // }
+  generateConductorConfig(g_bootstrapUrl, g_storagePath, g_proxyUrl);
   // Spawn Holochain
   log('info', 'Launching conductor...');
   await spawnHolochainProc();
@@ -266,7 +266,7 @@ async function startConductor(canRegenerateConfig) {
  * Some APIs can only be used after this event occurs.
  */
 app.on('ready', async function () {
-  console.error('App ready ... ' + APP_PORT + '');
+  log('info', 'App ready ... (' + APP_PORT + ')');
   // Create main window
   g_mainWindow = createWindow();
   // if bootstrapUrl not set, prompt it, otherwise Start Conductor

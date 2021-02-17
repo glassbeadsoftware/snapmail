@@ -72,6 +72,7 @@ module.exports.spawnKeystore = spawnKeystore;
  * Using proxy and bootstrap server
  */
 function generateConductorConfig(bootstrapUrl, storagePath, proxyUrl) {
+  log('info', 'generateConductorConfig() with ' + ADMIN_PORT)
   if (proxyUrl === undefined || proxyUrl === '') {
     proxyUrl = DEFAULT_PROXY_URL;
   }
