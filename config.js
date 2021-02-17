@@ -35,7 +35,7 @@ function spawnKeystore(keystore_bin) {
     bin = process.env.comspec;
     args.unshift("/c", "wsl", keystore_bin);
   }
-  console.log('Spawning ' + bin + ' (dirname: ' + __dirname + ')');
+  log('info', 'Spawning ' + bin + ' (dirname: ' + __dirname + ')');
   const keystore_proc = spawn(bin, args, {
     cwd: __dirname,
     env: {

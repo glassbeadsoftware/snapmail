@@ -37,8 +37,8 @@ if (process.platform === "win32") {
   HOLOCHAIN_BIN     = 'holochain-linux';
   LAIR_KEYSTORE_BIN = 'lair-keystore-linux';
 } else if (process.platform === 'darwin') {
-  HOLOCHAIN_BIN     = './holochain';
-  LAIR_KEYSTORE_BIN = './lair-keystore';
+  HOLOCHAIN_BIN     = './bin/holochain';
+  LAIR_KEYSTORE_BIN = './bin/lair-keystore';
 }
 
 
@@ -172,7 +172,7 @@ async function spawnHolochainProc() {
     args.unshift("/c", "wsl", HOLOCHAIN_BIN);
   }
   // Spawn "holochain" subprocess
-  log('info', 'Spawning ' + bin);
+  log('info', 'Spawning ' + bin + ' (dirname: ' + __dirname + ')');
   let holochain_proc = spawn(bin, args, {
     cwd: __dirname,
     env: {
