@@ -25,6 +25,7 @@
   "license": "CAL-1.0 Beta 4",
   "dependencies": {
     "@holochain/conductor-api": "0.0.1-dev.16",
+    "byte-base64": "^1.1.0",
     "command-exists": "^1.2.8",
     "dialogs": "^2.0.1",
     "electron-context-menu": "^0.12.1",

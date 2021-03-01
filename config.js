@@ -5,6 +5,7 @@ const fs = require('fs');
 const { wslPath } = require('./cli');
 const { spawn } = require('child_process');
 const { AdminWebsocket } = require('@holochain/conductor-api');
+const {bytesToBase64} = require('byte-base64');
 
 // -- CONSTS -- //
 
@@ -106,33 +107,115 @@ network:
 }
 module.exports.generateConductorConfig = generateConductorConfig;
 
+
+// async function isAppInstalled(appPort) {
+//   const adminWs = await AdminWebsocket.connect(`ws://localhost:${ADMIN_PORT}`);
+//   console.log('Connected to admin at ' + ADMIN_PORT);
+//   const dnas = await adminWs.listDnas();
+//   console.log('Found ' + dnas.length + ' dnas');
+// }
+
+function htos(u8array) {
+  return bytesToBase64(u8array)
+}
+
+
+/**
+ *
+ * @returns {Promise<AdminWebsocket>}
+ */
+async function connectToAdmin() {
+  var adminWs = await AdminWebsocket.connect(`ws://localhost:${ ADMIN_PORT }`);
+  console.log('Connected to admin at ' + ADMIN_PORT);
+  return adminWs;
+}
+module.exports.connectToAdmin = connectToAdmin;
+
+
+/**
+ *
+ * @param adminWs
+ * @returns {Promise<boolean|boolean>}
+ */
+async function hasActivatedApp(adminWs) {
+  const dnas = await adminWs.listDnas();
+  console.log('Found ' + dnas.length + ' dna(s)');
+  for (dna of dnas) {
+    console.log(' -  ' + htos(dna));
+  }
+  // // Cell IDs
+  // const cellIds = await adminWs.listCellIds();
+  // console.log('Found ' + cellIds.length + ' Cell(s)');
+  // for (cellId of cellIds) {
+  //   console.log(' -  ' + htos(cellId[0]) + ' - ' + htos(cellId[1]));
+  // }
+  //
+  // Active Apps
+  const activeAppIds = await adminWs.listActiveApps();
+  console.log('Found ' + activeAppIds.length + ' Active App(s)');
+  for (activeId of activeAppIds) {
+    console.log(' -  ' + activeId);
+  }
+  let hasActiveApp = activeAppIds.length == 1 && activeAppIds[0] == "snapmail-app";
+  return hasActiveApp;
+}
+module.exports.hasActivatedApp = hasActivatedApp;
+
+
+/**
+ * Uninstall current App and reinstall with new uuid
+ */
+async function reinstallApp(adminWs, uuid) {
+  await adminWs.deactivateApp({ installed_app_id: SNAPMAIL_APP_ID });
+  await installApp(adminWs, uuid);
+}
+module.exports.reinstallApp = reinstallApp;
+
+
 /**
  * Connect to Admin interface, install App and attach a port
  * @returns {Promise<void>}
  */
-async function connectAndInstallApp(appPort) {
-  const adminWs = await AdminWebsocket.connect(`ws://localhost:${ADMIN_PORT}`);
-  console.log('Connected to admin at ' + ADMIN_PORT);
-  const dnas = await adminWs.listDnas();
-  console.log('Found ' + dnas.length + ' dnas');
-  // const activeAppIds = await adminWs.listActiveApps();
-  if (dnas.length === 0) {
+async function installApp(adminWs, uuid) {
+    // Generate keys
     let myPubKey = await adminWs.generateAgentPubKey();
+    // Register Dna
+    let hash = await adminWs.registerDna({
+      uuid,
+      properties: undefined,
+      source:
+        {
+          path: './dna/snapmail.dna.gz',
+        },
+    });
+    console.log('registerDna response: ' + htos(hash));
+    // Install Dna
     await adminWs.installApp({
       agent_key: myPubKey,
       installed_app_id: SNAPMAIL_APP_ID,
       dnas: [
         {
+          hash,
           nick: 'snapmail.dna.gz',
-          path: './dna/snapmail.dna.gz',
+          //path: './dna/snapmail.dna.gz',
         },
       ],
     });
     console.log('App installed');
     await adminWs.activateApp({ installed_app_id: SNAPMAIL_APP_ID });
     console.log('App activated');
-  }
+}
+module.exports.installApp = installApp;
+
+
+/**
+ *
+ * @param adminWs
+ * @param appPort
+ * @returns {Promise<void>}
+ */
+async function attachApp(adminWs, appPort) {
   await adminWs.attachAppInterface({ port: appPort });
   console.log('App Interface attached');
 }
-module.exports.connectAndInstallApp = connectAndInstallApp;
+module.exports.attachApp = attachApp;

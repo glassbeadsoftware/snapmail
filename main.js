@@ -13,7 +13,7 @@ const prompt = require('electron-prompt');
 const { log, logger } = require('./logger');
 const { wslPath, killAllWsl } = require('./cli');
 const {generateConductorConfig, spawnKeystore, DEFAULT_BOOTSTRAP_URL,
-  CONDUCTOR_CONFIG_PATH, CONFIG_PATH, STORAGE_PATH, connectAndInstallApp} = require('./config');
+  CONDUCTOR_CONFIG_PATH, CONFIG_PATH, STORAGE_PATH, hasActivatedApp, connectToAdmin, installApp, attachApp, reinstallApp} = require('./config');
 
 // -- Code -- //
 
@@ -69,8 +69,10 @@ let g_holochain_proc = undefined;
 let g_keystore_proc = undefined;
 let g_canQuit = false;
 let g_bootstrapUrl = '';
+let g_uuid = '';
 let g_proxyUrl = '';
 let g_storagePath = STORAGE_PATH;
+let g_adminWs = undefined;
 
 // --  Create missing dirs -- //
 
@@ -269,7 +271,8 @@ app.on('ready', async function () {
   log('info', 'App ready ... (' + APP_PORT + ')');
   // Create main window
   g_mainWindow = createWindow();
-  // if bootstrapUrl not set, prompt it, otherwise Start Conductor
+  // Start Conductor
+  // if bootstrapUrl not set, prompt it, otherwise
   if(g_bootstrapUrl === "") {
     g_bootstrapUrl = DEFAULT_BOOTSTRAP_URL;
       await promptBootstrapUrl(true);
@@ -277,9 +280,18 @@ app.on('ready', async function () {
   } else {
     await startConductor(true);
   }
-  await connectAndInstallApp(APP_PORT);
+  // Connect to Conductor
+  g_adminWs = await connectToAdmin();
+  var hasActiveApp = await hasActivatedApp(g_adminWs);
+  if (!hasActiveApp) {
+    // Prompt for UUID
+    g_uuid = '<my-network-name>';
+    await promptUuid(true);
+    await installApp(g_adminWs, g_uuid);
+  }
+  await attachApp(g_adminWs, APP_PORT);
   // trigger refresh once we know interfaces have booted up
-  g_mainWindow.loadURL(g_indexUrl)
+  g_mainWindow.loadURL(g_indexUrl);
 });
 
 /**
@@ -329,9 +341,38 @@ app.on('activate', function () {
 /**
  * @returns false if user cancelled
  */
+async function promptUuid(canExitOnCancel) {
+  let r = await prompt({
+    title: 'SnapMail: Network Unique identifier',
+    height: 180,
+    width: 600,
+    alwaysOnTop: true,
+    label: 'UUID:',
+    value: g_uuid,
+    inputAttrs: {
+      type: 'string'
+    },
+    type: 'input'
+  });
+  if(r === null) {
+    console.log('user cancelled. Can exit: ' + canExitOnCancel);
+    if (canExitOnCancel) {
+      g_canQuit = true;
+      app.quit();
+    }
+  } else {
+    console.log('result', r);
+    g_uuid = r;
+  }
+  return r !== null
+}
+
+/**
+ * @returns false if user cancelled
+ */
 async function promptBootstrapUrl(canExitOnCancel) {
   let r = await prompt({
-    title: 'Bootstrap Server URL',
+    title: 'SnapMail: Bootstrap Server URL',
     height: 180,
     width: 600,
     alwaysOnTop: true,
@@ -418,6 +459,13 @@ const menutemplate = [
             await startConductor(true);
           }
         }
+      },
+      {
+        label: 'Change Network ID',
+        click: async function () {
+          await promptUuid(false);
+          await reinstallApp(g_adminWs, g_uuid);
+        },
       },
       {
         label: 'Restart Conductor', click: async function () {
