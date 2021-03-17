@@ -13,7 +13,7 @@ const CONFIG_PATH = path.join(app.getPath('appData'), 'Snapmail');
 const STORAGE_PATH = path.join(CONFIG_PATH, 'storage');
 const CONDUCTOR_CONFIG_PATH = path.join(CONFIG_PATH, 'conductor-config.yaml');
 const DEFAULT_PROXY_URL ='kitsune-proxy://VYgwCrh2ZCKL1lpnMM1VVUee7ks-9BkmW47C_ys4nqg/kitsune-quic/h/kitsune-proxy.harris-braun.com/p/4010/--';
-const DEFAULT_BOOTSTRAP_URL = 'https://bootstrap.holo.host';
+const DEFAULT_BOOTSTRAP_URL = 'https://bootstrap-staging.holo.host';
 const SNAPMAIL_APP_ID = 'snapmail-app'; // MUST MATCH SNAPMAIL_UI config
 //const ADMIN_PORT = 1235;
 const ADMIN_PORT = 1200 + Math.floor(Math.random() * 100); // Randomized admin port on each launch
@@ -72,10 +72,14 @@ module.exports.spawnKeystore = spawnKeystore;
  * Write the conductor config to storage path
  * Using proxy and bootstrap server
  */
-function generateConductorConfig(bootstrapUrl, storagePath, proxyUrl) {
-  log('info', 'generateConductorConfig() with ' + ADMIN_PORT)
+function generateConductorConfig(bootstrapUrl, storagePath, proxyUrl, canMdns) {
+  log('info', 'generateConductorConfig() with ' + ADMIN_PORT);
   if (proxyUrl === undefined || proxyUrl === '') {
     proxyUrl = DEFAULT_PROXY_URL;
+  }
+  let network_type = "quic_bootstrap";
+  if (canMdns) {
+    network_type = "quic_mdns";
   }
   let environment_path = wslPath(storagePath);
   console.log({environment_path});
@@ -92,6 +96,7 @@ admin_interfaces:
       type: websocket
       port: ${ADMIN_PORT}
 network:
+  network_type: ${network_type}
   bootstrap_service: ${bootstrapUrl}
   transport_pool:
     - type: proxy
@@ -102,7 +107,6 @@ network:
         type: remote_proxy_client
         proxy_url: ${proxyUrl}`
   ;
-
   fs.writeFileSync(CONDUCTOR_CONFIG_PATH, config);
 }
 module.exports.generateConductorConfig = generateConductorConfig;
@@ -173,49 +177,42 @@ module.exports.reinstallApp = reinstallApp;
 
 
 /**
- * Connect to Admin interface, install App and attach a port
+ *  Connect to Admin interface, install App and attach a port
+ * @param adminWs
+ * @param uuid
  * @returns {Promise<void>}
  */
 async function installApp(adminWs, uuid) {
-    // Generate keys
-    let myPubKey = await adminWs.generateAgentPubKey();
-    // Register Dna
-    let hash = await adminWs.registerDna({
+  // Generate keys
+  let myPubKey = await adminWs.generateAgentPubKey();
+  // Register Dna
+  let hash = undefined;
+  try {
+    hash = await adminWs.registerDna({
       uuid,
       properties: undefined,
-      source:
-        {
-          path: './dna/snapmail.dna.gz',
-        },
+      path: './dna/snapmail.dna',
     });
-    console.log('registerDna response: ' + htos(hash));
-    // Install Dna
+  } catch (err) {
+    console.error('[admin] registerDna() failed:');
+    console.error({err});
+    return;
+  }
+  console.log('registerDna response: ' + htos(hash));
+  // Install Dna
+  try {
     await adminWs.installApp({
-      agent_key: myPubKey,
-      installed_app_id: SNAPMAIL_APP_ID,
-      dnas: [
-        {
-          hash,
-          nick: 'snapmail.dna.gz',
-          //path: './dna/snapmail.dna.gz',
-        },
-      ],
+      agent_key: myPubKey, installed_app_id: SNAPMAIL_APP_ID, dnas: [{
+        hash, nick: 'snapmail.dna', //path: './dna/snapmail.dna.gz',
+      },],
     });
-    console.log('App installed');
-    await adminWs.activateApp({ installed_app_id: SNAPMAIL_APP_ID });
-    console.log('App activated');
+  } catch (err) {
+    console.error('[admin] installApp() failed:');
+    console.error({err});
+    return;
+  }
+  console.log('App installed');
+  await adminWs.activateApp({ installed_app_id: SNAPMAIL_APP_ID });
+  console.log('App activated');
 }
 module.exports.installApp = installApp;
-
-
-/**
- *
- * @param adminWs
- * @param appPort
- * @returns {Promise<void>}
- */
-async function attachApp(adminWs, appPort) {
-  await adminWs.attachAppInterface({ port: appPort });
-  console.log('App Interface attached');
-}
-module.exports.attachApp = attachApp;

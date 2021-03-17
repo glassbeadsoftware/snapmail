@@ -13,7 +13,7 @@ const prompt = require('electron-prompt');
 const { log, logger } = require('./logger');
 const { wslPath, killAllWsl } = require('./cli');
 const {generateConductorConfig, spawnKeystore, DEFAULT_BOOTSTRAP_URL,
-  CONDUCTOR_CONFIG_PATH, CONFIG_PATH, STORAGE_PATH, hasActivatedApp, connectToAdmin, installApp, attachApp, reinstallApp} = require('./config');
+  CONDUCTOR_CONFIG_PATH, CONFIG_PATH, STORAGE_PATH, hasActivatedApp, connectToAdmin, installApp, reinstallApp} = require('./config');
 
 // -- Code -- //
 
@@ -48,6 +48,7 @@ const MAGIC_READY_STRING = 'Conductor ready.';
 
 const APP_PORT = 8900 + Math.floor(Math.random() * 100); // Randomized port on each launch
 console.log({APP_PORT});
+const g_errorUrl = 'file://' + __dirname + '/ui/error.html';
 const g_indexUrl = 'file://' + __dirname + '/ui/index.html?APP=' + APP_PORT;
 log('info', 'g_indexUrl = ' + g_indexUrl)
 // -- Start-up stuff -- //
@@ -67,7 +68,8 @@ if (process.platform === "win32") {
 let g_mainWindow = undefined;
 let g_holochain_proc = undefined;
 let g_keystore_proc = undefined;
-let g_canQuit = false;
+let g_canQuit = true;
+let g_canMdns = false;
 let g_bootstrapUrl = '';
 let g_uuid = '';
 let g_proxyUrl = '';
@@ -138,7 +140,7 @@ function createWindow() {
   });
 
   // and load the index.html of the app.
-  mainWindow.loadURL(g_indexUrl);
+  //mainWindow.loadURL(g_indexUrl);
 
   // Open <a href='' target='_blank'> with default system browser
   mainWindow.webContents.on('new-window', function (event, url) {
@@ -151,12 +153,18 @@ function createWindow() {
 
   // Emitted when the window is closed.
   mainWindow.on('closed', function () {
-    console.log('*** mainWindow Closed');
-    killHolochain();
+    log('debug', '*** mainWindow Closed');
+    try {
+      killHolochain();
+    } catch (err) {
+      log('error', '*** Error while closing Holochain:');
+      log('error', err);
+    }
+    log('info', '*** Holochain Closed');
     // Dereference the window object, usually you would store windows
     // in an array if your app supports multi windows, this is the time
     // when you should delete the corresponding element.
-    g_mainWindow = null
+    g_mainWindow = null;
   });
   return mainWindow;
 }
@@ -191,8 +199,10 @@ async function spawnHolochainProc() {
     } else {
       log('info', `holochain process terminated with exit code ${code}`)
     }
-    g_canQuit = true;
-    //app.quit();
+    // g_canQuit = true;
+    if (g_canQuit) {
+      app.quit();
+    }
   });
   // Wait for holochain to boot up
   await new Promise((resolve, _reject) => {
@@ -213,6 +223,7 @@ async function spawnHolochainProc() {
 function killHolochain() {
   // SIGTERM by default
   if (g_holochain_proc) {
+    log('info', 'Killing holochain sub processes...');
     kill(g_holochain_proc.pid, function(err) {
       if (!err) {
         log('info', 'killed all holochain sub processes');
@@ -222,15 +233,17 @@ function killHolochain() {
     });
   }
   if (g_keystore_proc) {
+    log('info', 'Killing lair-keystore sub processes...');
     kill(g_keystore_proc.pid, function(err) {
       if (!err) {
-      log('info', 'killed all lair_keystore sub processes');
+      log('info', 'killed all lair-keystore sub processes');
       } else {
         log('error', err)
       }
     });
   }
   // Make sure there is no outstanding holochain procs
+  log('info', 'Killing WSL sub processes...');
   killAllWsl(HOLOCHAIN_BIN);
   killAllWsl(LAIR_KEYSTORE_BIN);
 }
@@ -240,27 +253,33 @@ function killHolochain() {
  * @param canRegenerateConfig - Regenerate the conductor config before relaunching the holochain process.
  */
 async function startConductor(canRegenerateConfig) {
-  // Make sure there is no outstanding Holochain & keystore procs
-  killHolochain();
-  // Spawn Keystore
+  g_canQuit = false;
+  killHolochain(); // Make sure there is no outstanding Holochain & keystore procs
   spawnKeystore(LAIR_KEYSTORE_BIN);
-  // // check if config exist, if not, create one.
-  // //console.log({CONDUCTOR_CONFIG_PATH});
-  // if (!fs.existsSync(CONDUCTOR_CONFIG_PATH)) {
-  //   generateConductorConfig(g_bootstrapUrl, g_storagePath, g_proxyUrl);
-  // } else {
-  //   if (canRegenerateConfig) {
-  //     log('info', 'Updating ConductorConfig with latest Bootstrap Url.');
-  //     generateConductorConfig(g_bootstrapUrl, g_storagePath, g_proxyUrl);
-  //   } else {
-  //     log('info', 'Public key and config found.');
-  //   }
-  // }
-  generateConductorConfig(g_bootstrapUrl, g_storagePath, g_proxyUrl);
-  // Spawn Holochain
+  if (canRegenerateConfig) {
+    generateConductorConfig(g_bootstrapUrl, g_storagePath, g_proxyUrl, g_canMdns);
+  }
   log('info', 'Launching conductor...');
   await spawnHolochainProc();
-  //log('info', {g_holochain_proc});
+  g_canQuit = true;
+  // Connect to Conductor and activate app
+  try {
+    g_adminWs = await connectToAdmin();
+    var hasActiveApp = await hasActivatedApp(g_adminWs);
+    if(!hasActiveApp) {
+      // Prompt for UUID
+      g_uuid = '<my-network-name>';
+      await promptUuid(true);
+      await installApp(g_adminWs, g_uuid);
+    }
+    await g_adminWs.attachAppInterface({ port: APP_PORT });
+    console.log('App Interface attached');
+  } catch (err) {
+    console.error('Conductor setup failed:');
+    console.error({err});
+    // Better to kill app if holochain not connected
+    app.quit();
+  }
 }
 
 /**
@@ -271,27 +290,28 @@ app.on('ready', async function () {
   log('info', 'App ready ... (' + APP_PORT + ')');
   // Create main window
   g_mainWindow = createWindow();
-  // Start Conductor
-  // if bootstrapUrl not set, prompt it, otherwise
-  if(g_bootstrapUrl === "") {
-    g_bootstrapUrl = DEFAULT_BOOTSTRAP_URL;
-      await promptBootstrapUrl(true);
+  try {
+    // Start Conductor
+    // if bootstrapUrl not set, prompt it, otherwise
+    if(g_bootstrapUrl === "") {
+      g_bootstrapUrl = DEFAULT_BOOTSTRAP_URL;
+      await promptNetworkType(true);
+      log('debug', 'network type prompt done: ' + g_canMdns);
+      if (!g_canMdns) {
+        await promptBootstrapUrl(true);
+      }
       await startConductor(true);
-  } else {
-    await startConductor(true);
+    } else {
+      await startConductor(true);
+    }
+    // trigger refresh once we know interfaces have booted up
+    g_mainWindow.loadURL(g_indexUrl);
+  } catch (err) {
+    console.error('Holochain init failed:');
+    console.error({err});
+    g_mainWindow.loadURL(g_errorUrl);
   }
-  // Connect to Conductor
-  g_adminWs = await connectToAdmin();
-  var hasActiveApp = await hasActivatedApp(g_adminWs);
-  if (!hasActiveApp) {
-    // Prompt for UUID
-    g_uuid = '<my-network-name>';
-    await promptUuid(true);
-    await installApp(g_adminWs, g_uuid);
-  }
-  await attachApp(g_adminWs, APP_PORT);
-  // trigger refresh once we know interfaces have booted up
-  g_mainWindow.loadURL(g_indexUrl);
+
 });
 
 /**
@@ -299,7 +319,7 @@ app.on('ready', async function () {
  * and calls app.requestSingleInstanceLock().
  */
 app.on('second-instance', (event) => {
-  console.log('\n\n second-instance detected !!! \n\n')
+  console.warn('\n\n second-instance detected !!! \n\n')
 });
 
 /**
@@ -341,28 +361,28 @@ app.on('activate', function () {
 /**
  * @returns false if user cancelled
  */
-async function promptUuid(canExitOnCancel) {
+async function promptNetworkType(canExitOnCancel) {
   let r = await prompt({
-    title: 'SnapMail: Network Unique identifier',
+    title: 'Select network type',
     height: 180,
-    width: 600,
+    width: 300,
     alwaysOnTop: true,
-    label: 'UUID:',
-    value: g_uuid,
-    inputAttrs: {
-      type: 'string'
-    },
-    type: 'input'
+    label: 'Choose network type:',
+    value: g_proxyUrl,
+    type: 'select',
+    selectOptions: {
+      'true': 'mDNS (LAN)',
+      'false': 'Bootstrap server (WAN)',
+    }
   });
   if(r === null) {
     console.log('user cancelled. Can exit: ' + canExitOnCancel);
     if (canExitOnCancel) {
-      g_canQuit = true;
       app.quit();
     }
   } else {
-    console.log('result', r);
-    g_uuid = r;
+    console.log('promptNetworkType result: ', r);
+    g_canMdns = r === 'true';
   }
   return r !== null
 }
@@ -386,12 +406,39 @@ async function promptBootstrapUrl(canExitOnCancel) {
   if(r === null) {
     console.log('user cancelled. Can exit: ' + canExitOnCancel);
     if (canExitOnCancel) {
-      g_canQuit = true;
       app.quit();
     }
   } else {
     console.log('result', r);
     g_bootstrapUrl = r;
+  }
+  return r !== null
+}
+
+/**
+ * @returns false if user cancelled
+ */
+async function promptUuid(canExitOnCancel) {
+  let r = await prompt({
+    title: 'SnapMail: Network Unique identifier',
+    height: 180,
+    width: 500,
+    alwaysOnTop: true,
+    label: 'UUID:',
+    value: g_uuid,
+    inputAttrs: {
+      type: 'string'
+    },
+    type: 'input'
+  });
+  if(r === null) {
+    console.log('user cancelled. Can exit: ' + canExitOnCancel);
+    if (canExitOnCancel) {
+      app.quit();
+    }
+  } else {
+    console.log('result', r);
+    g_uuid = r;
   }
   return r !== null
 }
@@ -415,7 +462,6 @@ async function promptProxyUrl(canExitOnCancel) {
   if(r === null) {
     console.log('user cancelled. Can exit: ' + canExitOnCancel);
     if (canExitOnCancel) {
-      g_canQuit = true;
       app.quit();
     }
   } else {
@@ -436,7 +482,6 @@ const menutemplate = [
       label: 'Quit',
       accelerator: 'Command+Q',
       click: function () {
-        g_canQuit = true;
         app.quit()
       },
     },],
@@ -445,7 +490,14 @@ const menutemplate = [
     label: 'Edit',
     submenu: [
       {
-        label: 'Change Bootstrap URL', click: async function () {
+        label: 'Change Network type',
+        click: async function () {
+          await promptNetworkType(false);
+          await startConductor(true);
+        },
+      },
+      {
+        label: 'Change Bootstrap Server', click: async function () {
           let changed = await promptBootstrapUrl(false);
           if (changed) {
             await startConductor(true);
@@ -453,7 +505,7 @@ const menutemplate = [
         }
       },
       {
-        label: 'Change Proxy URL', click: async function () {
+        label: 'Change Proxy Server', click: async function () {
           let changed = await promptProxyUrl(false);
           if (changed) {
             await startConductor(true);
@@ -461,7 +513,7 @@ const menutemplate = [
         }
       },
       {
-        label: 'Change Network ID',
+        label: 'Change Network UUID',
         click: async function () {
           await promptUuid(false);
           await reinstallApp(g_adminWs, g_uuid);
