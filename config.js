@@ -44,7 +44,9 @@ function spawnKeystore(keystore_bin) {
     },
   });
   // -- Handle Outputs
+  var mutex = false;
   keystore_proc.stdout.once('data', (data) => {
+    mutex = true;
     log('info', 'lair-keystore: ' + data.toString())
   });
   keystore_proc.stderr.on('data', (data) => {
@@ -64,6 +66,11 @@ function spawnKeystore(keystore_bin) {
     // quit = true;
     // app.quit();
   });
+
+  // Wait for lair to boot up
+  let start = Date.now();
+  while(mutex && Date.now() - start < 10)
+  ;
 }
 module.exports.spawnKeystore = spawnKeystore;
 
@@ -203,7 +210,7 @@ async function installApp(adminWs, uuid) {
   try {
     await adminWs.installApp({
       agent_key: myPubKey, installed_app_id: SNAPMAIL_APP_ID, dnas: [{
-        hash, nick: 'snapmail.dna', //path: './dna/snapmail.dna.gz',
+        hash, nick: 'snapmail.dna',
       },],
     });
   } catch (err) {

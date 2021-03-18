@@ -119,6 +119,12 @@ if (!fs.existsSync(g_storagePath)) {
 }
 
 
+function sleep(ms) {
+  return new Promise((resolve) => {
+    setTimeout(resolve, ms);
+  });
+}
+
 /**
  * Create the main window global
  */
@@ -256,6 +262,7 @@ async function startConductor(canRegenerateConfig) {
   g_canQuit = false;
   killHolochain(); // Make sure there is no outstanding Holochain & keystore procs
   spawnKeystore(LAIR_KEYSTORE_BIN);
+  //await sleep(2000);
   if (canRegenerateConfig) {
     generateConductorConfig(g_bootstrapUrl, g_storagePath, g_proxyUrl, g_canMdns);
   }
