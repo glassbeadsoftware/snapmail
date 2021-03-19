@@ -4,7 +4,11 @@ const { log } = require('./logger');
 const fs = require('fs');
 const { wslPath } = require('./cli');
 const { spawn } = require('child_process');
-const { AdminWebsocket } = require('@holochain/conductor-api');
+//const { AdminWebsocket } = require('@holochain/conductor-api');
+const { AdminWebsocket } = require('../holochain-conductor-api');
+
+
+
 const {bytesToBase64} = require('byte-base64');
 
 // -- CONSTS -- //
@@ -43,7 +47,6 @@ async function spawnKeystore(keystore_bin) {
     },
   });
   // -- Handle Outputs
-  // var mutex = false;
   // Wait for holochain to boot up
   await new Promise((resolve, reject) => {
     keystore_proc.stdout.once('data', (data) => {
@@ -71,12 +74,6 @@ async function spawnKeystore(keystore_bin) {
       // app.quit();
     });
   });
-
-  // Wait for lair to boot up
-  // let start = Date.now();
-  // while(mutex && Date.now() - start < 10)
-  // ;
-
   // Done
   return keystore_proc;
 }
@@ -177,7 +174,19 @@ async function hasActivatedApp(adminWs) {
     log('info',' -  ' + activeId);
   }
   let hasActiveApp = activeAppIds.length == 1 && activeAppIds[0] == "snapmail-app";
-  return hasActiveApp;
+  // Get App interfaces
+  let activeAppPort = 0;
+  if (hasActiveApp) {
+    const interfaces = await adminWs.listAppInterfaces();
+    if (interfaces.length > 0) {
+      activeAppPort = interfaces[0];
+    }
+    log('info','Found ' + interfaces.length + ' App Interfaces(s)');
+    for (appInterface of interfaces) {
+      log('info',' -  ' + appInterface);
+    }
+  }
+  return activeAppPort;
 }
 module.exports.hasActivatedApp = hasActivatedApp;
 

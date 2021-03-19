@@ -286,7 +286,7 @@ async function startConductor(canRegenerateConfig) {
   g_canQuit = false;
   killHolochain(); // Make sure there is no outstanding Holochain & keystore procs
   g_keystore_proc = await spawnKeystore(LAIR_KEYSTORE_BIN);
-  await sleep(2000);
+  //await sleep(2000);
   if (canRegenerateConfig) {
     generateConductorConfig(g_configPath, g_bootstrapUrl, g_storagePath, g_proxyUrl, g_adminPort, g_canMdns);
   }
@@ -295,19 +295,24 @@ async function startConductor(canRegenerateConfig) {
   g_canQuit = true;
   // Connect to Conductor and activate app
   try {
-    log('debug','Connecting to admin...');
+    log('debug','Connecting to admin at ' + g_adminPort + ' ...');
     g_adminWs = await connectToAdmin(g_adminPort);
-    let hasActiveApp = await hasActivatedApp(g_adminWs);
-    if(!hasActiveApp) {
+    let activeAppPort = await hasActivatedApp(g_adminWs);
+    if(activeAppPort === 0) {
       // Prompt for UUID
       g_uuid = '<my-network-name>';
       await promptUuid(true);
       await installApp(g_adminWs, g_uuid);
+      //log('debug','Attaching to app at ' + g_appPort + ' ...');
+      g_appPort = await g_adminWs.attachAppInterface({port: 0});
+      console.log({g_appPort});
+      g_appPort = g_appPort.port;
+      log('info','App Interface attached: ' + g_appPort);
+    } else {
+      g_appPort = activeAppPort;
     }
-    g_appPort = await g_adminWs.attachAppInterface({ port: g_appPort });
-    //console.log({g_appPort});
-    g_indexUrl += '' + g_appPort.port;
-    log('info','App Interface attached: ' + g_indexUrl);
+    g_indexUrl += '' + g_appPort;
+    console.log({g_indexUrl});
   } catch (err) {
     log('error', 'Conductor setup failed:');
     log('error',{err});
@@ -321,7 +326,7 @@ async function startConductor(canRegenerateConfig) {
  * Some APIs can only be used after this event occurs.
  */
 app.on('ready', async function () {
-  log('info', 'App ready ... (' + g_appPort + ')');
+  log('info', 'Electron App readying...');
   // Create main window
   g_mainWindow = createWindow();
   try {
