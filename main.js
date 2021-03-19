@@ -45,13 +45,16 @@ if (process.platform === "win32") {
 // specifying that the interfaces are ready to receive incoming connections
 const HC_MAGIC_READY_STRING = 'Conductor ready.';
 
-//var g_appPort = 0;
-var g_appPort = 8900 + Math.floor(Math.random() * 100); // Randomized port on each launch
-log('debug',{g_appPort});
+//const g_adminPort = 1235;
+//const g_adminPort = 1200 + Math.floor(Math.random() * 100); // Randomized admin port on each launch
+var g_adminPort = 0;
+var g_appPort = 0;
+//var g_appPort = 8900 + Math.floor(Math.random() * 100); // Randomized port on each launch
+//log('debug',{g_appPort});
 const g_errorUrl = 'file://' + __dirname + '/ui/error.html';
-const g_indexUrl = 'file://' + __dirname + '/ui/index.html?APP=' + g_appPort;
-//var g_indexUrl = 'file://' + __dirname + '/ui/index.html?APP=';
-log('debug', 'g_indexUrl = ' + g_indexUrl);
+//const g_indexUrl = 'file://' + __dirname + '/ui/index.html?APP=' + g_appPort;
+var g_indexUrl = 'file://' + __dirname + '/ui/index.html?APP=';
+//log('debug', 'g_indexUrl = ' + g_indexUrl);
 // -- Start-up stuff -- //
 
 /** Add Holochain bins to PATH for WSL */
@@ -109,10 +112,17 @@ log('debug',{g_configPath});
     const conductorConfigBuffer = fs.readFileSync(g_configPath);
     const conductorConfig = conductorConfigBuffer.toString();
     //console.log({conductorConfig})
-    let regex = /bootstrap_service: (.*)$/gm;
+    // Get Admin PORT
+    let regex = /port: (.*)$/gm;
     let match = regex.exec(conductorConfig);
+    //console.log({match});
+    g_adminPort = match[1];
+    // Get bootstrap server URL
+    regex = /bootstrap_service: (.*)$/gm;
+    match = regex.exec(conductorConfig);
     //console.log({match})
     g_bootstrapUrl = match[1];
+    // Get proxy server URL
     regex = /proxy_url: (.*)$/gm;
     match = regex.exec(conductorConfig);
     g_proxyUrl = match[1];
@@ -221,8 +231,13 @@ async function spawnHolochainProc() {
   // Wait for holochain to boot up
   await new Promise((resolve, _reject) => {
     holochain_proc.stdout.on('data', (data) => {
-      log('info', 'holochain: ' + data.toString());
-      if(data.toString().indexOf(HC_MAGIC_READY_STRING) > -1) {
+      let output = data.toString();
+      log('info', 'holochain: ' + output);
+      if(output.indexOf(HC_MAGIC_READY_STRING) > -1) {
+        let regex = /###ADMIN_PORT:([0-9]*)###/gm;
+        let match = regex.exec(output);
+        //console.log({match});
+        g_adminPort = match[1];
         resolve();
       }
     });
@@ -273,7 +288,7 @@ async function startConductor(canRegenerateConfig) {
   g_keystore_proc = await spawnKeystore(LAIR_KEYSTORE_BIN);
   await sleep(2000);
   if (canRegenerateConfig) {
-    generateConductorConfig(g_configPath, g_bootstrapUrl, g_storagePath, g_proxyUrl, g_canMdns);
+    generateConductorConfig(g_configPath, g_bootstrapUrl, g_storagePath, g_proxyUrl, g_adminPort, g_canMdns);
   }
   log('info', 'Launching conductor...');
   await spawnHolochainProc();
@@ -281,7 +296,7 @@ async function startConductor(canRegenerateConfig) {
   // Connect to Conductor and activate app
   try {
     log('debug','Connecting to admin...');
-    g_adminWs = await connectToAdmin();
+    g_adminWs = await connectToAdmin(g_adminPort);
     let hasActiveApp = await hasActivatedApp(g_adminWs);
     if(!hasActiveApp) {
       // Prompt for UUID
@@ -290,8 +305,9 @@ async function startConductor(canRegenerateConfig) {
       await installApp(g_adminWs, g_uuid);
     }
     g_appPort = await g_adminWs.attachAppInterface({ port: g_appPort });
-    //g_indexUrl += '' + g_appPort
-    log('info','App Interface attached: ' + g_appPort);
+    //console.log({g_appPort});
+    g_indexUrl += '' + g_appPort.port;
+    log('info','App Interface attached: ' + g_indexUrl);
   } catch (err) {
     log('error', 'Conductor setup failed:');
     log('error',{err});

@@ -15,9 +15,6 @@ const CONDUCTOR_CONFIG_FILENAME = 'conductor-config.yaml';
 const DEFAULT_PROXY_URL ='kitsune-proxy://VYgwCrh2ZCKL1lpnMM1VVUee7ks-9BkmW47C_ys4nqg/kitsune-quic/h/kitsune-proxy.harris-braun.com/p/4010/--';
 const DEFAULT_BOOTSTRAP_URL = 'https://bootstrap-staging.holo.host';
 const SNAPMAIL_APP_ID = 'snapmail-app'; // MUST MATCH SNAPMAIL_UI config
-//const ADMIN_PORT = 1235;
-const ADMIN_PORT = 1200 + Math.floor(Math.random() * 100); // Randomized admin port on each launch
-//const ADMIN_PORT = 0;
 const LAIR_MAGIC_READY_STRING = '#lair-keystore-ready#';
 
 module.exports.DEFAULT_BOOTSTRAP_URL = DEFAULT_BOOTSTRAP_URL;
@@ -52,7 +49,6 @@ async function spawnKeystore(keystore_bin) {
     keystore_proc.stdout.once('data', (data) => {
       log('info', 'lair-keystore: ' + data.toString());
       if(data.toString().indexOf(LAIR_MAGIC_READY_STRING) > -1) {
-        log('info', "LAIR-KEYSTORE RESOLVED");
         resolve();
       }
     });
@@ -91,8 +87,8 @@ module.exports.spawnKeystore = spawnKeystore;
  * Write the conductor config to storage path
  * Using proxy and bootstrap server
  */
-function generateConductorConfig(configPath, bootstrapUrl, storagePath, proxyUrl, canMdns) {
-  log('info', 'generateConductorConfig() with ' + ADMIN_PORT);
+function generateConductorConfig(configPath, bootstrapUrl, storagePath, proxyUrl, adminPort, canMdns) {
+  log('info', 'generateConductorConfig() with ' + adminPort);
   if (proxyUrl === undefined || proxyUrl === '') {
     proxyUrl = DEFAULT_PROXY_URL;
   }
@@ -113,7 +109,7 @@ passphrase_service:
 admin_interfaces:
   - driver:
       type: websocket
-      port: ${ADMIN_PORT}
+      port: ${adminPort}
 network:
   network_type: ${network_type}
   bootstrap_service: ${bootstrapUrl}
@@ -132,8 +128,8 @@ module.exports.generateConductorConfig = generateConductorConfig;
 
 
 // async function isAppInstalled(appPort) {
-//   const adminWs = await AdminWebsocket.connect(`ws://localhost:${ADMIN_PORT}`);
-//   console.log('Connected to admin at ' + ADMIN_PORT);
+//   const adminWs = await AdminWebsocket.connect(`ws://localhost:${adminPort}`);
+//   console.log('Connected to admin at ' + adminPort);
 //   const dnas = await adminWs.listDnas();
 //   console.log('Found ' + dnas.length + ' dnas');
 // }
@@ -147,10 +143,10 @@ function htos(u8array) {
  *
  * @returns {Promise<AdminWebsocket>}
  */
-async function connectToAdmin() {
-  let adminWs = await AdminWebsocket.connect(`ws://localhost:${ ADMIN_PORT }`);
-  log('debug',{adminWs});
-  log('debug','Connected to admin at ' + ADMIN_PORT);
+async function connectToAdmin(adminPort) {
+  let adminWs = await AdminWebsocket.connect(`ws://localhost:${ adminPort }`);
+  //log('debug',{adminWs});
+  log('debug','Connected to admin at ' + adminPort);
   return adminWs;
 }
 module.exports.connectToAdmin = connectToAdmin;
