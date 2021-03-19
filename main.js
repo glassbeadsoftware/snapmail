@@ -1,19 +1,18 @@
 // Modules to control application life and create native browser window
 const { app, BrowserWindow, Menu, shell } = require('electron');
 const spawn = require('child_process').spawn;
-//const assert = require('assert');
 const fs = require('fs');
 const path = require('path');
 const kill = require('tree-kill');
 const { dialog } = require('electron');
-//const request = require('request');
 const prompt = require('electron-prompt');
 
 // My Modules
 const { log, logger } = require('./logger');
 const { wslPath, killAllWsl } = require('./cli');
-const {generateConductorConfig, spawnKeystore, DEFAULT_BOOTSTRAP_URL,
-  CONDUCTOR_CONFIG_PATH, CONFIG_PATH, STORAGE_PATH, hasActivatedApp, connectToAdmin, installApp, reinstallApp} = require('./config');
+const {generateConductorConfig, spawnKeystore,
+  DEFAULT_BOOTSTRAP_URL, CONDUCTOR_CONFIG_FILENAME, CONFIG_PATH, STORAGE_PATH,
+  hasActivatedApp, connectToAdmin, installApp, reinstallApp} = require('./config');
 
 // -- Code -- //
 
@@ -44,19 +43,21 @@ if (process.platform === "win32") {
 
 // a special log from the conductor,
 // specifying that the interfaces are ready to receive incoming connections
-const MAGIC_READY_STRING = 'Conductor ready.';
+const HC_MAGIC_READY_STRING = 'Conductor ready.';
 
-const APP_PORT = 8900 + Math.floor(Math.random() * 100); // Randomized port on each launch
-console.log({APP_PORT});
+//var g_appPort = 0;
+var g_appPort = 8900 + Math.floor(Math.random() * 100); // Randomized port on each launch
+log('debug',{g_appPort});
 const g_errorUrl = 'file://' + __dirname + '/ui/error.html';
-const g_indexUrl = 'file://' + __dirname + '/ui/index.html?APP=' + APP_PORT;
-log('info', 'g_indexUrl = ' + g_indexUrl)
+const g_indexUrl = 'file://' + __dirname + '/ui/index.html?APP=' + g_appPort;
+//var g_indexUrl = 'file://' + __dirname + '/ui/index.html?APP=';
+log('debug', 'g_indexUrl = ' + g_indexUrl);
 // -- Start-up stuff -- //
 
 /** Add Holochain bins to PATH for WSL */
 const BIN_DIR = "bin";
 const BIN_PATH = path.join(__dirname, BIN_DIR);
-log('info', 'BIN_PATH = ' + BIN_PATH);
+log('debug', 'BIN_PATH = ' + BIN_PATH);
 if (process.platform === "win32") {
   process.env.PATH += ';' + BIN_PATH;
 }
@@ -73,30 +74,39 @@ let g_canMdns = false;
 let g_bootstrapUrl = '';
 let g_uuid = '';
 let g_proxyUrl = '';
-let g_storagePath = STORAGE_PATH;
+let g_storagePath = undefined;
+let g_configPath = undefined;
 let g_adminWs = undefined;
 
 // --  Create missing dirs -- //
 
 if (!fs.existsSync(CONFIG_PATH)) {
+  log('info', "Creating missing dir: " + CONFIG_PATH);
   fs.mkdirSync(CONFIG_PATH)
 }
-
+if (!fs.existsSync(STORAGE_PATH)) {
+  log('info', "Creating missing dir: " + STORAGE_PATH);
+  fs.mkdirSync(STORAGE_PATH)
+}
 // get specific storage folder from argv
 if (process.argv.length > 2) {
-  g_storagePath = path.join(CONFIG_PATH, process.argv[2]);
-  console.log({g_storagePath});
+  g_storagePath = path.join(STORAGE_PATH, process.argv[2]);
+  log('debug',{g_storagePath});
+  if (!fs.existsSync(g_storagePath)) {
+    log('info', "Creating missing dir: " + g_storagePath);
+    fs.mkdirSync(g_storagePath)
+  }
 }
-if (!fs.existsSync(g_storagePath)) {
-  fs.mkdirSync(g_storagePath)
-}
+// Determine final conductor config file path
+g_configPath = path.join(g_storagePath, CONDUCTOR_CONFIG_FILENAME);
+log('debug',{g_configPath});
 
 // -- Set Globals from current conductor config --/
 
 // tryLoadingConfig()
 {
   try {
-    const conductorConfigBuffer = fs.readFileSync(CONDUCTOR_CONFIG_PATH);
+    const conductorConfigBuffer = fs.readFileSync(g_configPath);
     const conductorConfig = conductorConfigBuffer.toString();
     //console.log({conductorConfig})
     let regex = /bootstrap_service: (.*)$/gm;
@@ -106,18 +116,16 @@ if (!fs.existsSync(g_storagePath)) {
     regex = /proxy_url: (.*)$/gm;
     match = regex.exec(conductorConfig);
     g_proxyUrl = match[1];
-    //console.log({ g_proxyUrl });
+    log('debug',{ g_proxyUrl });
   } catch(err) {
-    if(err.code === 'ENOENT')
-    {
-      console.error('File not found: ' + CONDUCTOR_CONFIG_PATH);
+    if(err.code === 'ENOENT') {
+      log('error', 'File not found: ' + g_configPath);
     } else {
-      console.error('Loading config file failed: ' + err);
+      log('error','Loading config file failed: ' + err);
     }
-    console.error('continuing...');
+    log('error','continuing...');
   }
 }
-
 
 function sleep(ms) {
   return new Promise((resolve) => {
@@ -135,13 +143,11 @@ function createWindow() {
     height: 1000,
     webPreferences: {
       nodeIntegration: true,
+      devTools: true
     },
     icon: __dirname + `/assets/favicon.png`,
     webgl: false,
     enableWebSQL: false,
-    webPreferences: {
-      devTools: true
-    },
     //autoHideMenuBar: true,
   });
 
@@ -151,7 +157,7 @@ function createWindow() {
   // Open <a href='' target='_blank'> with default system browser
   mainWindow.webContents.on('new-window', function (event, url) {
     event.preventDefault();
-    shell.openExternal(url);
+    shell.openExternal(url).then(_r => {});
   });
 
   // Open the DevTools.
@@ -172,6 +178,8 @@ function createWindow() {
     // when you should delete the corresponding element.
     g_mainWindow = null;
   });
+
+  // Done
   return mainWindow;
 }
 
@@ -182,7 +190,7 @@ function createWindow() {
 async function spawnHolochainProc() {
   // Adapt to WSL if needed
   let bin = HOLOCHAIN_BIN;
-  let args = ['-c', wslPath(CONDUCTOR_CONFIG_PATH)];
+  let args = ['-c', wslPath(g_configPath)];
   if (process.platform === "win32") {
     bin = process.env.comspec;
     args.unshift("/c", "wsl", HOLOCHAIN_BIN);
@@ -213,8 +221,8 @@ async function spawnHolochainProc() {
   // Wait for holochain to boot up
   await new Promise((resolve, _reject) => {
     holochain_proc.stdout.on('data', (data) => {
-      log('info', 'holochain: ' + data.toString())
-      if(data.toString().indexOf(MAGIC_READY_STRING) > -1) {
+      log('info', 'holochain: ' + data.toString());
+      if(data.toString().indexOf(HC_MAGIC_READY_STRING) > -1) {
         resolve();
       }
     });
@@ -254,6 +262,7 @@ function killHolochain() {
   killAllWsl(LAIR_KEYSTORE_BIN);
 }
 
+
 /**
  * Prepare conductor config and spawn holochain subprocess
  * @param canRegenerateConfig - Regenerate the conductor config before relaunching the holochain process.
@@ -261,31 +270,33 @@ function killHolochain() {
 async function startConductor(canRegenerateConfig) {
   g_canQuit = false;
   killHolochain(); // Make sure there is no outstanding Holochain & keystore procs
-  spawnKeystore(LAIR_KEYSTORE_BIN);
-  //await sleep(2000);
+  g_keystore_proc = await spawnKeystore(LAIR_KEYSTORE_BIN);
+  await sleep(2000);
   if (canRegenerateConfig) {
-    generateConductorConfig(g_bootstrapUrl, g_storagePath, g_proxyUrl, g_canMdns);
+    generateConductorConfig(g_configPath, g_bootstrapUrl, g_storagePath, g_proxyUrl, g_canMdns);
   }
   log('info', 'Launching conductor...');
   await spawnHolochainProc();
   g_canQuit = true;
   // Connect to Conductor and activate app
   try {
+    log('debug','Connecting to admin...');
     g_adminWs = await connectToAdmin();
-    var hasActiveApp = await hasActivatedApp(g_adminWs);
+    let hasActiveApp = await hasActivatedApp(g_adminWs);
     if(!hasActiveApp) {
       // Prompt for UUID
       g_uuid = '<my-network-name>';
       await promptUuid(true);
       await installApp(g_adminWs, g_uuid);
     }
-    await g_adminWs.attachAppInterface({ port: APP_PORT });
-    console.log('App Interface attached');
+    g_appPort = await g_adminWs.attachAppInterface({ port: g_appPort });
+    //g_indexUrl += '' + g_appPort
+    log('info','App Interface attached: ' + g_appPort);
   } catch (err) {
-    console.error('Conductor setup failed:');
-    console.error({err});
-    // Better to kill app if holochain not connected
-    app.quit();
+    log('error', 'Conductor setup failed:');
+    log('error',{err});
+    //// Better to kill app if holochain not connected
+    //app.quit();
   }
 }
 
@@ -294,7 +305,7 @@ async function startConductor(canRegenerateConfig) {
  * Some APIs can only be used after this event occurs.
  */
 app.on('ready', async function () {
-  log('info', 'App ready ... (' + APP_PORT + ')');
+  log('info', 'App ready ... (' + g_appPort + ')');
   // Create main window
   g_mainWindow = createWindow();
   try {
@@ -312,28 +323,30 @@ app.on('ready', async function () {
       await startConductor(true);
     }
     // trigger refresh once we know interfaces have booted up
-    g_mainWindow.loadURL(g_indexUrl);
+    log('debug',"Loading index.html: " + g_indexUrl);
+    await g_mainWindow.loadURL(g_indexUrl);
   } catch (err) {
-    console.error('Holochain init failed:');
-    console.error({err});
-    g_mainWindow.loadURL(g_errorUrl);
+    log('error','Holochain init failed:');
+    log('error',{err});
+    await g_mainWindow.loadURL(g_errorUrl);
   }
 
 });
+
 
 /**
  * This event will be emitted inside the primary instance of your application when a second instance has been executed
  * and calls app.requestSingleInstanceLock().
  */
-app.on('second-instance', (event) => {
-  console.warn('\n\n second-instance detected !!! \n\n')
+app.on('second-instance', (_event) => {
+  log('warn','\n\n second-instance detected !!! \n\n')
 });
 
 /**
  * When main window has been closed and the application will quit, destroy conductor subprocess
  */
 app.on('will-quit', (event) => {
-  console.log('*** App will-quit');
+  log('debug','*** App will-quit');
   if (!g_canQuit) {
     event.preventDefault();
     //killHolochain();
@@ -344,7 +357,7 @@ app.on('will-quit', (event) => {
  * Quit when all windows are closed.
  */
 app.on('window-all-closed', function () {
-  console.log('*** App window-all-closed');
+  log('debug','*** App window-all-closed');
   // On macOS it is common for applications and their menu bar
   // to stay active until the user quits explicitly with Cmd + Q
   if (process.platform !== 'darwin') {
@@ -365,6 +378,8 @@ app.on('activate', function () {
 });
 
 
+// -- Prompts and Menu -- //
+
 /**
  * @returns false if user cancelled
  */
@@ -383,12 +398,12 @@ async function promptNetworkType(canExitOnCancel) {
     }
   });
   if(r === null) {
-    console.log('user cancelled. Can exit: ' + canExitOnCancel);
+    log('debug','user cancelled. Can exit: ' + canExitOnCancel);
     if (canExitOnCancel) {
       app.quit();
     }
   } else {
-    console.log('promptNetworkType result: ', r);
+    log('debug','promptNetworkType result: ', r);
     g_canMdns = r === 'true';
   }
   return r !== null
@@ -411,12 +426,12 @@ async function promptBootstrapUrl(canExitOnCancel) {
     type: 'input'
   });
   if(r === null) {
-    console.log('user cancelled. Can exit: ' + canExitOnCancel);
+    log('debug','user cancelled. Can exit: ' + canExitOnCancel);
     if (canExitOnCancel) {
       app.quit();
     }
   } else {
-    console.log('result', r);
+    log('debug','result', r);
     g_bootstrapUrl = r;
   }
   return r !== null
@@ -439,12 +454,12 @@ async function promptUuid(canExitOnCancel) {
     type: 'input'
   });
   if(r === null) {
-    console.log('user cancelled. Can exit: ' + canExitOnCancel);
+    log('debug','user cancelled. Can exit: ' + canExitOnCancel);
     if (canExitOnCancel) {
       app.quit();
     }
   } else {
-    console.log('result', r);
+    log('debug','result', r);
     g_uuid = r;
   }
   return r !== null
@@ -467,12 +482,12 @@ async function promptProxyUrl(canExitOnCancel) {
     type: 'input'
   });
   if(r === null) {
-    console.log('user cancelled. Can exit: ' + canExitOnCancel);
+    log('debug','user cancelled. Can exit: ' + canExitOnCancel);
     if (canExitOnCancel) {
       app.quit();
     }
   } else {
-    console.log('result', r);
+    log('debug','result', r);
     g_proxyUrl = r;
   }
   return r !== null
@@ -574,4 +589,4 @@ const menutemplate = [
   },
 ];
 
-Menu.setApplicationMenu(Menu.buildFromTemplate(menutemplate))
+Menu.setApplicationMenu(Menu.buildFromTemplate(menutemplate));

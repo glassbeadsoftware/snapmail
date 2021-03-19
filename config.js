@@ -11,23 +11,25 @@ const {bytesToBase64} = require('byte-base64');
 
 const CONFIG_PATH = path.join(app.getPath('appData'), 'Snapmail');
 const STORAGE_PATH = path.join(CONFIG_PATH, 'storage');
-const CONDUCTOR_CONFIG_PATH = path.join(CONFIG_PATH, 'conductor-config.yaml');
+const CONDUCTOR_CONFIG_FILENAME = 'conductor-config.yaml';
 const DEFAULT_PROXY_URL ='kitsune-proxy://VYgwCrh2ZCKL1lpnMM1VVUee7ks-9BkmW47C_ys4nqg/kitsune-quic/h/kitsune-proxy.harris-braun.com/p/4010/--';
 const DEFAULT_BOOTSTRAP_URL = 'https://bootstrap-staging.holo.host';
 const SNAPMAIL_APP_ID = 'snapmail-app'; // MUST MATCH SNAPMAIL_UI config
 //const ADMIN_PORT = 1235;
 const ADMIN_PORT = 1200 + Math.floor(Math.random() * 100); // Randomized admin port on each launch
+//const ADMIN_PORT = 0;
+const LAIR_MAGIC_READY_STRING = '#lair-keystore-ready#';
 
 module.exports.DEFAULT_BOOTSTRAP_URL = DEFAULT_BOOTSTRAP_URL;
 module.exports.CONFIG_PATH = CONFIG_PATH;
 module.exports.STORAGE_PATH = STORAGE_PATH;
-module.exports.CONDUCTOR_CONFIG_PATH = CONDUCTOR_CONFIG_PATH;
+module.exports.CONDUCTOR_CONFIG_FILENAME = CONDUCTOR_CONFIG_FILENAME;
 
 
 /**
  * Spawn 'lair-keystore' process
  */
-function spawnKeystore(keystore_bin) {
+async function spawnKeystore(keystore_bin) {
   // -- Spawn Keystore -- //
   let bin = keystore_bin;
   //let args = ['keygen', '--path', wslPath(KEYSTORE_FILE_PATH), '--nullpass', '--quiet'];
@@ -44,33 +46,43 @@ function spawnKeystore(keystore_bin) {
     },
   });
   // -- Handle Outputs
-  var mutex = false;
-  keystore_proc.stdout.once('data', (data) => {
-    mutex = true;
-    log('info', 'lair-keystore: ' + data.toString())
-  });
-  keystore_proc.stderr.on('data', (data) => {
-    log('error', 'lair-keystore> ' + data.toString())
-  });
-  // -- Handle Termination
-  keystore_proc.on('exit', (code) => {
-     log('info', code);
-    // TODO: Figure out if must kill app if keystore crashes
-    // kill(holochain_handle.pid, function (err) {
-    //   if (!err) {
-    //     log('info', 'killed all holochain sub processes');
-    //   } else {
-    //     log('error', err);
-    //   }
-    // });
-    // quit = true;
-    // app.quit();
+  // var mutex = false;
+  // Wait for holochain to boot up
+  await new Promise((resolve, reject) => {
+    keystore_proc.stdout.once('data', (data) => {
+      log('info', 'lair-keystore: ' + data.toString());
+      if(data.toString().indexOf(LAIR_MAGIC_READY_STRING) > -1) {
+        log('info', "LAIR-KEYSTORE RESOLVED");
+        resolve();
+      }
+    });
+    keystore_proc.stderr.on('data', (data) => {
+      log('error', 'lair-keystore> ' + data.toString())
+    });
+    // -- Handle Termination
+    keystore_proc.on('exit', (code) => {
+       log('info', code);
+      reject();
+      // TODO: Figure out if must kill app if keystore crashes
+      // kill(holochain_handle.pid, function (err) {
+      //   if (!err) {
+      //     log('info', 'killed all holochain sub processes');
+      //   } else {
+      //     log('error', err);
+      //   }
+      // });
+      // quit = true;
+      // app.quit();
+    });
   });
 
   // Wait for lair to boot up
-  let start = Date.now();
-  while(mutex && Date.now() - start < 10)
-  ;
+  // let start = Date.now();
+  // while(mutex && Date.now() - start < 10)
+  // ;
+
+  // Done
+  return keystore_proc;
 }
 module.exports.spawnKeystore = spawnKeystore;
 
@@ -79,7 +91,7 @@ module.exports.spawnKeystore = spawnKeystore;
  * Write the conductor config to storage path
  * Using proxy and bootstrap server
  */
-function generateConductorConfig(bootstrapUrl, storagePath, proxyUrl, canMdns) {
+function generateConductorConfig(configPath, bootstrapUrl, storagePath, proxyUrl, canMdns) {
   log('info', 'generateConductorConfig() with ' + ADMIN_PORT);
   if (proxyUrl === undefined || proxyUrl === '') {
     proxyUrl = DEFAULT_PROXY_URL;
@@ -89,7 +101,7 @@ function generateConductorConfig(bootstrapUrl, storagePath, proxyUrl, canMdns) {
     network_type = "quic_mdns";
   }
   let environment_path = wslPath(storagePath);
-  console.log({environment_path});
+  log('debug',{environment_path});
   if (bootstrapUrl === undefined) {
     bootstrapUrl = DEFAULT_BOOTSTRAP_URL
   }
@@ -114,7 +126,7 @@ network:
         type: remote_proxy_client
         proxy_url: ${proxyUrl}`
   ;
-  fs.writeFileSync(CONDUCTOR_CONFIG_PATH, config);
+  fs.writeFileSync(configPath, config);
 }
 module.exports.generateConductorConfig = generateConductorConfig;
 
@@ -136,8 +148,9 @@ function htos(u8array) {
  * @returns {Promise<AdminWebsocket>}
  */
 async function connectToAdmin() {
-  var adminWs = await AdminWebsocket.connect(`ws://localhost:${ ADMIN_PORT }`);
-  console.log('Connected to admin at ' + ADMIN_PORT);
+  let adminWs = await AdminWebsocket.connect(`ws://localhost:${ ADMIN_PORT }`);
+  log('debug',{adminWs});
+  log('debug','Connected to admin at ' + ADMIN_PORT);
   return adminWs;
 }
 module.exports.connectToAdmin = connectToAdmin;
@@ -150,9 +163,9 @@ module.exports.connectToAdmin = connectToAdmin;
  */
 async function hasActivatedApp(adminWs) {
   const dnas = await adminWs.listDnas();
-  console.log('Found ' + dnas.length + ' dna(s)');
+  log('debug','Found ' + dnas.length + ' dna(s)');
   for (dna of dnas) {
-    console.log(' -  ' + htos(dna));
+    log('debug',' -  ' + htos(dna));
   }
   // // Cell IDs
   // const cellIds = await adminWs.listCellIds();
@@ -163,9 +176,9 @@ async function hasActivatedApp(adminWs) {
   //
   // Active Apps
   const activeAppIds = await adminWs.listActiveApps();
-  console.log('Found ' + activeAppIds.length + ' Active App(s)');
+  log('info','Found ' + activeAppIds.length + ' Active App(s)');
   for (activeId of activeAppIds) {
-    console.log(' -  ' + activeId);
+    log('info',' -  ' + activeId);
   }
   let hasActiveApp = activeAppIds.length == 1 && activeAppIds[0] == "snapmail-app";
   return hasActiveApp;
@@ -201,11 +214,11 @@ async function installApp(adminWs, uuid) {
       path: './dna/snapmail.dna',
     });
   } catch (err) {
-    console.error('[admin] registerDna() failed:');
-    console.error({err});
+    log('error','[admin] registerDna() failed:');
+    log('error',{err});
     return;
   }
-  console.log('registerDna response: ' + htos(hash));
+  log('debug','registerDna response: ' + htos(hash));
   // Install Dna
   try {
     await adminWs.installApp({
@@ -214,12 +227,12 @@ async function installApp(adminWs, uuid) {
       },],
     });
   } catch (err) {
-    console.error('[admin] installApp() failed:');
-    console.error({err});
+    log('error','[admin] installApp() failed:');
+    log('error',{err});
     return;
   }
-  console.log('App installed');
+  log('info','App installed');
   await adminWs.activateApp({ installed_app_id: SNAPMAIL_APP_ID });
-  console.log('App activated');
+  log('info','App activated');
 }
 module.exports.installApp = installApp;

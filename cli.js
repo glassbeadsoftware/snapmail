@@ -25,7 +25,7 @@ function wslPath(filePath) {
     log('error', error.toString());
   }
   stdout = stdout? stdout.toString() : "";
-  console.log("CLI wslPath; got results: " + stdout);
+  log('debug',"CLI wslPath; got results: " + stdout);
   fp = stdout.substring(0, stdout.length - 1); // remove 'return' char
   return fp
 }
