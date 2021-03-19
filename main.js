@@ -77,7 +77,7 @@ let g_canMdns = false;
 let g_bootstrapUrl = '';
 let g_uuid = '';
 let g_proxyUrl = '';
-let g_storagePath = undefined;
+let g_storagePath = STORAGE_PATH;
 let g_configPath = undefined;
 let g_adminWs = undefined;
 
