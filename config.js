@@ -4,8 +4,8 @@ const { log } = require('./logger');
 const fs = require('fs');
 const { wslPath } = require('./cli');
 const { spawn } = require('child_process');
-//const { AdminWebsocket } = require('@holochain/conductor-api');
-const { AdminWebsocket } = require('../holochain-conductor-api');
+const { AdminWebsocket } = require('@holochain/conductor-api');
+//const { AdminWebsocket } = require('../holochain-conductor-api');
 
 
 
