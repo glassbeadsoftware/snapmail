@@ -12,8 +12,11 @@ See [snapmail-rsm](https://github.com/ddd-mtl/snapmail-rsm) for holochain backen
 
 ## Installation
 
-**Prerequisite**: On windows, holochain requires WSL2 to be installed. Follow [this tutorial](https://pureinfotech.com/install-windows-subsystem-linux-2-windows-10/) on instructions to do that. Only Windows 10 version 2004 and up is supported.
+### Prerequisite 
+ - Windows: holochain requires WSL2 to be installed. Follow [this tutorial](https://pureinfotech.com/install-windows-subsystem-linux-2-windows-10/) on instructions to do that. Only Windows 10 version 2004 and up is supported.
+ - Linux: `libssl1.0.0` package must be installed on your system (and possibly `libssl-dev`)
 
+### Steps
 1. Go to the [release page](https://github.com/glassbeadsoftware/snapmail-release/releases)
 1. Download the latest release file for your platform
 1. Unzip the file somewhere on your disk
@@ -23,7 +26,7 @@ Use your own or the public one provided by Holo `bootstrap.holo.net`
 1. Set your username in the top input box.
 1. Other users on the same bootstrap server will appear in the bottom right list box after hitting the refresh button.
 
-#### Troubleshoot
+### Troubleshoot
 
 ##### Linux
 - Make sure the following executables have execution rights: `Snapmail`, `lair-keystore`, `holochain`.
