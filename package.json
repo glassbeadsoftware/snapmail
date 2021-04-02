@@ -13,7 +13,8 @@
     "package-osx": "electron-packager . Snapmail --platform=darwin --arch=x64 --out=../build --overwrite",
     "package-mac": "electron-packager . Snapmail --platform=darwin --arch=x64 --prune=true --overwrite --out=../build",
     "package-linux-asar": "electron-packager . Snapmail --platform=linux --arch=x64 --asar --prune=true --overwrite --out=../build",
-    "package-linux": "electron-packager . Snapmail --platform=linux --arch=x64 --overwrite --out=../build"
+    "package-linux": "electron-packager . Snapmail --platform=linux --arch=x64 --overwrite --out=../build",
+    "package-arm": "electron-packager . Snapmail --platform=linux --arch=arm64 --overwrite --out=../build"
   },
   "repository": "https://github.com/glassbeadsoftware/snapmail-release",
   "keywords": [
@@ -24,7 +25,7 @@
   "author": "Harris-Braun Enterprises, LLC and contributors",
   "license": "CAL-1.0 Beta 4",
   "dependencies": {
-    "@holochain/conductor-api": "github:holochain/holochain-conductor-api#damien",
+    "@holochain/conductor-api": "github:holochain/holochain-conductor-api",
     "byte-base64": "^1.1.0",
     "command-exists": "^1.2.8",
     "dialogs": "^2.0.1",
