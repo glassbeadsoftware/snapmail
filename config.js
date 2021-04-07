@@ -3,7 +3,7 @@ const { app } = require('electron');
 const { log } = require('./logger');
 const fs = require('fs');
 const { wslPath } = require('./cli');
-const { spawn } = require('child_process');
+const { spawn, fork } = require('child_process');
 const { AdminWebsocket } = require('@holochain/conductor-api');
 //const { AdminWebsocket } = require('../holochain-conductor-api');
 
@@ -42,6 +42,8 @@ async function spawnKeystore(keystore_bin) {
   log('info', 'Spawning ' + bin + ' (dirname: ' + __dirname + ')');
   const keystore_proc = spawn(bin, args, {
     cwd: __dirname,
+    detached: false,
+    //stdio: 'pipe',
     env: {
       ...process.env,
     },
@@ -223,7 +225,7 @@ async function installApp(adminWs, uuid) {
     log('error',{err});
     return;
   }
-  log('debug','registerDna response: ' + htos(hash));
+  log('info','registerDna response: ' + htos(hash));
   // Install Dna
   try {
     await adminWs.installApp({

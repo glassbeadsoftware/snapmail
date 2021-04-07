@@ -1,6 +1,6 @@
 // Modules to control application life and create native browser window
 const { app, BrowserWindow, Menu, shell } = require('electron');
-const spawn = require('child_process').spawn;
+const { spawn, fork } = require('child_process');
 const fs = require('fs');
 const path = require('path');
 const kill = require('tree-kill');
@@ -25,6 +25,8 @@ require('fix-path')();
 if (g_canDebug) {
   require('electron-debug')({ isEnabled: true });
 }
+
+const dist_dir = g_canDebug? "dbg" : "ui";
 
 /** CONSTS **/
 
@@ -51,9 +53,9 @@ var g_adminPort = 0;
 var g_appPort = 0;
 //var g_appPort = 8900 + Math.floor(Math.random() * 100); // Randomized port on each launch
 //log('debug',{g_appPort});
-const g_errorUrl = 'file://' + __dirname + '/ui/error.html';
+const g_errorUrl = 'file://' + __dirname + '/'+ dist_dir +'/error.html';
 //const g_indexUrl = 'file://' + __dirname + '/ui/index.html?APP=' + g_appPort;
-var g_indexUrl = 'file://' + __dirname + '/ui/index.html?APP=';
+var g_indexUrl = 'file://' + __dirname + '/'+ dist_dir +'/index.html?APP=';
 //log('debug', 'g_indexUrl = ' + g_indexUrl);
 // -- Start-up stuff -- //
 
@@ -209,6 +211,8 @@ async function spawnHolochainProc() {
   log('info', 'Spawning ' + bin + ' (dirname: ' + __dirname + ')');
   let holochain_proc = spawn(bin, args, {
     cwd: __dirname,
+    detached: false,
+    //stdio: 'pipe',
     env: {
       ...process.env,
       RUST_BACKTRACE: 1,
@@ -424,7 +428,7 @@ async function promptNetworkType(canExitOnCancel) {
       app.quit();
     }
   } else {
-    log('debug','promptNetworkType result: ', r);
+    log('debug','promptNetworkType result: ' + r);
     g_canMdns = r === 'true';
   }
   return r !== null
@@ -452,7 +456,7 @@ async function promptBootstrapUrl(canExitOnCancel) {
       app.quit();
     }
   } else {
-    log('debug','result', r);
+    log('debug','result: ' + r);
     g_bootstrapUrl = r;
   }
   return r !== null
@@ -480,7 +484,7 @@ async function promptUuid(canExitOnCancel) {
       app.quit();
     }
   } else {
-    log('debug','result', r);
+    log('debug','result: ' + r);
     g_uuid = r;
   }
   return r !== null
@@ -508,7 +512,7 @@ async function promptProxyUrl(canExitOnCancel) {
       app.quit();
     }
   } else {
-    log('debug','result', r);
+    log('debug','result: ' + r);
     g_proxyUrl = r;
   }
   return r !== null
