@@ -16,6 +16,7 @@ const {bytesToBase64} = require('byte-base64');
 const CONFIG_PATH = path.join(app.getPath('appData'), 'Snapmail');
 const STORAGE_PATH = path.join(CONFIG_PATH, 'storage');
 const CONDUCTOR_CONFIG_FILENAME = 'conductor-config.yaml';
+const APP_CONFIG_FILENAME = 'app-config.yaml';
 const DEFAULT_PROXY_URL ='kitsune-proxy://VYgwCrh2ZCKL1lpnMM1VVUee7ks-9BkmW47C_ys4nqg/kitsune-quic/h/kitsune-proxy.harris-braun.com/p/4010/--';
 const DEFAULT_BOOTSTRAP_URL = 'https://bootstrap-staging.holo.host';
 const SNAPMAIL_APP_ID = 'snapmail-app'; // MUST MATCH SNAPMAIL_UI config

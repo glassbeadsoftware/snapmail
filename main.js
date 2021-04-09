@@ -82,6 +82,7 @@ let g_proxyUrl = '';
 let g_storagePath = STORAGE_PATH;
 let g_configPath = undefined;
 let g_adminWs = undefined;
+let g_uuidList = undefined;
 
 // --  Create missing dirs -- //
 
@@ -111,6 +112,7 @@ log('debug',{g_configPath});
 // tryLoadingConfig()
 {
   try {
+    // -- Conductor Config -- //
     const conductorConfigBuffer = fs.readFileSync(g_configPath);
     const conductorConfig = conductorConfigBuffer.toString();
     //console.log({conductorConfig})
@@ -129,6 +131,17 @@ log('debug',{g_configPath});
     match = regex.exec(conductorConfig);
     g_proxyUrl = match[1];
     log('debug',{ g_proxyUrl });
+
+    // -- APP config -- //
+    const appPath = path.join(g_storagePath, APP_CONFIG_FILENAME);
+    const appConfigBuffer = fs.readFileSync(appPath);
+    const appConfig = appConfigBuffer.toString();
+    //console.log({conductorConfig})
+    // Get All UUID
+    //let regex = /uuid: (.*)$/gm;
+    //let match = regex.exec(appConfig);
+    //g_uuidList = match[1];
+
   } catch(err) {
     if(err.code === 'ENOENT') {
       log('error', 'File not found: ' + g_configPath);

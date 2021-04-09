@@ -25,7 +25,7 @@
   "author": "Harris-Braun Enterprises, LLC and contributors",
   "license": "CAL-1.0 Beta 4",
   "dependencies": {
-    "@holochain/conductor-api": "github:holochain/holochain-conductor-api",
+    "@holochain/conductor-api": "=0.0.3",
     "byte-base64": "^1.1.0",
     "command-exists": "^1.2.8",
     "dialogs": "^2.0.1",
