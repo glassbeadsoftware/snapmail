@@ -210,14 +210,14 @@ module.exports.reinstallApp = reinstallApp;
  * @param uuid
  * @returns {Promise<void>}
  */
-async function installApp(adminWs, uuid) {
+async function installApp(adminWs, uid) {
   // Generate keys
   let myPubKey = await adminWs.generateAgentPubKey();
   // Register Dna
   let hash = undefined;
   try {
     hash = await adminWs.registerDna({
-      uuid,
+      uid,
       properties: undefined,
       path: './dna/snapmail.dna',
     });

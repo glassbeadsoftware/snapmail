@@ -133,10 +133,10 @@ log('debug',{g_configPath});
     log('debug',{ g_proxyUrl });
 
     // -- APP config -- //
-    const appPath = path.join(g_storagePath, APP_CONFIG_FILENAME);
-    const appConfigBuffer = fs.readFileSync(appPath);
-    const appConfig = appConfigBuffer.toString();
-    //console.log({conductorConfig})
+    // const appPath = path.join(g_storagePath, APP_CONFIG_FILENAME);
+    // const appConfigBuffer = fs.readFileSync(appPath);
+    // const appConfig = appConfigBuffer.toString();
+    //console.log({appConfig})
     // Get All UUID
     //let regex = /uuid: (.*)$/gm;
     //let match = regex.exec(appConfig);
