@@ -176,7 +176,7 @@ async function hasActivatedApp(adminWs) {
   for (activeId of activeAppIds) {
     log('info',' -  ' + activeId);
   }
-  let hasActiveApp = activeAppIds.length == 1 && activeAppIds[0] == "snapmail-app";
+  let hasActiveApp = activeAppIds.length == 1 && activeAppIds[0] == SNAPMAIL_APP_ID;
   // Get App interfaces
   let activeAppPort = 0;
   if (hasActiveApp) {

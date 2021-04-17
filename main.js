@@ -326,8 +326,11 @@ async function startConductor(canRegenerateConfig) {
       log('info','App Interface attached: ' + g_appPort);
     } else {
       g_appPort = activeAppPort;
-      // FIXME Prompt UID selection menu
+      // Maybe Prompt UID selection menu
       g_uid = g_uidList[0];
+      if (g_uidList.length > 0) {
+        await promptUidSelect(false);
+      }
     }
     g_indexUrl += '' + g_appPort + '&UID=' + g_uid;
     console.log({g_indexUrl});
@@ -510,6 +513,37 @@ async function promptUid(canExitOnCancel) {
   }
   return r !== null
 }
+
+/**
+ * @returns false if user cancelled
+ */
+async function promptUidSelect(canExitOnCancel) {
+  let selectOptions = {};
+  for (const uid of g_uidList) {
+    selectOptions[uid] = uid;
+  }
+  let r = await prompt({
+    title: 'Select network',
+    height: 180,
+    width: 300,
+    alwaysOnTop: true,
+    label: 'Choose network:',
+    value: g_uid,
+    type: 'select',
+    selectOptions,
+  });
+  if(r === null) {
+    log('debug','user cancelled. Can exit: ' + canExitOnCancel);
+    if (canExitOnCancel) {
+      app.quit();
+    }
+  } else {
+    log('debug','promptUidSelect result: ' + r);
+    g_uid = r;
+  }
+  return r !== null
+}
+
 
 /**
  * @returns false if user cancelled
