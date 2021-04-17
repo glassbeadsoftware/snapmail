@@ -627,13 +627,10 @@ const menutemplate = [
         click: async function () {
           let changed = await promptUid(false);
           if (changed) {
-            // const succeeded = await cloneCell(g_adminWs, g_uid);
-            //if (succeeded) {
+            await g_mainWindow.setEnabled(false);
             await installApp(g_adminWs, g_uid);
-              // Do the switch
-              // FIXME
-              await startConductor(false);
-            //}
+            await startConductor(false);
+            await g_mainWindow.setEnabled(true);
           }
         },
       },
@@ -642,12 +639,9 @@ const menutemplate = [
         click: async function () {
           let changed = await promptUidSelect(false);
           if (changed) {
-            //const succeeded = await cloneCell(g_adminWs, g_uid);
-            //if (succeeded) {
-              // Do the switch
-              // FIXME
-              await startConductor(false);
-            //}
+            await g_mainWindow.setEnabled(false);
+            await startConductor(false);
+            await g_mainWindow.setEnabled(true);
           }
         },
       },
