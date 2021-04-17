@@ -163,20 +163,16 @@ async function hasActivatedApp(adminWs) {
   for (dna of dnas) {
     log('debug',' -  ' + htos(dna));
   }
-  // // Cell IDs
-  // const cellIds = await adminWs.listCellIds();
-  // console.log('Found ' + cellIds.length + ' Cell(s)');
-  // for (cellId of cellIds) {
-  //   console.log(' -  ' + htos(cellId[0]) + ' - ' + htos(cellId[1]));
-  // }
-  //
+
   // Active Apps
   const activeAppIds = await adminWs.listActiveApps();
   log('info','Found ' + activeAppIds.length + ' Active App(s)');
   for (activeId of activeAppIds) {
     log('info',' -  ' + activeId);
   }
-  let hasActiveApp = activeAppIds.length == 1 && activeAppIds[0] == SNAPMAIL_APP_ID;
+  // const hasActiveApp = activeAppIds.length == 1 && activeAppIds[0] == SNAPMAIL_APP_ID;
+  const hasActiveApp = activeAppIds.length > 0;
+
   // Get App interfaces
   let activeAppPort = 0;
   if (hasActiveApp) {
@@ -197,11 +193,41 @@ module.exports.hasActivatedApp = hasActivatedApp;
 /**
  * Uninstall current App and reinstall with new uid
  */
-async function reinstallApp(adminWs, uid) {
-  await adminWs.deactivateApp({ installed_app_id: SNAPMAIL_APP_ID });
-  await installApp(adminWs, uid);
+async function cloneCell(adminWs, uid) {
+  log('debug', 'cloneCell()');
+
+  // Check if cell exists
+  const cellIds = await adminWs.listCellIds();
+  console.log('Found ' + cellIds.length + ' Cell(s)');
+  for (const cellId of cellIds) {
+    console.log(' -  ' + htos(cellId[0]) + ' - ' + htos(cellId[1]));
+  }
+  if (cellIds.length == 0) {
+    console.error("Can't switch cell since no cell already installed");
+    return false;
+  }
+
+  let firstCellId = cellIds[0];
+
+  // Create it by cloning
+  try {
+    const clonedDna = await adminWs.createCloneCell({
+      properties: undefined,
+      dna_hash: firstCellId[0],
+      agent_key: firstCellId[1],
+      installed_app_id: SNAPMAIL_APP_ID,
+      slot_id: uid,
+      membrane_proof: undefined,
+    });
+    log('info', { clonedDna });
+  } catch (err) {
+    log('error', 'createCloneCell() failed:');
+    log('error',{err});
+  }
+  // Done
+  return true;
 }
-module.exports.reinstallApp = reinstallApp;
+module.exports.cloneCell = cloneCell;
 
 
 /**
@@ -211,7 +237,7 @@ module.exports.reinstallApp = reinstallApp;
  * @returns {Promise<void>}
  */
 async function installApp(adminWs, uid) {
-  const installed_app_id = SNAPMAIL_APP_ID;
+  const installed_app_id = SNAPMAIL_APP_ID + '-' + uid;
   log('info', 'Installing app: ' + installed_app_id);
   // Generate keys
   let myPubKey = await adminWs.generateAgentPubKey();
@@ -231,7 +257,7 @@ async function installApp(adminWs, uid) {
   log('info','registerDna response: ' + htos(hash));
   // Install Dna
   try {
-    await adminWs.installApp({
+    let installResponse = await adminWs.installApp({
       agent_key: myPubKey,
       installed_app_id,
       dnas: [{
@@ -239,6 +265,8 @@ async function installApp(adminWs, uid) {
         nick: uid,
       }],
     });
+    log('debug','Install app response:');
+    log('debug',{installResponse});
   } catch (err) {
     log('error','[admin] installApp() failed:');
     log('error',{err});

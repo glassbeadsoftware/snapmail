@@ -12,7 +12,7 @@ const { log, logger } = require('./logger');
 const { wslPath, killAllWsl } = require('./cli');
 const {generateConductorConfig, spawnKeystore,
   DEFAULT_BOOTSTRAP_URL, CONDUCTOR_CONFIG_FILENAME, APP_CONFIG_FILENAME, CONFIG_PATH, STORAGE_PATH,
-  hasActivatedApp, connectToAdmin, installApp, reinstallApp} = require('./config');
+  hasActivatedApp, connectToAdmin, installApp} = require('./config');
 
 // -- Code -- //
 
@@ -54,9 +54,8 @@ var g_appPort = 0;
 //var g_appPort = 8900 + Math.floor(Math.random() * 100); // Randomized port on each launch
 //log('debug',{g_appPort});
 const g_errorUrl = 'file://' + __dirname + '/'+ dist_dir +'/error.html';
-//const g_indexUrl = 'file://' + __dirname + '/ui/index.html?APP=' + g_appPort;
-var g_indexUrl = 'file://' + __dirname + '/'+ dist_dir +'/index.html?APP=';
-//log('debug', 'g_indexUrl = ' + g_indexUrl);
+const INDEX_URL = 'file://' + __dirname + '/'+ dist_dir +'/index.html?APP=';
+log('debug', 'INDEX_URL = ' + INDEX_URL);
 // -- Start-up stuff -- //
 
 /** Add Holochain bins to PATH for WSL */
@@ -82,7 +81,7 @@ let g_proxyUrl = '';
 let g_storagePath = STORAGE_PATH;
 let g_configPath = undefined;
 let g_adminWs = undefined;
-let g_uidList = undefined;
+let g_uidList = [];
 
 // --  Create missing dirs -- //
 
@@ -137,6 +136,7 @@ let g_appConfigPath = path.join(g_storagePath, APP_CONFIG_FILENAME);
     log('debug', 'Reading file ' + g_appConfigPath);
     const appConfigString = fs.readFileSync(g_appConfigPath).toString();
     g_uidList = appConfigString.replace(/\r\n/g,'\n').split('\n');
+    g_uidList = g_uidList.filter(function (el) {return el != '';});
     log('debug', {g_uidList});
 
   } catch(err) {
@@ -172,9 +172,6 @@ function createWindow() {
     enableWebSQL: false,
     //autoHideMenuBar: true,
   });
-
-  // and load the index.html of the app.
-  //mainWindow.loadURL(g_indexUrl);
 
   // Open <a href='' target='_blank'> with default system browser
   mainWindow.webContents.on('new-window', function (event, url) {
@@ -310,6 +307,7 @@ async function startConductor(canRegenerateConfig) {
   await spawnHolochainProc();
   g_canQuit = true;
   // Connect to Conductor and activate app
+  let indexUrl;
   try {
     log('debug','Connecting to admin at ' + g_adminPort + ' ...');
     g_adminWs = await connectToAdmin(g_adminPort);
@@ -320,25 +318,36 @@ async function startConductor(canRegenerateConfig) {
       await promptUid(true);
       await installApp(g_adminWs, g_uid);
       //log('debug','Attaching to app at ' + g_appPort + ' ...');
-      g_appPort = await g_adminWs.attachAppInterface({port: 0});
+      g_appPort = await g_adminWs.attachAppInterface({port: undefined});
       console.log({g_appPort});
       g_appPort = g_appPort.port;
       log('info','App Interface attached: ' + g_appPort);
     } else {
       g_appPort = activeAppPort;
       // Maybe Prompt UID selection menu
-      g_uid = g_uidList[0];
-      if (g_uidList.length > 0) {
-        await promptUidSelect(false);
+      if (g_uid === '' && g_uidList !== undefined && g_uidList.length > 0) {
+        g_uid = g_uidList[0];
+        if(g_uidList.length > 1) {
+          await promptUidSelect(false);
+        }
       }
     }
-    g_indexUrl += '' + g_appPort + '&UID=' + g_uid;
-    console.log({g_indexUrl});
+    indexUrl = INDEX_URL + g_appPort + '&UID=' + g_uid;
+    console.log({indexUrl});
   } catch (err) {
     log('error', 'Conductor setup failed:');
     log('error',{err});
+    indexUrl = INDEX_URL;
     //// Better to kill app if holochain not connected
     //app.quit();
+  }
+  // trigger refresh once we know interfaces have booted up
+  log('debug',"Loading index.html: " + indexUrl);
+  try {
+    await g_mainWindow.loadURL(indexUrl);
+  } catch(err) {
+    log('error', 'loadURL() failed:');
+    log('error',{err});
   }
 }
 
@@ -360,13 +369,8 @@ app.on('ready', async function () {
       if (!g_canMdns) {
         await promptBootstrapUrl(true);
       }
-      await startConductor(true);
-    } else {
-      await startConductor(true);
     }
-    // trigger refresh once we know interfaces have booted up
-    log('debug',"Loading index.html: " + g_indexUrl);
-    await g_mainWindow.loadURL(g_indexUrl);
+    await startConductor(true);
   } catch (err) {
     log('error','Holochain init failed:');
     log('error',{err});
@@ -507,6 +511,7 @@ async function promptUid(canExitOnCancel) {
     g_uid = r;
     try {
       fs.appendFileSync(g_appConfigPath, g_uid + '\n');
+      g_uidList.push(g_uid);
     } catch (err) {
       log('error','Writing config file failed: ' + err);
     }
@@ -519,7 +524,8 @@ async function promptUid(canExitOnCancel) {
  */
 async function promptUidSelect(canExitOnCancel) {
   let selectOptions = {};
-  for (const uid of g_uidList) {
+  const uniq = [...new Set(g_uidList)];
+  for (const uid of uniq) {
     selectOptions[uid] = uid;
   }
   let r = await prompt({
@@ -617,11 +623,31 @@ const menutemplate = [
         }
       },
       {
-        label: 'Change Network ID',
+        label: 'Join new Network',
         click: async function () {
           let changed = await promptUid(false);
           if (changed) {
-            await reinstallApp(g_adminWs, g_uid);
+            // const succeeded = await cloneCell(g_adminWs, g_uid);
+            //if (succeeded) {
+            await installApp(g_adminWs, g_uid);
+              // Do the switch
+              // FIXME
+              await startConductor(false);
+            //}
+          }
+        },
+      },
+      {
+        label: 'Switch Network',
+        click: async function () {
+          let changed = await promptUidSelect(false);
+          if (changed) {
+            //const succeeded = await cloneCell(g_adminWs, g_uid);
+            //if (succeeded) {
+              // Do the switch
+              // FIXME
+              await startConductor(false);
+            //}
           }
         },
       },
