@@ -16,7 +16,7 @@ const {bytesToBase64} = require('byte-base64');
 const CONFIG_PATH = path.join(app.getPath('appData'), 'Snapmail');
 const STORAGE_PATH = path.join(CONFIG_PATH, 'storage');
 const CONDUCTOR_CONFIG_FILENAME = 'conductor-config.yaml';
-const APP_CONFIG_FILENAME = 'app-config.yaml';
+const APP_CONFIG_FILENAME = 'app-config.txt';
 const DEFAULT_PROXY_URL ='kitsune-proxy://VYgwCrh2ZCKL1lpnMM1VVUee7ks-9BkmW47C_ys4nqg/kitsune-quic/h/kitsune-proxy.harris-braun.com/p/4010/--';
 const DEFAULT_BOOTSTRAP_URL = 'https://bootstrap-staging.holo.host';
 const SNAPMAIL_APP_ID = 'snapmail-app'; // MUST MATCH SNAPMAIL_UI config
@@ -26,7 +26,7 @@ module.exports.DEFAULT_BOOTSTRAP_URL = DEFAULT_BOOTSTRAP_URL;
 module.exports.CONFIG_PATH = CONFIG_PATH;
 module.exports.STORAGE_PATH = STORAGE_PATH;
 module.exports.CONDUCTOR_CONFIG_FILENAME = CONDUCTOR_CONFIG_FILENAME;
-
+module.exports.APP_CONFIG_FILENAME = APP_CONFIG_FILENAME;
 
 /**
  * Spawn 'lair-keystore' process
@@ -195,11 +195,11 @@ module.exports.hasActivatedApp = hasActivatedApp;
 
 
 /**
- * Uninstall current App and reinstall with new uuid
+ * Uninstall current App and reinstall with new uid
  */
-async function reinstallApp(adminWs, uuid) {
+async function reinstallApp(adminWs, uid) {
   await adminWs.deactivateApp({ installed_app_id: SNAPMAIL_APP_ID });
-  await installApp(adminWs, uuid);
+  await installApp(adminWs, uid);
 }
 module.exports.reinstallApp = reinstallApp;
 
@@ -207,10 +207,12 @@ module.exports.reinstallApp = reinstallApp;
 /**
  *  Connect to Admin interface, install App and attach a port
  * @param adminWs
- * @param uuid
+ * @param uid
  * @returns {Promise<void>}
  */
 async function installApp(adminWs, uid) {
+  const installed_app_id = SNAPMAIL_APP_ID;
+  log('info', 'Installing app: ' + installed_app_id);
   // Generate keys
   let myPubKey = await adminWs.generateAgentPubKey();
   // Register Dna
@@ -230,9 +232,12 @@ async function installApp(adminWs, uid) {
   // Install Dna
   try {
     await adminWs.installApp({
-      agent_key: myPubKey, installed_app_id: SNAPMAIL_APP_ID, dnas: [{
-        hash, nick: 'snapmail.dna',
-      },],
+      agent_key: myPubKey,
+      installed_app_id,
+      dnas: [{
+        hash,
+        nick: uid,
+      }],
     });
   } catch (err) {
     log('error','[admin] installApp() failed:');
@@ -240,7 +245,7 @@ async function installApp(adminWs, uid) {
     return;
   }
   log('info','App installed');
-  await adminWs.activateApp({ installed_app_id: SNAPMAIL_APP_ID });
+  await adminWs.activateApp({ installed_app_id });
   log('info','App activated');
 }
 module.exports.installApp = installApp;

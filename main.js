@@ -1,6 +1,6 @@
 // Modules to control application life and create native browser window
 const { app, BrowserWindow, Menu, shell } = require('electron');
-const { spawn, fork } = require('child_process');
+const { spawn } = require('child_process');
 const fs = require('fs');
 const path = require('path');
 const kill = require('tree-kill');
@@ -11,7 +11,7 @@ const prompt = require('electron-prompt');
 const { log, logger } = require('./logger');
 const { wslPath, killAllWsl } = require('./cli');
 const {generateConductorConfig, spawnKeystore,
-  DEFAULT_BOOTSTRAP_URL, CONDUCTOR_CONFIG_FILENAME, CONFIG_PATH, STORAGE_PATH,
+  DEFAULT_BOOTSTRAP_URL, CONDUCTOR_CONFIG_FILENAME, APP_CONFIG_FILENAME, CONFIG_PATH, STORAGE_PATH,
   hasActivatedApp, connectToAdmin, installApp, reinstallApp} = require('./config');
 
 // -- Code -- //
@@ -77,12 +77,12 @@ let g_keystore_proc = undefined;
 let g_canQuit = true;
 let g_canMdns = false;
 let g_bootstrapUrl = '';
-let g_uuid = '';
+let g_uid = '';
 let g_proxyUrl = '';
 let g_storagePath = STORAGE_PATH;
 let g_configPath = undefined;
 let g_adminWs = undefined;
-let g_uuidList = undefined;
+let g_uidList = undefined;
 
 // --  Create missing dirs -- //
 
@@ -106,6 +106,7 @@ if (process.argv.length > 2) {
 // Determine final conductor config file path
 g_configPath = path.join(g_storagePath, CONDUCTOR_CONFIG_FILENAME);
 log('debug',{g_configPath});
+let g_appConfigPath = path.join(g_storagePath, APP_CONFIG_FILENAME);
 
 // -- Set Globals from current conductor config --/
 
@@ -133,18 +134,14 @@ log('debug',{g_configPath});
     log('debug',{ g_proxyUrl });
 
     // -- APP config -- //
-    // const appPath = path.join(g_storagePath, APP_CONFIG_FILENAME);
-    // const appConfigBuffer = fs.readFileSync(appPath);
-    // const appConfig = appConfigBuffer.toString();
-    //console.log({appConfig})
-    // Get All UUID
-    //let regex = /uuid: (.*)$/gm;
-    //let match = regex.exec(appConfig);
-    //g_uuidList = match[1];
+    log('debug', 'Reading file ' + g_appConfigPath);
+    const appConfigString = fs.readFileSync(g_appConfigPath).toString();
+    g_uidList = appConfigString.replace(/\r\n/g,'\n').split('\n');
+    log('debug', {g_uidList});
 
   } catch(err) {
     if(err.code === 'ENOENT') {
-      log('error', 'File not found: ' + g_configPath);
+      log('error', 'File not found: ' + err);
     } else {
       log('error','Loading config file failed: ' + err);
     }
@@ -189,10 +186,10 @@ function createWindow() {
   //mainWindow.webContents.openDevTools()
 
   // Emitted when the window is closed.
-  mainWindow.on('closed', function () {
+  mainWindow.on('closed', async function () {
     log('debug', '*** mainWindow Closed');
     try {
-      killHolochain();
+      await killHolochain();
     } catch (err) {
       log('error', '*** Error while closing Holochain:');
       log('error', err);
@@ -213,6 +210,7 @@ function createWindow() {
  *
  */
 async function spawnHolochainProc() {
+  log('debug','spawnHolochainProc...');
   // Adapt to WSL if needed
   let bin = HOLOCHAIN_BIN;
   let args = ['-c', wslPath(g_configPath)];
@@ -266,7 +264,7 @@ async function spawnHolochainProc() {
 /**
  *
  */
-function killHolochain() {
+async function killHolochain() {
   // SIGTERM by default
   if (g_holochain_proc) {
     log('info', 'Killing holochain sub processes...');
@@ -288,8 +286,9 @@ function killHolochain() {
       }
     });
   }
+  // Wait a bit for the kill commands to complete
+  await sleep(1000);
   // Make sure there is no outstanding holochain procs
-  log('info', 'Killing WSL sub processes...');
   killAllWsl(HOLOCHAIN_BIN);
   killAllWsl(LAIR_KEYSTORE_BIN);
 }
@@ -301,7 +300,7 @@ function killHolochain() {
  */
 async function startConductor(canRegenerateConfig) {
   g_canQuit = false;
-  killHolochain(); // Make sure there is no outstanding Holochain & keystore procs
+  await killHolochain(); // Make sure there is no outstanding Holochain & keystore procs
   g_keystore_proc = await spawnKeystore(LAIR_KEYSTORE_BIN);
   //await sleep(2000);
   if (canRegenerateConfig) {
@@ -317,9 +316,9 @@ async function startConductor(canRegenerateConfig) {
     let activeAppPort = await hasActivatedApp(g_adminWs);
     if(activeAppPort === 0) {
       // Prompt for UUID
-      g_uuid = '<my-network-name>';
-      await promptUuid(true);
-      await installApp(g_adminWs, g_uuid);
+      g_uid = '<my-network-id>';
+      await promptUid(true);
+      await installApp(g_adminWs, g_uid);
       //log('debug','Attaching to app at ' + g_appPort + ' ...');
       g_appPort = await g_adminWs.attachAppInterface({port: 0});
       console.log({g_appPort});
@@ -327,8 +326,10 @@ async function startConductor(canRegenerateConfig) {
       log('info','App Interface attached: ' + g_appPort);
     } else {
       g_appPort = activeAppPort;
+      // FIXME Prompt UID selection menu
+      g_uid = g_uidList[0];
     }
-    g_indexUrl += '' + g_appPort;
+    g_indexUrl += '' + g_appPort + '&UID=' + g_uid;
     console.log({g_indexUrl});
   } catch (err) {
     log('error', 'Conductor setup failed:');
@@ -408,6 +409,7 @@ app.on('window-all-closed', function () {
  *
  */
 app.on('activate', function () {
+  log('debug','activated');
   // On macOS it's common to re-create a window in the app when the
   // dock icon is clicked and there are no other windows open.
   if (g_mainWindow === null) {
@@ -431,8 +433,8 @@ async function promptNetworkType(canExitOnCancel) {
     value: g_proxyUrl,
     type: 'select',
     selectOptions: {
-      'true': 'mDNS (LAN)',
       'false': 'Bootstrap server (WAN)',
+      'true': 'mDNS (LAN)',
     }
   });
   if(r === null) {
@@ -446,6 +448,7 @@ async function promptNetworkType(canExitOnCancel) {
   }
   return r !== null
 }
+
 
 /**
  * @returns false if user cancelled
@@ -478,14 +481,14 @@ async function promptBootstrapUrl(canExitOnCancel) {
 /**
  * @returns false if user cancelled
  */
-async function promptUuid(canExitOnCancel) {
+async function promptUid(canExitOnCancel) {
   let r = await prompt({
     title: 'SnapMail: Network Unique identifier',
     height: 180,
     width: 500,
     alwaysOnTop: true,
-    label: 'UUID:',
-    value: g_uuid,
+    label: 'UID:',
+    value: g_uid,
     inputAttrs: {
       type: 'string'
     },
@@ -498,7 +501,12 @@ async function promptUuid(canExitOnCancel) {
     }
   } else {
     log('debug','result: ' + r);
-    g_uuid = r;
+    g_uid = r;
+    try {
+      fs.appendFileSync(g_appConfigPath, g_uid + '\n');
+    } catch (err) {
+      log('error','Writing config file failed: ' + err);
+    }
   }
   return r !== null
 }
@@ -552,8 +560,10 @@ const menutemplate = [
       {
         label: 'Change Network type',
         click: async function () {
-          await promptNetworkType(false);
-          await startConductor(true);
+          let changed = await promptNetworkType(false);
+          if (changed) {
+            await startConductor(true);
+          }
         },
       },
       {
@@ -573,10 +583,12 @@ const menutemplate = [
         }
       },
       {
-        label: 'Change Network UUID',
+        label: 'Change Network ID',
         click: async function () {
-          await promptUuid(false);
-          await reinstallApp(g_adminWs, g_uuid);
+          let changed = await promptUid(false);
+          if (changed) {
+            await reinstallApp(g_adminWs, g_uid);
+          }
         },
       },
       {
@@ -628,3 +640,5 @@ const menutemplate = [
 ];
 
 Menu.setApplicationMenu(Menu.buildFromTemplate(menutemplate));
+
+log('debug',"If app ready is not called its because you are trying to launch on windows from WSL and not from normal cmd");
