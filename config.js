@@ -144,7 +144,7 @@ function htos(u8array) {
  * @returns {Promise<AdminWebsocket>}
  */
 async function connectToAdmin(adminPort) {
-  let adminWs = await AdminWebsocket.connect(`ws://localhost:${ adminPort }`);
+  let adminWs = await AdminWebsocket.connect(`ws://localhost:${ adminPort }`, 30000);
   //log('debug',{adminWs});
   log('debug','Connected to admin at ' + adminPort);
   return adminWs;

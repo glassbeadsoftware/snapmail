@@ -249,6 +249,11 @@ async function spawnHolochainProc() {
         let regex = /###ADMIN_PORT:([0-9]*)###/gm;
         let match = regex.exec(output);
         //console.log({match});
+        if (match === undefined || match === null || match.length === 0) {
+          console.log('ADMIN port not found in holochain output:');
+          console.log({output});
+          return;
+        }
         g_adminPort = match[1];
         resolve();
       }
