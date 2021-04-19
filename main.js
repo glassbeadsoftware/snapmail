@@ -193,12 +193,12 @@ function createWindow() {
       log('error', '*** Error while closing Holochain:');
       log('error', err);
     }
-    // let start = Date.now();
-    // let diff = 0;
-    // do {
-    //   diff = Date.now() - start;
-    //   //log('debug', 'diff = ' + diff);
-    // } while(diff < 3000);
+    // Wait for kill subprocess to finish on slow machines
+    let start = Date.now();
+    let diff = 0;
+    do {
+      diff = Date.now() - start;
+    } while(diff < 1000);
     log('info', '*** Holochain Closed');
     // Dereference the window object, usually you would store windows
     // in an array if your app supports multi windows, this is the time
