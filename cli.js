@@ -35,10 +35,11 @@ module.exports.wslPath = wslPath;
  * Make sure there is no outstanding holochain process in wsl by calling `killall` command
  */
 function killAllWsl(psname) {
+  // log('debug', 'killAllWsl: ' + process.platform);
   if (process.platform !== "win32") {
     return;
   }
-  log('info', 'killAllWsl:' + psname);
+  log('info', 'killAllWsl: ' + psname);
   let { stdout, stderr, error } = spawnSync(
     process.env.comspec,
     ["/c", "wsl", "killall", psname],
@@ -53,7 +54,7 @@ function killAllWsl(psname) {
   if (error) {
     log('error', error.toString());
   }
-  //log('info', 'killAllWsl:' + psname + ' - DONE');
+  log('info', 'killAllWsl: ' + psname + ' - DONE');
 }
 module.exports.killAllWsl = killAllWsl;
 

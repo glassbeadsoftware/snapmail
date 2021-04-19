@@ -183,14 +183,22 @@ function createWindow() {
   //mainWindow.webContents.openDevTools()
 
   // Emitted when the window is closed.
-  mainWindow.on('closed', async function () {
+  mainWindow.on('closed', function () {
     log('debug', '*** mainWindow Closed');
     try {
-      await killHolochain();
+      killHolochain().then(() => {
+        log('info', '*** Holochain promise Closed');
+      });
     } catch (err) {
       log('error', '*** Error while closing Holochain:');
       log('error', err);
     }
+    // let start = Date.now();
+    // let diff = 0;
+    // do {
+    //   diff = Date.now() - start;
+    //   //log('debug', 'diff = ' + diff);
+    // } while(diff < 3000);
     log('info', '*** Holochain Closed');
     // Dereference the window object, usually you would store windows
     // in an array if your app supports multi windows, this is the time
@@ -264,35 +272,52 @@ async function spawnHolochainProc() {
 }
 
 /**
- *
+ * Make sure there is no outstanding holochain procs
  */
 async function killHolochain() {
   // SIGTERM by default
-  if (g_holochain_proc) {
-    log('info', 'Killing holochain sub processes...');
-    kill(g_holochain_proc.pid, function(err) {
-      if (!err) {
-        log('info', 'killed all holochain sub processes');
-      } else {
-        log('error', err)
-      }
-    });
+  if (process.platform !== "win32") {
+    let canWaitForHolochain = false;
+    if(g_holochain_proc && g_holochain_proc.pid) {
+      canWaitForHolochain = true;
+      log('info', 'Killing holochain sub processes...');
+      kill(g_holochain_proc.pid, function(err) {
+        canWaitForHolochain = false;
+        if(!err) {
+          log('info', 'killed all holochain sub processes');
+        } else {
+          log('error', err)
+        }
+      });
+    }
+    let canWaitForKeystore = false;
+    if(g_keystore_proc && g_keystore_proc.pid) {
+      canWaitForKeystore = true;
+      log('info', 'Killing lair-keystore sub processes...');
+      kill(g_keystore_proc.pid, function(err) {
+        canWaitForKeystore = false;
+        if(!err) {
+          log('info', 'killed all lair-keystore sub processes');
+        } else {
+          log('error', err)
+        }
+      });
+    }
+    // Wait a bit for the kill commands to complete
+    log('info', 'waiting...');
+    while(canWaitForHolochain) {
+      await sleep(10);
+    }
+    while(canWaitForKeystore) {
+      await sleep(10);
+    }
+    //await sleep(2000);
+    log('info', 'Killing sub-processes done.');
+  } else {
+    killAllWsl(HOLOCHAIN_BIN);
+    killAllWsl(LAIR_KEYSTORE_BIN);
   }
-  if (g_keystore_proc) {
-    log('info', 'Killing lair-keystore sub processes...');
-    kill(g_keystore_proc.pid, function(err) {
-      if (!err) {
-      log('info', 'killed all lair-keystore sub processes');
-      } else {
-        log('error', err)
-      }
-    });
-  }
-  // Wait a bit for the kill commands to complete
-  await sleep(1000);
-  // Make sure there is no outstanding holochain procs
-  killAllWsl(HOLOCHAIN_BIN);
-  killAllWsl(LAIR_KEYSTORE_BIN);
+  log('debug', 'killHolochain() - DONE');
 }
 
 
