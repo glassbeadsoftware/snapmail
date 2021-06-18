@@ -2,6 +2,8 @@ const { spawnSync } = require('child_process');
 //const path = require('path');
 const { log } = require('./logger');
 
+const {CURRENT_DIR} = require('./globals');
+
 /**
  * On windows, call `wsl wslpath` on filePath to convert it to a wsl compatible filepath usable within wsl
  * @param filePath
@@ -16,7 +18,7 @@ function wslPath(filePath) {
   let { stdout, stderr, error } = spawnSync(
     process.env.comspec,
     wslparams,
-    {cwd: __dirname}
+    {cwd: CURRENT_DIR}
   );
   if (stderr) {
     log('error', stderr.toString());
@@ -43,7 +45,7 @@ function killAllWsl(psname) {
   let { stdout, stderr, error } = spawnSync(
     process.env.comspec,
     ["/c", "wsl", "killall", psname],
-    {cwd: __dirname},
+    {cwd: CURRENT_DIR},
   );
   if (stdout) {
     log('info', stdout.toString());

@@ -1,20 +1,20 @@
 {
   "name": "Snapmail",
   "version": "0.0.4",
-  "description": "A simple email application on holochain",
-  "main": "main.js",
+  "description": "A minimalist email application on holochain",
+  "main": "src/main.js",
   "scripts": {
-    "start": "electron .",
-    "alex": "electron . alex --no-sandbox",
-    "billy": "electron . billy --no-sandbox",
-    "camille": "electron . camille --no-sandbox",
-    "start-no": "electron . --no-sandbox --enable-logging",
-    "package-windows": "electron-packager . Snapmail --platform=win32 --out=../build --overwrite",
-    "package-osx": "electron-packager . Snapmail --platform=darwin --arch=x64 --out=../build --overwrite",
-    "package-mac": "electron-packager . Snapmail --platform=darwin --arch=x64 --prune=true --overwrite --out=../build",
-    "package-linux-asar": "electron-packager . Snapmail --platform=linux --arch=x64 --asar --prune=true --overwrite --out=../build",
-    "package-linux": "electron-packager . Snapmail --platform=linux --arch=x64 --overwrite --out=../build",
-    "package-arm": "electron-packager . Snapmail --platform=linux --arch=arm64 --overwrite --out=../build"
+    "start": "./node_modules/.bin/electron electron",
+    "alex": "./node_modules/.bin/electron . alex --no-sandbox",
+    "billy": "./node_modules/.bin/electron electron billy --no-sandbox",
+    "camille": "./node_modules/.bin/electron electron camille --no-sandbox",
+    "start-no": "./node_modules/.bin/electron electron --no-sandbox --enable-logging",
+    "package-windows": "./node_modules/.bin/electron-packager electron Snapmail --platform=win32 --out=../build --overwrite",
+    "package-osx": "./node_modules/.bin/electron-packager electron Snapmail --platform=darwin --arch=x64 --out=../build --overwrite",
+    "package-mac": "./node_modules/.bin/electron-packager electron Snapmail --platform=darwin --arch=x64 --prune=true --overwrite --out=../build",
+    "package-linux-asar": "./node_modules/.bin/electron-packager electron Snapmail --platform=linux --arch=x64 --asar --prune=true --overwrite --out=../build",
+    "package-linux": "./node_modules/.bin/electron-packager electron Snapmail --platform=linux --arch=x64 --overwrite --out=../build",
+    "package-arm": "./node_modules/.bin/electron-packager electron Snapmail --platform=linux --arch=arm64 --overwrite --out=../build"
   },
   "repository": "https://github.com/glassbeadsoftware/snapmail-release",
   "keywords": [

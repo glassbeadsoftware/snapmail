@@ -1,5 +1,5 @@
-const path = require('path');
-const { app } = require('electron');
+// const path = require('path');
+// const { app } = require('electron');
 const { log } = require('./logger');
 const fs = require('fs');
 const { wslPath } = require('./cli');
@@ -7,26 +7,17 @@ const { spawn, fork } = require('child_process');
 const { AdminWebsocket } = require('@holochain/conductor-api');
 //const { AdminWebsocket } = require('../holochain-conductor-api');
 
-
-
 const {bytesToBase64} = require('byte-base64');
+
+const {
+  //CONDUCTOR_CONFIG_FILENAME, APP_CONFIG_FILENAME, CONFIG_PATH, STORAGE_PATH,
+  CURRENT_DIR } = require('./globals');
 
 // -- CONSTS -- //
 
-const CONFIG_PATH = path.join(app.getPath('appData'), 'Snapmail');
-const STORAGE_PATH = path.join(CONFIG_PATH, 'storage');
-const CONDUCTOR_CONFIG_FILENAME = 'conductor-config.yaml';
-const APP_CONFIG_FILENAME = 'app-config.txt';
 const DEFAULT_PROXY_URL ='kitsune-proxy://VYgwCrh2ZCKL1lpnMM1VVUee7ks-9BkmW47C_ys4nqg/kitsune-quic/h/kitsune-proxy.harris-braun.com/p/4010/--';
-const DEFAULT_BOOTSTRAP_URL = 'https://bootstrap-staging.holo.host';
 const SNAPMAIL_APP_ID = 'snapmail-app'; // MUST MATCH SNAPMAIL_UI config
 const LAIR_MAGIC_READY_STRING = '#lair-keystore-ready#';
-
-module.exports.DEFAULT_BOOTSTRAP_URL = DEFAULT_BOOTSTRAP_URL;
-module.exports.CONFIG_PATH = CONFIG_PATH;
-module.exports.STORAGE_PATH = STORAGE_PATH;
-module.exports.CONDUCTOR_CONFIG_FILENAME = CONDUCTOR_CONFIG_FILENAME;
-module.exports.APP_CONFIG_FILENAME = APP_CONFIG_FILENAME;
 
 /**
  * Spawn 'lair-keystore' process
@@ -40,9 +31,9 @@ async function spawnKeystore(keystore_bin) {
     bin = process.env.comspec;
     args.unshift("/c", "wsl", keystore_bin);
   }
-  log('info', 'Spawning ' + bin + ' (dirname: ' + __dirname + ')');
+  log('info', 'Spawning ' + bin + ' (dirname: ' + CURRENT_DIR + ')');
   const keystore_proc = spawn(bin, args, {
-    cwd: __dirname,
+    cwd: CURRENT_DIR,
     detached: false,
     //stdio: 'pipe',
     env: {

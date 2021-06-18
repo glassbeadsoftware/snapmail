@@ -8,11 +8,12 @@ const { dialog } = require('electron');
 const prompt = require('electron-prompt');
 
 // My Modules
+const {
+  CONDUCTOR_CONFIG_FILENAME, APP_CONFIG_FILENAME, CONFIG_PATH, STORAGE_PATH, CURRENT_DIR} = require('./globals');
 const { log, logger } = require('./logger');
 const { wslPath, killAllWsl } = require('./cli');
-const {generateConductorConfig, spawnKeystore,
-  DEFAULT_BOOTSTRAP_URL, CONDUCTOR_CONFIG_FILENAME, APP_CONFIG_FILENAME, CONFIG_PATH, STORAGE_PATH,
-  hasActivatedApp, connectToAdmin, installApp} = require('./config');
+const {generateConductorConfig, spawnKeystore, hasActivatedApp, connectToAdmin, installApp, DEFAULT_BOOTSTRAP_URL} = require('./config');
+
 
 // -- Code -- //
 
@@ -26,7 +27,7 @@ if (g_canDebug) {
   require('electron-debug')({ isEnabled: true });
 }
 
-const dist_dir = g_canDebug? "dbg" : "ui";
+const DIST_DIR = g_canDebug? "ui_dbg" : "ui";
 
 /** CONSTS **/
 
@@ -53,14 +54,14 @@ var g_adminPort = 0;
 var g_appPort = 0;
 //var g_appPort = 8900 + Math.floor(Math.random() * 100); // Randomized port on each launch
 //log('debug',{g_appPort});
-const g_errorUrl = 'file://' + __dirname + '/'+ dist_dir +'/error.html';
-const INDEX_URL = 'file://' + __dirname + '/'+ dist_dir +'/index.html?APP=';
+const g_errorUrl = 'file://' + CURRENT_DIR + '/'+ DIST_DIR +'/error.html';
+const INDEX_URL = 'file://' + CURRENT_DIR + '/'+ DIST_DIR +'/index.html?APP=';
 log('debug', 'INDEX_URL = ' + INDEX_URL);
 // -- Start-up stuff -- //
 
 /** Add Holochain bins to PATH for WSL */
 const BIN_DIR = "bin";
-const BIN_PATH = path.join(__dirname, BIN_DIR);
+const BIN_PATH = path.join(CURRENT_DIR, BIN_DIR);
 log('debug', 'BIN_PATH = ' + BIN_PATH);
 if (process.platform === "win32") {
   process.env.PATH += ';' + BIN_PATH;
@@ -167,7 +168,7 @@ function createWindow() {
       nodeIntegration: true,
       devTools: true
     },
-    icon: __dirname + `/assets/favicon.png`,
+    icon: CURRENT_DIR + `/assets/favicon.png`,
     webgl: false,
     enableWebSQL: false,
     //autoHideMenuBar: true,
@@ -224,9 +225,9 @@ async function spawnHolochainProc() {
     args.unshift("/c", "wsl", HOLOCHAIN_BIN);
   }
   // Spawn "holochain" subprocess
-  log('info', 'Spawning ' + bin + ' (dirname: ' + __dirname + ')');
+  log('info', 'Spawning ' + bin + ' (dirname: ' + CURRENT_DIR + ')');
   let holochain_proc = spawn(bin, args, {
-    cwd: __dirname,
+    cwd: CURRENT_DIR,
     detached: false,
     //stdio: 'pipe',
     env: {
