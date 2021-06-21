@@ -3,7 +3,7 @@ SnapMail is an open-source P2P email app based on [Holochain](https://holochain.
 It is the latest iteration of [Snapmail](http://www.glassbead.com/snapmail/index.shtml) from [Glass Bead Software](http://www.glassbead.com/).
 
 
-![sshot](https://github.com/ddd-mtl/snapmail-release/blob/master/snapmail-ui.png)
+![sshot](https://github.com/ddd-mtl/snapmail-release/blob/master/assets/snapmail-ui.png)
 
 This is the release repo for the native application (Electron).  
 See [snapmail-rsm](https://github.com/ddd-mtl/snapmail-rsm) for holochain backend or [snapmail-ui](https://github.com/ddd-mtl/snapmail-ui) for web frontend source code.
