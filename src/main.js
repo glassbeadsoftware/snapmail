@@ -9,16 +9,16 @@ const prompt = require('electron-prompt');
 
 // My Modules
 const {
-  CONDUCTOR_CONFIG_FILENAME, APP_CONFIG_FILENAME, CONFIG_PATH, STORAGE_PATH, CURRENT_DIR} = require('./globals');
+  CONDUCTOR_CONFIG_FILENAME, APP_CONFIG_FILENAME, CONFIG_PATH, STORAGE_PATH, CURRENT_DIR, DEFAULT_BOOTSTRAP_URL } = require('./globals');
 const { log, logger } = require('./logger');
 const { wslPath, killAllWsl } = require('./cli');
-const {generateConductorConfig, spawnKeystore, hasActivatedApp, connectToAdmin, installApp, DEFAULT_BOOTSTRAP_URL} = require('./config');
+const {generateConductorConfig, spawnKeystore, hasActivatedApp, connectToAdmin, installApp } = require('./config');
 
 
 // -- Code -- //
 
 // Toggle this for debug / release mode
-const g_canDebug = false;
+const g_canDebug = true;
 
 require('electron-context-menu')();
 require('fix-path')();
@@ -98,9 +98,40 @@ if (!fs.existsSync(STORAGE_PATH)) {
 if (process.argv.length > 2) {
   g_storagePath = path.join(STORAGE_PATH, process.argv[2]);
   log('debug',{g_storagePath});
+  let version_txt = path.join(g_storagePath, "version.txt");
+  // Create storage and setup if none found
   if (!fs.existsSync(g_storagePath)) {
     log('info', "Creating missing dir: " + g_storagePath);
     fs.mkdirSync(g_storagePath)
+    //let appVersion = require("electron").remote.app.getVersion();
+    try { fs.writeFileSync(version_txt, app.getVersion(), 'utf-8'); }
+    catch(e) {
+      //showErrorDialog('Failed to save the version_txt file !');
+      console.error('Failed to save the version_txt file !')
+      process.abort();
+    }
+  } else {
+    // Make sure its a compatible version
+    try {
+      console.log('Reading: ' + version_txt);
+      let version = fs.readFileSync(version_txt, 'utf-8');
+      if (version !== app.getVersion()) {
+        console.error('App Version mismatch :-(')
+        console.error(version);
+        console.error(app.getVersion());
+        //dialog.showOpenDialogSync({ properties: ['openFile', 'multiSelections'] })
+        //showErrorDialog('App Version mismatch :-(');
+        //app.quit();
+        process.abort();
+      }
+    }
+    catch(e) {
+      //showErrorDialog('Failed to read the version_txt file !');
+      //app.quit();
+      console.error('Failed to read the version_txt file !')
+      console.error(e);
+      process.abort();
+    }
   }
 }
 // Determine final conductor config file path
@@ -405,9 +436,12 @@ app.on('ready', async function () {
   } catch (err) {
     log('error','Holochain init failed:');
     log('error',{err});
-    await g_mainWindow.loadURL(g_errorUrl);
+    if (g_mainWindow !== null && g_mainWindow !== undefined) {
+      await g_mainWindow.loadURL(g_errorUrl);
+    } else {
+      //app.quit();
+    }
   }
-
 });
 
 
@@ -610,6 +644,28 @@ async function promptProxyUrl(canExitOnCancel) {
   return r !== null
 }
 
+function showErrorDialog(message) {
+  dialog.showMessageBox(g_mainWindow, {
+    title: 'Application error',
+    buttons: ['OK'],
+    type: 'error',
+    message,
+  });
+}
+
+function showAbout() {
+  dialog.showMessageBox({
+    title: `About ${app.getName()}`,
+    message: `${app.getName()} - v${app.getVersion()}`,
+    detail: `A minimalist email app on Holochain from Glass Bead Software`,
+    buttons: [],
+    type: "info",
+    //iconIndex: 0,
+    //icon: CONFIG.ICON,
+    //icon: app.getFileIcon(path)
+});
+}
+
 /**
  * In this file you can include the rest of your app's specific main process code.
  * You can also put them in separate files and require them here.
@@ -619,14 +675,14 @@ const menutemplate = [
   {
     label: 'File', submenu: [{
       label: 'Quit',
-      accelerator: 'Command+Q',
+      //accelerator: 'Command+Q',
       click: function () {
         app.quit()
       },
     },],
   },
   {
-    label: 'Edit',
+    label: 'Settings',
     submenu: [
       {
         label: 'Change Network type',
@@ -721,6 +777,15 @@ const menutemplate = [
         },
       },
     ],
+  },
+  {
+    label: 'Help', submenu: [{
+      label: 'About',
+      //accelerator: 'Command+A',
+      click: function () {
+        showAbout();
+      },
+    },],
   },
 ];
 

@@ -9,9 +9,7 @@ const { AdminWebsocket } = require('@holochain/conductor-api');
 
 const {bytesToBase64} = require('byte-base64');
 
-const {
-  //CONDUCTOR_CONFIG_FILENAME, APP_CONFIG_FILENAME, CONFIG_PATH, STORAGE_PATH,
-  CURRENT_DIR } = require('./globals');
+const { CURRENT_DIR } = require('./globals');
 
 // -- CONSTS -- //
 
@@ -43,7 +41,7 @@ async function spawnKeystore(keystore_bin) {
   // -- Handle Outputs
   // Wait for holochain to boot up
   await new Promise((resolve, reject) => {
-    keystore_proc.stdout.once('data', (data) => {
+    keystore_proc.stdout.on('data', (data) => {
       log('info', 'lair-keystore: ' + data.toString());
       if(data.toString().indexOf(LAIR_MAGIC_READY_STRING) > -1) {
         resolve();
