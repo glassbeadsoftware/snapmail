@@ -4,7 +4,10 @@
   "description": "A minimalist email application on holochain",
   "main": "src/main.js",
   "scripts": {
+    "setup": ". scripts/setup.sh && scripts/setup-hc.sh",
+    "build-hc": ". scripts/build-hc.sh",
     "build": ". scripts/build.sh",
+    "build-dbg": ". scripts/build-dbg.sh",
     "start": "./node_modules/.bin/electron electron",
     "alex": "./node_modules/.bin/electron . alex --no-sandbox",
     "billy": "./node_modules/.bin/electron electron billy --no-sandbox",
