@@ -18,7 +18,7 @@ const {generateConductorConfig, spawnKeystore, hasActivatedApp, connectToAdmin, 
 // -- Code -- //
 
 // Toggle this for debug / release mode
-const g_canDebug = true;
+const g_canDebug = false;
 
 require('electron-context-menu')();
 require('fix-path')();
