@@ -791,4 +791,4 @@ const menutemplate = [
 
 Menu.setApplicationMenu(Menu.buildFromTemplate(menutemplate));
 
-log('debug',"If app ready is not called its because you are trying to launch on windows from WSL and not from normal cmd");
+log('debug'," !! If app.ready() is not called its because you are trying to launch on windows from WSL and not from normal cmd !!");

@@ -4,6 +4,11 @@
   "description": "A minimalist email application on holochain",
   "main": "src/main.js",
   "scripts": {
+    "postinstall": "electron-builder install-app-deps",
+    "dist": "electron-builder",
+    "dist-linux": "electron-builder --linux tar.gz",
+    "dist-mac": "electron-builder --mac",
+    "dist-arm64": "electron-builder --arm64 --linux tar.gz",
     "setup": ". scripts/setup.sh && scripts/setup-hc.sh",
     "build-hc": ". scripts/build-hc.sh",
     "build": ". scripts/build.sh",
@@ -14,12 +19,12 @@
     "billy": "./node_modules/.bin/electron electron billy --no-sandbox",
     "camille": "./node_modules/.bin/electron electron camille --no-sandbox",
     "start-no": "./node_modules/.bin/electron electron --no-sandbox --enable-logging",
-       "package-windows": "electron-packager node_modules/.bin/electron Snapmail --platform=win32 --out=./build --overwrite",
-           "package-osx": "./node_modules/.bin/electron-packager ./node_modules/.bin/electron Snapmail --platform=darwin --arch=x64 --out=./build --overwrite",
-           "package-mac": "./node_modules/.bin/electron-packager ./node_modules/.bin/electron Snapmail --platform=darwin --arch=x64 --prune=true --overwrite --out=./build",
+    "package-windows": "electron-packager node_modules/.bin/electron Snapmail --platform=win32 --out=./build --overwrite",
+    "package-osx": "./node_modules/.bin/electron-packager ./node_modules/.bin/electron Snapmail --platform=darwin --arch=x64 --out=./build --overwrite",
+    "package-mac": "./node_modules/.bin/electron-packager ./node_modules/.bin/electron Snapmail --platform=darwin --arch=x64 --prune=true --overwrite --out=./build",
     "package-linux-asar": "./node_modules/.bin/electron-packager ./node_modules/.bin/electron Snapmail --platform=linux --arch=x64 --asar --prune=true --overwrite --out=./build",
-         "package-linux": "./node_modules/.bin/electron-packager ./node_modules/.bin/electron Snapmail --platform=linux --arch=x64 --overwrite --out=./build",
-           "package-arm": "./node_modules/.bin/electron-packager ./node_modules/.bin/electron Snapmail --platform=linux --arch=arm64 --overwrite --out=./build"
+    "package-linux": "./node_modules/.bin/electron-packager ./node_modules/.bin/electron Snapmail --platform=linux --arch=x64 --overwrite --out=./build",
+    "package-arm": "./node_modules/.bin/electron-packager ./node_modules/.bin/electron Snapmail --platform=linux --arch=arm64 --overwrite --out=./build"
   },
   "repository": "https://github.com/glassbeadsoftware/snapmail-release",
   "keywords": [
@@ -27,6 +32,25 @@
     "Holochain",
     "Snapmail"
   ],
+  "build": {
+    "productName": "Snapmail",
+    "afterSign": "./afterSignHook.js",
+    "appId": "com.glass-bead-software.snapmail",
+    "copyright": "Copyright © 2021 Harris-Braun Enterprises LLC",
+    "asar": false,
+    "files": [
+      "src/*",
+      "ui/**/*",
+      "dna/*",
+      "bin/*",
+      "node_modules/**/*",
+      "package.json"
+    ],
+    "directories": {
+      "buildResources": "assets",
+      "output": "out"
+    }
+  },
   "author": "Harris-Braun Enterprises, LLC and contributors",
   "license": "CAL-1.0 Beta 4",
   "dependencies": {
@@ -38,7 +62,6 @@
     "electron-debug": "^3.0.1",
     "electron-log": "^3.0.9",
     "electron-osx-sign": "^0.4.14",
-    "electron-packager": "^14.1.0",
     "electron-prompt": "^1.6.0",
     "fix-path": "^2.1.0",
     "lint": "^0.7.0",
@@ -49,6 +72,8 @@
     "tree-kill": "^1.2.2"
   },
   "devDependencies": {
+    "electron-builder": "^22.11.7",
+    "electron-notarize": "^1.0.0",
     "electron": "^8.5.5"
   }
 }
