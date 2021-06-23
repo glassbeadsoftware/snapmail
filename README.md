@@ -5,7 +5,7 @@ It is the latest iteration of [Snapmail](http://www.glassbead.com/snapmail/index
 
 ![sshot](https://github.com/ddd-mtl/snapmail-release/blob/master/assets/snapmail-ui.png)
 
-This is the release repo for the native application (Electron).  
+This is the repository for the native application (Electron).  
 See [snapmail-rsm](https://github.com/ddd-mtl/snapmail-rsm) for holochain backend or [snapmail-ui](https://github.com/ddd-mtl/snapmail-ui) for web frontend source code.
 
 (CI and NIX configs are not set up for the moment.)
@@ -35,10 +35,9 @@ Use your own or the public one provided by Holo `bootstrap.holo.net`
 ## Releasing
 
 Steps required for making a new release:
- 2. Create a `build` folder
- 1. Download from github.com the `snapmail-ui` repo
- 3. In that folder run `npm run prod` (it generates the ui)
- 4. Copy the content of the `dist` subfolder to the `ui` subfolder in `snapmail-release`
- 5. Download or build `holochain` and `lair-keystore`
- 6. Copy `holochain` and `lair-keystore` binaries to `bin` subfolder in `snapmail-release`
- 1. In `snapmail-release` run packaging command for the current platform. ex: `npm run package-mac`
+1. `npm run setup`: Downloads related Snapmail repos
+1. `npm run setup-hc`: Downloads Holochain repo required by snapmail
+1. `npm run build-hc`: Builds Holochain binaries
+1. `npm run build`: Builds snapmail DNA and UI
+1. `npm run dist`: Packages the electron app for the current platform (outputs in `./out`)
+

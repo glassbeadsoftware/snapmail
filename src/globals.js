@@ -7,7 +7,9 @@ const CONDUCTOR_CONFIG_FILENAME = 'conductor-config.yaml';
 const APP_CONFIG_FILENAME = 'app-config.txt';
 const DEFAULT_BOOTSTRAP_URL = 'https://bootstrap-staging.holo.host';
 const CURRENT_DIR = path.join(__dirname, '..');
+const DNA_HASH_FILEPATH = './dna/dna_hash.txt';
 
+module.exports.DNA_HASH_FILEPATH = DNA_HASH_FILEPATH;
 module.exports.CURRENT_DIR = CURRENT_DIR;
 module.exports.DEFAULT_BOOTSTRAP_URL = DEFAULT_BOOTSTRAP_URL;
 module.exports.CONFIG_PATH = CONFIG_PATH;

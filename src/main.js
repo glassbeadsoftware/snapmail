@@ -9,7 +9,7 @@ const prompt = require('electron-prompt');
 
 // My Modules
 const {
-  CONDUCTOR_CONFIG_FILENAME, APP_CONFIG_FILENAME, CONFIG_PATH, STORAGE_PATH, CURRENT_DIR, DEFAULT_BOOTSTRAP_URL } = require('./globals');
+  DNA_HASH_FILEPATH, CONDUCTOR_CONFIG_FILENAME, APP_CONFIG_FILENAME, CONFIG_PATH, STORAGE_PATH, CURRENT_DIR, DEFAULT_BOOTSTRAP_URL } = require('./globals');
 const { log, logger } = require('./logger');
 const { wslPath, killAllWsl } = require('./cli');
 const {generateConductorConfig, spawnKeystore, hasActivatedApp, connectToAdmin, installApp } = require('./config');
@@ -83,6 +83,13 @@ let g_storagePath = STORAGE_PATH;
 let g_configPath = undefined;
 let g_adminWs = undefined;
 let g_uidList = [];
+
+// -- Read dna_hash -- //
+var DNA_HASH = '<unknown>';
+if (fs.existsSync(DNA_HASH_FILEPATH)) {
+  DNA_HASH = fs.readFileSync(DNA_HASH_FILEPATH, 'utf-8');
+}
+log('info', "DNA HASH: " + DNA_HASH);
 
 // --  Create missing dirs -- //
 
@@ -194,7 +201,7 @@ function createWindow() {
   // Create the browser window.
   let mainWindow = new BrowserWindow({
     width: 1400,
-    height: 1000,
+    height: 950,
     webPreferences: {
       nodeIntegration: true,
       devTools: true
@@ -655,9 +662,10 @@ function showErrorDialog(message) {
 
 function showAbout() {
   dialog.showMessageBox({
+    width: 800,
     title: `About ${app.getName()}`,
     message: `${app.getName()} - v${app.getVersion()}`,
-    detail: `A minimalist email app on Holochain from Glass Bead Software`,
+    detail: `Dna Hash: ${DNA_HASH}\nA minimalist email app on Holochain from Glass Bead Software`,
     buttons: [],
     type: "info",
     //iconIndex: 0,
