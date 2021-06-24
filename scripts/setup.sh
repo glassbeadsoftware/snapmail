@@ -1,5 +1,7 @@
 #!/bin/sh
 
+npm install
+
 # Create build Directory
 rm -r build
 mkdir build

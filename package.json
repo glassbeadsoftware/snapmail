@@ -8,6 +8,7 @@
     "dist": "electron-builder",
     "dist-linux": "electron-builder --linux tar.gz",
     "dist-mac": "electron-builder --mac",
+    "dist-win": "electron-builder --win",
     "dist-arm64": "electron-builder --arm64 --linux tar.gz",
     "setup": ". scripts/setup.sh && scripts/setup-hc.sh",
     "build-hc": ". scripts/build-hc.sh",
