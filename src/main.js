@@ -101,52 +101,60 @@ if (!fs.existsSync(STORAGE_PATH)) {
   log('info', "Creating missing dir: " + STORAGE_PATH);
   fs.mkdirSync(STORAGE_PATH)
 }
-// get specific storage folder from argv
+
+// -- Determine Session ID -- //
+let sessionId = '';
 if (process.argv.length > 2) {
-  g_storagePath = path.join(STORAGE_PATH, process.argv[2]);
-  log('debug',{g_storagePath});
-  let version_txt = path.join(g_storagePath, "version.txt");
-  // Create storage and setup if none found
-  if (!fs.existsSync(g_storagePath)) {
-    log('info', "Creating missing dir: " + g_storagePath);
-    fs.mkdirSync(g_storagePath)
-    //let appVersion = require("electron").remote.app.getVersion();
-    try { fs.writeFileSync(version_txt, app.getVersion(), 'utf-8'); }
-    catch(e) {
-      //showErrorDialog('Failed to save the version_txt file !');
-      console.error('Failed to save the version_txt file !')
-      process.abort();
-    }
-  } else {
-    // Make sure its a compatible version
-    try {
-      console.log('Reading: ' + version_txt);
-      let version = fs.readFileSync(version_txt, 'utf-8');
-      if (version !== app.getVersion()) {
-        console.error('App Version mismatch :-(')
-        console.error(version);
-        console.error(app.getVersion());
-        //dialog.showOpenDialogSync({ properties: ['openFile', 'multiSelections'] })
-        //showErrorDialog('App Version mismatch :-(');
-        //app.quit();
-        process.abort();
-      }
-    }
-    catch(e) {
-      //showErrorDialog('Failed to read the version_txt file !');
+  sessionId = process.argv[2];
+} else {
+  sessionId = 'default';
+}
+
+// -- Setup storage fodler -- //
+g_storagePath = path.join(STORAGE_PATH, sessionId);
+log('debug',{g_storagePath});
+let version_txt = path.join(g_storagePath, "version.txt");
+// Create storage and setup if none found
+if (!fs.existsSync(g_storagePath)) {
+  log('info', "Creating missing dir: " + g_storagePath);
+  fs.mkdirSync(g_storagePath)
+  //let appVersion = require("electron").remote.app.getVersion();
+  try { fs.writeFileSync(version_txt, app.getVersion(), 'utf-8'); }
+  catch(e) {
+    //showErrorDialog('Failed to save the version_txt file !');
+    console.error('Failed to save the version_txt file !')
+    process.abort();
+  }
+} else {
+  // Make sure its a compatible version
+  try {
+    console.log('Reading: ' + version_txt);
+    let version = fs.readFileSync(version_txt, 'utf-8');
+    if (version !== app.getVersion()) {
+      console.error('App Version mismatch :-(')
+      console.error(version);
+      console.error(app.getVersion());
+      //dialog.showOpenDialogSync({ properties: ['openFile', 'multiSelections'] })
+      //showErrorDialog('App Version mismatch :-(');
       //app.quit();
-      console.error('Failed to read the version_txt file !')
-      console.error(e);
       process.abort();
     }
   }
+  catch(e) {
+    //showErrorDialog('Failed to read the version_txt file !');
+    //app.quit();
+    console.error('Failed to read the version_txt file !')
+    console.error(e);
+    process.abort();
+  }
 }
-// Determine final conductor config file path
+
+// -- Determine final conductor config file path -- //
 g_configPath = path.join(g_storagePath, CONDUCTOR_CONFIG_FILENAME);
 log('debug',{g_configPath});
 let g_appConfigPath = path.join(g_storagePath, APP_CONFIG_FILENAME);
 
-// -- Set Globals from current conductor config --/
+// -- Set Globals from current conductor config -- //
 
 // tryLoadingConfig()
 {

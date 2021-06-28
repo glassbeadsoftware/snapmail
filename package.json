@@ -16,6 +16,7 @@
     "build-dbg": ". scripts/build-dbg.sh",
     "start": "./node_modules/.bin/electron electron",
     "win": "electron . win --no-sandbox",
+    "empty": "./node_modules/.bin/electron .",
     "alex": "./node_modules/.bin/electron . alex --no-sandbox",
     "billy": "./node_modules/.bin/electron electron billy --no-sandbox",
     "camille": "./node_modules/.bin/electron electron camille --no-sandbox",
