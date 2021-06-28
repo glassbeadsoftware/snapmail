@@ -1,5 +1,5 @@
 // Modules to control application life and create native browser window
-const { app, BrowserWindow, Menu, shell } = require('electron');
+const { app, BrowserWindow, Menu, shell, Tray } = require('electron');
 const { spawn } = require('child_process');
 const fs = require('fs');
 const path = require('path');
@@ -74,7 +74,7 @@ if (process.platform === "win32") {
 let g_mainWindow = undefined;
 let g_holochain_proc = undefined;
 let g_keystore_proc = undefined;
-let g_canQuit = true;
+let g_canQuit = false;
 let g_canMdns = false;
 let g_bootstrapUrl = '';
 let g_uid = '';
@@ -83,6 +83,7 @@ let g_storagePath = STORAGE_PATH;
 let g_configPath = undefined;
 let g_adminWs = undefined;
 let g_uidList = [];
+let g_tray = null;
 
 // -- Read dna_hash -- //
 var DNA_HASH = '<unknown>';
@@ -229,9 +230,20 @@ function createWindow() {
   // Open the DevTools.
   //mainWindow.webContents.openDevTools()
 
+  // Emitted on request to close window
+  mainWindow.on('close', (event) => {
+    log('debug', '*** mainWindow "close" - ' + g_canQuit);
+    if (g_canQuit) {
+      mainWindow = null;
+    } else {
+      event.preventDefault();
+      mainWindow.hide();
+    }
+  })
+
   // Emitted when the window is closed.
   mainWindow.on('closed', function () {
-    log('debug', '*** mainWindow Closed');
+    log('debug', '*** mainWindow "closed"');
     try {
       killHolochain().then(() => {
         log('info', '*** Holochain promise Closed');
@@ -373,7 +385,7 @@ async function killHolochain() {
  * @param canRegenerateConfig - Regenerate the conductor config before relaunching the holochain process.
  */
 async function startConductor(canRegenerateConfig) {
-  g_canQuit = false;
+  //g_canQuit = false;
   await killHolochain(); // Make sure there is no outstanding Holochain & keystore procs
   g_keystore_proc = await spawnKeystore(LAIR_KEYSTORE_BIN);
   //await sleep(2000);
@@ -382,7 +394,7 @@ async function startConductor(canRegenerateConfig) {
   }
   log('info', 'Launching conductor...');
   await spawnHolochainProc();
-  g_canQuit = true;
+  //g_canQuit = true;
   // Connect to Conductor and activate app
   let indexUrl;
   try {
@@ -434,6 +446,13 @@ async function startConductor(canRegenerateConfig) {
  */
 app.on('ready', async function () {
   log('info', 'Electron App readying...');
+  // Create sys tray
+  g_tray = new Tray('assets/favicon.png')
+  g_tray.setToolTip('SnapMail v' + app.getVersion())
+  //g_tray.setContextMenu(contextMenu)
+  const menu = Menu.buildFromTemplate(trayMenuTemplate)
+  g_tray.setContextMenu(menu)
+
   // Create main window
   g_mainWindow = createWindow();
   try {
@@ -472,7 +491,7 @@ app.on('second-instance', (_event) => {
  * When main window has been closed and the application will quit, destroy conductor subprocess
  */
 app.on('will-quit', (event) => {
-  log('debug','*** App will-quit');
+  log('debug','*** App "will-quit"');
   if (!g_canQuit) {
     event.preventDefault();
     //killHolochain();
@@ -483,7 +502,7 @@ app.on('will-quit', (event) => {
  * Quit when all windows are closed.
  */
 app.on('window-all-closed', function () {
-  log('debug','*** App window-all-closed');
+  log('debug','*** App "window-all-closed"');
   // On macOS it is common for applications and their menu bar
   // to stay active until the user quits explicitly with Cmd + Q
   if (process.platform !== 'darwin') {
@@ -496,14 +515,20 @@ app.on('window-all-closed', function () {
  *
  */
 app.on('activate', function () {
-  log('debug','activated');
+  log('debug','*** App "activate"');
   // On macOS it's common to re-create a window in the app when the
   // dock icon is clicked and there are no other windows open.
   if (g_mainWindow === null) {
     g_mainWindow = createWindow();
+  } else {
+    g_mainWindow.show();
   }
 });
 
+app.on('before-quit', function () {
+  log('debug','*** App "before-quit"');
+  g_canQuit = true;
+});
 
 // -- Prompts and Menu -- //
 
@@ -682,12 +707,110 @@ function showAbout() {
 });
 }
 
+
+
 /**
  * In this file you can include the rest of your app's specific main process code.
  * You can also put them in separate files and require them here.
  */
+const settingsMenuTemplate = [
+  {
+    label: 'Change Network type',
+    click: async function () {
+      let changed = await promptNetworkType(false);
+      if (changed) {
+        await startConductor(true);
+      }
+    },
+  },
+  {
+    label: 'Change Bootstrap Server', click: async function () {
+      let changed = await promptBootstrapUrl(false);
+      if (changed) {
+        await startConductor(true);
+      }
+    }
+  },
+  {
+    label: 'Change Proxy Server', click: async function () {
+      let changed = await promptProxyUrl(false);
+      if (changed) {
+        await startConductor(true);
+      }
+    }
+  },
+  {
+    label: 'Join new Network',
+    click: async function () {
+      let changed = await promptUid(false);
+      if (changed) {
+        await g_mainWindow.setEnabled(false);
+        await installApp(g_adminWs, g_uid);
+        await startConductor(false);
+        await g_mainWindow.setEnabled(true);
+      }
+    },
+  },
+  {
+    label: 'Switch Network',
+    click: async function () {
+      let changed = await promptUidSelect(false);
+      if (changed) {
+        await g_mainWindow.setEnabled(false);
+        await startConductor(false);
+        await g_mainWindow.setEnabled(true);
+      }
+    },
+  },
+  {
+    label: 'Restart Conductor', click: async function () {
+      await startConductor(false);
+    }
+  },
+];
 
-const menutemplate = [
+
+const debugMenuTemplate = [
+  // {
+  //   label: 'Dump logs', click: function() {
+  //     console.log({process})
+  //   }
+  // },
+  {
+    label: 'Open Config Folder',
+    click: function () {
+      shell.openItem(CONFIG_PATH)
+    },
+    //icon: 'assets/icon.png'
+  },
+  {
+    label: 'Open Log File',
+    click: function () {
+      shell.openItem(logger.transports.file.file)
+    },
+  },
+  {
+    label: 'devTools',
+    click: function () {
+      g_mainWindow.webContents.openDevTools()
+    },
+  },
+  {
+    label: 'Show PATHS',
+    click: function () {
+      dialog.showMessageBoxSync(g_mainWindow, {
+        type: 'info',
+        title: 'Constants',
+        message: 'BIN_PATH: ' + BIN_PATH + '\n' + 'process.env.path: ' + JSON.stringify(process.env.PATH),
+      });
+    },
+  },
+];
+
+/**
+ *
+ */
+const mainMenuTemplate = [
   {
     label: 'File', submenu: [{
       label: 'Quit',
@@ -699,100 +822,11 @@ const menutemplate = [
   },
   {
     label: 'Settings',
-    submenu: [
-      {
-        label: 'Change Network type',
-        click: async function () {
-          let changed = await promptNetworkType(false);
-          if (changed) {
-            await startConductor(true);
-          }
-        },
-      },
-      {
-        label: 'Change Bootstrap Server', click: async function () {
-          let changed = await promptBootstrapUrl(false);
-          if (changed) {
-            await startConductor(true);
-          }
-        }
-      },
-      {
-        label: 'Change Proxy Server', click: async function () {
-          let changed = await promptProxyUrl(false);
-          if (changed) {
-            await startConductor(true);
-          }
-        }
-      },
-      {
-        label: 'Join new Network',
-        click: async function () {
-          let changed = await promptUid(false);
-          if (changed) {
-            await g_mainWindow.setEnabled(false);
-            await installApp(g_adminWs, g_uid);
-            await startConductor(false);
-            await g_mainWindow.setEnabled(true);
-          }
-        },
-      },
-      {
-        label: 'Switch Network',
-        click: async function () {
-          let changed = await promptUidSelect(false);
-          if (changed) {
-            await g_mainWindow.setEnabled(false);
-            await startConductor(false);
-            await g_mainWindow.setEnabled(true);
-          }
-        },
-      },
-      {
-        label: 'Restart Conductor', click: async function () {
-          await startConductor(false);
-        }
-      },
-    ],
+    submenu: settingsMenuTemplate,
   },
   {
     label: 'Debug',
-    submenu: [
-      // {
-      //   label: 'Dump logs', click: function() {
-      //     console.log({process})
-      //   }
-      // },
-      {
-        label: 'Open Config Folder',
-        click: function () {
-          shell.openItem(CONFIG_PATH)
-        },
-        //icon: 'assets/icon.png'
-      },
-      {
-        label: 'Open Log File',
-        click: function () {
-          shell.openItem(logger.transports.file.file)
-        },
-      },
-      {
-        label: 'devTools',
-        click: function () {
-          g_mainWindow.webContents.openDevTools()
-        },
-      },
-      {
-        label: 'Show PATHS',
-        click: function () {
-          dialog.showMessageBoxSync(g_mainWindow, {
-            type: 'info',
-            title: 'Constants',
-            message: 'BIN_PATH: ' + BIN_PATH + '\n' + 'process.env.path: ' + JSON.stringify(process.env.PATH),
-          });
-        },
-      },
-    ],
+    submenu: debugMenuTemplate,
   },
   {
     label: 'Help', submenu: [{
@@ -805,6 +839,19 @@ const menutemplate = [
   },
 ];
 
-Menu.setApplicationMenu(Menu.buildFromTemplate(menutemplate));
+/**
+ *
+ */
+const trayMenuTemplate = [
+  { label: 'Tray / Untray', click: function () { g_mainWindow.isVisible()? g_mainWindow.hide() : g_mainWindow.show();  }  },
+  { label: 'Settings', submenu: settingsMenuTemplate },
+  { label: 'Debug', submenu: debugMenuTemplate },
+  { type: 'separator' },
+  { label: 'About', click: function () { showAbout(); } },
+  { type: 'separator' },
+  { label: 'Exit', click: function () { app.quit() } }
+];
+
+Menu.setApplicationMenu(Menu.buildFromTemplate(mainMenuTemplate));
 
 log('debug'," !! If app.ready() is not called its because you are trying to launch on windows from WSL and not from normal cmd !!");
