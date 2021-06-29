@@ -1,11 +1,12 @@
 // Modules to control application life and create native browser window
-const { app, BrowserWindow, Menu, shell, Tray } = require('electron');
+const { app, BrowserWindow, Menu, shell, Tray, screen } = require('electron');
 const { spawn } = require('child_process');
 const fs = require('fs');
 const path = require('path');
 const kill = require('tree-kill');
 const { dialog } = require('electron');
 const prompt = require('electron-prompt');
+const AutoLaunch = require('auto-launch');
 
 // My Modules
 const {
@@ -13,7 +14,7 @@ const {
 const { log, logger } = require('./logger');
 const { wslPath, killAllWsl } = require('./cli');
 const {generateConductorConfig, spawnKeystore, hasActivatedApp, connectToAdmin, installApp } = require('./config');
-
+const { SettingsStore } = require('./settings');
 
 // -- Code -- //
 
@@ -71,6 +72,7 @@ if (process.platform === "win32") {
 
 // Keep a global reference of the ELECTRON window object, if you don't,
 // the window will be closed automatically when the JavaScript object is garbage collected.
+let g_settingsStore = undefined;
 let g_mainWindow = undefined;
 let g_holochain_proc = undefined;
 let g_keystore_proc = undefined;
@@ -111,7 +113,7 @@ if (process.argv.length > 2) {
   sessionId = 'default';
 }
 
-// -- Setup storage fodler -- //
+// -- Setup storage folder -- //
 g_storagePath = path.join(STORAGE_PATH, sessionId);
 log('debug',{g_storagePath});
 let version_txt = path.join(g_storagePath, "version.txt");
@@ -197,6 +199,31 @@ let g_appConfigPath = path.join(g_storagePath, APP_CONFIG_FILENAME);
   }
 }
 
+// -- Check AutoLaunch -- //
+
+var autoLauncher = new AutoLaunch({
+  name: "Snapmail happ",
+  isHidden: true,
+});
+
+// -- Functions -- //
+
+function updateAutoLaunchSetting(canAutoLaunch) {
+  if (canAutoLaunch === undefined) {
+    canAutoLaunch = g_settingsStore.get('canAutoLaunch');
+  }
+  g_settingsStore.set('canAutoLaunch', canAutoLaunch);
+  if (canAutoLaunch) {
+    autoLauncher.enable();
+  } else {
+    autoLauncher.disable();
+  }
+}
+
+
+/**
+ *
+ */
 function sleep(ms) {
   return new Promise((resolve) => {
     setTimeout(resolve, ms);
@@ -208,9 +235,10 @@ function sleep(ms) {
  */
 function createWindow() {
   // Create the browser window.
+  let { width, height } = g_settingsStore.get('windowBounds');
   let mainWindow = new BrowserWindow({
-    width: 1400,
-    height: 950,
+    width,
+    height,
     webPreferences: {
       nodeIntegration: true,
       devTools: true
@@ -219,6 +247,20 @@ function createWindow() {
     webgl: false,
     enableWebSQL: false,
     //autoHideMenuBar: true,
+  });
+  let { x, y } = g_settingsStore.get('windowPosition');
+  mainWindow.setPosition(x, y);
+
+
+
+  // The BrowserWindow class extends the node.js core EventEmitter class, so we use that API
+  // to listen to events on the BrowserWindow. The resize event is emitted when the window size changes.
+  mainWindow.on('resize', () => {
+    // The event doesn't pass us the window size, so we call the `getBounds` method which returns an object with
+    // the height, width, and x and y coordinates.
+    let { width, height } = mainWindow.getBounds();
+    // Now that we have them, save them using the `set` method.
+    g_settingsStore.set('windowBounds', { width, height });
   });
 
   // Open <a href='' target='_blank'> with default system browser
@@ -233,6 +275,8 @@ function createWindow() {
   // Emitted on request to close window
   mainWindow.on('close', (event) => {
     log('debug', '*** mainWindow "close" - ' + g_canQuit);
+    let positions = mainWindow.getPosition();
+    g_settingsStore.set('windowPosition', { x: positions[0], y: positions[1] });
     if (g_canQuit) {
       mainWindow = null;
     } else {
@@ -446,12 +490,39 @@ async function startConductor(canRegenerateConfig) {
  */
 app.on('ready', async function () {
   log('info', 'Electron App readying...');
+
+  // Get Settings
+  const { width, height } = screen.getPrimaryDisplay().workAreaSize;
+  let default_width = Math.min(width, 1400);
+  let default_height = Math.min(height, 950);
+
+  let x = (width - default_width) / 2;
+  let y = (height - default_height) / 2;
+
+  g_settingsStore = new SettingsStore({
+    // We'll call our data file 'user-preferences'
+    configName: 'user-preferences',
+    defaults: {
+      windowBounds: { width: default_width, height: default_height },
+      canAutoLaunch: false,
+      windowPosition: {x, y},
+    }
+  });
+
+  // Check AutoLaunch
+  updateAutoLaunchSetting();
+
+  // Modify main menu
+  let mainMenu = Menu.getApplicationMenu();
+  let item = mainMenu.getMenuItemById('launch-at-startup');
+  item.checked = g_settingsStore.get('canAutoLaunch');
+
   // Create sys tray
-  g_tray = new Tray('assets/favicon.png')
-  g_tray.setToolTip('SnapMail v' + app.getVersion())
-  //g_tray.setContextMenu(contextMenu)
-  const menu = Menu.buildFromTemplate(trayMenuTemplate)
-  g_tray.setContextMenu(menu)
+  g_tray = new Tray('assets/favicon.png');
+  g_tray.setToolTip('SnapMail v' + app.getVersion());
+  const menu = Menu.buildFromTemplate(trayMenuTemplate);
+  g_tray.setContextMenu(menu);
+
 
   // Create main window
   g_mainWindow = createWindow();
@@ -708,37 +779,23 @@ function showAbout() {
 }
 
 
+const optionsMenuTemplate = [
+  {
+    id: 'launch-at-startup',
+    label: 'Launch at startup',
+    type: 'checkbox',
+    click: function (menuItem, browserWindow, event) {
+      //console.log(menuItem);
+      updateAutoLaunchSetting(menuItem.checked);
+    },
+  },
+];
 
 /**
  * In this file you can include the rest of your app's specific main process code.
  * You can also put them in separate files and require them here.
  */
-const settingsMenuTemplate = [
-  {
-    label: 'Change Network type',
-    click: async function () {
-      let changed = await promptNetworkType(false);
-      if (changed) {
-        await startConductor(true);
-      }
-    },
-  },
-  {
-    label: 'Change Bootstrap Server', click: async function () {
-      let changed = await promptBootstrapUrl(false);
-      if (changed) {
-        await startConductor(true);
-      }
-    }
-  },
-  {
-    label: 'Change Proxy Server', click: async function () {
-      let changed = await promptProxyUrl(false);
-      if (changed) {
-        await startConductor(true);
-      }
-    }
-  },
+const networkMenuTemplate = [
   {
     label: 'Join new Network',
     click: async function () {
@@ -763,8 +820,31 @@ const settingsMenuTemplate = [
     },
   },
   {
-    label: 'Restart Conductor', click: async function () {
-      await startConductor(false);
+    type: 'separator'
+  },
+  {
+    label: 'Change Network type',
+    click: async function () {
+      let changed = await promptNetworkType(false);
+      if (changed) {
+        await startConductor(true);
+      }
+    },
+  },
+  {
+    label: 'Change Bootstrap Server', click: async function () {
+      let changed = await promptBootstrapUrl(false);
+      if (changed) {
+        await startConductor(true);
+      }
+    }
+  },
+  {
+    label: 'Change Proxy Server', click: async function () {
+      let changed = await promptProxyUrl(false);
+      if (changed) {
+        await startConductor(true);
+      }
     }
   },
 ];
@@ -805,6 +885,11 @@ const debugMenuTemplate = [
       });
     },
   },
+  {
+    label: 'Restart Conductor', click: async function () {
+      await startConductor(false);
+    }
+  },
 ];
 
 /**
@@ -821,8 +906,12 @@ const mainMenuTemplate = [
     },],
   },
   {
-    label: 'Settings',
-    submenu: settingsMenuTemplate,
+    label: 'Network',
+    submenu: networkMenuTemplate,
+  },
+  {
+    label: 'Options',
+    submenu: optionsMenuTemplate,
   },
   {
     label: 'Debug',
@@ -844,7 +933,7 @@ const mainMenuTemplate = [
  */
 const trayMenuTemplate = [
   { label: 'Tray / Untray', click: function () { g_mainWindow.isVisible()? g_mainWindow.hide() : g_mainWindow.show();  }  },
-  { label: 'Settings', submenu: settingsMenuTemplate },
+  { label: 'Settings', submenu: networkMenuTemplate },
   { label: 'Debug', submenu: debugMenuTemplate },
   { type: 'separator' },
   { label: 'About', click: function () { showAbout(); } },
