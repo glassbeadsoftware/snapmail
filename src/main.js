@@ -132,10 +132,10 @@ if (!fs.existsSync(g_storagePath)) {
   // Make sure its a compatible version
   try {
     console.log('Reading: ' + version_txt);
-    let version = fs.readFileSync(version_txt, 'utf-8');
-    if (version !== app.getVersion()) {
+    const read_version = fs.readFileSync(version_txt, 'utf-8');
+    if (read_version !== app.getVersion()) {
       console.error('App Version mismatch :-(')
-      console.error(version);
+      console.error(read_version);
       console.error(app.getVersion());
       //dialog.showOpenDialogSync({ properties: ['openFile', 'multiSelections'] })
       //showErrorDialog('App Version mismatch :-(');
@@ -206,6 +206,25 @@ var autoLauncher = new AutoLaunch({
   isHidden: true,
 });
 
+// -- Handle IPC with UI -- //
+
+const ipc = require('electron').ipcMain;
+
+//Receive and reply to synchronous message
+ipc.on('helloSync', (event, args) => {
+  console.log("\n HELLO SYNC || \n");
+  console.log(args);
+  //do something with args
+  event.returnValue = 'Hi, sync reply';
+});
+
+//Receive and reply to asynchronous message
+ipc.on('hello', (event, args) => {
+  event.sender.send('asynReply','Hi, asyn reply');
+});
+
+
+// ----------------------------------------------------------------------------------------------
 // -- Functions -- //
 
 function updateAutoLaunchSetting(canAutoLaunch) {
