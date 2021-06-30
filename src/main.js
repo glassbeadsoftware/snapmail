@@ -541,6 +541,7 @@ app.on('ready', async function () {
       windowBounds: { width: default_width, height: default_height },
       canAutoLaunch: false,
       windowPosition: {x, y},
+      dontConfirmOnExit: false,
     }
   });
 
@@ -812,9 +813,45 @@ function showAbout() {
     //iconIndex: 0,
     //icon: CONFIG.ICON,
     //icon: app.getFileIcon(path)
-});
+  });
 }
 
+async function confirmExit() {
+  let dontConfirmOnExit = g_settingsStore.get("dontConfirmOnExit");
+  //let r = await prompt({
+  let {response, checkboxChecked} = await dialog.showMessageBox(g_mainWindow, {
+    //width: 800,
+    title: `Confirm Exit`,
+    message: "Incoming messages will not arrive until you relaunch SnapMail.\nAre you sure you want to exit?",
+    defaultId: 2,
+    buttons: ['Just minimize Snapmail', 'Cancel', 'Exit'],
+    type: "question",
+    checkboxLabel: "Don't ask again, just exit",
+    checkboxChecked: dontConfirmOnExit,
+    noLink: true,
+    //icon: app.getFileIcon(path)
+  });
+
+  //console.log(response);
+  //console.log(checkboxChecked);
+  g_settingsStore.set("dontConfirmOnExit", checkboxChecked);
+
+  switch (response) {
+    case 0: {
+      g_mainWindow.hide();
+      break;
+    }
+    case 2: {
+      return true;
+      break;
+    }
+    default:
+  }
+  return false;
+}
+
+//----------------------------------------------------------------------------------------------------------------------
+// -- MENUS
 
 const optionsMenuTemplate = [
   {
@@ -937,8 +974,16 @@ const mainMenuTemplate = [
     label: 'File', submenu: [{
       label: 'Quit',
       //accelerator: 'Command+Q',
-      click: function () {
-        app.quit()
+      click: async function () {
+        let dontConfirmOnExit = g_settingsStore.get("dontConfirmOnExit");
+        if (dontConfirmOnExit) {
+          app.quit();
+        } else {
+          let canExit = await confirmExit();
+          if (canExit) {
+            app.quit();
+          }
+        }
       },
     },],
   },
