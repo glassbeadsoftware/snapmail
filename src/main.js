@@ -1,5 +1,5 @@
 // Modules to control application life and create native browser window
-const { app, BrowserWindow, Menu, shell, Tray, screen } = require('electron');
+const { app, BrowserWindow, Menu, shell, Tray, screen, Notification } = require('electron');
 const { spawn } = require('child_process');
 const fs = require('fs');
 const path = require('path');
@@ -211,17 +211,33 @@ var autoLauncher = new AutoLaunch({
 const ipc = require('electron').ipcMain;
 
 //Receive and reply to synchronous message
-ipc.on('helloSync', (event, args) => {
-  console.log("\n HELLO SYNC || \n");
-  console.log(args);
+ipc.on('helloSync', (event, arg1, arg2) => {
+  console.log("\n HELLO SYNC ||");
+  console.log("arg1 = " + arg1);
+  console.log("arg2 = " + arg2);
+
+  //let mailItem = JSON.parse(arg2);
+
+  // Notification
+  const NOTIFICATION_TITLE = arg1;
+  const NOTIFICATION_BODY = arg2;
+  new Notification({ title: NOTIFICATION_TITLE, body: NOTIFICATION_BODY }).show();
+
   //do something with args
-  event.returnValue = 'Hi, sync reply';
+  event.returnValue = true;
 });
 
 //Receive and reply to asynchronous message
 ipc.on('hello', (event, args) => {
   event.sender.send('asynReply','Hi, asyn reply');
 });
+
+
+function showNotification () {
+  const NOTIFICATION_TITLE = 'Basic Notification'
+  const NOTIFICATION_BODY = 'Notification from the Main process'
+  new Notification({ title: NOTIFICATION_TITLE, body: NOTIFICATION_BODY }).show()
+}
 
 
 // ----------------------------------------------------------------------------------------------
@@ -545,6 +561,8 @@ app.on('ready', async function () {
 
   // Create main window
   g_mainWindow = createWindow();
+
+
   try {
     // Start Conductor
     // if bootstrapUrl not set, prompt it, otherwise
