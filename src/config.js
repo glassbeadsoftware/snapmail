@@ -2,7 +2,6 @@
 // const { app } = require('electron');
 const { log } = require('./logger');
 const fs = require('fs');
-const { wslPath } = require('./cli');
 const { spawn, fork } = require('child_process');
 const { AdminWebsocket } = require('@holochain/conductor-api');
 //const { AdminWebsocket } = require('../holochain-conductor-api');
@@ -23,12 +22,7 @@ const LAIR_MAGIC_READY_STRING = '#lair-keystore-ready#';
 async function spawnKeystore(keystore_bin) {
   // -- Spawn Keystore -- //
   let bin = keystore_bin;
-  //let args = ['keygen', '--path', wslPath(KEYSTORE_FILE_PATH), '--nullpass', '--quiet'];
   let args = [];
-  if(process.platform === "win32") {
-    bin = process.env.comspec;
-    args.unshift("/c", "wsl", keystore_bin);
-  }
   log('info', 'Spawning ' + bin + ' (dirname: ' + CURRENT_DIR + ')');
   const keystore_proc = spawn(bin, args, {
     cwd: CURRENT_DIR,
@@ -85,7 +79,7 @@ function generateConductorConfig(configPath, bootstrapUrl, storagePath, proxyUrl
   if (canMdns) {
     network_type = "quic_mdns";
   }
-  let environment_path = wslPath(storagePath);
+  let environment_path = storagePath;
   log('debug',{environment_path});
   if (bootstrapUrl === undefined) {
     bootstrapUrl = DEFAULT_BOOTSTRAP_URL

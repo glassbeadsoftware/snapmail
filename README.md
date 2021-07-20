@@ -32,7 +32,7 @@ Use your own or the public one provided by Holo `bootstrap.holo.net`
 - Make sure the following executables have execution rights: `Snapmail`, `lair-keystore`, `holochain`.
 - If you get `spawn ENOENT` error message, this means you need to [install nix-shell](https://developer.holochain.org/docs/install/) on your system.
 
-## Releasing
+## Developing / Releasing
 
 Steps required for making a new release:
 1. `npm run setup`: Downloads required Snapmail and Holochain repos

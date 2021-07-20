@@ -12,7 +12,6 @@ const AutoLaunch = require('auto-launch');
 const {
   DNA_HASH_FILEPATH, CONDUCTOR_CONFIG_FILENAME, APP_CONFIG_FILENAME, CONFIG_PATH, STORAGE_PATH, CURRENT_DIR, DEFAULT_BOOTSTRAP_URL } = require('./globals');
 const { log, logger } = require('./logger');
-const { wslPath, killAllWsl } = require('./cli');
 const {generateConductorConfig, spawnKeystore, hasActivatedApp, connectToAdmin, installApp } = require('./config');
 const { SettingsStore } = require('./settings');
 
@@ -37,8 +36,8 @@ var HOLOCHAIN_BIN     = './bin/holochain-linux';
 var LAIR_KEYSTORE_BIN = './bin/lair-keystore-linux';
 
 if (process.platform === "win32") {
-  HOLOCHAIN_BIN     = 'holochain-linux';
-  LAIR_KEYSTORE_BIN = 'lair-keystore-linux';
+  HOLOCHAIN_BIN     = 'holochain-win.exe';
+  LAIR_KEYSTORE_BIN = 'lair-keystore-win.exe';
 } else if (process.platform === 'darwin') {
   HOLOCHAIN_BIN     = './bin/holochain';
   LAIR_KEYSTORE_BIN = './bin/lair-keystore';
@@ -356,11 +355,7 @@ async function spawnHolochainProc() {
   log('debug','spawnHolochainProc...');
   // Adapt to WSL if needed
   let bin = HOLOCHAIN_BIN;
-  let args = ['-c', wslPath(g_configPath)];
-  if (process.platform === "win32") {
-    bin = process.env.comspec;
-    args.unshift("/c", "wsl", HOLOCHAIN_BIN);
-  }
+  let args = ['-c', g_configPath];
   // Spawn "holochain" subprocess
   log('info', 'Spawning ' + bin + ' (dirname: ' + CURRENT_DIR + ')');
   let holochain_proc = spawn(bin, args, {
@@ -452,8 +447,8 @@ async function killHolochain() {
     //await sleep(2000);
     log('info', 'Killing sub-processes done.');
   } else {
-    killAllWsl(HOLOCHAIN_BIN);
-    killAllWsl(LAIR_KEYSTORE_BIN);
+    //killAllWsl(HOLOCHAIN_BIN);
+    //killAllWsl(LAIR_KEYSTORE_BIN);
   }
   log('debug', 'killHolochain() - DONE');
 }
