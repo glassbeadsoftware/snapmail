@@ -549,7 +549,12 @@ app.on('ready', async function () {
   item.checked = g_settingsStore.get('canAutoLaunch');
 
   // Create sys tray
-  g_tray = new Tray('assets/favicon.png');
+  try
+  {
+    g_tray = new Tray('assets/favicon.png');
+  } catch (e) {
+    g_tray = new Tray('resources/app/assets/favicon.png');
+  }
   g_tray.setToolTip('SnapMail v' + app.getVersion());
   const menu = Menu.buildFromTemplate(trayMenuTemplate);
   g_tray.setContextMenu(menu);

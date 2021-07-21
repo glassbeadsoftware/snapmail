@@ -12,6 +12,8 @@
     "dist-arm64": "electron-builder --arm64 --linux tar.gz",
     "setup": ". scripts/setup.sh && scripts/download-hc.sh",
     "build-hc": ". scripts/build-hc.sh",
+    "build-win": ".\\scripts\\build.bat prod",
+    "build-win-dev": ".\\scripts\\build.bat dev",
     "build": ". scripts/build.sh",
     "build-dbg": ". scripts/build-dbg.sh",
     "start": "./node_modules/.bin/electron electron",
@@ -20,13 +22,7 @@
     "alex": "./node_modules/.bin/electron . alex --no-sandbox",
     "billy": "./node_modules/.bin/electron electron billy --no-sandbox",
     "camille": "./node_modules/.bin/electron electron camille --no-sandbox",
-    "start-no": "./node_modules/.bin/electron electron --no-sandbox --enable-logging",
-    "package-windows": "electron-packager node_modules/.bin/electron Snapmail --platform=win32 --out=./build --overwrite",
-    "package-osx": "./node_modules/.bin/electron-packager ./node_modules/.bin/electron Snapmail --platform=darwin --arch=x64 --out=./build --overwrite",
-    "package-mac": "./node_modules/.bin/electron-packager ./node_modules/.bin/electron Snapmail --platform=darwin --arch=x64 --prune=true --overwrite --out=./build",
-    "package-linux-asar": "./node_modules/.bin/electron-packager ./node_modules/.bin/electron Snapmail --platform=linux --arch=x64 --asar --prune=true --overwrite --out=./build",
-    "package-linux": "./node_modules/.bin/electron-packager ./node_modules/.bin/electron Snapmail --platform=linux --arch=x64 --overwrite --out=./build",
-    "package-arm": "./node_modules/.bin/electron-packager ./node_modules/.bin/electron Snapmail --platform=linux --arch=arm64 --overwrite --out=./build"
+    "start-no": "./node_modules/.bin/electron electron --no-sandbox --enable-logging"
   },
   "repository": "https://github.com/glassbeadsoftware/snapmail-release",
   "keywords": [
@@ -46,6 +42,7 @@
       "dna/*",
       "bin/*",
       "node_modules/**/*",
+      "assets/**",
       "package.json"
     ],
     "directories": {
