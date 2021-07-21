@@ -1,3 +1,6 @@
+REM Script for building holochain and lair for windows
+REM Holochain must have been downloaded first
+
 cd build
 
 REM Holochain

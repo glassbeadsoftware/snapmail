@@ -1,5 +1,7 @@
 #!/bin/sh
 
+### Script for Retrieving the right holochain and lair version into ./build
+
 cd build
 
 ### Holochain

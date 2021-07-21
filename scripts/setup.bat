@@ -1,3 +1,5 @@
+REM Script for setting up dev environment
+
 call npm install
 @echo on
 
