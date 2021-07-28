@@ -12,7 +12,7 @@ const AutoLaunch = require('auto-launch');
 const {
   DNA_HASH_FILEPATH, CONDUCTOR_CONFIG_FILENAME, APP_CONFIG_FILENAME, CONFIG_PATH, STORAGE_PATH, CURRENT_DIR, DEFAULT_BOOTSTRAP_URL } = require('./globals');
 const { log, logger } = require('./logger');
-const {generateConductorConfig, spawnKeystore, hasActivatedApp, connectToAdmin, installApp } = require('./config');
+const {generateConductorConfig, spawnKeystore, hasActivatedApp, connectToAdmin, installApp, getDnaHash } = require('./config');
 const { SettingsStore } = require('./settings');
 
 // -- Code -- //
@@ -85,6 +85,7 @@ let g_configPath = undefined;
 let g_adminWs = undefined;
 let g_uidList = [];
 let g_tray = null;
+let g_dnaHash = undefined;
 
 // -- Read dna_hash -- //
 var DNA_HASH = '<unknown>';
@@ -479,7 +480,7 @@ async function startConductor(canRegenerateConfig) {
       // Prompt for UUID
       g_uid = '<my-network-id>';
       await promptUid(true);
-      await installApp(g_adminWs, g_uid);
+      g_dnaHash = await installApp(g_adminWs, g_uid);
       //log('debug','Attaching to app at ' + g_appPort + ' ...');
       g_appPort = await g_adminWs.attachAppInterface({port: undefined});
       console.log({g_appPort});
@@ -570,7 +571,7 @@ app.on('ready', async function () {
     if(g_bootstrapUrl === "") {
       g_bootstrapUrl = DEFAULT_BOOTSTRAP_URL;
       await promptNetworkType(true);
-      log('debug', 'network type prompt done: ' + g_canMdns);
+      log('debug', 'network type prompt done. Can MDNS: ' + g_canMdns);
       if (!g_canMdns) {
         await promptBootstrapUrl(true);
       }
@@ -802,12 +803,16 @@ function showErrorDialog(message) {
   });
 }
 
-function showAbout() {
+async function showAbout() {
+  if (g_dnaHash === undefined) {
+    g_dnaHash = await getDnaHash(g_adminWs);
+  }
+  let netHash = g_dnaHash || "(unknown)";
   dialog.showMessageBox({
     width: 800,
     title: `About ${app.getName()}`,
     message: `${app.getName()} - v${app.getVersion()}`,
-    detail: `Dna Hash: ${DNA_HASH}\nA minimalist email app on Holochain from Glass Bead Software`,
+    detail: `A minimalist email app on Holochain from Glass Bead Software\n\nCore DNA hash: ${DNA_HASH}\n     Session hash: ${netHash}\n`,
     buttons: [],
     type: "info",
     //iconIndex: 0,
@@ -876,7 +881,7 @@ const networkMenuTemplate = [
       let changed = await promptUid(false);
       if (changed) {
         await g_mainWindow.setEnabled(false);
-        await installApp(g_adminWs, g_uid);
+        g_dnaHash = await installApp(g_adminWs, g_uid);
         await startConductor(false);
         await g_mainWindow.setEnabled(true);
       }
@@ -1003,8 +1008,8 @@ const mainMenuTemplate = [
     label: 'Help', submenu: [{
       label: 'About',
       //accelerator: 'Command+A',
-      click: function () {
-        showAbout();
+      click: async function () {
+        await showAbout();
       },
     },],
   },
@@ -1018,11 +1023,9 @@ const trayMenuTemplate = [
   { label: 'Settings', submenu: networkMenuTemplate },
   { label: 'Debug', submenu: debugMenuTemplate },
   { type: 'separator' },
-  { label: 'About', click: function () { showAbout(); } },
+  { label: 'About', click: async function () { await showAbout(); } },
   { type: 'separator' },
   { label: 'Exit', click: function () { app.quit() } }
 ];
 
 Menu.setApplicationMenu(Menu.buildFromTemplate(mainMenuTemplate));
-
-log('debug'," !! If app.ready() is not called its because you are trying to launch on windows from WSL and not from normal cmd !!");

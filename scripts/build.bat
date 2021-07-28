@@ -3,6 +3,7 @@ cd build
 
 REM Generate DNA
 cd snapmail-rsm
+call scripts/save_dna_hash
 call scripts/pack-happ.bat
 cp snapmail.dna ../../dna
 cp snapmail.happ ../../dna

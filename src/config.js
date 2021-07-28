@@ -65,6 +65,13 @@ async function spawnKeystore(keystore_bin) {
 }
 module.exports.spawnKeystore = spawnKeystore;
 
+function winPath(path) {
+  if (process.platform !== "win32") {
+    return path;
+  }
+  let fp = path.replace(/\\/g, "\\\\");
+  return fp;
+}
 
 /**
  * Write the conductor config to storage path
@@ -79,11 +86,12 @@ function generateConductorConfig(configPath, bootstrapUrl, storagePath, proxyUrl
   if (canMdns) {
     network_type = "quic_mdns";
   }
-  let environment_path = storagePath;
+  let environment_path = winPath(storagePath);
   log('debug',{environment_path});
   if (bootstrapUrl === undefined) {
     bootstrapUrl = DEFAULT_BOOTSTRAP_URL
   }
+
   const config =
     `environment_path: ${environment_path}
 use_dangerous_test_keystore: false
@@ -105,6 +113,46 @@ network:
         type: remote_proxy_client
         proxy_url: ${proxyUrl}`
   ;
+
+// No PROXY Config
+//   const config = `---
+// environment_path: "${environment_path}"
+// use_dangerous_test_keystore: false
+// passphrase_service:
+//   type: cmd
+// admin_interfaces:
+//   - driver:
+//       type: websocket
+//       port: ${adminPort}
+// network:
+//   network_type: ${network_type}
+//   bootstrap_service: ${bootstrapUrl}
+//   transport_pool:
+//     - type: quic
+//       bind_to: ~
+//       override_host: ~
+//       override_port: ~
+//   tuning_params:
+//     gossip_strategy: simple-bloom
+//     gossip_loop_iteration_delay_ms: "1000"
+//     gossip_output_target_mbps: "0.5"
+//     gossip_peer_on_success_next_gossip_delay_ms: "60000"
+//     gossip_peer_on_error_next_gossip_delay_ms: "300000"
+//     default_rpc_single_timeout_ms: "30000"
+//     default_rpc_multi_remote_agent_count: "2"
+//     default_rpc_multi_timeout_ms: "30000"
+//     agent_info_expires_after_ms: "1200000"
+//     tls_in_mem_session_storage: "512"
+//     proxy_keepalive_ms: "120000"
+//     proxy_to_expire_ms: "300000"
+//     concurrent_limit_per_thread: "4096"
+//     tx2_quic_max_idle_timeout_ms: "30000"
+//     tx2_pool_max_connection_count: "4096"
+//     tx2_channel_count_per_connection: "16"
+//     tx2_implicit_timeout_ms: "30000"
+//     tx2_initial_connect_retry_delay_ms: "200"`;
+
+
   fs.writeFileSync(configPath, config);
 }
 module.exports.generateConductorConfig = generateConductorConfig;
@@ -134,6 +182,24 @@ async function connectToAdmin(adminPort) {
 }
 module.exports.connectToAdmin = connectToAdmin;
 
+
+/**
+ *
+ * @param adminWs
+ * @returns {Promise<string|undefined>}
+ */
+async function getDnaHash(adminWs) {
+  const dnas = await adminWs.listDnas();
+  log('debug','getDnaHash() - Found ' + dnas.length + ' dna(s):');
+  for (dna of dnas) {
+    log('debug',' -  ' + htos(dna));
+  }
+  if (dnas.length == 0) {
+    return undefined;
+  }
+  return htos(dnas[0]);
+}
+module.exports.getDnaHash = getDnaHash;
 
 /**
  *
@@ -220,8 +286,9 @@ module.exports.cloneCell = cloneCell;
  * @returns {Promise<void>}
  */
 async function installApp(adminWs, uid) {
+  //const installed_app_id = SNAPMAIL_APP_ID;
   const installed_app_id = SNAPMAIL_APP_ID + '-' + uid;
-  log('info', 'Installing app: ' + installed_app_id);
+  log('info', 'Installing  app: ' + installed_app_id);
   // Generate keys
   let myPubKey = await adminWs.generateAgentPubKey();
   // Register Dna
@@ -258,5 +325,6 @@ async function installApp(adminWs, uid) {
   log('info','App installed');
   await adminWs.activateApp({ installed_app_id });
   log('info','App activated');
+  return htos(hash);
 }
 module.exports.installApp = installApp;
