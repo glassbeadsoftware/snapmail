@@ -206,42 +206,37 @@ var autoLauncher = new AutoLaunch({
   isHidden: true,
 });
 
-// -- Handle IPC with UI -- //
+// ----------------------------------------------------------------------------------------------
+// -- Handle IPC with UI
+// ----------------------------------------------------------------------------------------------
 
 const ipc = require('electron').ipcMain;
 
 //Receive and reply to synchronous message
-ipc.on('helloSync', (event, arg1, arg2) => {
-  console.log("\n HELLO SYNC ||");
-  console.log("arg1 = " + arg1);
-  console.log("arg2 = " + arg2);
-
-  //let mailItem = JSON.parse(arg2);
-
-  // Notification
-  const NOTIFICATION_TITLE = arg1;
-  const NOTIFICATION_BODY = arg2;
-  new Notification({ title: NOTIFICATION_TITLE, body: NOTIFICATION_BODY }).show();
-
-  //do something with args
-  event.returnValue = true;
+ipc.on('newMailSync', (event, title, body) => {
+  const canNotify = g_settingsStore.get('canNotify');
+  //log('debug', "canNotify = " + canNotify);
+  if(canNotify) {
+    new Notification({ title, body }).show();
+  }
+  event.returnValue = canNotify;
 });
 
-//Receive and reply to asynchronous message
-ipc.on('hello', (event, args) => {
-  event.sender.send('asynReply','Hi, asyn reply');
-});
+// //Receive and reply to asynchronous message
+// ipc.on('hello', (event, args) => {
+//   event.sender.send('asynReply','Hi, asyn reply');
+// });
 
-
-function showNotification () {
-  const NOTIFICATION_TITLE = 'Basic Notification'
-  const NOTIFICATION_BODY = 'Notification from the Main process'
-  new Notification({ title: NOTIFICATION_TITLE, body: NOTIFICATION_BODY }).show()
-}
+// function showNotification () {
+//   const NOTIFICATION_TITLE = 'Basic Notification'
+//   const NOTIFICATION_BODY = 'Notification from the Main process'
+//   new Notification({ title: NOTIFICATION_TITLE, body: NOTIFICATION_BODY }).show()
+// }
 
 
 // ----------------------------------------------------------------------------------------------
-// -- Functions -- //
+// -- Functions
+// ----------------------------------------------------------------------------------------------
 
 function updateAutoLaunchSetting(canAutoLaunch) {
   if (canAutoLaunch === undefined) {
@@ -255,6 +250,13 @@ function updateAutoLaunchSetting(canAutoLaunch) {
   }
 }
 
+
+function updateNotificationSetting(canNotify) {
+  if (canNotify === undefined) {
+    canNotify = g_settingsStore.get('canNotify');
+  }
+  g_settingsStore.set('canNotify', canNotify);
+}
 
 /**
  *
@@ -538,6 +540,7 @@ app.on('ready', async function () {
       canAutoLaunch: false,
       windowPosition: {x, y},
       dontConfirmOnExit: false,
+      canNotify: true,
     }
   });
 
@@ -548,6 +551,9 @@ app.on('ready', async function () {
   let mainMenu = Menu.getApplicationMenu();
   let item = mainMenu.getMenuItemById('launch-at-startup');
   item.checked = g_settingsStore.get('canAutoLaunch');
+
+  item = mainMenu.getMenuItemById('notify-msg');
+  item.checked = g_settingsStore.get('canNotify');
 
   // Create sys tray
   try
@@ -866,6 +872,15 @@ const optionsMenuTemplate = [
     click: function (menuItem, browserWindow, event) {
       //console.log(menuItem);
       updateAutoLaunchSetting(menuItem.checked);
+    },
+  },
+  {
+    id: 'notify-msg',
+    label: 'Allow Notifications',
+    type: 'checkbox',
+    click: function (menuItem, browserWindow, event) {
+      //console.log(menuItem);
+      updateNotificationSetting(menuItem.checked);
     },
   },
 ];
