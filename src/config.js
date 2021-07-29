@@ -114,7 +114,7 @@ network:
         proxy_url: ${proxyUrl}`
   ;
 
-// No PROXY Config
+// // - No PROXY Config
 //   const config = `---
 // environment_path: "${environment_path}"
 // use_dangerous_test_keystore: false

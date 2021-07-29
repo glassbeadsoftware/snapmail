@@ -212,7 +212,7 @@ var autoLauncher = new AutoLaunch({
 
 const ipc = require('electron').ipcMain;
 
-//Receive and reply to synchronous message
+// Receive and reply to synchronous message
 ipc.on('newMailSync', (event, title, body) => {
   const canNotify = g_settingsStore.get('canNotify');
   //log('debug', "canNotify = " + canNotify);
@@ -220,6 +220,13 @@ ipc.on('newMailSync', (event, title, body) => {
     new Notification({ title, body }).show();
   }
   event.returnValue = canNotify;
+});
+
+// Receive and reply to synchronous message
+ipc.on('newCountAsync', (event, newCount) => {
+  let append = newCount === 0 ? '' : ' (' + newCount + ')';
+  g_tray.setToolTip('SnapMail v' + app.getVersion() + append);
+  event.returnValue = true;
 });
 
 // //Receive and reply to asynchronous message
