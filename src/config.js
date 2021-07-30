@@ -1,7 +1,7 @@
 const fs = require('fs');
 const { spawn } = require('child_process');
 const { bytesToBase64 } = require('byte-base64');
-const { AdminWebsocket, AppWebsocket } = require('@holochain/conductor-api');
+const { AdminWebsocket, AppWebsocket, AppStatusFilter } = require('@holochain/conductor-api');
 //const { AdminWebsocket, AppWebsocket } = require('../holochain-conductor-api');
 
 const { log } = require('./logger');
@@ -238,7 +238,7 @@ async function hasActivatedApp(adminWs) {
   }
 
   // Active Apps
-  const activeAppIds = await adminWs.listActiveApps();
+  const activeAppIds = await adminWs.listApps({status_filter: AppStatusFilter.Enabled});
   log('info','Found ' + activeAppIds.length + ' Active App(s)');
   for (let activeId of activeAppIds) {
     log('info',' -  ' + activeId);
