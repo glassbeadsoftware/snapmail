@@ -2,6 +2,10 @@ const path = require('path');
 const fs = require('fs');
 const { app, remote } = require('electron');
 
+
+/**
+ * Object for handling/storing all user preferences
+ */
 class SettingsStore {
   constructor(opts) {
     // Renderer process has to get `app` module via `remote`, whereas the main process can get it directly

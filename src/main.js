@@ -1,4 +1,4 @@
-// Modules to control application life and create native browser window
+// - Modules to control application life and create native browser window
 const { app, BrowserWindow, Menu, shell, Tray, screen, Notification } = require('electron');
 const { spawn } = require('child_process');
 const fs = require('fs');
@@ -7,34 +7,42 @@ const kill = require('tree-kill');
 const { dialog } = require('electron');
 const prompt = require('electron-prompt');
 const AutoLaunch = require('auto-launch');
-
-// My Modules
+// - My Modules
 const {
-  DNA_HASH_FILEPATH, CONDUCTOR_CONFIG_FILENAME, APP_CONFIG_FILENAME, CONFIG_PATH, STORAGE_PATH, CURRENT_DIR, DEFAULT_BOOTSTRAP_URL, SNAPMAIL_APP_ID } = require('./globals');
+  DNA_HASH_FILEPATH, CONDUCTOR_CONFIG_FILENAME, APP_CONFIG_FILENAME, CONFIG_PATH,
+  STORAGE_PATH, CURRENT_DIR, DEFAULT_BOOTSTRAP_URL, SNAPMAIL_APP_ID } = require('./globals');
 const { log, logger } = require('./logger');
-const {generateConductorConfig, spawnKeystore, hasActivatedApp, connectToAdmin, connectToApp, installApp, getDnaHash } = require('./config');
+const {
+  generateConductorConfig, spawnKeystore, hasActivatedApp, connectToAdmin,
+  connectToApp, installApp, getDnaHash } = require('./config');
 const { SettingsStore } = require('./settings');
 
-// -- Code -- //
-
-// Toggle this for debug / release mode
-const g_canDebug = false;
+//----------------------------------------------------------------------------------------------------------------------
+// - PRE-INIT
+//----------------------------------------------------------------------------------------------------------------------
 
 require('electron-context-menu')();
 require('fix-path')();
-// enables the devtools window automatically
-if (g_canDebug) {
-  require('electron-debug')({ isEnabled: true });
+
+//----------------------------------------------------------------------------------------------------------------------
+// - CONSTS
+//----------------------------------------------------------------------------------------------------------------------
+
+// Toggle this for debug / release mode
+const IS_DEBUG = process.env.APP_DEV ? (process.env.APP_DEV.trim() === 'true') : false;
+
+//enables the devtools window automatically
+if (IS_DEBUG) {
+  log('info', "DEBUG MODE ENABLED");
+  // require('electron-debug')({ isEnabled: true });
 }
+//const DIST_DIR = IS_DEBUG? "ui_dbg" : "ui";
 
-const DIST_DIR = g_canDebug? "ui_dbg" : "ui";
+const DIST_DIR = "ui";
 
-/** CONSTS **/
-
-// default for linux
+// - Default is linux
 var HOLOCHAIN_BIN     = './bin/holochain-linux';
 var LAIR_KEYSTORE_BIN = './bin/lair-keystore-linux';
-
 if (process.platform === "win32") {
   HOLOCHAIN_BIN     = 'holochain-win.exe';
   LAIR_KEYSTORE_BIN = 'lair-keystore-win.exe';
@@ -43,21 +51,13 @@ if (process.platform === "win32") {
   LAIR_KEYSTORE_BIN = './bin/lair-keystore';
 }
 
-
 // a special log from the conductor,
 // specifying that the interfaces are ready to receive incoming connections
 const HC_MAGIC_READY_STRING = 'Conductor ready.';
 
-//const g_adminPort = 1235;
-//const g_adminPort = 1200 + Math.floor(Math.random() * 100); // Randomized admin port on each launch
-var g_adminPort = 0;
-var g_appPort = 0;
-//var g_appPort = 8900 + Math.floor(Math.random() * 100); // Randomized port on each launch
-//log('debug',{g_appPort});
 const g_errorUrl = 'file://' + CURRENT_DIR + '/'+ DIST_DIR +'/error.html';
 const INDEX_URL = 'file://' + CURRENT_DIR + '/'+ DIST_DIR +'/index.html?APP=';
 log('debug', 'INDEX_URL = ' + INDEX_URL);
-// -- Start-up stuff -- //
 
 /** Add Holochain bins to PATH for WSL */
 const BIN_DIR = "bin";
@@ -67,12 +67,23 @@ if (process.platform === "win32") {
   process.env.PATH += ';' + BIN_PATH;
 }
 
-// --  GLOBALS  -- //
+//----------------------------------------------------------------------------------------------------------------------
+// --  GLOBALS
+//----------------------------------------------------------------------------------------------------------------------
+
+//const g_adminPort = 1235;
+//const g_adminPort = 1200 + Math.floor(Math.random() * 100); // Randomized admin port on each launch
+//var g_appPort = 8900 + Math.floor(Math.random() * 100); // Randomized port on each launch
+//log('debug',{g_appPort});
+
+var g_adminPort = 0;
+var g_appPort = 0;
 
 // Keep a global reference of the ELECTRON window object, if you don't,
 // the window will be closed automatically when the JavaScript object is garbage collected.
-let g_settingsStore = undefined;
 let g_mainWindow = undefined;
+
+let g_settingsStore = undefined;
 let g_holochain_proc = undefined;
 let g_keystore_proc = undefined;
 let g_canQuit = false;
@@ -94,6 +105,10 @@ if (fs.existsSync(DNA_HASH_FILEPATH)) {
 }
 log('info', "DNA HASH: " + DNA_HASH);
 
+//----------------------------------------------------------------------------------------------------------------------
+// -- SETUP
+//----------------------------------------------------------------------------------------------------------------------
+
 // --  Create missing dirs -- //
 
 if (!fs.existsSync(CONFIG_PATH)) {
@@ -106,7 +121,8 @@ if (!fs.existsSync(STORAGE_PATH)) {
 }
 
 // -- Determine Session ID -- //
-let sessionId = '';
+
+let sessionId;
 if (process.argv.length > 2) {
   sessionId = process.argv[2];
 } else {
@@ -114,6 +130,7 @@ if (process.argv.length > 2) {
 }
 
 // -- Setup storage folder -- //
+
 g_storagePath = path.join(STORAGE_PATH, sessionId);
 log('debug',{g_storagePath});
 let version_txt = path.join(g_storagePath, "version.txt");
@@ -186,7 +203,7 @@ let g_appConfigPath = path.join(g_storagePath, APP_CONFIG_FILENAME);
     log('debug', 'Reading file ' + g_appConfigPath);
     const appConfigString = fs.readFileSync(g_appConfigPath).toString();
     g_uidList = appConfigString.replace(/\r\n/g,'\n').split('\n');
-    g_uidList = g_uidList.filter(function (el) {return el != '';});
+    g_uidList = g_uidList.filter(function (el) {return el !== '';});
     log('debug', {g_uidList});
 
   } catch(err) {
@@ -207,7 +224,7 @@ var autoLauncher = new AutoLaunch({
 });
 
 // ----------------------------------------------------------------------------------------------
-// -- Handle IPC with UI
+// -- IPC between UI and Main
 // ----------------------------------------------------------------------------------------------
 
 const ipc = require('electron').ipcMain;
@@ -295,8 +312,6 @@ function createWindow() {
   let { x, y } = g_settingsStore.get('windowPosition');
   mainWindow.setPosition(x, y);
 
-
-
   // The BrowserWindow class extends the node.js core EventEmitter class, so we use that API
   // to listen to events on the BrowserWindow. The resize event is emitted when the window size changes.
   mainWindow.on('resize', () => {
@@ -313,8 +328,8 @@ function createWindow() {
     shell.openExternal(url).then(_r => {});
   });
 
-  // Open the DevTools.
-  //mainWindow.webContents.openDevTools()
+  // Open DevTools
+  if (IS_DEBUG) mainWindow.webContents.openDevTools();
 
   // Emitted on request to close window
   mainWindow.on('close', (event) => {
@@ -413,6 +428,7 @@ async function spawnHolochainProc() {
   // Done
   g_holochain_proc = holochain_proc;
 }
+
 
 /**
  * Make sure there is no outstanding holochain procs
@@ -520,7 +536,7 @@ async function startConductor(canRegenerateConfig) {
     const installed_app_id = SNAPMAIL_APP_ID + '-' + g_uid;
     let appWs = await connectToApp(g_appPort);
     const appInfo = await appWs.appInfo({ installed_app_id }, 1000);
-    console.log({appInfo});
+    log('info', appInfo);
     if (appInfo === null) {
       log('error', "happ not installed in conductor: " + installed_app_id)
     }
@@ -536,7 +552,7 @@ async function startConductor(canRegenerateConfig) {
       , 9999
     );
     log('debug', "username found: " + username);
-    if (username == "<noname>") {
+    if (username === "<noname>") {
       let firstUsername = await promptFirstHandle(true);
       let result = await appWs.callZome({
           cap: null,
@@ -564,6 +580,7 @@ async function startConductor(canRegenerateConfig) {
     log('error',{err});
   }
 }
+
 
 /**
  * This method will be called when Electron has finished initialization and is ready to create browser windows.
@@ -614,10 +631,8 @@ app.on('ready', async function () {
   const menu = Menu.buildFromTemplate(trayMenuTemplate);
   g_tray.setContextMenu(menu);
 
-
   // Create main window
   g_mainWindow = createWindow();
-
 
   try {
     // Start Conductor
@@ -651,6 +666,7 @@ app.on('second-instance', (_event) => {
   log('warn','\n\n second-instance detected !!! \n\n')
 });
 
+
 /**
  * When main window has been closed and the application will quit, destroy conductor subprocess
  */
@@ -661,6 +677,7 @@ app.on('will-quit', (event) => {
     //killHolochain();
   }
 });
+
 
 /**
  * Quit when all windows are closed.
@@ -674,6 +691,7 @@ app.on('window-all-closed', function () {
     app.quit();
   }
 });
+
 
 /**
  *
@@ -689,12 +707,19 @@ app.on('activate', function () {
   }
 });
 
+
+/**
+ *
+ */
 app.on('before-quit', function () {
   log('debug','*** App "before-quit"');
   g_canQuit = true;
 });
 
-// -- Prompts and Menu -- //
+
+//----------------------------------------------------------------------------------------------------------------------
+// -- PROMPTS
+//----------------------------------------------------------------------------------------------------------------------
 
 /**
  * @returns false if user cancelled
@@ -813,6 +838,7 @@ async function promptUid(canExitOnCancel) {
   return r !== null
 }
 
+
 /**
  * @returns false if user cancelled
  */
@@ -873,15 +899,23 @@ async function promptProxyUrl(canExitOnCancel) {
   return r !== null
 }
 
-function showErrorDialog(message) {
-  dialog.showMessageBox(g_mainWindow, {
-    title: 'Application error',
-    buttons: ['OK'],
-    type: 'error',
-    message,
-  });
-}
 
+// /**
+//  *
+//  */
+// function showErrorDialog(message) {
+//   dialog.showMessageBox(g_mainWindow, {
+//     title: 'Application error',
+//     buttons: ['OK'],
+//     type: 'error',
+//     message,
+//   });
+// }
+
+
+/**
+ *
+ */
 async function showAbout() {
   if (g_dnaHash === undefined) {
     g_dnaHash = await getDnaHash(g_adminWs);
@@ -897,9 +931,13 @@ async function showAbout() {
     //iconIndex: 0,
     //icon: CONFIG.ICON,
     //icon: app.getFileIcon(path)
-  });
+  }, {});
 }
 
+
+/**
+ *
+ */
 async function confirmExit() {
   let dontConfirmOnExit = g_settingsStore.get("dontConfirmOnExit");
   //let r = await prompt({
@@ -927,7 +965,7 @@ async function confirmExit() {
     }
     case 2: {
       return true;
-      break;
+      //break;
     }
     default:
   }
@@ -936,14 +974,14 @@ async function confirmExit() {
 
 //----------------------------------------------------------------------------------------------------------------------
 // -- MENUS
+//----------------------------------------------------------------------------------------------------------------------
 
 const optionsMenuTemplate = [
   {
     id: 'launch-at-startup',
     label: 'Launch at startup',
     type: 'checkbox',
-    click: function (menuItem, browserWindow, event) {
-      //console.log(menuItem);
+    click: function (menuItem, _browserWindow, _event) {
       updateAutoLaunchSetting(menuItem.checked);
     },
   },
@@ -951,12 +989,12 @@ const optionsMenuTemplate = [
     id: 'notify-msg',
     label: 'Allow Notifications',
     type: 'checkbox',
-    click: function (menuItem, browserWindow, event) {
-      //console.log(menuItem);
+    click: function (menuItem, _browserWindow, _event) {
       updateNotificationSetting(menuItem.checked);
     },
   },
 ];
+
 
 /**
  * In this file you can include the rest of your app's specific main process code.
@@ -1026,19 +1064,19 @@ const debugMenuTemplate = [
   {
     label: 'Open Config Folder',
     click: function () {
-      shell.openItem(CONFIG_PATH)
+      shell.openItem(CONFIG_PATH);
     },
     //icon: 'assets/icon.png'
   },
   {
     label: 'Open Log File',
     click: function () {
-      shell.openItem(logger.transports.file.file)
+      shell.openItem(logger.transports.file.file);
     },
   },
   {
     label: 'devTools',
-    click: function () {
+    click: function () {;
       g_mainWindow.webContents.openDevTools()
     },
   },
@@ -1058,6 +1096,7 @@ const debugMenuTemplate = [
     }
   },
 ];
+
 
 /**
  *
@@ -1103,6 +1142,7 @@ const mainMenuTemplate = [
   },
 ];
 
+
 /**
  *
  */
@@ -1115,5 +1155,10 @@ const trayMenuTemplate = [
   { type: 'separator' },
   { label: 'Exit', click: function () { app.quit() } }
 ];
+
+
+//----------------------------------------------------------------------------------------------------------------------
+// -- FINALIZE
+//----------------------------------------------------------------------------------------------------------------------
 
 Menu.setApplicationMenu(Menu.buildFromTemplate(mainMenuTemplate));

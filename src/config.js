@@ -1,20 +1,28 @@
-// const path = require('path');
-// const { app } = require('electron');
+const fs = require('fs');
+const { spawn } = require('child_process');
+const { bytesToBase64 } = require('byte-base64');
+const { AdminWebsocket, AppWebsocket } = require('@holochain/conductor-api');
+//const { AdminWebsocket, AppWebsocket } = require('../holochain-conductor-api');
 
 const { log } = require('./logger');
-const fs = require('fs');
-const { spawn, fork } = require('child_process');
-const { AdminWebsocket, AppWebsocket } = require('@holochain/conductor-api');
-//const { AdminWebsocket } = require('../holochain-conductor-api');
-
-const {bytesToBase64} = require('byte-base64');
-
-const { CURRENT_DIR, SNAPMAIL_APP_ID } = require('./globals');
+const { CURRENT_DIR, SNAPMAIL_APP_ID, DEFAULT_BOOTSTRAP_URL } = require('./globals');
 
 // -- CONSTS -- //
 
 const DEFAULT_PROXY_URL ='kitsune-proxy://VYgwCrh2ZCKL1lpnMM1VVUee7ks-9BkmW47C_ys4nqg/kitsune-quic/h/kitsune-proxy.harris-braun.com/p/4010/--';
 const LAIR_MAGIC_READY_STRING = '#lair-keystore-ready#';
+
+
+// -- Functions -- //
+
+/**
+ * @param u8array
+ * @returns {string}
+ */
+function htos(u8array) {
+  return bytesToBase64(u8array)
+}
+
 
 /**
  * Spawn 'lair-keystore' process
@@ -65,6 +73,12 @@ async function spawnKeystore(keystore_bin) {
 }
 module.exports.spawnKeystore = spawnKeystore;
 
+
+/**
+ * Sanitize path for Windows
+ * @param path
+ * @returns path
+ */
 function winPath(path) {
   if (process.platform !== "win32") {
     return path;
@@ -89,9 +103,10 @@ function generateConductorConfig(configPath, bootstrapUrl, storagePath, proxyUrl
   let environment_path = winPath(storagePath);
   log('debug',{environment_path});
   if (bootstrapUrl === undefined) {
-    bootstrapUrl = DEFAULT_BOOTSTRAP_URL
+    bootstrapUrl = DEFAULT_BOOTSTRAP_URL;
   }
 
+  // - Basic Config with Proxy
   const config =
     `environment_path: ${environment_path}
 use_dangerous_test_keystore: false
@@ -165,10 +180,6 @@ module.exports.generateConductorConfig = generateConductorConfig;
 //   console.log('Found ' + dnas.length + ' dnas');
 // }
 
-function htos(u8array) {
-  return bytesToBase64(u8array)
-}
-
 
 /**
  *
@@ -203,32 +214,33 @@ module.exports.connectToApp = connectToApp;
 async function getDnaHash(adminWs) {
   const dnas = await adminWs.listDnas();
   log('debug','getDnaHash() - Found ' + dnas.length + ' dna(s):');
-  for (dna of dnas) {
+  for (let dna of dnas) {
     log('debug',' -  ' + htos(dna));
   }
-  if (dnas.length == 0) {
+  if (dnas.length === 0) {
     return undefined;
   }
   return htos(dnas[0]);
 }
 module.exports.getDnaHash = getDnaHash;
 
+
 /**
  *
  * @param adminWs
- * @returns {Promise<boolean|boolean>}
+ * @returns {Promise<number>}
  */
 async function hasActivatedApp(adminWs) {
   const dnas = await adminWs.listDnas();
   log('debug','Found ' + dnas.length + ' dna(s)');
-  for (dna of dnas) {
+  for (let dna of dnas) {
     log('debug',' -  ' + htos(dna));
   }
 
   // Active Apps
   const activeAppIds = await adminWs.listActiveApps();
   log('info','Found ' + activeAppIds.length + ' Active App(s)');
-  for (activeId of activeAppIds) {
+  for (let activeId of activeAppIds) {
     log('info',' -  ' + activeId);
   }
   // const hasActiveApp = activeAppIds.length == 1 && activeAppIds[0] == SNAPMAIL_APP_ID;
@@ -242,7 +254,7 @@ async function hasActivatedApp(adminWs) {
       activeAppPort = interfaces[0];
     }
     log('info','Found ' + interfaces.length + ' App Interfaces(s)');
-    for (appInterface of interfaces) {
+    for (let appInterface of interfaces) {
       log('info',' -  ' + appInterface);
     }
   }
@@ -263,7 +275,7 @@ async function cloneCell(adminWs, uid) {
   for (const cellId of cellIds) {
     console.log(' -  ' + htos(cellId[0]) + ' - ' + htos(cellId[1]));
   }
-  if (cellIds.length == 0) {
+  if (cellIds.length === 0) {
     console.error("Can't switch cell since no cell already installed");
     return false;
   }
@@ -293,9 +305,6 @@ module.exports.cloneCell = cloneCell;
 
 /**
  *  Connect to Admin interface, install App and attach a port
- * @param adminWs
- * @param uid
- * @returns {Promise<void>}
  */
 async function installApp(adminWs, uid) {
   //const installed_app_id = SNAPMAIL_APP_ID;
