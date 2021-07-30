@@ -175,9 +175,9 @@ module.exports.generateConductorConfig = generateConductorConfig;
 
 // async function isAppInstalled(appPort) {
 //   const adminWs = await AdminWebsocket.connect(`ws://localhost:${adminPort}`);
-//   console.log('Connected to admin at ' + adminPort);
+//   log('info', 'Connected to admin at ' + adminPort);
 //   const dnas = await adminWs.listDnas();
-//   console.log('Found ' + dnas.length + ' dnas');
+//   log('info', 'Found ' + dnas.length + ' dnas');
 // }
 
 
@@ -271,12 +271,12 @@ async function cloneCell(adminWs, uid) {
 
   // Check if cell exists
   const cellIds = await adminWs.listCellIds();
-  console.log('Found ' + cellIds.length + ' Cell(s)');
+  log('info', 'Found ' + cellIds.length + ' Cell(s)');
   for (const cellId of cellIds) {
-    console.log(' -  ' + htos(cellId[0]) + ' - ' + htos(cellId[1]));
+    log('info', ' -  ' + htos(cellId[0]) + ' - ' + htos(cellId[1]));
   }
   if (cellIds.length === 0) {
-    console.error("Can't switch cell since no cell already installed");
+    log('error', "Can't switch cell since no cell already installed");
     return false;
   }
 

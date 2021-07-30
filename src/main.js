@@ -142,18 +142,18 @@ if (!fs.existsSync(g_storagePath)) {
   try { fs.writeFileSync(version_txt, app.getVersion(), 'utf-8'); }
   catch(e) {
     //showErrorDialog('Failed to save the version_txt file !');
-    console.error('Failed to save the version_txt file !')
+    log('error', 'Failed to save the version_txt file !')
     process.abort();
   }
 } else {
   // Make sure its a compatible version
   try {
-    console.log('Reading: ' + version_txt);
+    log('debug', 'Reading: ' + version_txt);
     const read_version = fs.readFileSync(version_txt, 'utf-8');
     if (read_version !== app.getVersion()) {
-      console.error('App Version mismatch :-(')
-      console.error(read_version);
-      console.error(app.getVersion());
+      log('error', 'App Version mismatch :-(')
+      log('error', read_version);
+      log('error', app.getVersion());
       //dialog.showOpenDialogSync({ properties: ['openFile', 'multiSelections'] })
       //showErrorDialog('App Version mismatch :-(');
       //app.quit();
@@ -163,8 +163,8 @@ if (!fs.existsSync(g_storagePath)) {
   catch(e) {
     //showErrorDialog('Failed to read the version_txt file !');
     //app.quit();
-    console.error('Failed to read the version_txt file !')
-    console.error(e);
+    log('error', 'Failed to read the version_txt file !')
+    log('error', e);
     process.abort();
   }
 }
@@ -414,10 +414,10 @@ async function spawnHolochainProc() {
       if(output.indexOf(HC_MAGIC_READY_STRING) > -1) {
         let regex = /###ADMIN_PORT:([0-9]*)###/gm;
         let match = regex.exec(output);
-        //console.log({match});
+        //log('debug', {match});
         if (match === undefined || match === null || match.length === 0) {
-          console.log('ADMIN port not found in holochain output:');
-          console.log({output});
+          log('warn', 'ADMIN port not found in holochain output:');
+          log('warn', {output});
           return;
         }
         g_adminPort = match[1];
@@ -495,29 +495,34 @@ async function startConductor(canRegenerateConfig) {
   log('info', 'Launching conductor...');
   await spawnHolochainProc();
   //g_canQuit = true;
-  // Connect to Conductor and activate app
+  // - Connect to Conductor and activate app
   let indexUrl;
   try {
     log('debug','Connecting to admin at ' + g_adminPort + ' ...');
     g_adminWs = await connectToAdmin(g_adminPort);
     let activeAppPort = await hasActivatedApp(g_adminWs);
     if(activeAppPort === 0) {
-      // Prompt for UUID
+      // - Prompt for first UID
       g_uid = '<my-network-id>';
       await promptUid(true);
       g_dnaHash = await installApp(g_adminWs, g_uid);
       //log('debug','Attaching to app at ' + g_appPort + ' ...');
       g_appPort = await g_adminWs.attachAppInterface({port: undefined});
-      console.log({g_appPort});
+      log('debug', {g_appPort});
       g_appPort = g_appPort.port;
       log('info','App Interface attached: ' + g_appPort);
     } else {
       g_appPort = activeAppPort;
-      // Maybe Prompt UID selection menu
+      // - Prompt for UID selection or prefered UID if multiple uid found
       if (g_uid === '' && g_uidList !== undefined && g_uidList.length > 0) {
-        g_uid = g_uidList[0];
-        if(g_uidList.length > 1) {
-          await promptUidSelect(false);
+        let maybe_uid = g_settingsStore.get('uid');
+        if (maybe_uid !== undefined) {
+          g_uid = maybe_uid;
+        } else {
+          g_uid = g_uidList[0];
+          if(g_uidList.length > 1) {
+            await promptUidSelect(false);
+          }
         }
       }
     }
@@ -866,6 +871,7 @@ async function promptUidSelect(canExitOnCancel) {
   } else {
     log('debug','promptUidSelect result: ' + r);
     g_uid = r;
+    g_settingsStore.set('uid', g_uid);
   }
   return r !== null
 }
@@ -921,7 +927,7 @@ async function showAbout() {
     g_dnaHash = await getDnaHash(g_adminWs);
   }
   let netHash = g_dnaHash || "(unknown)";
-  dialog.showMessageBox({
+  await dialog.showMessageBox({
     width: 800,
     title: `About ${app.getName()}`,
     message: `${app.getName()} - v${app.getVersion()}`,
@@ -1058,7 +1064,7 @@ const networkMenuTemplate = [
 const debugMenuTemplate = [
   // {
   //   label: 'Dump logs', click: function() {
-  //     console.log({process})
+  //     log('debug', {process})
   //   }
   // },
   {
@@ -1076,8 +1082,8 @@ const debugMenuTemplate = [
   },
   {
     label: 'devTools',
-    click: function () {;
-      g_mainWindow.webContents.openDevTools()
+    click: function () {
+      g_mainWindow.webContents.openDevTools();
     },
   },
   {
