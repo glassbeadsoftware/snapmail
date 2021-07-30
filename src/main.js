@@ -17,16 +17,16 @@ const {
   connectToApp, installApp, getDnaHash } = require('./config');
 const { SettingsStore } = require('./settings');
 
-//----------------------------------------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------------------
 // - PRE-INIT
-//----------------------------------------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------------------
 
 require('electron-context-menu')();
 require('fix-path')();
 
-//----------------------------------------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------------------
 // - CONSTS
-//----------------------------------------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------------------
 
 // Toggle this for debug / release mode
 const IS_DEBUG = process.env.APP_DEV ? (process.env.APP_DEV.trim() === 'true') : false;
@@ -67,17 +67,17 @@ if (process.platform === "win32") {
   process.env.PATH += ';' + BIN_PATH;
 }
 
-//----------------------------------------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------------------
 // --  GLOBALS
-//----------------------------------------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------------------
 
 //const g_adminPort = 1235;
 //const g_adminPort = 1200 + Math.floor(Math.random() * 100); // Randomized admin port on each launch
 //var g_appPort = 8900 + Math.floor(Math.random() * 100); // Randomized port on each launch
 //log('debug',{g_appPort});
 
-var g_adminPort = 0;
-var g_appPort = 0;
+let g_adminPort = 0;
+let g_appPort = 0;
 
 // Keep a global reference of the ELECTRON window object, if you don't,
 // the window will be closed automatically when the JavaScript object is garbage collected.
@@ -91,7 +91,7 @@ let g_canMdns = false;
 let g_bootstrapUrl = '';
 let g_uid = '';
 let g_proxyUrl = '';
-let g_storagePath = STORAGE_PATH;
+let g_storagePath = undefined;
 let g_configPath = undefined;
 let g_adminWs = undefined;
 let g_uidList = [];
@@ -99,15 +99,15 @@ let g_tray = null;
 let g_dnaHash = undefined;
 
 // -- Read dna_hash -- //
-var DNA_HASH = '<unknown>';
+let DNA_HASH = '<unknown>';
 if (fs.existsSync(DNA_HASH_FILEPATH)) {
   DNA_HASH = fs.readFileSync(DNA_HASH_FILEPATH, 'utf-8');
 }
 log('info', "DNA HASH: " + DNA_HASH);
 
-//----------------------------------------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------------------
 // -- SETUP
-//----------------------------------------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------------------
 
 // --  Create missing dirs -- //
 
@@ -223,13 +223,16 @@ var autoLauncher = new AutoLaunch({
   isHidden: true,
 });
 
-// ----------------------------------------------------------------------------------------------
+// ------------------------------------------------------------------------------------------------
 // -- IPC between UI and Main
-// ----------------------------------------------------------------------------------------------
+// ------------------------------------------------------------------------------------------------
 
 const ipc = require('electron').ipcMain;
 
-// Receive and reply to synchronous message
+/**
+ * Receive synchronous notification
+ * Launch Notification if allowed
+ */
 ipc.on('newMailSync', (event, title, body) => {
   const canNotify = g_settingsStore.get('canNotify');
   //log('debug', "canNotify = " + canNotify);
@@ -239,12 +242,17 @@ ipc.on('newMailSync', (event, title, body) => {
   event.returnValue = canNotify;
 });
 
-// Receive and reply to synchronous message
+
+/**
+ * Receive asynchronous new mail counter
+ * Update sys tray title
+ */
 ipc.on('newCountAsync', (event, newCount) => {
   let append = newCount === 0 ? '' : ' (' + newCount + ')';
   g_tray.setToolTip('SnapMail v' + app.getVersion() + append);
   event.returnValue = true;
 });
+
 
 // //Receive and reply to asynchronous message
 // ipc.on('hello', (event, args) => {
@@ -258,9 +266,9 @@ ipc.on('newCountAsync', (event, newCount) => {
 // }
 
 
-// ----------------------------------------------------------------------------------------------
+// ------------------------------------------------------------------------------------------------
 // -- Functions
-// ----------------------------------------------------------------------------------------------
+// ------------------------------------------------------------------------------------------------
 
 function updateAutoLaunchSetting(canAutoLaunch) {
   if (canAutoLaunch === undefined) {
@@ -313,9 +321,11 @@ function createWindow() {
   mainWindow.setPosition(x, y);
 
   // The BrowserWindow class extends the node.js core EventEmitter class, so we use that API
-  // to listen to events on the BrowserWindow. The resize event is emitted when the window size changes.
+  // to listen to events on the BrowserWindow.
+  // The resize event is emitted when the window size changes.
   mainWindow.on('resize', () => {
-    // The event doesn't pass us the window size, so we call the `getBounds` method which returns an object with
+    // The event doesn't pass us the window size,
+    // so we call the `getBounds` method which returns an object with
     // the height, width, and x and y coordinates.
     let { width, height } = mainWindow.getBounds();
     // Now that we have them, save them using the `set` method.
@@ -574,7 +584,8 @@ async function startConductor(canRegenerateConfig) {
   } catch(err) {
     log('error', "*** Calling zome for initial username failed.");
     log('error', {err});
-    //alert("Holochain failed.\n Connection to holochain might be lost. Reload App or refresh web page to attempt reconnection");
+    //alert("Holochain failed.\n Connection to holochain might be lost.
+    // Reload App or refresh web page to attempt reconnection");
   }
   // -- trigger refresh once we know interfaces have booted up -- //
   log('debug',"Loading index.html: " + indexUrl);
@@ -588,7 +599,8 @@ async function startConductor(canRegenerateConfig) {
 
 
 /**
- * This method will be called when Electron has finished initialization and is ready to create browser windows.
+ * This method will be called when Electron has finished initialization
+ * and is ready to create browser windows.
  * Some APIs can only be used after this event occurs.
  */
 app.on('ready', async function () {
@@ -664,7 +676,8 @@ app.on('ready', async function () {
 
 
 /**
- * This event will be emitted inside the primary instance of your application when a second instance has been executed
+ * This event will be emitted inside the primary instance of your application
+ * when a second instance has been executed.
  * and calls app.requestSingleInstanceLock().
  */
 app.on('second-instance', (_event) => {
@@ -722,9 +735,9 @@ app.on('before-quit', function () {
 });
 
 
-//----------------------------------------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------------------
 // -- PROMPTS
-//----------------------------------------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------------------
 
 /**
  * @returns false if user cancelled
@@ -931,7 +944,9 @@ async function showAbout() {
     width: 800,
     title: `About ${app.getName()}`,
     message: `${app.getName()} - v${app.getVersion()}`,
-    detail: `A minimalist email app on Holochain from Glass Bead Software\n\nCore DNA hash: ${DNA_HASH}\n     Session hash: ${netHash}\n`,
+    detail: `A minimalist email app on Holochain from Glass Bead Software\n\n`
+      + `Core DNA hash: ${DNA_HASH}\n`
+      + `   Session hash: ${netHash}\n`,
     buttons: [],
     type: "info",
     //iconIndex: 0,
@@ -950,7 +965,8 @@ async function confirmExit() {
   let {response, checkboxChecked} = await dialog.showMessageBox(g_mainWindow, {
     //width: 800,
     title: `Confirm Exit`,
-    message: "Incoming messages will not arrive until you relaunch SnapMail.\nAre you sure you want to exit?",
+    message: "Incoming messages will not arrive until you relaunch SnapMail.\n" +
+      "Are you sure you want to exit?",
     defaultId: 2,
     buttons: ['Just minimize Snapmail', 'Cancel', 'Exit'],
     type: "question",
@@ -978,9 +994,9 @@ async function confirmExit() {
   return false;
 }
 
-//----------------------------------------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------------------
 // -- MENUS
-//----------------------------------------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------------------
 
 const optionsMenuTemplate = [
   {
@@ -1163,8 +1179,8 @@ const trayMenuTemplate = [
 ];
 
 
-//----------------------------------------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------------------
 // -- FINALIZE
-//----------------------------------------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------------------
 
 Menu.setApplicationMenu(Menu.buildFromTemplate(mainMenuTemplate));
