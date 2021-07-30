@@ -1,19 +1,19 @@
 // const path = require('path');
 // const { app } = require('electron');
+
 const { log } = require('./logger');
 const fs = require('fs');
 const { spawn, fork } = require('child_process');
-const { AdminWebsocket } = require('@holochain/conductor-api');
+const { AdminWebsocket, AppWebsocket } = require('@holochain/conductor-api');
 //const { AdminWebsocket } = require('../holochain-conductor-api');
 
 const {bytesToBase64} = require('byte-base64');
 
-const { CURRENT_DIR } = require('./globals');
+const { CURRENT_DIR, SNAPMAIL_APP_ID } = require('./globals');
 
 // -- CONSTS -- //
 
 const DEFAULT_PROXY_URL ='kitsune-proxy://VYgwCrh2ZCKL1lpnMM1VVUee7ks-9BkmW47C_ys4nqg/kitsune-quic/h/kitsune-proxy.harris-braun.com/p/4010/--';
-const SNAPMAIL_APP_ID = 'snapmail-app'; // MUST MATCH SNAPMAIL_UI config
 const LAIR_MAGIC_READY_STRING = '#lair-keystore-ready#';
 
 /**
@@ -181,6 +181,18 @@ async function connectToAdmin(adminPort) {
   return adminWs;
 }
 module.exports.connectToAdmin = connectToAdmin;
+
+
+/**
+ *
+ */
+async function connectToApp(appPort) {
+  let appWs = await AppWebsocket.connect(`ws://localhost:${ appPort }`, 30000);
+  log('debug',{appWs});
+  log('debug','Connected to app at ' + appPort);
+  return appWs;
+}
+module.exports.connectToApp = connectToApp;
 
 
 /**

@@ -10,9 +10,9 @@ const AutoLaunch = require('auto-launch');
 
 // My Modules
 const {
-  DNA_HASH_FILEPATH, CONDUCTOR_CONFIG_FILENAME, APP_CONFIG_FILENAME, CONFIG_PATH, STORAGE_PATH, CURRENT_DIR, DEFAULT_BOOTSTRAP_URL } = require('./globals');
+  DNA_HASH_FILEPATH, CONDUCTOR_CONFIG_FILENAME, APP_CONFIG_FILENAME, CONFIG_PATH, STORAGE_PATH, CURRENT_DIR, DEFAULT_BOOTSTRAP_URL, SNAPMAIL_APP_ID } = require('./globals');
 const { log, logger } = require('./logger');
-const {generateConductorConfig, spawnKeystore, hasActivatedApp, connectToAdmin, installApp, getDnaHash } = require('./config');
+const {generateConductorConfig, spawnKeystore, hasActivatedApp, connectToAdmin, connectToApp, installApp, getDnaHash } = require('./config');
 const { SettingsStore } = require('./settings');
 
 // -- Code -- //
@@ -506,7 +506,7 @@ async function startConductor(canRegenerateConfig) {
       }
     }
     indexUrl = INDEX_URL + g_appPort + '&UID=' + g_uid;
-    console.log({indexUrl});
+    log('debug', indexUrl);
   } catch (err) {
     log('error', 'Conductor setup failed:');
     log('error',{err});
@@ -514,7 +514,48 @@ async function startConductor(canRegenerateConfig) {
     //// Better to kill app if holochain not connected
     //app.quit();
   }
-  // trigger refresh once we know interfaces have booted up
+  // -- Check username -- //
+  try
+  {
+    const installed_app_id = SNAPMAIL_APP_ID + '-' + g_uid;
+    let appWs = await connectToApp(g_appPort);
+    const appInfo = await appWs.appInfo({ installed_app_id }, 1000);
+    console.log({appInfo});
+    if (appInfo === null) {
+      log('error', "happ not installed in conductor: " + installed_app_id)
+    }
+    let cellId = appInfo.cell_data[0].cell_id;
+    let username = await appWs.callZome({
+        cap: null,
+        cell_id: cellId,
+        zome_name: "snapmail",
+        fn_name: "get_my_handle",
+        provenance: cellId[1],
+        payload: undefined,
+      }
+      , 9999
+    );
+    log('debug', "username found: " + username);
+    if (username == "<noname>") {
+      let firstUsername = await promptFirstHandle(true);
+      let result = await appWs.callZome({
+          cap: null,
+          cell_id: cellId,
+          zome_name: "snapmail",
+          fn_name: "set_handle",
+          provenance: cellId[1],
+          payload: firstUsername,
+        }
+        , 9999
+      );
+      log('debug', "username set: " + JSON.stringify(result));
+    }
+  } catch(err) {
+    log('error', "*** Calling zome for initial username failed.");
+    log('error', {err});
+    //alert("Holochain failed.\n Connection to holochain might be lost. Reload App or refresh web page to attempt reconnection");
+  }
+  // -- trigger refresh once we know interfaces have booted up -- //
   log('debug',"Loading index.html: " + indexUrl);
   try {
     await g_mainWindow.loadURL(indexUrl);
@@ -712,6 +753,31 @@ async function promptBootstrapUrl(canExitOnCancel) {
   }
   return r !== null
 }
+
+
+/**
+ *
+ */
+async function promptFirstHandle() {
+  let r = await prompt({
+    title: 'SnapMail: Starting Username',
+    height: 180,
+    width: 500,
+    alwaysOnTop: true,
+    label: 'Username:',
+    value: "<noname>",
+    inputAttrs: {
+      type: 'string'
+    },
+    type: 'input'
+  });
+  if(r === null) {
+    log('debug','user cancelled. Exiting');
+    app.quit();
+  }
+  return r;
+}
+
 
 /**
  * @returns false if user cancelled
