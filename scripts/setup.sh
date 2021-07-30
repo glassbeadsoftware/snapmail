@@ -1,8 +1,9 @@
 #!/bin/sh
-
 # Script for setting up dev environment
 
-RUN yes | npm install
+start=`date +%s`
+
+npm install
 
 # Create build Directory
 rm -r build
@@ -21,3 +22,9 @@ cd ..
 
 # Done
 cd ..
+
+
+# Print duration
+end=`date +%s`
+runtime=$((end-start))
+echo $runtime
