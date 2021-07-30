@@ -182,16 +182,16 @@ let g_appConfigPath = path.join(g_storagePath, APP_CONFIG_FILENAME);
     // -- Conductor Config -- //
     const conductorConfigBuffer = fs.readFileSync(g_configPath);
     const conductorConfig = conductorConfigBuffer.toString();
-    //console.log({conductorConfig})
+    // log('debug', {conductorConfig})
     // Get Admin PORT
     let regex = /port: (.*)$/gm;
     let match = regex.exec(conductorConfig);
-    //console.log({match});
+    // log('silly', {match});
     g_adminPort = match[1];
     // Get bootstrap server URL
     regex = /bootstrap_service: (.*)$/gm;
     match = regex.exec(conductorConfig);
-    //console.log({match})
+    // log('silly', {match});
     g_bootstrapUrl = match[1];
     // Get proxy server URL
     regex = /proxy_url: (.*)$/gm;
@@ -976,8 +976,8 @@ async function confirmExit() {
     //icon: app.getFileIcon(path)
   });
 
-  //console.log(response);
-  //console.log(checkboxChecked);
+  //log('silly', response);
+  //log('silly', checkboxChecked);
   g_settingsStore.set("dontConfirmOnExit", checkboxChecked);
 
   switch (response) {
