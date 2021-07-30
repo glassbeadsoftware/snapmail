@@ -199,7 +199,7 @@ module.exports.connectToAdmin = connectToAdmin;
  */
 async function connectToApp(appPort) {
   let appWs = await AppWebsocket.connect(`ws://localhost:${ appPort }`, 30000);
-  log('debug',{appWs});
+  //log('silly',{appWs});
   log('debug','Connected to app at ' + appPort);
   return appWs;
 }
@@ -292,7 +292,7 @@ async function cloneCell(adminWs, uid) {
       slot_id: uid,
       membrane_proof: undefined,
     });
-    log('info', { clonedDna });
+    log('debug', clonedDna);
   } catch (err) {
     log('error', 'createCloneCell() failed:');
     log('error',{err});

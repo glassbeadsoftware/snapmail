@@ -10,6 +10,10 @@ const DEFAULT_BOOTSTRAP_URL = 'https://bootstrap-staging.holo.host';
 const CURRENT_DIR = path.join(__dirname, '..');
 const DNA_HASH_FILEPATH = './dna/dna_hash.txt';
 
+// Toggle this for debug / release mode
+const IS_DEBUG = process.env.APP_DEV ? (process.env.APP_DEV.trim() === 'true') : false;
+
+module.exports.IS_DEBUG = IS_DEBUG;
 module.exports.SNAPMAIL_APP_ID = SNAPMAIL_APP_ID;
 module.exports.DNA_HASH_FILEPATH = DNA_HASH_FILEPATH;
 module.exports.CURRENT_DIR = CURRENT_DIR;

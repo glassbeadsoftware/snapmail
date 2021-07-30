@@ -10,7 +10,7 @@ const AutoLaunch = require('auto-launch');
 // - My Modules
 const {
   DNA_HASH_FILEPATH, CONDUCTOR_CONFIG_FILENAME, APP_CONFIG_FILENAME, CONFIG_PATH,
-  STORAGE_PATH, CURRENT_DIR, DEFAULT_BOOTSTRAP_URL, SNAPMAIL_APP_ID } = require('./globals');
+  STORAGE_PATH, CURRENT_DIR, DEFAULT_BOOTSTRAP_URL, SNAPMAIL_APP_ID, IS_DEBUG } = require('./globals');
 const { log, logger } = require('./logger');
 const {
   generateConductorConfig, spawnKeystore, hasActivatedApp, connectToAdmin,
@@ -18,24 +18,19 @@ const {
 const { SettingsStore } = require('./settings');
 
 //--------------------------------------------------------------------------------------------------
-// - PRE-INIT
+// PRE-INIT
 //--------------------------------------------------------------------------------------------------
 
 require('electron-context-menu')();
 require('fix-path')();
 
+process.env.WASM_LOG="WARN";
+process.env.RUST_LOG="WARN";
+
 //--------------------------------------------------------------------------------------------------
-// - CONSTS
+// CONSTS
 //--------------------------------------------------------------------------------------------------
 
-// Toggle this for debug / release mode
-const IS_DEBUG = process.env.APP_DEV ? (process.env.APP_DEV.trim() === 'true') : false;
-
-//enables the devtools window automatically
-if (IS_DEBUG) {
-  log('info', "DEBUG MODE ENABLED");
-  // require('electron-debug')({ isEnabled: true });
-}
 //const DIST_DIR = IS_DEBUG? "ui_dbg" : "ui";
 
 const DIST_DIR = "ui";
@@ -270,6 +265,19 @@ ipc.on('newCountAsync', (event, newCount) => {
 // -- Functions
 // ------------------------------------------------------------------------------------------------
 
+/**
+ *
+ */
+function sleep(ms) {
+  return new Promise((resolve) => {
+    setTimeout(resolve, ms);
+  });
+}
+
+
+/**
+ *
+ */
 function updateAutoLaunchSetting(canAutoLaunch) {
   if (canAutoLaunch === undefined) {
     canAutoLaunch = g_settingsStore.get('canAutoLaunch');
@@ -283,6 +291,9 @@ function updateAutoLaunchSetting(canAutoLaunch) {
 }
 
 
+/**
+ *
+ */
 function updateNotificationSetting(canNotify) {
   if (canNotify === undefined) {
     canNotify = g_settingsStore.get('canNotify');
@@ -290,14 +301,6 @@ function updateNotificationSetting(canNotify) {
   g_settingsStore.set('canNotify', canNotify);
 }
 
-/**
- *
- */
-function sleep(ms) {
-  return new Promise((resolve) => {
-    setTimeout(resolve, ms);
-  });
-}
 
 /**
  * Create the main window global
@@ -388,9 +391,9 @@ function createWindow() {
  */
 async function spawnHolochainProc() {
   log('debug','spawnHolochainProc...');
-  // Adapt to WSL if needed
   let bin = HOLOCHAIN_BIN;
   let args = ['-c', g_configPath];
+
   // Spawn "holochain" subprocess
   log('info', 'Spawning ' + bin + ' (dirname: ' + CURRENT_DIR + ')');
   let holochain_proc = spawn(bin, args, {
@@ -403,7 +406,7 @@ async function spawnHolochainProc() {
     },
   });
   // Handle error output
-  holochain_proc.stderr.on('data', (data) => log('error', 'holochain> ' + data.toString()));
+  holochain_proc.stderr.on('data', (data) => log('error', '*** holochain > ' + data.toString()));
   // if "holochain" exit, close the app
   holochain_proc.on('exit', (code, signal) => {
     if (signal) {
@@ -551,7 +554,7 @@ async function startConductor(canRegenerateConfig) {
     const installed_app_id = SNAPMAIL_APP_ID + '-' + g_uid;
     let appWs = await connectToApp(g_appPort);
     const appInfo = await appWs.appInfo({ installed_app_id }, 1000);
-    log('info', appInfo);
+    log('debug', {appInfo});
     if (appInfo === null) {
       log('error', "happ not installed in conductor: " + installed_app_id)
     }
