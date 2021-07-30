@@ -14,7 +14,7 @@ cd ..
 
 # Generate Web UI
 cd snapmail-ui
-npm run prod
+npm run $1
 cp -r dist/* ../../ui
 cd ..
 

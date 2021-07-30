@@ -625,7 +625,7 @@ app.on('ready', async function () {
       canAutoLaunch: false,
       windowPosition: {x, y},
       dontConfirmOnExit: false,
-      canNotify: true,
+      canNotify: false,
     }
   });
 

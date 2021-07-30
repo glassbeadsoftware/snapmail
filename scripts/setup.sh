@@ -2,7 +2,7 @@
 
 # Script for setting up dev environment
 
-npm install
+RUN yes | npm install
 
 # Create build Directory
 rm -r build

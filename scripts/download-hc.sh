@@ -5,7 +5,7 @@
 cd build
 
 ### Holochain
-# Extract REV from holochain_rev.txt
+# Extract REV from holochain_rev.txt in snapmail-rsm
 HC_REV=`cat snapmail-rsm/holochain_rev.txt`
 echo HC_REV = $HC_REV
 # Build holochain
@@ -22,7 +22,7 @@ echo LAIR_REV = $LAIR_REV
 # Build lair
 git clone https://github.com/holochain/lair.git -n
 cd lair
-git checkout -b $LAIR_REV
+git checkout tags/v$LAIR_REV
 cd ..
 
 # Done
