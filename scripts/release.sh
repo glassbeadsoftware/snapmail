@@ -6,5 +6,5 @@ echo Starting Release process...
 ./scripts/setup.sh
 ./scripts/download-hc.sh
 ./scripts/build-hc.sh
-npm run build
+./scripts/build.sh prod
 npm run dist-$1
