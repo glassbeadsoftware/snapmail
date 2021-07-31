@@ -5,10 +5,11 @@
 cd build
 
 ## Holochain
-cd holochain/crates/holochain
-cargo build --release
-cd ../../..
-cp holochain/target/release/holochain ../bin/holochain-linux
+cd holochain
+cargo build --release -p holochain
+cp target/release/holochain ../../bin/holochain-linux
+cargo install --path crates/hc
+cd ..
 
 ## Lair
 cd lair

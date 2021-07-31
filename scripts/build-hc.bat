@@ -4,10 +4,11 @@ REM Holochain must have been downloaded first
 cd build
 
 REM Holochain
-cd holochain/crates/holochain
-cargo build --release
-cd ../../..
-cp holochain/target/release/holochain ../bin/holochain-win
+cd holochain
+cargo build --release -p holochain
+cp target/release/holochain ../../bin/holochain-win
+cargo install --path crates/hc
+cd ..
 
 REM Lair
 cd lair
