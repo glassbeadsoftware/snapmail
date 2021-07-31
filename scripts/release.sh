@@ -6,6 +6,7 @@ start=`date +%s`
 echo Starting Release process...
 
 ./scripts/setup.sh
+./scripts/update-dna.sh
 ./scripts/download-hc.sh
 ./scripts/build-hc.sh
 ./scripts/build.sh prod

@@ -1,16 +1,19 @@
 @echo off
 @setlocal
+:: Script for creating a new release from scratch
+
 set start=%time%
 
-REM Creating SnapMail RELEASE
+:: Creating SnapMail RELEASE
 call .\scripts\setup.bat
+call .\scripts\update-dna.bat
 wsl -e ./scripts/download-hc.sh
 call .\scripts\build-hc.bat
 call .\scripts\build.bat prod
 npm run dist-win
-REM RELEASE Done.
+:: RELEASE Done
 
-REM Time measured:
+:: Time measured
 set end=%time%
 set options="tokens=1-4 delims=:.,"
 for /f %options% %%a in ("%start%") do set start_h=%%a&set /a start_m=100%%b %% 100&set /a start_s=100%%c %% 100&set /a start_ms=100%%d %% 100
@@ -26,6 +29,5 @@ if %mins% lss 0 set /a hours = %hours% - 1 & set /a mins = 60%mins%
 if %hours% lss 0 set /a hours = 24%hours%
 if 1%ms% lss 100 set ms=0%ms%
 
-:: Mission accomplished
 set /a totalsecs = %hours%*3600 + %mins%*60 + %secs%
 echo command took %hours%:%mins%:%secs%.%ms% (%totalsecs%.%ms%s total)

@@ -18,6 +18,3 @@ cd ..
 REM Done
 cd ..
 
-REM Generate DNA
-REM git clone https://github.com/glassbeadsoftware/snapmail-rsm
-call .\scripts\download_dna.bat

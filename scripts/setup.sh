@@ -14,8 +14,5 @@ cd snapmail-ui
 npm install
 cd ..
 
+# Done
 cd ..
-
-# Generate DNA
-#git clone https://github.com/glassbeadsoftware/snapmail-rsm
-bash ./scripts/download_dna.sh

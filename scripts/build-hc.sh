@@ -1,5 +1,4 @@
 #!/bin/sh
-
 # Script for building holochain and lair for linux / MacOs
 # Holochain must have been downloaded first
 
