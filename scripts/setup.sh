@@ -1,8 +1,7 @@
 #!/bin/sh
-
 # Script for setting up dev environment
 
-RUN yes | npm install
+npm install
 
 # Create build Directory
 rm -r build

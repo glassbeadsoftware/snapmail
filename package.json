@@ -4,16 +4,18 @@
   "description": "A minimalist email application on holochain",
   "main": "src/main.js",
   "scripts": {
-    "postinstall": "electron-builder install-app-deps",
+    "postinstall": "electron-builder install-app-deps",  
            "dist": "electron-builder",
      "dist-linux": "electron-builder --linux tar.gz",
        "dist-mac": "electron-builder --mac",
        "dist-win": "set APP_DEV=false && electron-builder --win",
      "dist-arm64": "electron-builder --arm64 --linux tar.gz",
+
       "build-win": ".\\scripts\\build.bat prod",
   "build-win-dev": ".\\scripts\\build.bat dev",
           "build": ". scripts/build.sh prod",
       "build-dev": ". scripts/build.sh dev",
+
             "win": "electron . win --no-sandbox",
         "win-dev": "set APP_DEV=true && electron . win --no-sandbox",
           "start": "./node_modules/.bin/electron electron",
