@@ -8,9 +8,6 @@ rmdir /S /Q build
 mkdir build
 cd build
 
-REM Generate DNA
-git clone https://github.com/glassbeadsoftware/snapmail-rsm
-
 REM Generate Web UI
 git clone https://github.com/glassbeadsoftware/snapmail-ui
 cd snapmail-ui
@@ -20,3 +17,7 @@ cd ..
 
 REM Done
 cd ..
+
+REM Generate DNA
+REM git clone https://github.com/glassbeadsoftware/snapmail-rsm
+call .\scripts\download_dna.bat

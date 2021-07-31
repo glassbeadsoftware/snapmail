@@ -2,13 +2,13 @@ REM Script for building Snapmail DNA and UI
 cd build
 
 REM Generate DNA
-cd snapmail-rsm
-call scripts/save_dna_hash
-call scripts/pack-happ.bat
-cp snapmail.dna ../../dna
-cp snapmail.happ ../../dna
-cp dna_hash.txt ../../dna
-cd ..
+REM cd snapmail-rsm
+REM call scripts/save_dna_hash
+REM call scripts/pack-happ.bat
+REM cp snapmail.dna ../../dna
+REM cp snapmail.happ ../../dna
+REM cp dna_hash.txt ../../dna
+REM cd ..
 
 REM Generate Web UI
 cd snapmail-ui
