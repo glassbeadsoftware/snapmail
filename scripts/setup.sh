@@ -6,7 +6,7 @@ npm install
 
 echo
 echo \* Create 'build' folder
-rm -r build
+rm -rf build
 mkdir build
 cd build
 
