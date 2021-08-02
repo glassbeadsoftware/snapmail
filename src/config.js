@@ -238,13 +238,13 @@ async function hasActivatedApp(adminWs) {
   }
 
   // Active Apps
-  const activeAppIds = await adminWs.listApps({status_filter: AppStatusFilter.Enabled});
-  log('info','Found ' + activeAppIds.length + ' Active App(s)');
-  for (let activeId of activeAppIds) {
-    log('info',' -  ' + activeId);
+  const activeApps = await adminWs.listApps({status_filter: AppStatusFilter.Enabled});
+  log('info','Found ' + activeApps.length + ' Active App(s)');
+  for (let activeApp of activeApps) {
+    log('info',' -  ' + activeApp.installed_app_id);
   }
   // const hasActiveApp = activeAppIds.length == 1 && activeAppIds[0] == SNAPMAIL_APP_ID;
-  const hasActiveApp = activeAppIds.length > 0;
+  const hasActiveApp = activeApps.length > 0;
 
   // Get App interfaces
   let activeAppPort = 0;

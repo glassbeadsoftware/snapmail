@@ -348,7 +348,7 @@ function createWindow() {
   mainWindow.on('close', (event) => {
     log('debug', '*** mainWindow "close" - ' + g_canQuit);
     let positions = mainWindow.getPosition();
-    g_settingsStore.set('windowPosition', { x: positions[0], y: positions[1] });
+    g_settingsStore.set('windowPosition', { x: Math.floor(positions[0]), y: Math.floor(positions[1]) });
     if (g_canQuit) {
       mainWindow = null;
     } else {
@@ -614,8 +614,8 @@ app.on('ready', async function () {
   let default_width = Math.min(width, 1400);
   let default_height = Math.min(height, 950);
 
-  let x = (width - default_width) / 2;
-  let y = (height - default_height) / 2;
+  let x = Math.floor((width - default_width) / 2);
+  let y = Math.floor((height - default_height) / 2);
 
   g_settingsStore = new SettingsStore({
     // We'll call our data file 'user-preferences'
