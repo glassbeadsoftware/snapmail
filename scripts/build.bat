@@ -1,12 +1,30 @@
-REM Script for building Snapmail UI
+@echo off
+echo Generating Snapmail UI
+
+:: Args and folders
+if "%~1"=="" goto BLANK
+
+IF NOT exist build ( goto NODIR )
+IF NOT exist build\snapmail-ui ( goto NODIR )
+
+:: Start
 cd build
 
-REM Generate Web UI
+:: Generate Web UI
 cd snapmail-ui
 call npm run %1
-@echo on
 cp -r dist/* ../../ui
 cd ..
 
-REM Done
+:: Done
 cd ..
+echo ** UI generated in ./ui
+exit /b 0
+
+:BLANK
+echo Missing argument ('dev' or 'prod')
+exit /b 1
+
+:NODIR
+echo Missing snapmail-ui directory. Call 'setup.bat' first.
+exit /b 1
