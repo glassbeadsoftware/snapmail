@@ -42,8 +42,8 @@ if (process.platform === "win32") {
   HOLOCHAIN_BIN     = 'holochain-win.exe';
   LAIR_KEYSTORE_BIN = 'lair-keystore-win.exe';
 } else if (process.platform === 'darwin') {
-  HOLOCHAIN_BIN     = './bin/holochain';
-  LAIR_KEYSTORE_BIN = './bin/lair-keystore';
+  HOLOCHAIN_BIN     = './bin/holochain-linux';
+  LAIR_KEYSTORE_BIN = './bin/lair-keystore-linux';
 }
 
 // a special log from the conductor,
@@ -721,7 +721,7 @@ app.on('activate', function () {
   log('debug','*** App "activate"');
   // On macOS it's common to re-create a window in the app when the
   // dock icon is clicked and there are no other windows open.
-  if (g_mainWindow === null) {
+  if (g_mainWindow === null || g_mainWindow === undefined) {
     g_mainWindow = createWindow();
   } else {
     g_mainWindow.show();
