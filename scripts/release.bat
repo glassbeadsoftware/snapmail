@@ -1,12 +1,14 @@
 @echo off
 @setlocal
-:: Script for creating a new release from scratch
+echo.
+echo * Create new Snapmail happ Release
+echo !!! Make sure DNA has been updated to latest first !!!
+echo.
 
 set start=%time%
 
 :: Creating SnapMail RELEASE
 call .\scripts\setup.bat
-call .\scripts\update-dna.bat
 wsl -e ./scripts/download-hc.sh
 call .\scripts\build-hc.bat
 call .\scripts\build.bat prod
@@ -30,4 +32,4 @@ if %hours% lss 0 set /a hours = 24%hours%
 if 1%ms% lss 100 set ms=0%ms%
 
 set /a totalsecs = %hours%*3600 + %mins%*60 + %secs%
-echo command took %hours%:%mins%:%secs%.%ms% (%totalsecs%.%ms%s total)
+echo * Command took %hours%:%mins%:%secs%.%ms% (%totalsecs%.%ms%s total)

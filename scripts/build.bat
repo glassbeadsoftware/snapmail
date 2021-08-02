@@ -1,5 +1,6 @@
 @echo off
-echo Generating Snapmail UI
+echo.
+echo * Generate Snapmail UI
 
 :: Args and folders
 if "%~1"=="" goto BLANK
@@ -18,13 +19,15 @@ cd ..
 
 :: Done
 cd ..
-echo ** UI generated in ./ui
+echo.
+echo * Done. UI generated in './ui'
+echo.
 exit /b 0
 
 :BLANK
-echo Missing argument ('dev' or 'prod')
+echo. * Aborting. Missing argument ('dev' or 'prod')
 exit /b 1
 
 :NODIR
-echo Missing snapmail-ui directory. Call 'setup.bat' first.
+echo. Aborting. Missing 'snapmail-ui' directory. Call 'setup.bat' first.
 exit /b 1

@@ -1,5 +1,6 @@
 @echo off
-echo Building holochain and lair for Windows
+echo.
+echo * Build Holochain and Lair for Windows
 
 IF NOT exist build ( goto NODIR )
 IF NOT exist build\holochain ( goto NODIR )
@@ -7,23 +8,35 @@ IF NOT exist build\lair ( goto NODIR )
 
 cd build
 
-:: Holochain
+
+echo.
+echo * Build Holochain
 cd holochain
 cargo build --release -p holochain
 cp target/release/holochain ../../bin/holochain-win
+
+
+echo.
+echo * Install HC tool
 cargo install --path crates/hc
 cd ..
 
-:: Lair
+
+echo.
+echo * Build Lair
 cd lair
 cargo build --release
 cp target/release/lair-keystore ../../bin/lair-keystore-win
 cd ..
 
-:: Done
+
+echo.
+echo * Done
+echo.
 cd ..
 exit /b 0
 
+
 :NODIR
-echo Missing directories. Call 'wsl -e ./scripts/download-hc.sh' first.
+echo * Aborting. Missing directories. Call 'wsl -e ./scripts/download-hc.sh' first.
 exit /b 1

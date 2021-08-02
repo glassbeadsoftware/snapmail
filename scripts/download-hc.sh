@@ -1,28 +1,50 @@
 #!/bin/sh
-### Script for Retrieving the right holochain and lair version into ./build
+echo
+echo \* Download the right Holochain and Lair version
+
+if ! test -d "./build"; then
+    echo "$0: Aborting. Missing './build' folder."
+    exit 1
+fi
 
 cd build
 
+### snapmail-rsm
+if ! test -d "./snapmail-rsm"; then
+  echo \* Download DNA source code
+  git clone https://github.com/glassbeadsoftware/snapmail-rsm
+fi
+
+
 ### Holochain
-# Extract REV from holochain_rev.txt in snapmail-rsm
+echo
+echo \* Extract REV from holochain_rev.txt in snapmail-rsm
 HC_REV=`cat snapmail-rsm/holochain_rev.txt`
 echo HC_REV = $HC_REV
-# Build holochain
+
+echo
+echo \* Download and checkout Holochain REV
 git clone https://github.com/holochain/holochain.git -n
 cd holochain
 git checkout $HC_REV
 cd ..
 
+
 ### Lair
-# Extract LAIR REV from crates/holochain_keystore/Cargo.toml
-#lair_keystore_api = "=0.0.1-alpha.12"
+echo
+echo \* Extract LAIR REV from crates/holochain_keystore/Cargo.toml
 LAIR_REV=`awk -F "=" '/lair_keystore_api/ {print $3}' holochain/crates/holochain_keystore/Cargo.toml | sed 's/"//g'`
 echo LAIR_REV = $LAIR_REV
-# Build lair
+
+echo
+echo \* Download and checkout Lair TAG
 git clone https://github.com/holochain/lair.git -n
 cd lair
 git checkout tags/v$LAIR_REV
 cd ..
 
+
 # Done
+echo
+echo \* Done
 cd ..

@@ -1,18 +1,29 @@
 #!/bin/sh
-# Script for setting up dev environment
-
+echo
+echo \* Setup dev environment
 npm install
 
-# Create build Directory
+
+echo
+echo \* Create 'build' folder
 rm -r build
 mkdir build
 cd build
 
-# Generate Web UI
+
+echo
+echo \* Download latest DNA source code
+git clone https://github.com/glassbeadsoftware/snapmail-rsm
+
+
+echo
+echo \* Download and set up latest UI source code
 git clone https://github.com/glassbeadsoftware/snapmail-ui
 cd snapmail-ui
 npm install
 cd ..
 
-# Done
+
+echo
+echo \* Done
 cd ..
