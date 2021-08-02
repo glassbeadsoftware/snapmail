@@ -9,8 +9,8 @@ const prompt = require('electron-prompt');
 const AutoLaunch = require('auto-launch');
 // - My Modules
 const {
-  DNA_HASH_FILEPATH, CONDUCTOR_CONFIG_FILENAME, APP_CONFIG_FILENAME, CONFIG_PATH,
-  STORAGE_PATH, CURRENT_DIR, DEFAULT_BOOTSTRAP_URL, SNAPMAIL_APP_ID, IS_DEBUG } = require('./globals');
+  DNA_HASH_FILEPATH, CONDUCTOR_CONFIG_FILENAME, APP_CONFIG_FILENAME, CONFIG_PATH, STORAGE_PATH,
+  CURRENT_DIR, DEFAULT_BOOTSTRAP_URL, SNAPMAIL_APP_ID, IS_DEBUG, DEFAULT_PROXY_URL } = require('./globals');
 const { log, logger } = require('./logger');
 const {
   generateConductorConfig, spawnKeystore, hasActivatedApp, connectToAdmin,
@@ -86,6 +86,7 @@ let g_canMdns = false;
 let g_bootstrapUrl = '';
 let g_uid = '';
 let g_proxyUrl = '';
+let g_canProxy = true;
 let g_storagePath = undefined;
 let g_configPath = undefined;
 let g_adminWs = undefined;
@@ -189,11 +190,15 @@ let g_appConfigPath = path.join(g_storagePath, APP_CONFIG_FILENAME);
     // log('silly', {match});
     g_bootstrapUrl = match[1];
     // Get proxy server URL
-    regex = /proxy_url: (.*)$/gm;
-    match = regex.exec(conductorConfig);
-    g_proxyUrl = match[1];
-    log('debug',{ g_proxyUrl });
-
+    try {
+      regex = /proxy_url: (.*)$/gm;
+      match = regex.exec(conductorConfig);
+      g_proxyUrl = match[1];
+      log('debug',{ g_proxyUrl });
+    } catch(err) {
+      log('info', 'No proxy URL found in config');
+      g_proxyUrl = DEFAULT_PROXY_URL;
+    }
     // -- APP config -- //
     log('debug', 'Reading file ' + g_appConfigPath);
     const appConfigString = fs.readFileSync(g_appConfigPath).toString();
@@ -503,7 +508,7 @@ async function startConductor(canRegenerateConfig) {
   g_keystore_proc = await spawnKeystore(LAIR_KEYSTORE_BIN);
   //await sleep(2000);
   if (canRegenerateConfig) {
-    generateConductorConfig(g_configPath, g_bootstrapUrl, g_storagePath, g_proxyUrl, g_adminPort, g_canMdns);
+    generateConductorConfig(g_configPath, g_bootstrapUrl, g_storagePath, g_proxyUrl, g_adminPort, g_canMdns, g_canProxy);
   }
   log('info', 'Launching conductor...');
   await spawnHolochainProc();
@@ -892,6 +897,22 @@ async function promptUidSelect(canExitOnCancel) {
   return r !== null
 }
 
+/**
+ * @returns false if user cancelled
+ */
+async function promptCanProxy() {
+  let {response} = await dialog.showMessageBox(g_mainWindow, {
+    title: `Proxy`,
+    message: "Do you want to use a proxy?",
+    defaultId: 0,
+    buttons: ['Yes', 'No'],
+    type: "question",
+    noLink: true,
+  });
+  log('warn', 'promptCanProxy: ' + response);
+  g_canProxy = response === 0;
+  return g_canProxy;
+}
 
 /**
  * @returns false if user cancelled
@@ -944,13 +965,13 @@ async function showAbout() {
   }
   let netHash = g_dnaHash || "(unknown)";
   await dialog.showMessageBox({
-    width: 800,
+    width: 900,
     title: `About ${app.getName()}`,
     message: `${app.getName()} - v${app.getVersion()}`,
     detail: `A minimalist email app on Holochain from Glass Bead Software\n\n`
       + `Core DNA hash: ${DNA_HASH}\n`
-      + `   Session hash: ${netHash}\n`,
-    buttons: [],
+      + `     Session hash: ${netHash}\n`,
+    buttons: ['OK'],
     type: "info",
     //iconIndex: 0,
     //icon: CONFIG.ICON,
@@ -1071,9 +1092,18 @@ const networkMenuTemplate = [
   },
   {
     label: 'Change Proxy Server', click: async function () {
-      let changed = await promptProxyUrl(false);
-      if (changed) {
-        await startConductor(true);
+      const prevCanProxy = g_canProxy;
+      let canProxy = await promptCanProxy();
+      const proxyChanged = prevCanProxy !== canProxy;
+      if (canProxy) {
+        let changed = await promptProxyUrl(false);
+        if(changed || proxyChanged) {
+          await startConductor(true);
+        }
+      } else  {
+        if(proxyChanged) {
+          await startConductor(true);
+        }
       }
     }
   },

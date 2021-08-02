@@ -9,11 +9,13 @@ const APP_CONFIG_FILENAME = 'app-config.txt';
 const DEFAULT_BOOTSTRAP_URL = 'https://bootstrap-staging.holo.host';
 const CURRENT_DIR = path.join(__dirname, '..');
 const DNA_HASH_FILEPATH = './dna/dna_hash.txt';
+const DEFAULT_PROXY_URL ='kitsune-proxy://VYgwCrh2ZCKL1lpnMM1VVUee7ks-9BkmW47C_ys4nqg/kitsune-quic/h/kitsune-proxy.harris-braun.com/p/4010/--';
 
 // Toggle this for debug / release mode
 const IS_DEBUG = process.env.APP_DEV ? (process.env.APP_DEV.trim() === 'true') : false;
 
 module.exports.IS_DEBUG = IS_DEBUG;
+module.exports.DEFAULT_PROXY_URL = DEFAULT_PROXY_URL;
 module.exports.SNAPMAIL_APP_ID = SNAPMAIL_APP_ID;
 module.exports.DNA_HASH_FILEPATH = DNA_HASH_FILEPATH;
 module.exports.CURRENT_DIR = CURRENT_DIR;

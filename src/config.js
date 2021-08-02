@@ -5,11 +5,10 @@ const { AdminWebsocket, AppWebsocket, AppStatusFilter } = require('@holochain/co
 //const { AdminWebsocket, AppWebsocket } = require('../holochain-conductor-api');
 
 const { log } = require('./logger');
-const { CURRENT_DIR, SNAPMAIL_APP_ID, DEFAULT_BOOTSTRAP_URL } = require('./globals');
+const { CURRENT_DIR, SNAPMAIL_APP_ID, DEFAULT_BOOTSTRAP_URL, DEFAULT_PROXY_URL } = require('./globals');
 
 // -- CONSTS -- //
 
-const DEFAULT_PROXY_URL ='kitsune-proxy://VYgwCrh2ZCKL1lpnMM1VVUee7ks-9BkmW47C_ys4nqg/kitsune-quic/h/kitsune-proxy.harris-braun.com/p/4010/--';
 const LAIR_MAGIC_READY_STRING = '#lair-keystore-ready#';
 
 
@@ -91,7 +90,7 @@ function winPath(path) {
  * Write the conductor config to storage path
  * Using proxy and bootstrap server
  */
-function generateConductorConfig(configPath, bootstrapUrl, storagePath, proxyUrl, adminPort, canMdns) {
+function generateConductorConfig(configPath, bootstrapUrl, storagePath, proxyUrl, adminPort, canMdns, canProxy) {
   log('info', 'generateConductorConfig() with ' + adminPort);
   if (proxyUrl === undefined || proxyUrl === '') {
     proxyUrl = DEFAULT_PROXY_URL;
@@ -106,9 +105,11 @@ function generateConductorConfig(configPath, bootstrapUrl, storagePath, proxyUrl
     bootstrapUrl = DEFAULT_BOOTSTRAP_URL;
   }
 
-  // - Basic Config with Proxy
-  const config =
-    `environment_path: ${environment_path}
+  let config;
+  if (canProxy) {
+    // - Basic Config with Proxy
+    config = `---
+environment_path: ${environment_path}
 use_dangerous_test_keystore: false
 passphrase_service:
   type: cmd
@@ -127,46 +128,28 @@ network:
       proxy_config:
         type: remote_proxy_client
         proxy_url: ${proxyUrl}`
-  ;
-
-// // - No PROXY Config
-//   const config = `---
-// environment_path: "${environment_path}"
-// use_dangerous_test_keystore: false
-// passphrase_service:
-//   type: cmd
-// admin_interfaces:
-//   - driver:
-//       type: websocket
-//       port: ${adminPort}
-// network:
-//   network_type: ${network_type}
-//   bootstrap_service: ${bootstrapUrl}
-//   transport_pool:
-//     - type: quic
-//       bind_to: ~
-//       override_host: ~
-//       override_port: ~
-//   tuning_params:
-//     gossip_strategy: simple-bloom
-//     gossip_loop_iteration_delay_ms: "1000"
-//     gossip_output_target_mbps: "0.5"
-//     gossip_peer_on_success_next_gossip_delay_ms: "60000"
-//     gossip_peer_on_error_next_gossip_delay_ms: "300000"
-//     default_rpc_single_timeout_ms: "30000"
-//     default_rpc_multi_remote_agent_count: "2"
-//     default_rpc_multi_timeout_ms: "30000"
-//     agent_info_expires_after_ms: "1200000"
-//     tls_in_mem_session_storage: "512"
-//     proxy_keepalive_ms: "120000"
-//     proxy_to_expire_ms: "300000"
-//     concurrent_limit_per_thread: "4096"
-//     tx2_quic_max_idle_timeout_ms: "30000"
-//     tx2_pool_max_connection_count: "4096"
-//     tx2_channel_count_per_connection: "16"
-//     tx2_implicit_timeout_ms: "30000"
-//     tx2_initial_connect_retry_delay_ms: "200"`;
-
+    ;
+} else {
+    // - No PROXY Config
+    config =`---
+environment_path: "${environment_path}"
+use_dangerous_test_keystore: false
+passphrase_service:
+  type: cmd
+admin_interfaces:
+  - driver:
+      type: websocket
+      port: ${adminPort}
+network:
+  network_type: ${network_type}
+  bootstrap_service: ${bootstrapUrl}
+  transport_pool:
+    - type: quic
+      bind_to: ~
+      override_host: ~
+      override_port: ~`
+    ;
+  }
 
   fs.writeFileSync(configPath, config);
 }
