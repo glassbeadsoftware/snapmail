@@ -1,5 +1,5 @@
 // - Modules to control application life and create native browser window
-const { app, BrowserWindow, Menu, shell, Tray, screen, Notification } = require('electron');
+const { app, BrowserWindow, Menu, shell, Tray, screen, Notification, nativeImage } = require('electron');
 const { spawn } = require('child_process');
 const fs = require('fs');
 const path = require('path');
@@ -655,11 +655,11 @@ app.on('ready', async function () {
       g_tray = new Tray('resources/app/assets/favicon.png');
     } catch (e) {
       try {
-        g_tray = new Tray(__dirname + nativeImage.createFromPath('./assets/favicon.png'))
-        //g_tray = new Tray(app.getAppPath(), 'favicon.png');
+        //g_tray = new Tray(__dirname + nativeImage.createFromPath('./assets/favicon.png'))
+        g_tray = new Tray(app.getAppPath() + 'assets/favicon.png');
       } catch (e) {
         log('error', "Could not find favicon. appPath: " + app.getAppPath());
-        log('error', "Could not find favicon. __dirname: " + __dirname);
+        //log('error', "Could not find favicon. __dirname: " + __dirname);
         g_tray = new Tray(nativeImage.createEmpty());
       }
     }
