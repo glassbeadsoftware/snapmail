@@ -655,11 +655,9 @@ app.on('ready', async function () {
       g_tray = new Tray('resources/app/assets/favicon.png');
     } catch (e) {
       try {
-        //g_tray = new Tray(__dirname + nativeImage.createFromPath('./assets/favicon.png'))
-        g_tray = new Tray(app.getAppPath() + 'assets/favicon.png');
+        g_tray = new Tray(app.getAppPath() + '/assets/favicon.png');
       } catch (e) {
         log('error', "Could not find favicon. appPath: " + app.getAppPath());
-        //log('error', "Could not find favicon. __dirname: " + __dirname);
         g_tray = new Tray(nativeImage.createEmpty());
       }
     }
