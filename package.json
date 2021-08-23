@@ -1,6 +1,6 @@
 {
   "name": "Snapmail",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "A minimalist email application on holochain",
   "main": "src/main.js",
   "scripts": {
@@ -67,6 +67,7 @@
     "dialogs": "^2.0.1",
     "electron-context-menu": "^0.12.1",
     "electron-debug": "^3.0.1",
+    "electron-is-dev": "^1.2.0",
     "electron-log": "^4.4.0",
     "electron-osx-sign": "^0.4.14",
     "electron-prompt": "^1.6.0",

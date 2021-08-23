@@ -8,6 +8,7 @@ const { dialog } = require('electron');
 const prompt = require('electron-prompt');
 const AutoLaunch = require('auto-launch');
 const { autoUpdater } = require('electron-updater');
+const IS_DEV = require('electron-is-dev');
 
 // - My Modules
 const {
@@ -274,9 +275,18 @@ autoUpdater.on('update-downloaded', () => {
 
 // export this to MenuItem click callback
 function checkForUpdates(menuItem, focusedWindow, event) {
-  g_updater = menuItem;
-  g_updater.enabled = false;
-  autoUpdater.checkForUpdates();
+  if (IS_DEBUG || IS_DEV) {
+    dialog.showMessageBox({
+      title: 'Check Update failed',
+      message: 'No update available in dev mode.'
+    }).then(() => {
+      //
+    });
+  } else {
+    g_updater = menuItem;
+    g_updater.enabled = false;
+    autoUpdater.checkForUpdates();
+  }
 }
 
 // ------------------------------------------------------------------------------------------------
