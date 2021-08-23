@@ -238,15 +238,15 @@ autoUpdater.on('error', (error) => {
   dialog.showErrorBox('Error: ', error == null ? "unknown" : (error.stack || error).toString());
 })
 
-autoUpdater.on('update-available', () => {
+autoUpdater.on('update-available', (info) => {
   dialog.showMessageBox({
     type: 'info',
     title: 'Found Update',
-    message: 'A software update has been found, do you want to update now?',
+    message: 'A software update has been found (v' + info.version + '), do you want to update now?',
     buttons: ['Yes', 'No']
   }).then((buttonIndex) => {
-    if (buttonIndex === 0) {
-      autoUpdater.downloadUpdate();
+    if (buttonIndex.response === 0) {
+      autoUpdater.downloadUpdate().then((paths) => {log('debug', 'download array: ' + JSON.stringify(paths))});
     }
     else {
       g_updater.enabled = true;
@@ -255,6 +255,14 @@ autoUpdater.on('update-available', () => {
   });
 })
 
+
+// autoUpdater.on('download-progress', (progress, bytesPerSecond, percent, total, transferred) => {
+//   let append = ' - ' + progress + '%';
+//   //let append = ' - ' + JSON.stringify(progress);
+//   log('debug', 'download-progress: ' + JSON.stringify(progress))
+//
+//   g_tray.setToolTip('SnapMail v' + app.getVersion() + append);
+// })
 
 autoUpdater.on('update-not-available', () => {
   dialog.showMessageBox({
