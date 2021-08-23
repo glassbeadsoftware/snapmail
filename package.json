@@ -1,31 +1,34 @@
 {
   "name": "Snapmail",
-  "version": "0.0.5",
+  "version": "0.1.0",
   "description": "A minimalist email application on holochain",
   "main": "src/main.js",
   "scripts": {
-    "postinstall": "electron-builder install-app-deps",  
-           "dist": "electron-builder",
-     "dist-linux": "electron-builder --linux tar.gz",
-       "dist-mac": "electron-builder --mac",
-       "dist-win": "set APP_DEV=false && electron-builder --win",
-     "dist-arm64": "electron-builder --arm64 --linux tar.gz",
-
-      "build-win": ".\\scripts\\build.bat prod",
-  "build-win-dev": ".\\scripts\\build.bat dev",
-          "build": ". scripts/build.sh prod",
-      "build-dev": ". scripts/build.sh dev",
-
-            "win": "electron . win --no-sandbox",
-        "win-dev": "set APP_DEV=true && electron . win --no-sandbox",
-          "start": "./node_modules/.bin/electron electron",
-          "empty": "./node_modules/.bin/electron .",
-           "alex": "./node_modules/.bin/electron . alex --no-sandbox",
-          "billy": "./node_modules/.bin/electron electron billy --no-sandbox",
-        "camille": "./node_modules/.bin/electron electron camille --no-sandbox",
-       "start-no": "./node_modules/.bin/electron electron --no-sandbox --enable-logging"
+    "postinstall": "electron-builder install-app-deps",
+    "deploy-win": "set APP_DEV=false && electron-builder build --win --publish always",
+    "deploy-mac": "electron-builder build --mac --publish always",
+    "dist": "electron-builder",
+    "dist-linux": "electron-builder --linux tar.gz",
+    "dist-mac": "electron-builder --mac",
+    "dist-win": "set APP_DEV=false && electron-builder --win",
+    "dist-arm64": "electron-builder --arm64 --linux tar.gz",
+    "build-win": ".\\scripts\\build.bat prod",
+    "build-win-dev": ".\\scripts\\build.bat dev",
+    "build": ". scripts/build.sh prod",
+    "build-dev": ". scripts/build.sh dev",
+    "win": "electron . win --no-sandbox",
+    "win-dev": "set APP_DEV=true && electron . win --no-sandbox",
+    "start": "./node_modules/.bin/electron electron",
+    "empty": "./node_modules/.bin/electron .",
+    "alex": "./node_modules/.bin/electron . alex --no-sandbox",
+    "billy": "./node_modules/.bin/electron electron billy --no-sandbox",
+    "camille": "./node_modules/.bin/electron electron camille --no-sandbox",
+    "start-no": "./node_modules/.bin/electron electron --no-sandbox --enable-logging"
   },
-  "repository": "https://github.com/glassbeadsoftware/snapmail-release",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/glassbeadsoftware/snapmail-release.git"
+  },
   "keywords": [
     "Electron",
     "Holochain",
@@ -49,6 +52,9 @@
     "directories": {
       "buildResources": "assets",
       "output": "out"
+    },
+    "publish": {
+      "provider": "github"
     }
   },
   "author": "Harris-Braun Enterprises, LLC and contributors",
@@ -64,6 +70,7 @@
     "electron-log": "^4.4.0",
     "electron-osx-sign": "^0.4.14",
     "electron-prompt": "^1.6.0",
+    "electron-updater": "^4.3.9",
     "fix-path": "^2.1.0",
     "lint": "^0.7.0",
     "open": "^6.3.0",

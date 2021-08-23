@@ -7,6 +7,8 @@ const kill = require('tree-kill');
 const { dialog } = require('electron');
 const prompt = require('electron-prompt');
 const AutoLaunch = require('auto-launch');
+const { autoUpdater } = require('electron-updater');
+
 // - My Modules
 const {
   DNA_HASH_FILEPATH, CONDUCTOR_CONFIG_FILENAME, APP_CONFIG_FILENAME, CONFIG_PATH, STORAGE_PATH,
@@ -224,10 +226,69 @@ var autoLauncher = new AutoLaunch({
 });
 
 // ------------------------------------------------------------------------------------------------
+// -- Auto Update
+// ------------------------------------------------------------------------------------------------
+
+let g_updater;
+autoUpdater.autoDownload = false;
+
+autoUpdater.on('error', (error) => {
+  dialog.showErrorBox('Error: ', error == null ? "unknown" : (error.stack || error).toString());
+})
+
+autoUpdater.on('update-available', () => {
+  dialog.showMessageBox({
+    type: 'info',
+    title: 'Found Update',
+    message: 'A software update has been found, do you want to update now?',
+    buttons: ['Yes', 'No']
+  }).then((buttonIndex) => {
+    if (buttonIndex === 0) {
+      autoUpdater.downloadUpdate();
+    }
+    else {
+      g_updater.enabled = true;
+      g_updater = null;
+    }
+  });
+})
+
+
+autoUpdater.on('update-not-available', () => {
+  dialog.showMessageBox({
+    title: 'No Update found',
+    message: 'Current version is up-to-date.'
+  });
+  g_updater.enabled = true;
+  g_updater = null;
+})
+
+autoUpdater.on('update-downloaded', () => {
+  dialog.showMessageBox({
+    title: 'Install Update',
+    message: 'Update downloaded, application will terminate and perform update...'
+  }).then(() => {
+    setImmediate(() => autoUpdater.quitAndInstall())
+  })
+})
+
+// export this to MenuItem click callback
+function checkForUpdates(menuItem, focusedWindow, event) {
+  g_updater = menuItem;
+  g_updater.enabled = false;
+  autoUpdater.checkForUpdates();
+}
+
+// ------------------------------------------------------------------------------------------------
 // -- IPC between UI and Main
 // ------------------------------------------------------------------------------------------------
 
 const ipc = require('electron').ipcMain;
+
+// ipc.on('app_version', (event) => {
+//   event.sender.send('app_version', { version: app.getVersion() });
+// });
+
 
 /**
  * Receive synchronous notification
@@ -385,6 +446,11 @@ function createWindow() {
     // when you should delete the corresponding element.
     g_mainWindow = null;
   });
+
+  //// Check for update
+  //mainWindow.once('ready-to-show', () => {
+  //  autoUpdater.checkForUpdatesAndNotify();
+  //});
 
   // Done
   return mainWindow;
@@ -1169,6 +1235,11 @@ const debugMenuTemplate = [
 const mainMenuTemplate = [
   {
     label: 'File', submenu: [{
+        label:`Check for Update`,
+      click: function () {
+          checkForUpdates(this);
+        }
+      }, {
       label: 'Quit',
       //accelerator: 'Command+Q',
       click: async function () {
@@ -1182,7 +1253,8 @@ const mainMenuTemplate = [
           }
         }
       },
-    },],
+    },
+    ],
   },
   {
     label: 'Network',
