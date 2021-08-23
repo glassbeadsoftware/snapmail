@@ -132,7 +132,7 @@ if (process.argv.length > 2) {
 
 g_storagePath = path.join(STORAGE_PATH, sessionId);
 log('debug',{g_storagePath});
-let version_txt = path.join(g_storagePath, "version.txt");
+let version_txt = path.join(g_storagePath, "dna_version.txt");
 // Create storage and setup if none found
 if (!fs.existsSync(g_storagePath)) {
   log('info', "Creating missing dir: " + g_storagePath);
@@ -150,13 +150,14 @@ if (!fs.existsSync(g_storagePath)) {
     log('debug', 'Reading: ' + version_txt);
     const read_version = fs.readFileSync(version_txt, 'utf-8');
     if (read_version !== app.getVersion()) {
-      log('error', 'App Version mismatch :-(')
-      log('error', read_version);
-      log('error', app.getVersion());
-      //dialog.showOpenDialogSync({ properties: ['openFile', 'multiSelections'] })
-      //showErrorDialog('App Version mismatch :-(');
-      //app.quit();
-      process.abort();
+      // FIXME Check only DNA versions
+      // log('error', 'App Version mismatch :-(')
+      // log('error', read_version);
+      // log('error', app.getVersion());
+      // //dialog.showOpenDialogSync({ properties: ['openFile', 'multiSelections'] })
+      // //showErrorDialog('App Version mismatch :-(');
+      // //app.quit();
+      // process.abort();
     }
   }
   catch(e) {
