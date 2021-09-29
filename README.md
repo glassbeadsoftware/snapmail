@@ -30,18 +30,9 @@ Use your own or the public one provided by Holo `bootstrap.holo.net`
 
 ##### Linux
 - Make sure the following executables have execution rights: `Snapmail`, `lair-keystore`, `holochain`.
-- If you get `spawn ENOENT` error message, this means you need to [install nix-shell](https://developer.holochain.org/docs/install/) on your system.
 
-## Developing / Releasing
 
-#### Steps for preparing a new release on Windows:
-1. `./scripts/release.bat`
-
-#### Steps for preparing a new release on Mac / Linux / Android:
-1. `./scripts/release.sh`
-
-#### Steps required for updating version number:
-FIXME 
+## Releasing
 
 #### Steps for updating holochain version:
 1. `./scripts/setup.sh`
@@ -50,3 +41,18 @@ FIXME
 4. `./scripts/save-dna-hash.sh`
 5. `./scripts/pack-happ.sh`
 6. `git commit`
+
+#### Steps required for updating version number:
+1. `./scripts/update-version-number.sh <semver>`
+
+#### Steps for preparing a new release on Windows:
+1. `./scripts/release.bat`
+
+#### Steps for preparing a new release on Mac / Linux / Android:
+1. `./scripts/release.sh`
+
+#### Steps for publishing the new release on Windows:
+1. `npm run deploy-win`
+
+#### Steps for publishing the new release on Mac:
+1. `npm run deploy-mac`
