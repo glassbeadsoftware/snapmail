@@ -1,6 +1,6 @@
 #!/bin/sh
 echo
-echo \* Download the right Holochain and Lair version
+echo \* Download the Holochain and Lair version that is stored in holochain_rev.txt
 
 if ! test -d "./build"; then
     echo "$0: Aborting. Missing './build' folder."

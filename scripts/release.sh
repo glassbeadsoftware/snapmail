@@ -27,7 +27,8 @@ echo \* Target platform: $platform
 ./scripts/setup.sh
 ./scripts/download-hc.sh
 ./scripts/build-hc.sh
-./scripts/build.sh prod
+./scripts/update-dna.sh
+./scripts/build-ui.sh prod
 npm run dist-$platform
 
 echo

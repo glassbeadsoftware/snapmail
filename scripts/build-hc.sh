@@ -1,6 +1,7 @@
 #!/bin/sh
 echo
 echo \* Build Holochain and Lair for Linux or MacOs
+echo \* WARNING \* This will install a new version of hc tools
 
 if ! test -d "./build"; then
     echo "$0: Aborting. Missing './build' folder."

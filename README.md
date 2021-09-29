@@ -34,9 +34,19 @@ Use your own or the public one provided by Holo `bootstrap.holo.net`
 
 ## Developing / Releasing
 
-Steps required for making a new release:
-1. `npm run setup`: Downloads required Snapmail and Holochain repos
-1. `npm run build-hc`: Builds Holochain binaries
-1. `npm run build`: Builds snapmail DNA and UI
-1. `npm run dist`: Packages the electron app for the current platform (outputs in `./out`)
+#### Steps for preparing a new release on Windows:
+1. `./scripts/release.bat`
 
+#### Steps for preparing a new release on Mac / Linux / Android:
+1. `./scripts/release.sh`
+
+#### Steps required for updating version number:
+FIXME 
+
+#### Steps for updating holochain version:
+1. `./scripts/setup.sh`
+2. `cd build/snapmail-rsm`
+3. `./scripts/set-holochain-rev.sh <rev>`
+4. `./scripts/save-dna-hash.sh`
+5. `./scripts/pack-happ.sh`
+6. `git commit`

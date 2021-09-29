@@ -1,7 +1,7 @@
 #!/bin/sh
 
-# Script for normalizing version numbers
-# Build script must be called first
+# Script for aligning electron ui version number to web ui's number
+# Setup script must be called first
 
 NEW_VER=`awk -F ":" '/"version"/ {print $2}' ./build/snapmail-ui/package.json | sed 's/"//g' | sed 's/,//g' | sed 's/ //g'`
 

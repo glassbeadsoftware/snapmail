@@ -1,6 +1,7 @@
 @echo off
 echo.
 echo * Build Holochain and Lair for Windows
+echo * WARNING * This will install a new version of hc tools
 
 IF NOT exist build ( goto NODIR )
 IF NOT exist build\holochain ( goto NODIR )

@@ -11,7 +11,8 @@ set start=%time%
 call .\scripts\setup.bat
 wsl -e ./scripts/download-hc.sh
 call .\scripts\build-hc.bat
-call .\scripts\build.bat prod
+call .\scripts\update-dna.bat
+call .\scripts\build-ui.bat prod
 npm run dist-win
 :: RELEASE Done
 
