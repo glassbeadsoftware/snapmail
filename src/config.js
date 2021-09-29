@@ -26,6 +26,46 @@ function htos(u8array) {
 /**
  * Spawn 'lair-keystore' process
  */
+async function getKeystoreVersion(keystore_bin) {
+  // -- Spawn Keystore -- //
+  let bin = keystore_bin;
+  let args = ["--version"];
+  log('info', 'Spawning ' + bin + ' (dirname: ' + CURRENT_DIR + ')');
+  const keystore_proc = spawn(bin, args, {
+    cwd: CURRENT_DIR,
+    detached: false,
+    //stdio: 'pipe',
+    env: {
+      ...process.env,
+    },
+  });
+  let version = ''
+  // -- Handle Outputs
+  // Wait for holochain to boot up
+  await new Promise((resolve, reject) => {
+    keystore_proc.stdout.on('data', (data) => {
+      log('info', 'lair-keystore: ' + data.toString());
+      version = data.toString();
+      resolve();
+    });
+    keystore_proc.stderr.on('data', (data) => {
+      log('error', 'lair-keystore> ' + data.toString())
+    });
+    // -- Handle Termination
+    keystore_proc.on('exit', (code) => {
+      log('info', code);
+      reject();
+    });
+  });
+  // Done
+  return version;
+}
+module.exports.getKeystoreVersion = getKeystoreVersion;
+
+
+/**
+ * Spawn 'lair-keystore' process
+ */
 async function spawnKeystore(keystore_bin) {
   // -- Spawn Keystore -- //
   let bin = keystore_bin;
@@ -111,12 +151,15 @@ function generateConductorConfig(configPath, bootstrapUrl, storagePath, proxyUrl
     config = `---
 environment_path: ${environment_path}
 use_dangerous_test_keystore: false
+dpki: ~
 passphrase_service:
-  type: cmd
+  type: danger_insecure_from_config
+  passphrase: default-insecure-passphrase
 admin_interfaces:
   - driver:
       type: websocket
       port: ${adminPort}
+db_sync_level: Normal      
 network:
   network_type: ${network_type}
   bootstrap_service: ${bootstrapUrl}
@@ -125,18 +168,26 @@ network:
       sub_transport:
         type: quic
         bind_to: kitsune-quic://0.0.0.0:0
+        override_host: ~
+        override_port: ~        
       proxy_config:
         type: remote_proxy_client
         proxy_url: ${proxyUrl}
   tuning_params:
-    gossip_strategy: simple-bloom
+    gossip_strategy: sharded-gossip
     gossip_loop_iteration_delay_ms: "1000"
-    gossip_output_target_mbps: "0.5"
+    gossip_outbound_target_mbps: "0.5"
+    gossip_inbound_target_mbps: "0.5"
+    gossip_historic_outbound_target_mbps: "0.1"
+    gossip_historic_inbound_target_mbps: "0.1"
     gossip_peer_on_success_next_gossip_delay_ms: "60000"
     gossip_peer_on_error_next_gossip_delay_ms: "300000"
+    gossip_local_sync_delay_ms: "60000"
+    gossip_dynamic_arcs: "false"
+    gossip_single_storage_arc_per_space: "false"
     default_rpc_single_timeout_ms: "30000"
-    default_rpc_multi_remote_agent_count: "2"
-    default_rpc_multi_timeout_ms: "30000"
+    default_rpc_multi_remote_agent_count: "3"
+    default_rpc_multi_remote_request_grace_ms: "3000"
     agent_info_expires_after_ms: "1200000"
     tls_in_mem_session_storage: "512"
     proxy_keepalive_ms: "120000"
@@ -146,19 +197,22 @@ network:
     tx2_pool_max_connection_count: "4096"
     tx2_channel_count_per_connection: "16"
     tx2_implicit_timeout_ms: "30000"
-    tx2_initial_connect_retry_delay_ms: "200"`
-    ;
+    tx2_initial_connect_retry_delay_ms: "200"
+    `;
 } else {
     // - No PROXY Config
     config =`---
 environment_path: "${environment_path}"
 use_dangerous_test_keystore: false
+dpki: ~
 passphrase_service:
-  type: cmd
+  type: danger_insecure_from_config
+  passphrase: default-insecure-passphrase
 admin_interfaces:
   - driver:
       type: websocket
       port: ${adminPort}
+db_sync_level: Normal      
 network:
   network_type: ${network_type}
   bootstrap_service: ${bootstrapUrl}
@@ -168,14 +222,20 @@ network:
       override_host: ~
       override_port: ~
   tuning_params:
-    gossip_strategy: simple-bloom
+    gossip_strategy: sharded-gossip
     gossip_loop_iteration_delay_ms: "1000"
-    gossip_output_target_mbps: "0.5"
+    gossip_outbound_target_mbps: "0.5"
+    gossip_inbound_target_mbps: "0.5"
+    gossip_historic_outbound_target_mbps: "0.1"
+    gossip_historic_inbound_target_mbps: "0.1"
     gossip_peer_on_success_next_gossip_delay_ms: "60000"
     gossip_peer_on_error_next_gossip_delay_ms: "300000"
+    gossip_local_sync_delay_ms: "60000"
+    gossip_dynamic_arcs: "false"
+    gossip_single_storage_arc_per_space: "false"
     default_rpc_single_timeout_ms: "30000"
-    default_rpc_multi_remote_agent_count: "2"
-    default_rpc_multi_timeout_ms: "30000"
+    default_rpc_multi_remote_agent_count: "3"
+    default_rpc_multi_remote_request_grace_ms: "3000"
     agent_info_expires_after_ms: "1200000"
     tls_in_mem_session_storage: "512"
     proxy_keepalive_ms: "120000"
@@ -185,8 +245,8 @@ network:
     tx2_pool_max_connection_count: "4096"
     tx2_channel_count_per_connection: "16"
     tx2_implicit_timeout_ms: "30000"
-    tx2_initial_connect_retry_delay_ms: "200"`
-    ;
+    tx2_initial_connect_retry_delay_ms: "200"
+    `;
   }
 
   fs.writeFileSync(configPath, config);

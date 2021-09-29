@@ -16,7 +16,7 @@ const {
   CURRENT_DIR, DEFAULT_BOOTSTRAP_URL, SNAPMAIL_APP_ID, IS_DEBUG, DEFAULT_PROXY_URL } = require('./globals');
 const { log, logger } = require('./logger');
 const {
-  generateConductorConfig, spawnKeystore, hasActivatedApp, connectToAdmin,
+  generateConductorConfig, spawnKeystore, getKeystoreVersion, hasActivatedApp, connectToAdmin,
   connectToApp, installApp, getDnaHash } = require('./config');
 const { SettingsStore } = require('./settings');
 
@@ -76,6 +76,9 @@ if (process.platform === "win32") {
 
 let g_adminPort = 0;
 let g_appPort = 0;
+
+let g_lair_version = ""
+let g_holochain_version = ""
 
 // Keep a global reference of the ELECTRON window object, if you don't,
 // the window will be closed automatically when the JavaScript object is garbage collected.
@@ -479,6 +482,41 @@ function createWindow() {
 /**
  *
  */
+async function getHolochainVersion() {
+  let bin = HOLOCHAIN_BIN;
+  let args = ['--version'];
+
+  // Spawn "holochain" subprocess
+  log('info', 'Spawning ' + bin + ' (dirname: ' + CURRENT_DIR + ')');
+  let holochain_proc = spawn(bin, args, {
+    cwd: CURRENT_DIR,
+    detached: false,
+    //stdio: 'pipe',
+    env: {
+      ...process.env,
+      RUST_BACKTRACE: 1,
+    },
+  });
+  // Handle error output
+  holochain_proc.stderr.on('data', (data) => log('error', '*** holochain > ' + data.toString()));
+  holochain_proc.on('exit', (_code, _signal) => {
+    // n/a
+  });
+  // Wait for holochain to boot up
+  await new Promise((resolve, _reject) => {
+    holochain_proc.stdout.on('data', (data) => {
+      g_holochain_version = data.toString();
+        resolve();
+    });
+  });
+  // Done
+}
+
+
+
+/**
+ *
+ */
 async function spawnHolochainProc() {
   log('debug','spawnHolochainProc...');
   let bin = HOLOCHAIN_BIN;
@@ -590,12 +628,14 @@ async function killHolochain() {
 async function startConductor(canRegenerateConfig) {
   //g_canQuit = false;
   await killHolochain(); // Make sure there is no outstanding Holochain & keystore procs
+  g_lair_version = await getKeystoreVersion(LAIR_KEYSTORE_BIN);
   g_keystore_proc = await spawnKeystore(LAIR_KEYSTORE_BIN);
   //await sleep(2000);
   if (canRegenerateConfig) {
     generateConductorConfig(g_configPath, g_bootstrapUrl, g_storagePath, g_proxyUrl, g_adminPort, g_canMdns, g_canProxy);
   }
   log('info', 'Launching conductor...');
+  await getHolochainVersion();
   await spawnHolochainProc();
   //g_canQuit = true;
   // - Connect to Conductor and activate app
@@ -1065,7 +1105,9 @@ async function showAbout() {
     message: `${app.getName()} - v${app.getVersion()}`,
     detail: `A minimalist email app on Holochain from Glass Bead Software\n\n`
       + `Core DNA hash: ${DNA_HASH}\n`
-      + `     Session hash: ${netHash}\n`,
+      + `     Session hash: ${netHash}\n\n`
+      + g_holochain_version + ''
+      + g_lair_version + `\n`,
     buttons: ['OK'],
     type: "info",
     //iconIndex: 0,
