@@ -39,6 +39,7 @@ process.env.RUST_LOG="WARN";
 const DIST_DIR = "ui";
 
 // - Default is linux
+var IS_LINUX = false
 var HOLOCHAIN_BIN     = './bin/holochain-linux';
 var LAIR_KEYSTORE_BIN = './bin/lair-keystore-linux';
 if (process.platform === "win32") {
@@ -47,6 +48,9 @@ if (process.platform === "win32") {
 } else if (process.platform === 'darwin') {
   HOLOCHAIN_BIN     = './bin/holochain-linux';
   LAIR_KEYSTORE_BIN = './bin/lair-keystore-linux';
+} else {
+  // TODO: check for android?
+  IS_LINUX = true
 }
 
 // a special log from the conductor,
@@ -287,17 +291,23 @@ autoUpdater.on('update-downloaded', () => {
 
 // export this to MenuItem click callback
 function checkForUpdates(menuItem, focusedWindow, event) {
-  if (IS_DEBUG || IS_DEV) {
+  if(IS_DEBUG || IS_DEV) {
     dialog.showMessageBox({
-      title: 'Check Update failed',
+      title: 'Check for Update failed',
       message: 'No update available in dev mode.'
-    }).then(() => {
-      //
-    });
+    }).then(() => {});
   } else {
-    g_updater = menuItem;
-    g_updater.enabled = false;
-    autoUpdater.checkForUpdates();
+    if(IS_LINUX) {
+      dialog.showMessageBox({
+        title: 'Update unavailable',
+        message: 'auto-update not available on linux. Please check and download latest version \
+        from github: https://github.com/glassbeadsoftware/snapmail-release/releases'
+      }).then(() => {});
+    } else {
+      g_updater = menuItem;
+      g_updater.enabled = false;
+      autoUpdater.checkForUpdates();
+    }
   }
 }
 
