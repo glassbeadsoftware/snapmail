@@ -1,6 +1,6 @@
 {
   "name": "Snapmail",
-  "version": "0.1.3",
+  "version": "1.4",
   "description": "A minimalist email application on holochain",
   "main": "src/main.js",
   "scripts": {

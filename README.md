@@ -14,7 +14,7 @@ See [snapmail-rsm](https://github.com/ddd-mtl/snapmail-rsm) for holochain backen
 
 ### Prerequisite 
  - Windows: holochain requires WSL2 to be installed. Follow [this tutorial](https://pureinfotech.com/install-windows-subsystem-linux-2-windows-10/) on instructions to do that. Only Windows 10 version 2004 and up is supported.
- - Linux: `libssl1.0.0` package must be installed on your system (and possibly `libssl-dev`)
+ - Linux: `libssl` package must be installed on your system (and possibly `libssl-dev`)
 
 ### Steps
 1. Go to the [release page](https://github.com/glassbeadsoftware/snapmail-release/releases)
@@ -44,6 +44,8 @@ Use your own or the public one provided by Holo `bootstrap.holo.net`
 
 #### Steps required for updating version number:
 1. `./scripts/update-version-number.sh <semver>`
+2. `cd build/snapmail-ui`
+3. `git commit`
 
 #### Steps for preparing a new release on Windows:
 1. `./scripts/release.bat`
