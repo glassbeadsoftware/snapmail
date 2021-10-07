@@ -1,16 +1,24 @@
 #!/bin/bash
 echo
-echo \* Create new Snapmail happ Release
-echo !!! Make sure DNA has been updated to latest first !!!
+echo \* Creating new Snapmail happ Release
 echo
 
 start=`date +%s`
 
 # Check pre-conditions
 #if [ $# != 1 ]; then
-#  echo 1>&2 "$0: Aborting. Missing argument: target platform"
+#  echo 1>&2 "$0: Aborting. Missing argument: target"
 #  exit 2
 #fi
+
+read -p "Build DNA (Y/N)? " -n 1 -r
+echo
+echo
+if [[ $REPLY =~ ^[Yy]$ ]]; then
+  echo \* DNA wil be built and packed.
+else
+  echo \* DNA wil NOT be built and packed.
+fi
 
 # Determine platform
 arch=`uname -m`
@@ -27,7 +35,9 @@ echo \* Target platform: $platform
 ./scripts/setup.sh
 ./scripts/download-hc.sh
 ./scripts/build-hc.sh
-./scripts/update-dna.sh
+if [[ $REPLY =~ ^[Yy]$ ]]; then
+  ./scripts/update-dna.sh
+fi
 ./scripts/build-ui.sh prod
 npm run dist-$platform
 

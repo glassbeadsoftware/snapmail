@@ -1,9 +1,12 @@
 @echo off
 @setlocal
 echo.
-echo * Create new Snapmail happ Release
-echo !!! Make sure DNA has been updated to latest first !!!
+echo * Creating new Snapmail happ Release
 echo.
+
+SET /P AREYOUSURE=Build DNA (Y/[N])?
+if /I "%AREYOUSURE%"=="Y" (echo "* DNA will be built and packed") else (echo "* DNA will NOT be built and packed")
+
 
 set start=%time%
 
@@ -11,7 +14,7 @@ set start=%time%
 call .\scripts\setup.bat
 wsl -e ./scripts/download-hc.sh
 call .\scripts\build-hc.bat
-call .\scripts\update-dna.bat
+IF /I "%AREYOUSURE%"=="Y" (call .\scripts\update-dna.bat)
 call .\scripts\build-ui.bat prod
 npm run dist-win
 :: RELEASE Done
