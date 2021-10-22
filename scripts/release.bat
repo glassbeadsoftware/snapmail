@@ -4,16 +4,24 @@ echo.
 echo * Creating new Snapmail happ Release
 echo.
 
-SET /P AREYOUSURE=Build DNA (Y/[N])?
-if /I "%AREYOUSURE%"=="Y" (echo "* DNA will be built and packed") else (echo "* DNA will NOT be built and packed")
+echo Current dependencies in ./bin:
+call "bin/holochain-win.exe" --version
+call "bin/lair-keystore-win.exe" --version
+call hc --version
+echo.
+SET /P CANBUILDHOLOCHAIN=Regenerate holochain from source (Y/[N])?
+if /I "%CANBUILDHOLOCHAIN%"=="Y" (echo * Holochain will be rebuilt from source) else (echo * Holochain will NOT be rebuilt from source)
+echo.
+SET /P AREYOUSURE=Rebuild Snapmail DNA from source(Y/[N])?
+if /I "%AREYOUSURE%"=="Y" (echo * Snapmail DNA will be rebuilt) else (echo * Snapmail DNA will NOT be rebuilt)
 
 
 set start=%time%
 
 :: Creating SnapMail RELEASE
 call .\scripts\setup.bat
-wsl -e ./scripts/download-hc.sh
-call .\scripts\build-hc.bat
+IF /I "%CANBUILDHOLOCHAIN%"=="Y" (wsl -e ./scripts/download-hc.sh)
+IF /I "%CANBUILDHOLOCHAIN%"=="Y" (call .\scripts\build-hc.bat)
 IF /I "%AREYOUSURE%"=="Y" (call .\scripts\update-dna.bat)
 call .\scripts\build-ui.bat prod
 npm run dist-win

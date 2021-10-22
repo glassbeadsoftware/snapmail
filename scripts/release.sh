@@ -11,13 +11,29 @@ start=`date +%s`
 #  exit 2
 #fi
 
-read -p "Build DNA (Y/N)? " -n 1 -r
+echo Current dependecies:
+./bin/holochain-linux --version
+./bin/lair-keystore-linux --version
+hc --version
+
+read -p "Regenerate holochain from source (Y/N)? " -n 1 -r
+echo
+echo
+HCREPLY=$REPLY
+if [[ $HCREPLY =~ ^[Yy]$ ]]; then
+  echo \* Holochain will be rebuilt from source.
+else
+  echo \* Holochain will not be rebuilt from source.
+fi
+
+
+read -p "Rebuild Snapmail DNA from source (Y/N)? " -n 1 -r
 echo
 echo
 if [[ $REPLY =~ ^[Yy]$ ]]; then
-  echo \* DNA wil be built and packed.
+  echo \* Snapmail DNA wil be rebuilt.
 else
-  echo \* DNA wil NOT be built and packed.
+  echo \* Snapmail DNA wil NOT be rebuilt.
 fi
 
 # Determine platform
@@ -33,8 +49,10 @@ echo \* Target platform: $platform
 
 # Starting Release process
 ./scripts/setup.sh
+if [[ $HCREPLY =~ ^[Yy]$ ]]; then
 ./scripts/download-hc.sh
 ./scripts/build-hc.sh
+fi
 if [[ $REPLY =~ ^[Yy]$ ]]; then
   ./scripts/update-dna.sh
 fi
