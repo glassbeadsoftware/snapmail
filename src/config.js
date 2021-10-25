@@ -150,11 +150,11 @@ function generateConductorConfig(configPath, bootstrapUrl, storagePath, proxyUrl
     // - Basic Config with Proxy
     config = `---
 environment_path: ${environment_path}
-use_dangerous_test_keystore: false
+keystore:
+  type: lair_server_legacy_deprecated
+  keystore_path: "${environment_path}\\\\keystore"
+  danger_passphrase_insecure_from_config: default-insecure-passphrase
 dpki: ~
-passphrase_service:
-  type: danger_insecure_from_config
-  passphrase: default-insecure-passphrase
 admin_interfaces:
   - driver:
       type: websocket
@@ -203,11 +203,11 @@ network:
     // - No PROXY Config
     config =`---
 environment_path: "${environment_path}"
-use_dangerous_test_keystore: false
+keystore:
+  type: lair_server_legacy_deprecated
+  keystore_path: "${environment_path}\\\\keystore"
+  danger_passphrase_insecure_from_config: default-insecure-passphrase
 dpki: ~
-passphrase_service:
-  type: danger_insecure_from_config
-  passphrase: default-insecure-passphrase
 admin_interfaces:
   - driver:
       type: websocket

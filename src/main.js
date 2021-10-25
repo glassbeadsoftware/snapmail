@@ -656,8 +656,12 @@ async function startConductor(canRegenerateConfig) {
     let activeAppPort = await hasActivatedApp(g_adminWs);
     if(activeAppPort === 0) {
       // - Prompt for first UID
-      g_uid = '<my-network-id>';
-      await promptUid(true);
+      if (!g_canMdns) {
+        g_uid = '<my-network-access-key>';
+        await promptUid(true);
+      } else {
+        addUid("local")
+      }
       g_dnaHash = await installApp(g_adminWs, g_uid);
       //log('debug','Attaching to app at ' + g_appPort + ' ...');
       g_appPort = await g_adminWs.attachAppInterface({port: undefined});
@@ -813,6 +817,11 @@ app.on('ready', async function () {
       log('debug', 'network type prompt done. Can MDNS: ' + g_canMdns);
       if (!g_canMdns) {
         await promptBootstrapUrl(true);
+      } else {
+        let menu = Menu.getApplicationMenu();
+        menu.getMenuItemById('join-network').enabled = false;
+        menu.getMenuItemById('switch-network').enabled = false;
+        menu.getMenuItemById('change-bootstrap').enabled = false;
       }
     }
     await startConductor(true);
@@ -980,11 +989,11 @@ async function promptFirstHandle() {
  */
 async function promptUid(canExitOnCancel) {
   let r = await prompt({
-    title: 'SnapMail: Network Unique identifier',
+    title: 'SnapMail: Network Access Key',
     height: 180,
     width: 500,
     alwaysOnTop: true,
-    label: 'UID:',
+    label: 'Network Access Key:',
     value: g_uid,
     inputAttrs: {
       type: 'string'
@@ -997,16 +1006,21 @@ async function promptUid(canExitOnCancel) {
       app.quit();
     }
   } else {
-    log('debug','result: ' + r);
-    g_uid = r;
-    try {
-      fs.appendFileSync(g_appConfigPath, g_uid + '\n');
-      g_uidList.push(g_uid);
-    } catch (err) {
-      log('error','Writing config file failed: ' + err);
-    }
+    addUid(r)
   }
   return r !== null
+}
+
+
+function addUid(newUid) {
+  log('debug','addUid(): ' + newUid);
+  g_uid = newUid;
+  try {
+    fs.appendFileSync(g_appConfigPath, g_uid + '\n');
+    g_uidList.push(g_uid);
+  } catch (err) {
+    log('error','Writing config file failed: ' + err);
+  }
 }
 
 
@@ -1114,8 +1128,8 @@ async function showAbout() {
     title: `About ${app.getName()}`,
     message: `${app.getName()} - v${app.getVersion()}`,
     detail: `A minimalist email app on Holochain from Glass Bead Software\n\n`
-      + `Core DNA hash: ${DNA_HASH}\n`
-      + `     Session hash: ${netHash}\n\n`
+      + `Zome hash: ${DNA_HASH}\n`
+      + ` DNA hash: ${netHash}\n\n`
       + g_holochain_version + ''
       + g_lair_version + `\n`,
     buttons: ['OK'],
@@ -1195,6 +1209,7 @@ const optionsMenuTemplate = [
  */
 const networkMenuTemplate = [
   {
+    id: 'join-network',
     label: 'Join new Network',
     click: async function () {
       let changed = await promptUid(false);
@@ -1207,6 +1222,7 @@ const networkMenuTemplate = [
     },
   },
   {
+    id: 'switch-network',
     label: 'Switch Network',
     click: async function () {
       let changed = await promptUidSelect(false);
@@ -1224,13 +1240,20 @@ const networkMenuTemplate = [
     label: 'Change Network type',
     click: async function () {
       let changed = await promptNetworkType(false);
+      console.log("changed: " + changed + ' | ' + g_canMdns)
+      let menu = Menu.getApplicationMenu();
+      menu.getMenuItemById('join-network').enabled = !g_canMdns;
+      menu.getMenuItemById('switch-network').enabled = !g_canMdns;
+      menu.getMenuItemById('change-bootstrap').enabled = !g_canMdns;
       if (changed) {
         await startConductor(true);
       }
     },
   },
   {
-    label: 'Change Bootstrap Server', click: async function () {
+    id: 'change-bootstrap',
+    label: 'Change Bootstrap Server',
+    click: async function () {
       let changed = await promptBootstrapUrl(false);
       if (changed) {
         await startConductor(true);
@@ -1238,7 +1261,8 @@ const networkMenuTemplate = [
     }
   },
   {
-    label: 'Change Proxy Server', click: async function () {
+    label: 'Change Proxy Server',
+    click: async function () {
       const prevCanProxy = g_canProxy;
       let canProxy = await promptCanProxy();
       const proxyChanged = prevCanProxy !== canProxy;
