@@ -1,4 +1,4 @@
-# snapmail-release
+# snapmail
 SnapMail is an open-source P2P email app based on [Holochain](https://holochain.org/).  
 It is the latest iteration of [Snapmail](http://www.glassbead.com/snapmail/index.shtml) from [Glass Bead Software](http://www.glassbead.com/).
 
