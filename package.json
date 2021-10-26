@@ -25,7 +25,7 @@
     "billy": "./node_modules/.bin/electron electron billy --no-sandbox",
     "camille": "./node_modules/.bin/electron electron camille --no-sandbox",
     "start-no": "./node_modules/.bin/electron electron --no-sandbox --enable-logging",
-    "dna-install": "bash scripts/install-hc-tools.sh",
+    "dna-install": "bash scripts/workflow/install-hc-tools.sh",
     "dna-setup": "bash scripts/setup.sh",
     "dna-pack": "bash scripts/workflow/dna-pack.sh",
     "web-install": "cd build/snapmail-ui && rm package-lock.json && npm install"
