@@ -60,12 +60,17 @@ jobs:
       - name: list downloads
         run: ls -R
         working-directory: dna
+      # Download other snapmail repos
+      - name: Download other snapmail repos
+        shell: bash # important because this runs shell scripts
+        run: |
+          npm run dna-setup
       # depending on the windows command (when we are ready to build for it), may have to check which os currently on
       - name: Install nodejs dependencies
         run: |
           ls
           npm install
-        #  npm run web-install
+          npm run web-install
         # if: ${{ runner.os == 'Windows' }}
         # shell: bash
       - name: build snapmail-ui
