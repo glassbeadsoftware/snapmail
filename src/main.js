@@ -59,6 +59,7 @@ if (process.platform === "win32") {
 // specifying that the interfaces are ready to receive incoming connections
 const HC_MAGIC_READY_STRING = 'Conductor ready.';
 
+const g_switchingUrl = 'file://' + CURRENT_DIR + '/'+ DIST_DIR +'/switching.html';
 const g_errorUrl = 'file://' + CURRENT_DIR + '/'+ DIST_DIR +'/error.html';
 const INDEX_URL = 'file://' + CURRENT_DIR + '/'+ DIST_DIR +'/index.html?APP=';
 log('debug', 'INDEX_URL = ' + INDEX_URL);
@@ -1238,6 +1239,7 @@ const networkMenuTemplate = [
     click: async function () {
       let changed = await promptUidSelect(false);
       if (changed) {
+        await g_mainWindow.loadURL(g_switchingUrl);
         await g_mainWindow.setEnabled(false);
         await startConductor(false);
         await g_mainWindow.setEnabled(true);
