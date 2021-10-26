@@ -35,7 +35,7 @@ jobs:
       - uses: actions/upload-artifact@master
         with:
           name: snapmail-artifact
-          path: dna/workdir/snapmail.dna
+          path: dna/snapmail.dna
 
   # upload the app package for each target os
   upload-assets:
