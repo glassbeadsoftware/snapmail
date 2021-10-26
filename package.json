@@ -28,7 +28,8 @@
     "dna-install": "bash scripts/workflow/install-hc-tools.sh",
     "dna-setup": "bash scripts/setup.sh",
     "dna-pack": "bash scripts/workflow/dna-pack.sh",
-    "web-install": "cd build/snapmail-ui && rm package-lock.json && npm install"
+    "web-install": "cd build/snapmail-ui && rm package-lock.json && npm install",
+    "dist-build": "tsc && electron-builder build"
   },
   "repository": {
     "type": "git",

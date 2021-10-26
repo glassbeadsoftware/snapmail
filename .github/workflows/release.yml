@@ -8,7 +8,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-      - uses: taiki-e/create-gh-release-action@v1
+      #- uses: taiki-e/create-gh-release-action@v1
         env:
           # (required)
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -70,21 +70,13 @@ jobs:
       - name: build snapmail-ui
         run: npm run build prod
         shell: bash
-      - name: dist snapmail (linux)
+      - name: dist snapmail
         shell: bash
-        if: ${{ runner.os == 'Linux' }}
         run: |
-          npm run dist-linux-app
-      - name: dist snapmail (windows)
-        shell: bash
-        if: ${{ runner.os == 'Windows' }}
-        run: |
-          npm run dist-win
-      - name: dist snapmail (Mac)
-        shell: bash
-        if: ${{ runner.os == 'macOs' }}
-        run: |
-          npm run dist-mac
+          npm run dist-build
+      - name: list builds
+        run: ls
+        working-directory: out
       - name: upload binary (ubuntu only)
         if: ${{ runner.os == 'Linux' }}
         env:
