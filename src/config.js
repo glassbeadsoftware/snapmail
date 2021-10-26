@@ -66,10 +66,11 @@ module.exports.getKeystoreVersion = getKeystoreVersion;
 /**
  * Spawn 'lair-keystore' process
  */
-async function spawnKeystore(keystore_bin) {
+async function spawnKeystore(keystore_bin, storagePath) {
   // -- Spawn Keystore -- //
   let bin = keystore_bin;
-  let args = [];
+  const lair_dir = "" + winPath(storagePath) + "\\keystore";
+  let args = ['-d', lair_dir];
   log('info', 'Spawning ' + bin + ' (dirname: ' + CURRENT_DIR + ')');
   const keystore_proc = spawn(bin, args, {
     cwd: CURRENT_DIR,

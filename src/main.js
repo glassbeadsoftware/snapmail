@@ -642,7 +642,7 @@ async function startConductor(canRegenerateConfig) {
   //g_canQuit = false;
   await killHolochain(); // Make sure there is no outstanding Holochain & keystore procs
   g_lair_version = await getKeystoreVersion(LAIR_KEYSTORE_BIN);
-  g_keystore_proc = await spawnKeystore(LAIR_KEYSTORE_BIN);
+  g_keystore_proc = await spawnKeystore(LAIR_KEYSTORE_BIN, g_storagePath);
   //await sleep(2000);
   if (canRegenerateConfig) {
     generateConductorConfig(g_configPath, g_bootstrapUrl, g_storagePath, g_proxyUrl, g_adminPort, g_canMdns, g_canProxy);

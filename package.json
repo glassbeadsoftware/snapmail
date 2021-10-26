@@ -9,6 +9,7 @@
     "deploy-mac": "electron-builder build --mac --publish always",
     "dist": "electron-builder",
     "dist-linux": "electron-builder --linux tar.gz",
+    "dist-linux-app": "electron-builder --linux AppImage",
     "dist-mac": "electron-builder --mac",
     "dist-win": "set APP_DEV=false && electron-builder --win",
     "dist-arm64": "electron-builder --arm64 --linux tar.gz",
