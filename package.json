@@ -24,7 +24,10 @@
     "alex": "./node_modules/.bin/electron . alex --no-sandbox",
     "billy": "./node_modules/.bin/electron electron billy --no-sandbox",
     "camille": "./node_modules/.bin/electron electron camille --no-sandbox",
-    "start-no": "./node_modules/.bin/electron electron --no-sandbox --enable-logging"
+    "start-no": "./node_modules/.bin/electron electron --no-sandbox --enable-logging",
+    "dna-install": "bash scripts/install-hc-tools.sh",
+    "dna-test": "bash scripts/workflow/dna-test.sh",
+    "dna-pack": "bash scripts/workflow/dna-pack.sh"
   },
   "repository": {
     "type": "git",

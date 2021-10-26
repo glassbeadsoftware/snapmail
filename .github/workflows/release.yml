@@ -15,7 +15,7 @@ jobs:
         env:
           # (required)
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-  
+
   build-dna:
     runs-on: ubuntu-latest
     steps:
@@ -32,12 +32,8 @@ jobs:
       # "upload" dna as build artifact
       - uses: actions/upload-artifact@master
         with:
-          name: profiles-artifact
-          path: dna/workdir/profiles.dna
-      - uses: actions/upload-artifact@master
-        with:
-          name: projects-artifact
-          path: dna/workdir/projects.dna
+          name: snapmail-artifact
+          path: dna/workdir/snapmail.dna
 
   # upload the app package for each target os
   upload-assets:
