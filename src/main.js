@@ -34,6 +34,8 @@ process.env.RUST_LOG="WARN";
 // CONSTS
 //--------------------------------------------------------------------------------------------------
 
+const REPORT_BUG_URL = `https://github.com/glassbeadsoftware/snapmail/issues/new`;
+
 //const DIST_DIR = IS_DEBUG? "ui_dbg" : "ui";
 
 const DIST_DIR = "ui";
@@ -657,10 +659,10 @@ async function startConductor(canRegenerateConfig) {
     if(activeAppPort === 0) {
       // - Prompt for first UID
       if (!g_canMdns) {
-        g_uid = '<my-network-access-key>';
-        await promptUid(true);
+          g_uid = '<my-network-access-key>';
+          await promptUid(true);
       } else {
-        addUid("local")
+        addUid("local-mdns")
       }
       g_dnaHash = await installApp(g_adminWs, g_uid);
       //log('debug','Attaching to app at ' + g_appPort + ' ...');
@@ -816,7 +818,8 @@ app.on('ready', async function () {
       await promptNetworkType(true);
       log('debug', 'network type prompt done. Can MDNS: ' + g_canMdns);
       if (!g_canMdns) {
-        await promptBootstrapUrl(true);
+        /// Use default bootstrap url
+        // await promptBootstrapUrl(true);
       } else {
         let menu = Menu.getApplicationMenu();
         menu.getMenuItemById('join-network').enabled = false;
@@ -943,6 +946,7 @@ async function promptBootstrapUrl(canExitOnCancel) {
     label: 'URL:',
     value: g_bootstrapUrl,
     inputAttrs: {
+      required: true,
       type: 'url'
     },
     type: 'input'
@@ -972,6 +976,9 @@ async function promptFirstHandle() {
     label: 'Username:',
     value: "<noname>",
     inputAttrs: {
+      required: true,
+      minlength: "3",
+      pattern: "[a-zA-Z0-9\-_.]+",
       type: 'string'
     },
     type: 'input'
@@ -989,13 +996,16 @@ async function promptFirstHandle() {
  */
 async function promptUid(canExitOnCancel) {
   let r = await prompt({
-    title: 'SnapMail: Network Access Key',
+    title: 'SnapMail: Join new Network',
     height: 180,
     width: 500,
     alwaysOnTop: true,
     label: 'Network Access Key:',
     value: g_uid,
     inputAttrs: {
+      minlength: "2",
+      required: true,
+      pattern: "[a-zA-Z0-9\-_.]+",
       type: 'string'
     },
     type: 'input'
@@ -1085,6 +1095,7 @@ async function promptProxyUrl(canExitOnCancel) {
     label: 'URL:',
     value: g_proxyUrl,
     inputAttrs: {
+      required: true,
       type: 'url'
     },
     type: 'input'
@@ -1240,7 +1251,6 @@ const networkMenuTemplate = [
     label: 'Change Network type',
     click: async function () {
       let changed = await promptNetworkType(false);
-      console.log("changed: " + changed + ' | ' + g_canMdns)
       let menu = Menu.getApplicationMenu();
       menu.getMenuItemById('join-network').enabled = !g_canMdns;
       menu.getMenuItemById('switch-network').enabled = !g_canMdns;
@@ -1365,6 +1375,16 @@ const mainMenuTemplate = [
   },
   {
     label: 'Help', submenu: [{
+      label: 'Report bug / issue',
+      click: function () {
+        shell.openExternal(REPORT_BUG_URL)
+        //g_mainWindow.loadURL(REPORT_BUG_URL)
+       }
+      },
+      {
+        type: 'separator'
+      },
+      {
       label: 'About',
       //accelerator: 'Command+A',
       click: async function () {
@@ -1380,8 +1400,19 @@ const mainMenuTemplate = [
  */
 const trayMenuTemplate = [
   { label: 'Tray / Untray', click: function () { g_mainWindow.isVisible()? g_mainWindow.hide() : g_mainWindow.show();  }  },
-  { label: 'Settings', submenu: networkMenuTemplate },
-  { label: 'Debug', submenu: debugMenuTemplate },
+  //{ label: 'Settings', submenu: networkMenuTemplate },
+  {
+    label: 'Switch network',
+    click: async function () {
+      let changed = await promptUidSelect(false);
+      if(changed) {
+        await g_mainWindow.setEnabled(false);
+        await startConductor(false);
+        await g_mainWindow.setEnabled(true);
+      }
+    }
+  },
+  //{ label: 'Debug', submenu: debugMenuTemplate },
   { type: 'separator' },
   { label: 'About', click: async function () { await showAbout(); } },
   { type: 'separator' },
