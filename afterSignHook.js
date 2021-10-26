@@ -10,7 +10,7 @@ module.exports = async function (params) {
 
   console.log('afterSign hook triggered', params)
 
-  const appId = 'com.glass-bead-software.snapmail'
+  const appId = 'com.harris-braun-enterprises.snapmail'
 
   const appPath = path.join(
     params.appOutDir,
