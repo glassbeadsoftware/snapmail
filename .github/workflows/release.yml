@@ -25,6 +25,11 @@ jobs:
         shell: bash # important because this runs shell scripts
         run: |
           npm run dna-install
+      # Download other snapmail repos
+      - name: Download other snapmail repos
+        shell: bash # important because this runs shell scripts
+        run: |
+          npm run dna-setup
       # # build dna
       - name: Build DNA
         run: |
@@ -50,44 +55,54 @@ jobs:
       # rm the dna files from repository
       - name: clearing precompiled dna files
         run: |
-          rm dna/workdir/*.dna
+          rm dna/*.dna
       - uses: actions/download-artifact@master
         with:
-          name: profiles-artifact
-          path: dna/workdir
-      - uses: actions/download-artifact@master
-        with:
-          name: projects-artifact
-          path: dna/workdir
+          name: snapmail-artifact
+          path: dna
       - name: list downloads
         run: ls -R
-        working-directory: dna/workdir
+        working-directory: dna
       # depending on the windows command (when we are ready to build for it), may have to check which os currently on
       - name: Install nodejs dependencies
         run: |
           npm install
           npm run web-install
-          npm run electron-install
         # if: ${{ runner.os == 'Windows' }}
         # shell: bash
-      - name: build acorn
-        run: npm run build
+      - name: build snapmail-ui
+        run: npm run build prod
         shell: bash
+      - name: dist snapmail (linux)
+        shell: bash
+        if: ${{ runner.os == 'Linux' }}
+        run: |
+          npm run dist-linux-app
+      - name: dist snapmail (windows)
+        shell: bash
+        if: ${{ runner.os == 'Windows' }}
+        run: |
+          npm run dist-win
+      - name: dist snapmail (Mac)
+        shell: bash
+        if: ${{ runner.os == 'macOs' }}
+        run: |
+          npm run dist-mac
       - name: upload binary (ubuntu only)
         if: ${{ runner.os == 'Linux' }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          gh release upload "${GITHUB_REF#refs/tags/}" "electron/out/Acorn-0.5.5-alpha.AppImage" --clobber
+          gh release upload "${GITHUB_REF#refs/tags/}" "out/Snapmail-0.1.5.AppImage" --clobber
       - name: upload binary (macos only)
         if: ${{ runner.os == 'macOs' }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          gh release upload "${GITHUB_REF#refs/tags/}" "electron/out/Acorn-0.5.5-alpha.dmg" --clobber
+          gh release upload "${GITHUB_REF#refs/tags/}" "out/Snapmail-0.1.5.dmg" --clobber
       - name: upload binary (Windows only)
         if: ${{ runner.os == 'Windows' }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          gh release upload "$($env:GITHUB_REF -replace "refs/tags/")" "electron/out/Acorn.Setup.0.5.5-alpha.exe" --clobber
+          gh release upload "$($env:GITHUB_REF -replace "refs/tags/")" "out/Acorn.Setup.0.1.5.exe" --clobber
