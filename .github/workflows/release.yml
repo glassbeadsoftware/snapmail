@@ -63,8 +63,9 @@ jobs:
       # depending on the windows command (when we are ready to build for it), may have to check which os currently on
       - name: Install nodejs dependencies
         run: |
+          ls
           npm install
-          npm run web-install
+        #  npm run web-install
         # if: ${{ runner.os == 'Windows' }}
         # shell: bash
       - name: build snapmail-ui
