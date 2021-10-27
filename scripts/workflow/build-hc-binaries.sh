@@ -26,12 +26,12 @@ echo platform : $platform
 
 cd build
 cd holochain
-cargo build --release -p holochain
+FIX_SQL_FMT=1 cargo build --release -p holochain
 cp target/release/holochain ../../bin/holochain-$platform
 cd ..
 
 
 cd lair
-cargo build --release
+FIX_SQL_FMT=1 cargo build --release
 cp target/release/lair-keystore ../../bin/lair-keystore-$platform
 cd ..
