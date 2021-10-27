@@ -40,7 +40,7 @@ fi
 arch=`uname -m`
 platform="linux"
 if [[ "$OSTYPE" == "darwin"* ]]; then
-        platform="mac"
+  platform="mac"
 elif [[ $arch == "aarch64" ]]; then
   platform="arm64"
 fi

@@ -30,7 +30,8 @@
     "dna-pack": "bash scripts/workflow/dna-pack.sh",
     "web-install": "cd build/snapmail-ui && rm package-lock.json && npm install",
     "build-prod": "bash scripts/workflow/build-ui-prod.sh",
-    "dist-build": "set APP_DEV=false && electron-builder build"
+    "dist-build": "set APP_DEV=false && electron-builder build",
+    "build-hc": "bash scripts/workflow/build-hc-binaries.sh"
   },
   "repository": {
     "type": "git",

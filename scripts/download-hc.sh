@@ -47,5 +47,5 @@ cd ..
 
 # Done
 echo
-echo \* Done
+echo \* Done - download-hc.sh
 cd ..

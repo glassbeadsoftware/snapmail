@@ -75,11 +75,14 @@ jobs:
           npm install
           npm run web-install
         # if: ${{ runner.os == 'Windows' }}
-        # shell: bash
       - name: build snapmail-ui
         shell: bash
         run: |
           npm run build-prod
+      - name: build holochain and lair
+        shell: bash
+        run: |
+          npm run build-hc
       - name: dist snapmail
         shell: bash
         env:
