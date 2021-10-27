@@ -75,7 +75,7 @@ jobs:
       - name: build snapmail-ui
         shell: bash
         run: |
-          ./scripts/build-ui.sh prod
+          npm run build-prod
       - name: dist snapmail
         shell: bash
         run: |
