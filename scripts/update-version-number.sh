@@ -13,10 +13,17 @@ fi
 OLD_VER=`awk -F ":" '/"version"/ {print $2}' package.json | sed 's/"//g' | sed 's/,//g' | sed 's/ //g'`
 sed -i "s/\"version\": \"$OLD_VER\"/\"version\": \"$1\"/" package.json
 
+
 echo
 echo "Updating version number '$OLD_VER' -> '$1'"
 echo
 
+
 # Change build/snapmail-ui/package.json
 OLD_VER=`awk -F ":" '/"version"/ {print $2}' ./build/snapmail-ui/package.json | sed 's/"//g' | sed 's/,//g' | sed 's/ //g'`
 sed -i "s/\"version\": \"$OLD_VER\"/\"version\": \"$1\"/" ./build/snapmail-ui/package.json
+
+
+# Change .github/workflows/release.yml
+OLD_VER=`awk -F ":" '/SNAPMAIL_VERSION/ {print $2}' ./.github/workflows/release.yml | sed 's/ //g'
+sed -i "s/$OLD_VER/$1/" ./.github/workflows/release.yml
