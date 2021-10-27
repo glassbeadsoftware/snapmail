@@ -44,11 +44,6 @@ jobs:
     name: Build on ubuntu-18.04 arm64
     steps:
       - uses: actions/checkout@v2
-      - uses: uraimo/run-on-arch-action@v2.0.5
-        with:
-          arch: aarch64
-          distro: ubuntu18.04
-          githubToken: ${{ github.token }}
       # rm the dna files from repository
       - name: clearing precompiled dna files
         run: |
@@ -60,25 +55,18 @@ jobs:
       - name: list downloads
         run: ls -R
         working-directory: dna
-      - name: Install nodejs dependencies
+      # Install nodejs dependencies
+      - uses: uraimo/run-on-arch-action@v2.0.5
+        with:
+          arch: aarch64
+          distro: ubuntu18.04
+          githubToken: ${{ github.token }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           npm install
           npm run web-install
-      - name: build snapmail-ui
-        shell: bash
-        run: |
           npm run build-prod
-      - name: dist snapmail
-        shell: bash
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
           npm run dist-build
-      - name: list builds
-        run: ls
-        working-directory: out
-      - name: upload binary
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
+          ls out
           gh release upload "${GITHUB_REF#refs/tags/}" "out/Snapmail-0.1.5.tar.gz" --clobber
