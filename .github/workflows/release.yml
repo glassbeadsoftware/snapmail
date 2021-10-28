@@ -82,28 +82,7 @@ jobs:
         shell: bash
         run: |
           npm run build-hc
-      # upload binaries
-      - uses: actions/upload-artifact@master
-        if: ${{ runner.os == 'Windows' }}
-        with:
-          name: holochain-windows-artifact
-          path: bin/holochain-win.exe
-      - uses: actions/upload-artifact@master
-        if: ${{ runner.os == 'macOs' }}
-        with:
-          name: holochain-macos-artifact
-          path: bin/holochain-linux
-      - uses: actions/upload-artifact@master
-        if: ${{ runner.os == 'Windows' }}
-        with:
-          name: lair-windows-artifact
-          path: bin/lair-keystore-win.exe
-      - uses: actions/upload-artifact@master
-        if: ${{ runner.os == 'macOs' }}
-        with:
-          name: lair-macos-artifact
-          path: bin/lair-keystore-linux
-      # upload installers
+      # upload installers and binaries
       - name: dist snapmail
         shell: bash
         env:
@@ -125,9 +104,13 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           gh release upload "${GITHUB_REF#refs/tags/}" "out/Snapmail-0.1.5.dmg" --clobber
+          gh release upload "${GITHUB_REF#refs/tags/}" "bin/lair-keystore-linux" --clobber
+          gh release upload "${GITHUB_REF#refs/tags/}" "bin/holochain-linux" --clobber
       - name: upload binary (Windows only)
         if: ${{ runner.os == 'Windows' }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           gh release upload "$($env:GITHUB_REF -replace "refs/tags/")" "out/Snapmail Setup 0.1.5.exe" --clobber
+          gh release upload "${GITHUB_REF#refs/tags/}" "bin/lair-keystore-win.exe" --clobber
+          gh release upload "${GITHUB_REF#refs/tags/}" "bin/holochain-win.exe" --clobber
