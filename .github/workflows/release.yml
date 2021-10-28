@@ -112,5 +112,5 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           gh release upload "$($env:GITHUB_REF -replace "refs/tags/")" "out/Snapmail Setup 0.1.5.exe" --clobber
-          gh release upload "${GITHUB_REF#refs/tags/}" "bin/lair-keystore-win.exe" --clobber
-          gh release upload "${GITHUB_REF#refs/tags/}" "bin/holochain-win.exe" --clobber
+          gh release upload "$($env:GITHUB_REF -replace "refs/tags/")" "bin/lair-keystore-win.exe" --clobber
+          gh release upload "$($env:GITHUB_REF -replace "refs/tags/")" "bin/holochain-win.exe" --clobber
