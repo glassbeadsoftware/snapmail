@@ -14,7 +14,7 @@ echo.
 echo * Build Holochain
 cd holochain
 cargo build --release -p holochain
-cp target/release/holochain ../../bin/holochain-win
+copy target\release\holochain.exe ..\..\bin\holochain-win.exe
 
 
 echo.
@@ -27,7 +27,7 @@ echo.
 echo * Build Lair
 cd lair
 cargo build --release
-cp target/release/lair-keystore ../../bin/lair-keystore-win
+copy target\release\lair-keystore.exe ..\..\bin\lair-keystore-win.exe
 cd ..
 
 
