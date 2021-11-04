@@ -4,6 +4,7 @@
   "description": "A minimalist email application on holochain",
   "main": "src/main.js",
   "scripts": {
+    "package"       : "rimraf ui.zip && cd ui && bestzip ../ui.zip * && cd .. && hc web-app pack workdir",
     "postinstall"   : "electron-builder install-app-deps",
     "deploy-win"    : "set APP_DEV=false && electron-builder build --win --publish always",
     "deploy-mac"    : "electron-builder build --mac --publish always",
@@ -88,6 +89,7 @@
     "tree-kill": "^1.2.2"
   },
   "devDependencies": {
+    "bestzip": "^2.2.0",
     "electron": "^8.5.5",
     "electron-builder": "^22.11.7",
     "electron-notarize": "^1.0.0"
