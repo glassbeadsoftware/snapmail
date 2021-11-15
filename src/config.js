@@ -415,7 +415,7 @@ async function installApp(adminWs, uid) {
       installed_app_id,
       dnas: [{
         hash,
-        nick: uid,
+        role_id: uid,
       }],
     });
     log('debug','Install app response:');
