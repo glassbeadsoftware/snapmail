@@ -811,8 +811,16 @@ app.on('ready', async function () {
   // Create main window
   g_mainWindow = createWindow();
 
+  // Load splashscreen
   try {
-    // Start Conductor
+    await g_mainWindow.loadURL(g_switchingUrl);
+  } catch(err) {
+    log('error', 'loadURL() failed:');
+    log('error',{err});
+  }
+
+  // Start Conductor
+  try {
     // if bootstrapUrl not set, prompt it, otherwise
     if(g_bootstrapUrl === "") {
       g_bootstrapUrl = DEFAULT_BOOTSTRAP_URL;
