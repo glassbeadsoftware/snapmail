@@ -17,12 +17,13 @@ module.exports = async function (params) {
     `${params.packager.appInfo.productFilename}.app`
   )
   if (!fs.existsSync(appPath)) {
+    console.log('appPath file not found: ' + appPath)
     console.log('skip')
     return
   }
 
   console.log(`Notarizing ${appId} found at ${appPath}`)
-
+  console.log(`Notarizing with appleId: ${process.env.APPLE_ID_EMAIL}`)
   try {
     await electronNotarize.notarize({
       appBundleId: appId,
