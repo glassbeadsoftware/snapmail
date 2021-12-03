@@ -1,9 +1,6 @@
 name: Release x64
 
-on:
-  push:
-    tags:
-      - v[0-9]+.*
+on: workflow_dispatch
 
 jobs:
   # the create-release would be used once we want to create a specific release based on if the commit has a tag
@@ -82,6 +79,13 @@ jobs:
         shell: bash
         run: |
           npm run build-hc
+      # Setup sign 7 notarize
+      - name: sign and notarize setup (macos only)
+        if: ${{ runner.os == 'macOs' }}
+        uses:  figleafteam/import-codesign-certs@v2
+        with:
+          p12-file-base64: ${{ secrets.HBE_APPLE_CERTIFICATE_BASE64 }}
+          p12-password: ${{ secrets.HBE_APPLE_CERTIFICATE_PASS }}
       # upload installers and binaries
       - name: dist snapmail
         shell: bash
