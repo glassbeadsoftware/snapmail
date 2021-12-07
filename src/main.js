@@ -790,14 +790,14 @@ app.on('ready', async function () {
   // Create sys tray
   try
   {
-    g_tray = new Tray('assets/favicon.png');
+    g_tray = new Tray('assets/favicon16.png');
   } catch (e) {
     try
     {
-      g_tray = new Tray('resources/app/assets/favicon.png');
+      g_tray = new Tray('resources/app/assets/favicon16.png');
     } catch (e) {
       try {
-        g_tray = new Tray(app.getAppPath() + '/assets/favicon.png');
+        g_tray = new Tray(app.getAppPath() + '/assets/favicon16.png');
       } catch (e) {
         log('error', "Could not find favicon. appPath: " + app.getAppPath());
         g_tray = new Tray(nativeImage.createEmpty());
@@ -1310,14 +1310,16 @@ const debugMenuTemplate = [
   {
     label: 'Open Config Folder',
     click: function () {
-      shell.openItem(CONFIG_PATH);
+      shell.openExternal('file://' + CONFIG_PATH);
+      //shell.openItem(CONFIG_PATH);
     },
     //icon: 'assets/icon.png'
   },
   {
     label: 'Open Log File',
     click: function () {
-      shell.openItem(logger.transports.file.file);
+      shell.openExternal('file://' + logger.transports.file.file);
+      //shell.openItem(logger.transports.file.file);
     },
   },
   {
