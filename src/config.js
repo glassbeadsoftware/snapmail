@@ -293,16 +293,19 @@ module.exports.connectToApp = connectToApp;
  * @param adminWs
  * @returns {Promise<string|undefined>}
  */
-async function getDnaHash(adminWs) {
-  const dnas = await adminWs.listDnas();
-  log('debug','getDnaHash() - Found ' + dnas.length + ' dna(s):');
-  for (let dna of dnas) {
-    log('debug',' -  ' + htos(dna));
+async function getDnaHash(adminWs, uid) {
+  const apps = await adminWs.listApps("running");
+  log('debug','getDnaHash('+ uid +') - Found ' + apps.length + ' app(s):');
+  for (let app of apps) {
+    log('debug',' -  ' + app.installed_app_id);
+    for (let cell of app.cell_data) {
+      log('debug','    -  ' + cell.role_id);
+      if (cell.role_id == uid) {
+        return htos(cell.cell_id[0]);
+      }
+    }
   }
-  if (dnas.length === 0) {
-    return undefined;
-  }
-  return htos(dnas[0]);
+  return undefined;
 }
 module.exports.getDnaHash = getDnaHash;
 

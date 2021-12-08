@@ -1154,8 +1154,8 @@ async function promptProxyUrl(canExitOnCancel) {
  *
  */
 async function showAbout() {
-  if (g_dnaHash === undefined) {
-    g_dnaHash = await getDnaHash(g_adminWs);
+  if (g_uid === undefined) {
+    g_dnaHash = await getDnaHash(g_adminWs, g_uid);
   }
   let netHash = g_dnaHash || "(unknown)";
   await dialog.showMessageBox({
