@@ -1163,8 +1163,8 @@ async function showAbout() {
     title: `About ${app.getName()}`,
     message: `${app.getName()} - v${app.getVersion()}`,
     detail: `A minimalist email app on Holochain from Glass Bead Software\n\n`
-      + `Zome hash: ${DNA_HASH}\n`
-      + ` DNA hash: ${netHash}\n\n`
+      + `Zome hash:\n${DNA_HASH}\n\n`
+      + `DNA hash of "${g_uid}":\n${netHash}\n\n`
       + g_holochain_version + ''
       + g_lair_version + `\n`,
     buttons: ['OK'],
@@ -1249,6 +1249,7 @@ const networkMenuTemplate = [
     click: async function () {
       let changed = await promptUid(false);
       if (changed) {
+        await g_mainWindow.loadURL(g_switchingUrl);
         await g_mainWindow.setEnabled(false);
         g_dnaHash = await installApp(g_adminWs, g_uid);
         await startConductor(false);
