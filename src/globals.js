@@ -8,7 +8,7 @@ const CONDUCTOR_CONFIG_FILENAME = 'conductor-config.yaml';
 const APP_CONFIG_FILENAME = 'app-config.txt';
 const DEFAULT_BOOTSTRAP_URL = 'https://bootstrap-staging.holo.host';
 const CURRENT_DIR = path.join(__dirname, '..');
-const DNA_HASH_FILEPATH = './dna/dna_hash.txt';
+const DNA_HASH_FILEPATH = 'dna/dna_hash.txt';
 const DEFAULT_PROXY_URL ='kitsune-proxy://SYVd4CF3BdJ4DS7KwLLgeU3_DbHoZ34Y-qroZ79DOs8/kitsune-quic/h/165.22.32.11/p/5779/--'
 //kitsune-proxy://VYgwCrh2ZCKL1lpnMM1VVUee7ks-9BkmW47C_ys4nqg/kitsune-quic/h/kitsune-proxy.harris-braun.com/p/4010/--';
 

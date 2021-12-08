@@ -111,8 +111,36 @@ let g_dnaHash = undefined;
 let DNA_HASH = '<unknown>';
 if (fs.existsSync(DNA_HASH_FILEPATH)) {
   DNA_HASH = fs.readFileSync(DNA_HASH_FILEPATH, 'utf-8');
+} else  {
+  if (fs.existsSync('resources/app/' + DNA_HASH_FILEPATH)) {
+    DNA_HASH = fs.readFileSync('resources/app/' + DNA_HASH_FILEPATH, 'utf-8');
+  } else {
+    if (fs.existsSync(app.getAppPath() + '/' + DNA_HASH_FILEPATH)) {
+      DNA_HASH = fs.readFileSync(app.getAppPath() + '/' + DNA_HASH_FILEPATH, 'utf-8');
+    }
+  }
 }
 log('info', "DNA HASH: " + DNA_HASH);
+
+
+
+// Create sys tray
+function create_tray() {
+  try {
+    g_tray = new Tray('assets/favicon16.png');
+  } catch(e) {
+    try {
+      g_tray = new Tray('resources/app/assets/favicon16.png');
+    } catch(e) {
+      try {
+        g_tray = new Tray(app.getAppPath() + '/assets/favicon16.png');
+      } catch(e) {
+        log('error', "Could not find favicon. appPath: " + app.getAppPath());
+        g_tray = new Tray(nativeImage.createEmpty());
+      }
+    }
+  }
+}
 
 //--------------------------------------------------------------------------------------------------
 // -- SETUP
@@ -345,7 +373,9 @@ ipc.on('newMailSync', (event, title, body) => {
  */
 ipc.on('newCountAsync', (event, newCount) => {
   let append = newCount === 0 ? '' : ' (' + newCount + ')';
-  g_tray.setToolTip('SnapMail v' + app.getVersion() + append);
+  if (g_tray) {
+    g_tray.setToolTip('SnapMail v' + app.getVersion() + append);
+  }
   event.returnValue = true;
 });
 
@@ -788,22 +818,7 @@ app.on('ready', async function () {
   item.checked = g_settingsStore.get('canNotify');
 
   // Create sys tray
-  try
-  {
-    g_tray = new Tray('assets/favicon16.png');
-  } catch (e) {
-    try
-    {
-      g_tray = new Tray('resources/app/assets/favicon16.png');
-    } catch (e) {
-      try {
-        g_tray = new Tray(app.getAppPath() + '/assets/favicon16.png');
-      } catch (e) {
-        log('error', "Could not find favicon. appPath: " + app.getAppPath());
-        g_tray = new Tray(nativeImage.createEmpty());
-      }
-    }
-  }
+  create_tray();
   g_tray.setToolTip('SnapMail v' + app.getVersion());
   const menu = Menu.buildFromTemplate(trayMenuTemplate);
   g_tray.setContextMenu(menu);
