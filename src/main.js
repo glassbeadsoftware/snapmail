@@ -527,6 +527,10 @@ function createWindow() {
 }
 
 
+function sleep(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
 /**
  *
  */
@@ -551,11 +555,16 @@ async function getHolochainVersion() {
     // n/a
   });
   // Wait for holochain to boot up
-  await new Promise((resolve, _reject) => {
+  await new Promise(async (resolve, reject) => {
+    const start_time = Date.now()
     holochain_proc.stdout.on('data', (data) => {
       g_holochain_version = data.toString();
-        resolve();
+      resolve();
     });
+    while(Date.now() - start_time < 5 * 1000) {
+      await sleep(100);
+    }
+    reject(new Error("Failed to retrieve holochain version from child process"))
   });
   // Done
 }
@@ -597,7 +606,8 @@ async function spawnHolochainProc() {
   });
   // Wait for holochain to boot up
   log('info', 'holochain <-> waiting for magic ready string');
-  await new Promise((resolve, _reject) => {
+  await new Promise(async (resolve, _reject) => {
+    const start_time = Date.now()
     let total_output = ""
     holochain_proc.stdout.on('data', (data) => {
       let output = data.toString();
@@ -617,8 +627,12 @@ async function spawnHolochainProc() {
         resolve();
       } else {
         log('info', 'holochain <- waiting for magic ready string');
-      }output
+      }
     });
+    while(Date.now() - start_time < 10 * 1000) {
+      await sleep(100);
+    }
+    reject(new Error("Failed to retrieve holochain's magic ready string from child process"))
   });
   // Done
   g_holochain_proc = holochain_proc;
@@ -689,12 +703,14 @@ async function startConductor(canRegenerateConfig) {
     generateConductorConfig(g_configPath, g_bootstrapUrl, g_storagePath, g_proxyUrl, g_adminPort, g_canMdns, g_canProxy);
   }
   log('info', 'Launching conductor...');
-  await getHolochainVersion();
-  await spawnHolochainProc();
   //g_canQuit = true;
-  // - Connect to Conductor and activate app
+
   let indexUrl;
   try {
+    // - Spawn Conductor
+    await getHolochainVersion();
+    await spawnHolochainProc();
+    // - Connect to Conductor and activate app
     g_adminWs = await connectToAdmin(g_adminPort);
     let activeAppPort = await hasActivatedApp(g_adminWs);
     if(activeAppPort === 0) {

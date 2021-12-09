@@ -226,7 +226,7 @@ async function connectToAdmin(adminPort) {
   //try {
     adminWs = await AdminWebsocket.connect(`ws://localhost:${ adminPort }`, 30000);
     //log('debug',{adminWs});
-    log('info', 'Connected to admin at ' + adminPort);
+    log('info', 'Connected to admin at ' + adminPort + ' !');
   //} catch (e) {
   //  log('error', 'Failed to to connect to admin at ' + adminPort + ': ' + e);
   //}
