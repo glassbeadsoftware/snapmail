@@ -606,7 +606,7 @@ async function spawnHolochainProc() {
   });
   // Wait for holochain to boot up
   log('info', 'holochain <-> waiting for magic ready string');
-  await new Promise(async (resolve, _reject) => {
+  await new Promise(async (resolve, reject) => {
     const start_time = Date.now()
     let total_output = ""
     holochain_proc.stdout.on('data', (data) => {
