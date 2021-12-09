@@ -596,6 +596,7 @@ async function spawnHolochainProc() {
     }
   });
   // Wait for holochain to boot up
+  log('info', 'holochain <-> waiting for magic ready string');
   await new Promise((resolve, _reject) => {
     let total_output = ""
     holochain_proc.stdout.on('data', (data) => {
@@ -614,7 +615,9 @@ async function spawnHolochainProc() {
         g_adminPort = match[1];
         //log('info', {total_output});
         resolve();
-      }
+      } else {
+        log('info', 'holochain <- waiting for magic ready string');
+      }output
     });
   });
   // Done
@@ -692,7 +695,6 @@ async function startConductor(canRegenerateConfig) {
   // - Connect to Conductor and activate app
   let indexUrl;
   try {
-    log('debug','Connecting to admin at ' + g_adminPort + ' ...');
     g_adminWs = await connectToAdmin(g_adminPort);
     let activeAppPort = await hasActivatedApp(g_adminWs);
     if(activeAppPort === 0) {

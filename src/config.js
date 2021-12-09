@@ -221,9 +221,15 @@ module.exports.generateConductorConfig = generateConductorConfig;
  * @returns {Promise<AdminWebsocket>}
  */
 async function connectToAdmin(adminPort) {
-  let adminWs = await AdminWebsocket.connect(`ws://localhost:${ adminPort }`, 30000);
-  //log('debug',{adminWs});
-  log('debug','Connected to admin at ' + adminPort);
+  log('info','Connecting to admin at ' + adminPort + ' ...');
+  let adminWs = undefined
+  //try {
+    adminWs = await AdminWebsocket.connect(`ws://localhost:${ adminPort }`, 30000);
+    //log('debug',{adminWs});
+    log('info', 'Connected to admin at ' + adminPort);
+  //} catch (e) {
+  //  log('error', 'Failed to to connect to admin at ' + adminPort + ': ' + e);
+  //}
   return adminWs;
 }
 module.exports.connectToAdmin = connectToAdmin;
@@ -233,9 +239,14 @@ module.exports.connectToAdmin = connectToAdmin;
  *
  */
 async function connectToApp(appPort) {
-  let appWs = await AppWebsocket.connect(`ws://localhost:${ appPort }`, 30000);
+  let appWs = undefined
+  //try {
+    appWs = await AppWebsocket.connect(`ws://localhost:${ appPort }`, 30000);
   //log('silly',{appWs});
-  log('debug','Connected to app at ' + appPort);
+  log('info','Connected to app at ' + appPort);
+  //} catch (e) {
+  //  log('error', 'Failed to to connect to app at ' + appPort + ': ' + e);
+  //}
   return appWs;
 }
 module.exports.connectToApp = connectToApp;
