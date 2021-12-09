@@ -1,5 +1,5 @@
 // - Modules to control application life and create native browser window
-const { app, BrowserWindow, Menu, shell, Tray, screen, Notification, nativeImage } = require('electron');
+const { app, BrowserWindow, Menu, shell, Tray, screen, Notification, nativeImage, globalShortcut } = require('electron');
 const { spawn } = require('child_process');
 const fs = require('fs');
 const path = require('path');
@@ -169,7 +169,7 @@ if (process.argv.length > 2) {
 // -- Setup storage folder -- //
 
 g_storagePath = path.join(STORAGE_PATH, sessionId);
-log('debug',{g_storagePath});
+log('info',{g_storagePath});
 let version_txt = path.join(g_storagePath, "dna_version.txt");
 // Create storage and setup if none found
 if (!fs.existsSync(g_storagePath)) {
@@ -453,6 +453,11 @@ function createWindow() {
   });
   let { x, y } = g_settingsStore.get('windowPosition');
   mainWindow.setPosition(x, y);
+
+  globalShortcut.register('f5', function() {
+    //console.log('f5 is pressed')
+    mainWindow.reload()
+  })
 
   // The BrowserWindow class extends the node.js core EventEmitter class, so we use that API
   // to listen to events on the BrowserWindow.
@@ -1359,6 +1364,12 @@ const debugMenuTemplate = [
       await startConductor(false);
     }
   },
+  {
+    label: 'Reload window', click: async function () {
+      g_mainWindow.reload();
+    }
+  },
+
 ];
 
 
