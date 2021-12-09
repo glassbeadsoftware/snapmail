@@ -597,19 +597,22 @@ async function spawnHolochainProc() {
   });
   // Wait for holochain to boot up
   await new Promise((resolve, _reject) => {
+    let total_output = ""
     holochain_proc.stdout.on('data', (data) => {
       let output = data.toString();
+      total_output += output
       log('info', 'holochain: ' + output);
       if(output.indexOf(HC_MAGIC_READY_STRING) > -1) {
         let regex = /###ADMIN_PORT:([0-9]*)###/gm;
-        let match = regex.exec(output);
+        let match = regex.exec(total_output);
         //log('debug', {match});
         if (match === undefined || match === null || match.length === 0) {
-          log('warn', 'ADMIN port not found in holochain output:');
-          log('warn', {output});
+          log('warn', 'ADMIN port not found in holochain total_output:');
+          log('warn', {total_output});
           return;
         }
         g_adminPort = match[1];
+        //log('info', {total_output});
         resolve();
       }
     });

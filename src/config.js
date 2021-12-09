@@ -6,6 +6,7 @@ const { AdminWebsocket, AppWebsocket, AppStatusFilter } = require('@holochain/co
 
 const { log } = require('./logger');
 const { CURRENT_DIR, SNAPMAIL_APP_ID, DEFAULT_BOOTSTRAP_URL, DEFAULT_PROXY_URL } = require('./globals');
+const path = require("path");
 
 // -- CONSTS -- //
 
@@ -140,11 +141,13 @@ function generateConductorConfig(configPath, bootstrapUrl, storagePath, proxyUrl
   if (canMdns) {
     network_type = "quic_mdns";
   }
-  let environment_path = winPath(storagePath);
-  log('debug',{environment_path});
   if (bootstrapUrl === undefined) {
     bootstrapUrl = DEFAULT_BOOTSTRAP_URL;
   }
+  let environment_path = winPath(storagePath);
+  log('debug',{environment_path});
+  let keystore_path = winPath(path.join(environment_path, "keystore"))
+  log('debug',{keystore_path});
 
   let config;
   if (canProxy) {
@@ -153,7 +156,7 @@ function generateConductorConfig(configPath, bootstrapUrl, storagePath, proxyUrl
 environment_path: ${environment_path}
 keystore:
   type: lair_server_legacy_deprecated
-  keystore_path: "${environment_path}\\\\keystore"
+  keystore_path: "${keystore_path}"
   danger_passphrase_insecure_from_config: default-insecure-passphrase
 dpki: ~
 admin_interfaces:
@@ -181,7 +184,7 @@ network:
 environment_path: "${environment_path}"
 keystore:
   type: lair_server_legacy_deprecated
-  keystore_path: "${environment_path}\\\\keystore"
+  keystore_path: "${keystore_path}"
   danger_passphrase_insecure_from_config: default-insecure-passphrase
 dpki: ~
 admin_interfaces:
