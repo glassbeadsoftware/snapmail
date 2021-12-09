@@ -539,7 +539,7 @@ async function getHolochainVersion() {
   let args = ['--version'];
 
   // Spawn "holochain" subprocess
-  log('info', 'Spawning ' + bin + ' (dirname: ' + CURRENT_DIR + ')');
+  log('info', 'Spawning ' + bin + ' (dirname: ' + CURRENT_DIR + ') | getHolochainVersion()');
   let holochain_proc = spawn(bin, args, {
     cwd: CURRENT_DIR,
     detached: false,
@@ -580,7 +580,7 @@ async function spawnHolochainProc() {
   let args = ['-c', g_configPath];
 
   // Spawn "holochain" subprocess
-  log('info', 'Spawning ' + bin + ' (dirname: ' + CURRENT_DIR + ')');
+  log('info', 'Spawning ' + bin + ' (dirname: ' + CURRENT_DIR + ') | spawnHolochainProc()');
   let holochain_proc = spawn(bin, args, {
     cwd: CURRENT_DIR,
     detached: false,

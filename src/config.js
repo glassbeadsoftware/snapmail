@@ -31,7 +31,7 @@ async function getKeystoreVersion(keystore_bin) {
   // -- Spawn Keystore -- //
   let bin = keystore_bin;
   let args = ["--version"];
-  log('info', 'Spawning ' + bin + ' (dirname: ' + CURRENT_DIR + ')');
+  log('info', 'Spawning ' + bin + ' (dirname: ' + CURRENT_DIR + ') | getKeystoreVersion()');
   const keystore_proc = spawn(bin, args, {
     cwd: CURRENT_DIR,
     detached: false,
@@ -72,7 +72,7 @@ async function spawnKeystore(keystore_bin, storagePath) {
   let bin = keystore_bin;
   const lair_dir = winPath(path.join(storagePath, "keystore"))
   let args = ['-d', lair_dir];
-  log('info', 'Spawning ' + bin + ' (dirname: ' + CURRENT_DIR + ')');
+  log('info', 'Spawning ' + bin + ' (dirname: ' + CURRENT_DIR + ') | spawnKeystore()');
   const keystore_proc = spawn(bin, args, {
     cwd: CURRENT_DIR,
     detached: false,
