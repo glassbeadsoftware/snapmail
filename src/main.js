@@ -238,7 +238,7 @@ let g_appConfigPath = path.join(g_storagePath, APP_CONFIG_FILENAME);
       g_proxyUrl = match[1];
       log('debug',{ g_proxyUrl });
     } catch(err) {
-      log('info', 'No proxy URL found in config');
+      log('info', 'No proxy URL found in config. Using default proxy.');
       g_proxyUrl = DEFAULT_PROXY_URL;
     }
     // -- APP config -- //
@@ -559,6 +559,7 @@ async function getHolochainVersion() {
     const start_time = Date.now()
     holochain_proc.stdout.on('data', (data) => {
       g_holochain_version = data.toString();
+      log('info', 'getHolochainVersion() result: ' + g_holochain_version);
       resolve();
     });
     while(Date.now() - start_time < 5 * 1000) {
@@ -644,48 +645,43 @@ async function spawnHolochainProc() {
  */
 async function killHolochain() {
   // SIGTERM by default
-  if (process.platform !== "win32") {
-    let canWaitForHolochain = false;
-    if(g_holochain_proc && g_holochain_proc.pid) {
-      canWaitForHolochain = true;
-      log('info', 'Killing holochain sub processes...');
-      kill(g_holochain_proc.pid, function(err) {
-        canWaitForHolochain = false;
-        if(!err) {
-          log('info', 'killed all holochain sub processes');
-        } else {
-          log('error', err)
-        }
-      });
-    }
-    let canWaitForKeystore = false;
-    if(g_keystore_proc && g_keystore_proc.pid) {
-      canWaitForKeystore = true;
-      log('info', 'Killing lair-keystore sub processes...');
-      kill(g_keystore_proc.pid, function(err) {
-        canWaitForKeystore = false;
-        if(!err) {
-          log('info', 'killed all lair-keystore sub processes');
-        } else {
-          log('error', err)
-        }
-      });
-    }
-    // Wait a bit for the kill commands to complete
-    log('info', 'waiting...');
-    while(canWaitForHolochain) {
-      await sleep(10);
-    }
-    while(canWaitForKeystore) {
-      await sleep(10);
-    }
-    //await sleep(2000);
-    log('info', 'Killing sub-processes done.');
-  } else {
-    //killAllWsl(HOLOCHAIN_BIN);
-    //killAllWsl(LAIR_KEYSTORE_BIN);
+  let canWaitForHolochain = false;
+  if(g_holochain_proc && g_holochain_proc.pid) {
+    canWaitForHolochain = true;
+    log('info', 'Killing holochain sub processes...');
+    kill(g_holochain_proc.pid, function(err) {
+      canWaitForHolochain = false;
+      if(!err) {
+        log('info', 'killed all holochain sub processes');
+      } else {
+        log('error', err)
+      }
+    });
   }
-  log('debug', 'killHolochain() - DONE');
+  let canWaitForKeystore = false;
+  if(g_keystore_proc && g_keystore_proc.pid) {
+    canWaitForKeystore = true;
+    log('info', 'Killing lair-keystore sub processes...');
+    kill(g_keystore_proc.pid, function(err) {
+      canWaitForKeystore = false;
+      if(!err) {
+        log('info', 'killed all lair-keystore sub processes');
+      } else {
+        log('error', err)
+      }
+    });
+  }
+  // Wait for the kill commands to complete
+  log('info', 'waiting...');
+  const start_time = Date.now()
+  while(canWaitForHolochain || canWaitForKeystore) {
+    await sleep(10);
+    if (Date.now() - start_time > 5 * 1000) {
+      log('error', 'Killing sub-processes TIMED-OUT. Aborted.');
+      break;
+    }
+  }
+  log('info', 'Killing sub-processes DONE.');
 }
 
 
@@ -693,7 +689,7 @@ async function killHolochain() {
  * Prepare conductor config and spawn holochain subprocess
  * @param canRegenerateConfig - Regenerate the conductor config before relaunching the holochain process.
  */
-async function startConductor(canRegenerateConfig) {
+async function startConductorAndLoadPage(canRegenerateConfig) {
   //g_canQuit = false;
   await killHolochain(); // Make sure there is no outstanding Holochain & keystore procs
   g_lair_version = await getKeystoreVersion(LAIR_KEYSTORE_BIN);
@@ -721,7 +717,7 @@ async function startConductor(canRegenerateConfig) {
       } else {
         addUid("local-mdns")
       }
-      g_dnaHash = await installApp(g_adminWs, g_uid);
+      await installApp(g_adminWs, g_uid);
       //log('debug','Attaching to app at ' + g_appPort + ' ...');
       g_appPort = await g_adminWs.attachAppInterface({port: undefined});
       log('debug', {g_appPort});
@@ -744,10 +740,13 @@ async function startConductor(canRegenerateConfig) {
     }
     indexUrl = INDEX_URL + g_appPort + '&UID=' + g_uid;
     log('debug', indexUrl);
+    g_dnaHash = await getDnaHash(g_adminWs, g_uid);
   } catch (err) {
     log('error', 'Conductor setup failed:');
     log('error',{err});
     indexUrl = INDEX_URL;
+    await g_mainWindow.loadURL(g_errorUrl);
+    return;
     //// Better to kill app if holochain not connected
     //app.quit();
   }
@@ -756,10 +755,10 @@ async function startConductor(canRegenerateConfig) {
   {
     const installed_app_id = SNAPMAIL_APP_ID + '-' + g_uid;
     let appWs = await connectToApp(g_appPort);
-    const appInfo = await appWs.appInfo({ installed_app_id }, 1000);
+    const appInfo = await appWs.appInfo({ installed_app_id }, 3000);
     log('debug', {appInfo});
     if (appInfo === null) {
-      log('error', "happ not installed in conductor: " + installed_app_id)
+      throw new Error("happ not installed in conductor: " + installed_app_id)
     }
     let cellId = appInfo.cell_data[0].cell_id;
     let username = await appWs.callZome({
@@ -790,6 +789,8 @@ async function startConductor(canRegenerateConfig) {
   } catch(err) {
     log('error', "*** Calling zome for initial username failed.");
     log('error', {err});
+    await g_mainWindow.loadURL(g_errorUrl);
+    return;
     //alert("Holochain failed.\n Connection to holochain might be lost.
     // Reload App or refresh web page to attempt reconnection");
   }
@@ -861,32 +862,22 @@ app.on('ready', async function () {
   }
 
   // Start Conductor
-  try {
-    // if bootstrapUrl not set, prompt it, otherwise
-    if(g_bootstrapUrl === "") {
-      g_bootstrapUrl = DEFAULT_BOOTSTRAP_URL;
-      await promptNetworkType(true);
-      log('debug', 'network type prompt done. Can MDNS: ' + g_canMdns);
-      if (!g_canMdns) {
-        /// Use default bootstrap url
-        // await promptBootstrapUrl(true);
-      } else {
-        let menu = Menu.getApplicationMenu();
-        menu.getMenuItemById('join-network').enabled = false;
-        menu.getMenuItemById('switch-network').enabled = false;
-        menu.getMenuItemById('change-bootstrap').enabled = false;
-      }
-    }
-    await startConductor(true);
-  } catch (err) {
-    log('error','Holochain init failed:');
-    log('error',{err});
-    if (g_mainWindow !== null && g_mainWindow !== undefined) {
-      await g_mainWindow.loadURL(g_errorUrl);
+  // if bootstrapUrl not set, prompt it, otherwise
+  if(g_bootstrapUrl === "") {
+    g_bootstrapUrl = DEFAULT_BOOTSTRAP_URL;
+    await promptNetworkType(true);
+    log('debug', 'network type prompt done. Can MDNS: ' + g_canMdns);
+    if (!g_canMdns) {
+      /// Use default bootstrap url
+      // await promptBootstrapUrl(true);
     } else {
-      //app.quit();
+      let menu = Menu.getApplicationMenu();
+      menu.getMenuItemById('join-network').enabled = false;
+      menu.getMenuItemById('switch-network').enabled = false;
+      menu.getMenuItemById('change-bootstrap').enabled = false;
     }
   }
+  await startConductorAndLoadPage(true);
 });
 
 
@@ -964,7 +955,6 @@ async function promptNetworkType(canExitOnCancel) {
     width: 300,
     alwaysOnTop: true,
     label: 'Choose network type:',
-    value: g_proxyUrl,
     type: 'select',
     selectOptions: {
       'false': 'Bootstrap server (WAN)',
@@ -1180,10 +1170,11 @@ async function promptProxyUrl(canExitOnCancel) {
  *
  */
 async function showAbout() {
-  if (g_uid === undefined) {
+  if (g_dnaHash === undefined) {
     g_dnaHash = await getDnaHash(g_adminWs, g_uid);
   }
   let netHash = g_dnaHash || "(unknown)";
+  log("info", `[${g_holochain_version}] DNA hash of "${g_uid}": ${netHash}\n`)
   await dialog.showMessageBox({
     width: 900,
     title: `About ${app.getName()}`,
@@ -1191,8 +1182,8 @@ async function showAbout() {
     detail: `A minimalist email app on Holochain from Glass Bead Software\n\n`
       + `Zome hash:\n${DNA_HASH}\n\n`
       + `DNA hash of "${g_uid}":\n${netHash}\n\n`
-      + g_holochain_version + ''
-      + g_lair_version + `\n`,
+      + '' + g_holochain_version + ''
+      + '' + g_lair_version + `\n`,
     buttons: ['OK'],
     type: "info",
     //iconIndex: 0,
@@ -1277,8 +1268,8 @@ const networkMenuTemplate = [
       if (changed) {
         await g_mainWindow.loadURL(g_switchingUrl);
         await g_mainWindow.setEnabled(false);
-        g_dnaHash = await installApp(g_adminWs, g_uid);
-        await startConductor(false);
+        await installApp(g_adminWs, g_uid);
+        await startConductorAndLoadPage(false);
         await g_mainWindow.setEnabled(true);
       }
     },
@@ -1291,7 +1282,7 @@ const networkMenuTemplate = [
       if (changed) {
         await g_mainWindow.loadURL(g_switchingUrl);
         await g_mainWindow.setEnabled(false);
-        await startConductor(false);
+        await startConductorAndLoadPage(false);
         await g_mainWindow.setEnabled(true);
       }
     },
@@ -1308,7 +1299,7 @@ const networkMenuTemplate = [
       menu.getMenuItemById('switch-network').enabled = !g_canMdns;
       menu.getMenuItemById('change-bootstrap').enabled = !g_canMdns;
       if (changed) {
-        await startConductor(true);
+        await startConductorAndLoadPage(true);
       }
     },
   },
@@ -1318,7 +1309,7 @@ const networkMenuTemplate = [
     click: async function () {
       let changed = await promptBootstrapUrl(false);
       if (changed) {
-        await startConductor(true);
+        await startConductorAndLoadPage(true);
       }
     }
   },
@@ -1331,11 +1322,11 @@ const networkMenuTemplate = [
       if (canProxy) {
         let changed = await promptProxyUrl(false);
         if(changed || proxyChanged) {
-          await startConductor(true);
+          await startConductorAndLoadPage(true);
         }
       } else  {
         if(proxyChanged) {
-          await startConductor(true);
+          await startConductorAndLoadPage(true);
         }
       }
     }
@@ -1382,7 +1373,7 @@ const debugMenuTemplate = [
   },
   {
     label: 'Restart Conductor', click: async function () {
-      await startConductor(false);
+      await startConductorAndLoadPage(false);
     }
   },
   {
@@ -1467,7 +1458,7 @@ const trayMenuTemplate = [
       let changed = await promptUidSelect(false);
       if(changed) {
         await g_mainWindow.setEnabled(false);
-        await startConductor(false);
+        await startConductorAndLoadPage(false);
         await g_mainWindow.setEnabled(true);
       }
     }

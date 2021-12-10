@@ -45,7 +45,7 @@ async function getKeystoreVersion(keystore_bin) {
   // Wait for holochain to boot up
   await new Promise((resolve, reject) => {
     keystore_proc.stdout.on('data', (data) => {
-      log('info', 'lair-keystore: ' + data.toString());
+      log('info', 'lair-keystore result: ' + data.toString());
       version = data.toString();
       resolve();
     });
