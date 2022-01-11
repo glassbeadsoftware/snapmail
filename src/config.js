@@ -259,12 +259,16 @@ module.exports.connectToApp = connectToApp;
  */
 async function getDnaHash(adminWs, uid) {
   const apps = await adminWs.listApps("running");
-  log('debug','getDnaHash('+ uid +') - Found ' + apps.length + ' app(s):');
+  log('info','getDnaHash('+ uid +') - Found ' + apps.length + ' app(s):');
   for (let app of apps) {
-    log('debug',' -  ' + app.installed_app_id);
+    log('info',' -  ' + app.installed_app_id);
     for (let cell of app.cell_data) {
-      log('debug','    -  ' + cell.role_id);
-      if (cell.role_id == uid) {
+      // log('info','    -  ' + cell.role_id);
+      log('info','    -  ' + htos(cell.cell_id[0]));
+      if (cell.role_id === uid) {
+        log('info','Found cell:' + htos(cell.cell_id[0]));
+        //log('info','  0. ' + htos(cell.cell_id[0]));
+        //log('info','  1. ' + htos(cell.cell_id[1]));
         return htos(cell.cell_id[0]);
       }
     }
@@ -358,7 +362,7 @@ module.exports.cloneCell = cloneCell;
 async function installApp(adminWs, uid) {
   //const installed_app_id = SNAPMAIL_APP_ID;
   const installed_app_id = SNAPMAIL_APP_ID + '-' + uid;
-  log('info', 'Installing  app: ' + installed_app_id);
+  log('info', '     Installing  app: ' + installed_app_id);
   // Generate keys
   let myPubKey = await adminWs.generateAgentPubKey();
   // Register Dna
