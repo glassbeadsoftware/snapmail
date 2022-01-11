@@ -54,13 +54,13 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       # Add Windows certificate
-      - name: Add Windows certificate
-        if: matrix.os == 'windows-latest' && startsWith(github.ref, 'refs/tags/')
-        id: write_file
-        uses: timheuer/base64-to-file@v1
-        with:
-          fileName: 'win-certificate.pfx'
-          encodedString: ${{ secrets.CERTIFICATE_WINDOWS_PFX }}
+      ##- name: Add Windows certificate
+      ##  if: matrix.os == 'windows-latest' && startsWith(github.ref, 'refs/tags/')
+      ##  id: write_file
+      ##  uses: timheuer/base64-to-file@v1
+      ##  with:
+      ##    fileName: 'win-certificate.pfx'
+      ##    encodedString: ${{ secrets.CERTIFICATE_WINDOWS_PFX }}
       # rm the dna files from repository
       - name: clearing precompiled dna files
         run: |
