@@ -64,7 +64,7 @@ const g_errorUrl = 'file://' + CURRENT_DIR + '/'+ DIST_DIR +'/error.html';
 const INDEX_URL = 'file://' + CURRENT_DIR + '/'+ DIST_DIR +'/index.html?APP=';
 log('debug', 'INDEX_URL = ' + INDEX_URL);
 
-/** Add Holochain bins to PATH for WSL */
+/** Add Holochain bins to PATH for windows */
 const BIN_DIR = "bin";
 const BIN_PATH = path.join(CURRENT_DIR, BIN_DIR);
 log('debug', 'BIN_PATH = ' + BIN_PATH);
@@ -550,7 +550,7 @@ async function getHolochainVersion() {
     },
   });
   // Handle error output
-  holochain_proc.stderr.on('data', (data) => log('error', '*** holochain > ' + data.toString()));
+  holochain_proc.stderr.on('data', (data) => log('error', '*** holochain version > ' + data.toString()));
   holochain_proc.on('exit', (_code, _signal) => {
     // n/a
   });
@@ -560,6 +560,14 @@ async function getHolochainVersion() {
     holochain_proc.stdout.on('data', (data) => {
       g_holochain_version = data.toString();
       log('info', 'getHolochainVersion() result: ' + g_holochain_version);
+      log('info', 'Killing holochain sub process...');
+      kill(holochain_proc.pid, function(err) {
+        if(!err) {
+          log('info', 'Killed holochain sub process');
+        } else {
+          log('error', err)
+        }
+      });
       resolve();
     });
     while(Date.now() - start_time < 10 * 1000) {
@@ -705,6 +713,7 @@ async function startConductorAndLoadPage(canRegenerateConfig) {
   try {
     // - Spawn Conductor
     await getHolochainVersion();
+    await sleep(1000); // Time buffer to make sure holochain process closed
     await spawnHolochainProc();
     // - Connect to Conductor and activate app
     g_adminWs = await connectToAdmin(g_adminPort);
