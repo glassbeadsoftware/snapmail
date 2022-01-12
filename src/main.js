@@ -1,6 +1,6 @@
 // - Modules to control application life and create native browser window
 const { app, BrowserWindow, Menu, shell, Tray, screen, Notification, nativeImage, globalShortcut } = require('electron');
-const { spawn } = require('child_process');
+const { spawn, spawnSync } = require('child_process');
 const fs = require('fs');
 const path = require('path');
 const kill = require('tree-kill');
@@ -534,47 +534,52 @@ function sleep(ms) {
 /**
  *
  */
-async function getHolochainVersion() {
+function getHolochainVersion() {
   let bin = HOLOCHAIN_BIN;
   let args = ['--version'];
 
   // Spawn "holochain" subprocess
   log('info', 'Spawning ' + bin + ' (dirname: ' + CURRENT_DIR + ') | getHolochainVersion()');
-  let holochain_proc = spawn(bin, args, {
+  let holochain_proc = spawnSync(bin, args, {
     cwd: CURRENT_DIR,
     detached: false,
+    timeout: 5000,
+    encoding: 'utf8',
     //stdio: 'pipe',
     env: {
       ...process.env,
       RUST_BACKTRACE: 1,
     },
   });
-  // Handle error output
-  holochain_proc.stderr.on('data', (data) => log('error', '*** holochain version > ' + data.toString()));
-  holochain_proc.on('exit', (_code, _signal) => {
-    // n/a
-  });
-  // Wait for holochain to boot up
-  await new Promise(async (resolve, reject) => {
-    const start_time = Date.now()
-    holochain_proc.stdout.on('data', (data) => {
-      g_holochain_version = data.toString();
-      log('info', 'getHolochainVersion() result: ' + g_holochain_version);
-      log('info', 'Killing holochain sub process...');
-      kill(holochain_proc.pid, function(err) {
-        if(!err) {
-          log('info', 'Killed holochain sub process');
-        } else {
-          log('error', err)
-        }
-      });
-      resolve();
-    });
-    while(Date.now() - start_time < 10 * 1000) {
-      await sleep(100);
-    }
-    reject(new Error("Failed to retrieve holochain version from child process"))
-  });
+  log('info', 'getHolochainVersion() result: ' + holochain_proc.stdout);
+  return holochain_proc.stdout;
+
+  // // Handle error output
+  // holochain_proc.stderr.on('data', (data) => log('error', '*** holochain version > ' + data.toString()));
+  // holochain_proc.on('exit', (_code, _signal) => {
+  //   // n/a
+  // });
+  // // Wait for holochain to boot up
+  // await new Promise(async (resolve, reject) => {
+  //   const start_time = Date.now()
+  //   holochain_proc.stdout.on('data', (data) => {
+  //     g_holochain_version = data.toString();
+  //     log('info', 'getHolochainVersion() result: ' + g_holochain_version);
+  //     log('info', 'Killing holochain sub process... ' + holochain_proc.pid);
+  //     kill(holochain_proc.pid, function(err) {
+  //       if(!err) {
+  //         log('info', 'Killed holochain sub process ' + holochain_proc.pid);
+  //       } else {
+  //         log('error', err)
+  //       }
+  //     });
+  //     resolve();
+  //   });
+  //   while(Date.now() - start_time < 5 * 1000) {
+  //     await sleep(100);
+  //   }
+  //   reject(new Error("Failed to retrieve holochain version from child process " + holochain_proc.pid))
+  // });
   // Done
 }
 
@@ -700,7 +705,7 @@ async function killHolochain() {
 async function startConductorAndLoadPage(canRegenerateConfig) {
   //g_canQuit = false;
   await killHolochain(); // Make sure there is no outstanding Holochain & keystore procs
-  g_lair_version = await getKeystoreVersion(LAIR_KEYSTORE_BIN);
+  g_lair_version = getKeystoreVersion(LAIR_KEYSTORE_BIN);
   g_keystore_proc = await spawnKeystore(LAIR_KEYSTORE_BIN, g_storagePath);
   //await sleep(2000);
   if (canRegenerateConfig) {
@@ -712,8 +717,8 @@ async function startConductorAndLoadPage(canRegenerateConfig) {
   let indexUrl;
   try {
     // - Spawn Conductor
-    await getHolochainVersion();
-    await sleep(1000); // Time buffer to make sure holochain process closed
+    g_holochain_version = getHolochainVersion();
+    // await sleep(1000); // Time buffer to make sure holochain process closed
     await spawnHolochainProc();
     // - Connect to Conductor and activate app
     g_adminWs = await connectToAdmin(g_adminPort);

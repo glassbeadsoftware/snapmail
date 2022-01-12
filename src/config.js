@@ -1,5 +1,5 @@
 const fs = require('fs');
-const { spawn } = require('child_process');
+const { spawn, spawnSync } = require('child_process');
 const { bytesToBase64 } = require('byte-base64');
 const { AdminWebsocket, AppWebsocket, AppStatusFilter } = require('@holochain/conductor-api');
 //const { AdminWebsocket, AppWebsocket } = require('../holochain-conductor-api');
@@ -25,41 +25,47 @@ function htos(u8array) {
 
 
 /**
- * Spawn 'lair-keystore' process
+ * Spawn 'lair-keystore --version' process
  */
-async function getKeystoreVersion(keystore_bin) {
+function getKeystoreVersion(keystore_bin) {
   // -- Spawn Keystore -- //
   let bin = keystore_bin;
   let args = ["--version"];
   log('info', 'Spawning ' + bin + ' (dirname: ' + CURRENT_DIR + ') | getKeystoreVersion()');
-  const keystore_proc = spawn(bin, args, {
+  const keystore_proc = spawnSync(bin, args, {
     cwd: CURRENT_DIR,
     detached: false,
+    timeout: 5000,
+    encoding: 'utf8',
     //stdio: 'pipe',
     env: {
       ...process.env,
     },
   });
-  let version = ''
-  // -- Handle Outputs
-  // Wait for holochain to boot up
-  await new Promise((resolve, reject) => {
-    keystore_proc.stdout.on('data', (data) => {
-      log('info', 'lair-keystore result: ' + data.toString());
-      version = data.toString();
-      resolve();
-    });
-    keystore_proc.stderr.on('data', (data) => {
-      log('error', 'lair-keystore> ' + data.toString())
-    });
-    // -- Handle Termination
-    keystore_proc.on('exit', (code) => {
-      log('info', code);
-      reject();
-    });
-  });
-  // Done
-  return version;
+  log('info', 'lair-keystore result: ' + keystore_proc.stdout);
+  return keystore_proc.stdout;
+  //
+  // let version = ''
+  //
+  // // -- Handle Outputs
+  // // Wait for holochain to boot up
+  // await new Promise((resolve, reject) => {
+  //   keystore_proc.stdout.on('data', (data) => {
+  //     log('info', 'lair-keystore result: ' + data.toString());
+  //     version = data.toString();
+  //     resolve();
+  //   });
+  //   keystore_proc.stderr.on('data', (data) => {
+  //     log('error', 'lair-keystore> ' + data.toString())
+  //   });
+  //   // -- Handle Termination
+  //   keystore_proc.on('exit', (code) => {
+  //     log('info', code);
+  //     reject();
+  //   });
+  // });
+  // // Done
+  // return version;
 }
 module.exports.getKeystoreVersion = getKeystoreVersion;
 
@@ -133,7 +139,7 @@ function winPath(path) {
  * Using proxy and bootstrap server
  */
 function generateConductorConfig(configPath, bootstrapUrl, storagePath, proxyUrl, adminPort, canMdns, canProxy) {
-  log('info', 'generateConductorConfig() with ' + adminPort);
+  log('info', 'generateConductorConfig() with admin port ' + adminPort);
   if (proxyUrl === undefined || proxyUrl === '') {
     proxyUrl = DEFAULT_PROXY_URL;
   }
@@ -224,7 +230,7 @@ async function connectToAdmin(adminPort) {
   log('info','Connecting to admin at ' + adminPort + ' ...');
   let adminWs = undefined
   //try {
-    adminWs = await AdminWebsocket.connect(`ws://localhost:${ adminPort }`, 30000);
+    adminWs = await AdminWebsocket.connect(`ws://localhost:${ adminPort }`, 120 * 1000);
     //log('debug',{adminWs});
     log('info', 'Connected to admin at ' + adminPort + ' !');
   //} catch (e) {
