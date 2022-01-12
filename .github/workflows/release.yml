@@ -124,14 +124,18 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           gh release upload "${GITHUB_REF#refs/tags/}" "out/Snapmail-0.1.5.AppImage" --clobber
+          gh release upload "${GITHUB_REF#refs/tags/}" "bin/lair-keystore-linux" --clobber
+          gh release upload "${GITHUB_REF#refs/tags/}" "bin/holochain-linux" --clobber
       - name: upload binary (macos only)
         if: ${{ runner.os == 'macOs' }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
+          cp bin/lair-keystore-linux bin/lair-keystore-mac
+          cp bin/holochain-linux bin/holochain-mac
           gh release upload "${GITHUB_REF#refs/tags/}" "out/Snapmail-0.1.5.dmg" --clobber
-          gh release upload "${GITHUB_REF#refs/tags/}" "bin/lair-keystore-linux" --clobber
-          gh release upload "${GITHUB_REF#refs/tags/}" "bin/holochain-linux" --clobber
+          gh release upload "${GITHUB_REF#refs/tags/}" "bin/lair-keystore-mac" --clobber
+          gh release upload "${GITHUB_REF#refs/tags/}" "bin/holochain-mac" --clobber
       - name: upload binary (Windows only)
         if: ${{ runner.os == 'Windows' }}
         env:
