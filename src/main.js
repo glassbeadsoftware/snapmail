@@ -562,7 +562,7 @@ async function getHolochainVersion() {
       log('info', 'getHolochainVersion() result: ' + g_holochain_version);
       resolve();
     });
-    while(Date.now() - start_time < 5 * 1000) {
+    while(Date.now() - start_time < 10 * 1000) {
       await sleep(100);
     }
     reject(new Error("Failed to retrieve holochain version from child process"))
@@ -630,7 +630,7 @@ async function spawnHolochainProc() {
         log('info', 'holochain <- waiting for magic ready string');
       }
     });
-    while(Date.now() - start_time < 10 * 1000) {
+    while(Date.now() - start_time < 60 * 1000) {
       await sleep(100);
     }
     reject(new Error("Failed to retrieve holochain's magic ready string from child process"))
