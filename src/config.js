@@ -230,7 +230,7 @@ async function connectToAdmin(adminPort) {
   log('info','Connecting to admin at ' + adminPort + ' ...');
   let adminWs = undefined
   //try {
-    adminWs = await AdminWebsocket.connect(`ws://localhost:${ adminPort }`, 120 * 1000);
+    adminWs = await AdminWebsocket.connect(`ws://localhost:${ adminPort }`, 60 * 1000);
     //log('debug',{adminWs});
     log('info', 'Connected to admin at ' + adminPort + ' !');
   //} catch (e) {
@@ -403,7 +403,7 @@ async function installApp(adminWs, uid) {
     return;
   }
   log('info','App installed');
-  await adminWs.activateApp({ installed_app_id });
+  await adminWs.enableApp({ installed_app_id });
   log('info','App activated');
   return htos(hash);
 }

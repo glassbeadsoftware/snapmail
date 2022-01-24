@@ -321,7 +321,7 @@ autoUpdater.on('update-downloaded', () => {
 })
 
 // export this to MenuItem click callback
-function checkForUpdates(menuItem, focusedWindow, event) {
+function checkForUpdates(menuItem, _focusedWindow, _event) {
   if(IS_DEBUG || IS_DEV) {
     dialog.showMessageBox({
       title: 'Check for Update failed',
@@ -399,16 +399,6 @@ ipc.on('newCountAsync', (event, newCount) => {
 /**
  *
  */
-function sleep(ms) {
-  return new Promise((resolve) => {
-    setTimeout(resolve, ms);
-  });
-}
-
-
-/**
- *
- */
 function updateAutoLaunchSetting(canAutoLaunch) {
   if (canAutoLaunch === undefined) {
     canAutoLaunch = g_settingsStore.get('canAutoLaunch');
@@ -444,11 +434,11 @@ function createWindow() {
     height,
     webPreferences: {
       nodeIntegration: true,
-      devTools: true
+      devTools: true,
+      webgl: false,
+      enableWebSQL: false,
     },
     icon: CURRENT_DIR + `/assets/favicon.png`,
-    webgl: false,
-    enableWebSQL: false,
     //autoHideMenuBar: true,
   });
   let { x, y } = g_settingsStore.get('windowPosition');
@@ -758,7 +748,7 @@ async function startConductorAndLoadPage(canRegenerateConfig) {
   } catch (err) {
     log('error', 'Conductor setup failed:');
     log('error',{err});
-    indexUrl = INDEX_URL;
+    //indexUrl = INDEX_URL;
     await g_mainWindow.loadURL(g_errorUrl);
     return;
     //// Better to kill app if holochain not connected
@@ -1371,6 +1361,7 @@ const debugMenuTemplate = [
   },
   {
     label: 'devTools',
+    // role: "toggleDevTools",
     click: function () {
       g_mainWindow.webContents.openDevTools();
     },
