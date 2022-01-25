@@ -13,18 +13,16 @@ See [snapmail-rsm](https://github.com/ddd-mtl/snapmail-rsm) for holochain backen
 ## Installation
 
 ### Prerequisite 
- - Windows: holochain requires WSL2 to be installed. Follow [this tutorial](https://pureinfotech.com/install-windows-subsystem-linux-2-windows-10/) on instructions to do that. Only Windows 10 version 2004 and up is supported.
  - Linux: `libssl` package must be installed on your system (and possibly `libssl-dev`)
 
 ### Steps
 1. Go to the [release page](https://github.com/glassbeadsoftware/snapmail-release/releases)
-1. Download the latest release file for your platform
-1. Unzip the file somewhere on your disk
-1. Launch the `Snapmail` executable.  
-1. You will be prompted to select a bootstrap server url. This is required for discovering other peers on the network.
-Use your own or the public one provided by Holo `bootstrap.holo.net`
-1. Set your username in the top input box.
-1. Other users on the same bootstrap server will appear in the bottom right list box after hitting the refresh button.
+2. Download the latest release file for your platform.
+3. Execute the downloaded installer.
+4. Launch the `Snapmail` executable.
+5. You will be prompted to select a network access key. This is required for discovering other peers on the network. You will only communicate with peers using the same network access key.
+6. You will be prompted to Set a username.
+7. Other users on the same network will appear in the bottom right list box.
 
 ### Troubleshoot
 
@@ -32,7 +30,7 @@ Use your own or the public one provided by Holo `bootstrap.holo.net`
 - Make sure the following executables have execution rights: `Snapmail`, `lair-keystore`, `holochain`.
 
 
-## Releasing
+## Development
 
 #### Steps for updating holochain version:
 1. `./scripts/setup.sh`
@@ -42,15 +40,22 @@ Use your own or the public one provided by Holo `bootstrap.holo.net`
 5. `./scripts/pack-happ.sh`
 6. `git commit`
 
+ 
+## Releasing
+
 #### Steps required for updating version number:
 1. `./scripts/update-version-number.sh <semver>`
 2. `cd build/snapmail-ui`
 3. `git commit`
 
-#### Steps for preparing a new release on Windows:
+#### Steps for preparing a new release for all platforms on github:
+1. Tag a new release in the [release page](https://github.com/glassbeadsoftware/snapmail-release/releases).
+2. Wait for CI to complete its [workflow](https://github.com/glassbeadsoftware/snapmail/actions).
+ 
+#### Steps for preparing a new release locally on Windows:
 1. `./scripts/release.bat`
 
-#### Steps for preparing a new release on Mac / Linux / Android:
+#### Steps for preparing a new release locally on Mac / Linux / Android:
 1. `./scripts/release.sh`
 
 #### Steps for publishing the new release on Windows:
