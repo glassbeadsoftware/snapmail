@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="en">
+<head>
+<link rel="stylesheet" href="networking.css">
+<div class="wrapper">
+    <div class="box">
+        <h1>Network status</h1>
+    </div>
+</div>
+</head>
+<body>
+<div class="activity-message" id="bootstrap-url">
+    Checking bootstrap server...
+</div>
+<div class="activity-message" style="margin-left:30px;" id="bootstrap-status"></div>
+
+<script>
+  const ipc = require('electron').ipcRenderer;
+  const bootstrapEl = document.getElementById('bootstrap-url')
+  const bootStatusEl = document.getElementById('bootstrap-status')
+  ipc.on('bootstrapStatusReply', (event, url, status) => {
+    console.log({url})
+    console.log({status})
+    bootstrapEl.innerHTML = url
+    bootStatusEl.innerHTML = status? 'OK' : 'Not responding'
+  })
+  let reply = ipc.send('bootstrapStatus');
+  //console.log(reply);
+</script>
+</body>
+</html>

@@ -51,6 +51,7 @@ if (process.platform !== "win32" && process.platform !== 'darwin') {
 // specifying that the interfaces are ready to receive incoming connections
 const HC_MAGIC_READY_STRING = 'Conductor ready.';
 
+const g_networkUrl = 'file://' + CURRENT_DIR + '/'+ DIST_DIR +'/networking.html';
 const g_switchingUrl = 'file://' + CURRENT_DIR + '/'+ DIST_DIR +'/switching.html';
 const g_errorUrl = 'file://' + CURRENT_DIR + '/'+ DIST_DIR +'/error.html';
 const INDEX_URL = 'file://' + CURRENT_DIR + '/'+ DIST_DIR +'/index.html?APP=';
@@ -371,10 +372,14 @@ ipc.on('newCountAsync', (event, newCount) => {
 });
 
 
-// //Receive and reply to asynchronous message
-// ipc.on('hello', (event, args) => {
-//   event.sender.send('asynReply','Hi, asyn reply');
-// });
+/**
+ * Receive and reply to asynchronous message
+ */
+ipc.on('bootstrapStatus', (event) => {
+  console.log({event})
+  const succeeded = pingBootstrap(g_bootstrapUrl);
+  event.sender.send('bootstrapStatusReply',g_bootstrapUrl, succeeded);
+});
 
 // function showNotification () {
 //   const NOTIFICATION_TITLE = 'Basic Notification'
@@ -429,6 +434,7 @@ function createWindow() {
     height,
     webPreferences: {
       nodeIntegration: true,
+      contextIsolation: false,
       devTools: true,
       webgl: false,
       enableWebSQL: false,
@@ -1307,23 +1313,43 @@ const debugMenuTemplate = [
       g_mainWindow.webContents.openDevTools();
     },
   },
+  // {
+  //   label: 'Show PATHS',
+  //   click: function () {
+  //     dialog.showMessageBoxSync(g_mainWindow, {
+  //       type: 'info',
+  //       title: 'Constants',
+  //       message: 'BIN_PATH: ' + BIN_PATH + '\n' + 'process.env.path: ' + JSON.stringify(process.env.PATH),
+  //     });
+  //   },
+  // },
   {
-    label: 'Show PATHS',
-    click: function () {
-      dialog.showMessageBoxSync(g_mainWindow, {
-        type: 'info',
-        title: 'Constants',
-        message: 'BIN_PATH: ' + BIN_PATH + '\n' + 'process.env.path: ' + JSON.stringify(process.env.PATH),
-      });
-    },
+    id: 'debug-network',
+    label: 'Debug network',
+    click: async function () {
+      const currentURL = g_mainWindow.webContents.getURL();
+      const currentFilename = currentURL.substring(currentURL.lastIndexOf('/')+1);
+      const networkFilename = g_networkUrl.substring(g_networkUrl.lastIndexOf('/')+1);
+      //console.log({currentFilename})
+      if (networkFilename != currentFilename) {
+        await g_mainWindow.loadURL(g_networkUrl);
+        //const succeeded = pingBootstrap(g_bootstrapUrl);
+      } else {
+        const indexUrl = INDEX_URL + g_appPort + '&UID=' + g_uid;
+        await g_mainWindow.loadURL(indexUrl);
+      }
+    }
   },
   {
-    label: 'Restart Conductor', click: async function () {
+    label: 'Restart Conductor',
+    click: async function () {
       await startConductorAndLoadPage(false);
     }
   },
   {
-    label: 'Reload window', click: async function () {
+    label: 'Reload window',
+    accelerator: 'F5',
+    click: async function () {
       g_mainWindow.reload();
     }
   },
