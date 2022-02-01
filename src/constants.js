@@ -27,8 +27,10 @@ const LAIR_KEYSTORE_BIN = BIN_PATH + LAIR_KEYSTORE_BIN_NAME + FILE_EXT
 const REPORT_BUG_URL = `https://github.com/glassbeadsoftware/snapmail/issues/new`;
 
 
-// A special log from the conductor,
-// specifying that the interfaces are ready to receive incoming connections
+/**
+ * A special log from the conductor,
+ * specifying that the interfaces are ready to receive incoming connections
+ */
 const HC_MAGIC_READY_STRING = 'Conductor ready.';
 
 /** Toggle this for debug / release mode */

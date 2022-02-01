@@ -10,7 +10,7 @@ const AutoLaunch = require('auto-launch');
 const { autoUpdater } = require('electron-updater');
 const IS_DEV = require('electron-is-dev');
 
-// - My Modules
+/** My Modules */
 const {
   DNA_HASH_FILEPATH, CONDUCTOR_CONFIG_FILENAME, APP_CONFIG_FILENAME, CONFIG_PATH, STORAGE_PATH,
   CURRENT_DIR, DEFAULT_BOOTSTRAP_URL, SNAPMAIL_APP_ID, DEFAULT_PROXY_URL, LAIR_KEYSTORE_BIN,
@@ -63,8 +63,10 @@ let g_appPort = 0;
 let g_lair_version = ""
 let g_holochain_version = ""
 
-// Keep a global reference of the ELECTRON window object, if you don't,
-// the window will be closed automatically when the JavaScript object is garbage collected.
+/**
+ * Keep a global reference of the ELECTRON window object, if you don't,
+ * the window will be closed automatically when the JavaScript object is garbage collected.
+ */
 let g_mainWindow = undefined;
 
 let g_userSettings = undefined;
@@ -83,7 +85,7 @@ let g_uidList = [];
 let g_tray = null;
 let g_dnaHash = undefined;
 
-// -- Read dna_hash -- //
+/** -- Read dna_hash -- */
 let DNA_HASH = '<unknown>';
 if (fs.existsSync(DNA_HASH_FILEPATH)) {
   DNA_HASH = fs.readFileSync(DNA_HASH_FILEPATH, 'utf-8');
@@ -99,7 +101,7 @@ if (fs.existsSync(DNA_HASH_FILEPATH)) {
 log('info', "DNA HASH: " + DNA_HASH);
 
 
-/** Create sys tray */
+/** -- Create sys tray -- */
 function create_tray() {
   try {
     g_tray = new Tray('web/logo/logo256.png');
@@ -121,7 +123,7 @@ function create_tray() {
 // -- SETUP
 //--------------------------------------------------------------------------------------------------
 
-// --  Create missing dirs -- //
+/** --  Create missing dirs -- */
 
 if (!fs.existsSync(CONFIG_PATH)) {
   log('info', "Creating missing dir: " + CONFIG_PATH);
@@ -132,7 +134,7 @@ if (!fs.existsSync(STORAGE_PATH)) {
   fs.mkdirSync(STORAGE_PATH)
 }
 
-// -- Determine Session ID -- //
+/** -- Determine Session ID -- */
 
 let sessionId;
 if (process.argv.length > 2) {
@@ -141,7 +143,7 @@ if (process.argv.length > 2) {
   sessionId = 'default';
 }
 
-// -- Setup storage folder -- //
+/** -- Setup storage folder -- */
 
 g_storagePath = path.join(STORAGE_PATH, sessionId);
 log('info',{g_storagePath});
@@ -182,12 +184,12 @@ if (!fs.existsSync(g_storagePath)) {
   }
 }
 
-// -- Determine final conductor config file path -- //
+/** -- Determine final conductor config file path -- */
 g_configPath = path.join(g_storagePath, CONDUCTOR_CONFIG_FILENAME);
 log('debug',{g_configPath});
 let g_appConfigPath = path.join(g_storagePath, APP_CONFIG_FILENAME);
 
-// -- Set Globals from current conductor config -- //
+/** -- Set Globals from current conductor config -- */
 
 // tryLoadingConfig()
 {
@@ -233,7 +235,7 @@ let g_appConfigPath = path.join(g_storagePath, APP_CONFIG_FILENAME);
   }
 }
 
-// -- Check AutoLaunch -- //
+/** -- Check AutoLaunch -- */
 
 var autoLauncher = new AutoLaunch({
   name: "Snapmail happ",
@@ -295,7 +297,7 @@ autoUpdater.on('update-downloaded', () => {
   })
 })
 
-// export this to MenuItem click callback
+/** export this to MenuItem click callback */
 function checkForUpdates(menuItem, _focusedWindow, _event) {
   if(IS_DEBUG || IS_DEV) {
     dialog.showMessageBox({
@@ -414,7 +416,6 @@ function updateNotificationSetting(canNotify) {
  * Create the main window global
  */
 function createWindow() {
-  // Create the browser window.
   let { width, height } = g_userSettings.get('windowBounds');
   let mainWindow = new BrowserWindow({
     width,
@@ -437,15 +438,16 @@ function createWindow() {
     mainWindow.reload()
   })
 
-  // The BrowserWindow class extends the node.js core EventEmitter class, so we use that API
-  // to listen to events on the BrowserWindow.
-  // The resize event is emitted when the window size changes.
+  /**
+   * The BrowserWindow class extends the node.js core EventEmitter class, so we use that API
+   * to listen to events on the BrowserWindow. The resize event is emitted when the window size changes.
+   */
   mainWindow.on('resize', () => {
-    // The event doesn't pass us the window size,
-    // so we call the `getBounds` method which returns an object with
-    // the height, width, and x and y coordinates.
+    /** The event doesn't pass us the window size,
+     * so we call the `getBounds` method which returns an object with
+     * the height, width, and x and y coordinates.*/
     let { width, height } = mainWindow.getBounds();
-    // Now that we have them, save them using the `set` method.
+    /** Now that we have them, save them using the `set` method. */
     g_userSettings.set('windowBounds', { width, height });
   });
 
@@ -455,10 +457,10 @@ function createWindow() {
     shell.openExternal(url).then(_r => {});
   });
 
-  // Open DevTools
+  /** Open DevTools */
   if (IS_DEBUG) mainWindow.webContents.openDevTools();
 
-  // Emitted on request to close window
+  /** Emitted on request to close window */
   mainWindow.on('close', (event) => {
     log('debug', '*** mainWindow "close" - ' + g_canQuit);
     let positions = mainWindow.getPosition();
@@ -471,7 +473,7 @@ function createWindow() {
     }
   })
 
-  // Emitted when the window is closed.
+  /** Emitted when the window is closed. */
   mainWindow.on('closed', function () {
     log('debug', '*** mainWindow "closed"');
     try {
@@ -482,16 +484,18 @@ function createWindow() {
       log('error', '*** Error while closing Holochain:');
       log('error', err);
     }
-    // Wait for kill subprocess to finish on slow machines
+    /** Wait for kill subprocess to finish on slow machines */
     let start = Date.now();
     let diff = 0;
     do {
       diff = Date.now() - start;
     } while(diff < 1000);
     log('info', '*** Holochain Closed');
-    // Dereference the window object, usually you would store windows
-    // in an array if your app supports multi windows, this is the time
-    // when you should delete the corresponding element.
+    /**
+     * Dereference the window object, usually you would store windows
+     * in an array if your app supports multi windows, this is the time
+     * when you should delete the corresponding element.
+     */
     g_mainWindow = null;
   });
 
@@ -500,7 +504,7 @@ function createWindow() {
   //  autoUpdater.checkForUpdatesAndNotify();
   //});
 
-  // Done
+  /** Done */
   return mainWindow;
 }
 
@@ -513,7 +517,7 @@ async function spawnHolochainProc() {
   let bin = HOLOCHAIN_BIN;
   let args = ['-c', g_configPath];
 
-  // Spawn "holochain" subprocess
+  /** Spawn "holochain" subprocess */
   log('info', 'Spawning ' + bin + ' (dirname: ' + CURRENT_DIR + ') | spawnHolochainProc()');
   let holochain_proc = spawn(bin, args, {
     cwd: CURRENT_DIR,
@@ -524,9 +528,9 @@ async function spawnHolochainProc() {
       RUST_BACKTRACE: 1,
     },
   });
-  // Handle error output
+  /** Handle error output */
   holochain_proc.stderr.on('data', (data) => log('error', '*** holochain > ' + data.toString()));
-  // if "holochain" exit, close the app
+  /** if "holochain" exit, close the app */
   holochain_proc.on('exit', (code, signal) => {
     if (signal) {
       log('info', `holochain process terminated due to receipt of signal ${signal}`)
@@ -538,7 +542,7 @@ async function spawnHolochainProc() {
       app.quit();
     }
   });
-  // Wait for holochain to boot up
+  /** Wait for holochain to boot up */
   log('info', 'holochain <-> waiting for magic ready string');
   await new Promise(async (resolve, reject) => {
     const start_time = Date.now()
@@ -568,7 +572,7 @@ async function spawnHolochainProc() {
     }
     reject(new Error("Failed to retrieve holochain's magic ready string from child process"))
   });
-  // Done
+  /** Done */
   g_holochain_proc = holochain_proc;
 }
 
@@ -577,7 +581,7 @@ async function spawnHolochainProc() {
  * Make sure there is no outstanding holochain procs
  */
 async function killHolochain() {
-  // SIGTERM by default
+  /** SIGTERM by default */
   let canWaitForHolochain = false;
   if(g_holochain_proc && g_holochain_proc.pid) {
     canWaitForHolochain = true;
@@ -604,7 +608,7 @@ async function killHolochain() {
       }
     });
   }
-  // Wait for the kill commands to complete
+  /* Wait for the kill commands to complete */
   log('info', 'waiting...');
   const start_time = Date.now()
   while(canWaitForHolochain || canWaitForKeystore) {
@@ -638,11 +642,11 @@ async function startConductorAndLoadPage(canRegenerateConfig) {
   try {
     const res = pingBootstrap(g_bootstrapUrl)
     log('info', 'bootstrap result: ' + res)
-    // - Spawn Conductor
+    /** - Spawn Conductor */
     g_holochain_version = getHolochainVersion();
     // await sleep(1000); // Time buffer to make sure holochain process closed
     await spawnHolochainProc();
-    // - Connect to Conductor and activate app
+    /** - Connect to Conductor and activate app */
     g_adminWs = await connectToAdmin(g_adminPort);
     let activeAppPort = await hasActivatedApp(g_adminWs);
     if(activeAppPort === 0) {
@@ -654,14 +658,14 @@ async function startConductorAndLoadPage(canRegenerateConfig) {
         addUid("local-mdns")
       }
       await installApp(g_adminWs, g_uid);
-      //log('debug','Attaching to app at ' + g_appPort + ' ...');
+      // log('debug','Attaching to app at ' + g_appPort + ' ...');
       g_appPort = await g_adminWs.attachAppInterface({port: undefined});
       log('debug', {g_appPort});
       g_appPort = g_appPort.port;
       log('info','App Interface attached: ' + g_appPort);
     } else {
       g_appPort = activeAppPort;
-      // - Prompt for UID selection or prefered UID if multiple uid found
+      /** - Prompt for UID selection or prefered UID if multiple uid found */
       if (g_uid === '' && g_uidList !== undefined && g_uidList.length > 0) {
         let maybe_uid = g_userSettings.get('uid');
         if (maybe_uid !== undefined) {
@@ -686,7 +690,7 @@ async function startConductorAndLoadPage(canRegenerateConfig) {
     //// Better to kill app if holochain not connected
     //app.quit();
   }
-  // -- Check username -- //
+  /** -- Check username -- */
   try
   {
     const installed_app_id = SNAPMAIL_APP_ID + '-' + g_uid;
@@ -730,7 +734,7 @@ async function startConductorAndLoadPage(canRegenerateConfig) {
     //alert("Holochain failed.\n Connection to holochain might be lost.
     // Reload App or refresh web page to attempt reconnection");
   }
-  // -- trigger refresh once we know interfaces have booted up -- //
+  /** -- trigger refresh once we know interfaces have booted up -- **/
   log('debug',"Loading index.html: " + indexUrl);
   try {
     await g_mainWindow.loadURL(indexUrl);
@@ -758,7 +762,7 @@ app.on('ready', async function () {
   let y = Math.floor((height - default_height) / 2);
 
   g_userSettings = new SettingsStore({
-    // We'll call our data file 'user-preferences'
+    /** We'll call our data file 'user-preferences' */
     configName: 'user-preferences',
     defaults: {
       windowBounds: { width: default_width, height: default_height },
@@ -769,10 +773,10 @@ app.on('ready', async function () {
     }
   });
 
-  // Check AutoLaunch
+  /** Check AutoLaunch */
   updateAutoLaunchSetting();
 
-  // Modify main menu
+  /** Modify main menu */
   let mainMenu = Menu.getApplicationMenu();
   let item = mainMenu.getMenuItemById('launch-at-startup');
   item.checked = g_userSettings.get('canAutoLaunch');
@@ -780,16 +784,16 @@ app.on('ready', async function () {
   item = mainMenu.getMenuItemById('notify-msg');
   item.checked = g_userSettings.get('canNotify');
 
-  // Create sys tray
+  /** Create sys tray */
   create_tray();
   g_tray.setToolTip('SnapMail v' + app.getVersion());
   const menu = Menu.buildFromTemplate(trayMenuTemplate);
   g_tray.setContextMenu(menu);
 
-  // Create main window
+  /** Create main window */
   g_mainWindow = createWindow();
 
-  // Load splashscreen
+  /** Load splashscreen */
   try {
     await g_mainWindow.loadURL(SWITCHING_URL);
   } catch(err) {
@@ -797,14 +801,14 @@ app.on('ready', async function () {
     log('error',{err});
   }
 
-  // Start Conductor
-  // if bootstrapUrl not set, prompt it, otherwise
+  /** Start Conductor */
+  /** if bootstrapUrl not set, prompt it, otherwise */
   if(g_bootstrapUrl === "") {
     g_bootstrapUrl = DEFAULT_BOOTSTRAP_URL;
     await promptNetworkType(true);
     log('debug', 'network type prompt done. Can MDNS: ' + g_canMdns);
     if (!g_canMdns) {
-      /// Use default bootstrap url
+      //// Use default bootstrap url
       // await promptBootstrapUrl(true);
     } else {
       let menu = Menu.getApplicationMenu();
@@ -844,8 +848,10 @@ app.on('will-quit', (event) => {
  */
 app.on('window-all-closed', function () {
   log('debug','*** App "window-all-closed"');
-  // On macOS it is common for applications and their menu bar
-  // to stay active until the user quits explicitly with Cmd + Q
+  /**
+   * On macOS it is common for applications and their menu bar
+   * to stay active until the user quits explicitly with Cmd + Q
+   */
   if (process.platform !== 'darwin') {
     //g_canQuit = true;
     app.quit();
@@ -858,8 +864,10 @@ app.on('window-all-closed', function () {
  */
 app.on('activate', function () {
   log('debug','*** App "activate"');
-  // On macOS it's common to re-create a window in the app when the
-  // dock icon is clicked and there are no other windows open.
+  /**
+   * On macOS it's common to re-create a window in the app when the
+   * dock icon is clicked and there are no other windows open.
+   */
   if (g_mainWindow === null || g_mainWindow === undefined) {
     g_mainWindow = createWindow();
   } else {

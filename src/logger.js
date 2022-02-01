@@ -8,7 +8,7 @@ module.exports.log = log;
 module.exports.logger = electronLogger;
 
 
-// - SET UP LOGGING
+/** -- SET UP LOGGING -- */
 
 electronLogger.transports.console.format = '[{h}:{i}:{s}][{level}] {text}';
 electronLogger.transports.file.format = '[{h}:{i}:{s}][{level}] {text}';
