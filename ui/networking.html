@@ -10,6 +10,15 @@
 </head>
 <body>
 
+<!-- Peers -->
+<div class="activity-message" id="peers">
+    Peer count
+</div>
+<div class="activity-message" style="margin-left:30px;" id="peer-count">0</div>
+
+<div></div>
+<br/>
+
 <!-- Bootstrap / mdns -->
 <div class="activity-message" id="bootstrap-url">
     Checking bootstrap server...
@@ -17,6 +26,7 @@
 <div class="activity-message" style="margin-left:30px;" id="bootstrap-status"></div>
 
 <div></div>
+<br/>
 
 <!-- PROXY -->
 <div class="activity-message" id="proxy-url">
@@ -32,7 +42,10 @@
   const proxyEl = document.getElementById('proxy-url')
   const proxyStatusEl = document.getElementById('proxy-status')
 
-  ipc.on('networkInfoReply', (event, canMdns, canProxy, proxyUrl) => {
+  const peerCountEl = document.getElementById('peer-count')
+
+  ipc.on('networkInfoReply', (event, canMdns, canProxy, proxyUrl, peerCount) => {
+    peerCountEl.innerHTML = peerCount
     if (canMdns) {
       bootstrapEl.innerHTML = "Using MDNS"
     } else {

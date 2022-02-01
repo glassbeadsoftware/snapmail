@@ -79,6 +79,7 @@ let g_updater = undefined;
 let g_holochain_proc = undefined;
 let g_keystore_proc = undefined;
 let g_adminWs = undefined;
+let g_cellId = undefined;
 let g_canQuit = false;
 let g_uid = '';
 
@@ -355,10 +356,17 @@ ipc.on('bootstrapStatus', (event) => {
   event.sender.send('bootstrapStatusReply',g_bootstrapUrl, succeeded);
 });
 
-ipc.on('networkInfo', (event) => {
+ipc.on('networkInfo', async (event) => {
   console.log("*** RECEIVED networkInfo: " + g_canMdns)
-  event.sender.send('networkInfoReply',g_canMdns, g_canProxy, g_proxyUrl);
+
+  const dump = await g_adminWs.dumpState({cell_id: g_cellId});
+  const peer_dump = dump[0].peer_dump;
+  //console.log({peer_dump})
+  const peer_count = peer_dump.peers.length;
+  event.sender.send('networkInfoReply',g_canMdns, g_canProxy, g_proxyUrl, peer_count);
 });
+
+
 
 // function showNotification () {
 //   const NOTIFICATION_TITLE = 'Basic Notification'
@@ -711,13 +719,13 @@ async function startConductorAndLoadPage(canRegenerateConfig) {
     if (appInfo === null) {
       throw new Error("happ not installed in conductor: " + installed_app_id)
     }
-    let cellId = appInfo.cell_data[0].cell_id;
+    g_cellId = appInfo.cell_data[0].cell_id;
     let username = await appWs.callZome({
         cap: null,
-        cell_id: cellId,
+        cell_id: g_cellId,
         zome_name: "snapmail",
         fn_name: "get_my_handle",
-        provenance: cellId[1],
+        provenance: g_cellId[1],
         payload: undefined,
       }
       , 9999
@@ -727,10 +735,10 @@ async function startConductorAndLoadPage(canRegenerateConfig) {
       let firstUsername = await promptFirstHandle(true);
       let result = await appWs.callZome({
           cap: null,
-          cell_id: cellId,
+          cell_id: g_cellId,
           zome_name: "snapmail",
           fn_name: "set_handle",
-          provenance: cellId[1],
+          provenance: g_cellId[1],
           payload: firstUsername,
         }
         , 9999
