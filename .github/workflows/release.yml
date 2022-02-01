@@ -94,7 +94,7 @@ jobs:
         run: |
           npm run build-hc
       # Setup sign & notarize
-      - name: sign and notarize setup (macos only)
+      - name: Setup sign and notarize (macos only)
         if: ${{ runner.os == 'macOs' }}
         uses:  figleafteam/import-codesign-certs@v2
         with:

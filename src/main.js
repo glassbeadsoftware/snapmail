@@ -18,7 +18,7 @@ const { log, logger } = require('./logger');
 const {
   generateConductorConfig, spawnKeystore, getKeystoreVersion, hasActivatedApp, connectToAdmin,
   connectToApp, installApp, getDnaHash } = require('./config');
-const { SettingsStore } = require('./settings');
+const { SettingsStore } = require('./userSettings');
 
 //--------------------------------------------------------------------------------------------------
 // PRE-INIT
@@ -91,7 +91,7 @@ let g_holochain_version = ""
 // the window will be closed automatically when the JavaScript object is garbage collected.
 let g_mainWindow = undefined;
 
-let g_settingsStore = undefined;
+let g_userSettings = undefined;
 let g_holochain_proc = undefined;
 let g_keystore_proc = undefined;
 let g_canQuit = false;
@@ -123,17 +123,16 @@ if (fs.existsSync(DNA_HASH_FILEPATH)) {
 log('info', "DNA HASH: " + DNA_HASH);
 
 
-
-// Create sys tray
+/** Create sys tray */
 function create_tray() {
   try {
-    g_tray = new Tray('assets/favicon16.png');
+    g_tray = new Tray('web/logo/logo256.png');
   } catch(e) {
     try {
-      g_tray = new Tray('resources/app/assets/favicon16.png');
+      g_tray = new Tray('resources/app/web/logo/logo256.png');
     } catch(e) {
       try {
-        g_tray = new Tray(app.getAppPath() + '/assets/favicon16.png');
+        g_tray = new Tray(app.getAppPath() + '/web/logo/logo256.png');
       } catch(e) {
         log('error', "Could not find favicon. appPath: " + app.getAppPath());
         g_tray = new Tray(nativeImage.createEmpty());
@@ -358,7 +357,7 @@ const ipc = require('electron').ipcMain;
  * Launch Notification if allowed
  */
 ipc.on('newMailSync', (event, title, body) => {
-  const canNotify = g_settingsStore.get('canNotify');
+  const canNotify = g_userSettings.get('canNotify');
   //log('debug', "canNotify = " + canNotify);
   if(canNotify) {
     new Notification({ title, body }).show();
@@ -401,9 +400,9 @@ ipc.on('newCountAsync', (event, newCount) => {
  */
 function updateAutoLaunchSetting(canAutoLaunch) {
   if (canAutoLaunch === undefined) {
-    canAutoLaunch = g_settingsStore.get('canAutoLaunch');
+    canAutoLaunch = g_userSettings.get('canAutoLaunch');
   }
-  g_settingsStore.set('canAutoLaunch', canAutoLaunch);
+  g_userSettings.set('canAutoLaunch', canAutoLaunch);
   if (canAutoLaunch) {
     autoLauncher.enable();
   } else {
@@ -417,9 +416,9 @@ function updateAutoLaunchSetting(canAutoLaunch) {
  */
 function updateNotificationSetting(canNotify) {
   if (canNotify === undefined) {
-    canNotify = g_settingsStore.get('canNotify');
+    canNotify = g_userSettings.get('canNotify');
   }
-  g_settingsStore.set('canNotify', canNotify);
+  g_userSettings.set('canNotify', canNotify);
 }
 
 
@@ -428,7 +427,7 @@ function updateNotificationSetting(canNotify) {
  */
 function createWindow() {
   // Create the browser window.
-  let { width, height } = g_settingsStore.get('windowBounds');
+  let { width, height } = g_userSettings.get('windowBounds');
   let mainWindow = new BrowserWindow({
     width,
     height,
@@ -441,7 +440,7 @@ function createWindow() {
     icon: CURRENT_DIR + `/assets/favicon.png`,
     //autoHideMenuBar: true,
   });
-  let { x, y } = g_settingsStore.get('windowPosition');
+  let { x, y } = g_userSettings.get('windowPosition');
   mainWindow.setPosition(x, y);
 
   globalShortcut.register('f5', function() {
@@ -458,7 +457,7 @@ function createWindow() {
     // the height, width, and x and y coordinates.
     let { width, height } = mainWindow.getBounds();
     // Now that we have them, save them using the `set` method.
-    g_settingsStore.set('windowBounds', { width, height });
+    g_userSettings.set('windowBounds', { width, height });
   });
 
   // Open <a href='' target='_blank'> with default system browser
@@ -474,7 +473,7 @@ function createWindow() {
   mainWindow.on('close', (event) => {
     log('debug', '*** mainWindow "close" - ' + g_canQuit);
     let positions = mainWindow.getPosition();
-    g_settingsStore.set('windowPosition', { x: Math.floor(positions[0]), y: Math.floor(positions[1]) });
+    g_userSettings.set('windowPosition', { x: Math.floor(positions[0]), y: Math.floor(positions[1]) });
     if (g_canQuit) {
       mainWindow = null;
     } else {
@@ -731,7 +730,7 @@ async function startConductorAndLoadPage(canRegenerateConfig) {
       g_appPort = activeAppPort;
       // - Prompt for UID selection or prefered UID if multiple uid found
       if (g_uid === '' && g_uidList !== undefined && g_uidList.length > 0) {
-        let maybe_uid = g_settingsStore.get('uid');
+        let maybe_uid = g_userSettings.get('uid');
         if (maybe_uid !== undefined) {
           g_uid = maybe_uid;
         } else {
@@ -825,7 +824,7 @@ app.on('ready', async function () {
   let x = Math.floor((width - default_width) / 2);
   let y = Math.floor((height - default_height) / 2);
 
-  g_settingsStore = new SettingsStore({
+  g_userSettings = new SettingsStore({
     // We'll call our data file 'user-preferences'
     configName: 'user-preferences',
     defaults: {
@@ -843,10 +842,10 @@ app.on('ready', async function () {
   // Modify main menu
   let mainMenu = Menu.getApplicationMenu();
   let item = mainMenu.getMenuItemById('launch-at-startup');
-  item.checked = g_settingsStore.get('canAutoLaunch');
+  item.checked = g_userSettings.get('canAutoLaunch');
 
   item = mainMenu.getMenuItemById('notify-msg');
-  item.checked = g_settingsStore.get('canNotify');
+  item.checked = g_userSettings.get('canNotify');
 
   // Create sys tray
   create_tray();
@@ -1105,7 +1104,7 @@ async function promptUidSelect(canExitOnCancel) {
   } else {
     log('debug','promptUidSelect result: ' + r);
     g_uid = r;
-    g_settingsStore.set('uid', g_uid);
+    g_userSettings.set('uid', g_uid);
   }
   return r !== null
 }
@@ -1201,7 +1200,7 @@ async function showAbout() {
  *
  */
 async function confirmExit() {
-  let dontConfirmOnExit = g_settingsStore.get("dontConfirmOnExit");
+  let dontConfirmOnExit = g_userSettings.get("dontConfirmOnExit");
   //let r = await prompt({
   let {response, checkboxChecked} = await dialog.showMessageBox(g_mainWindow, {
     //width: 800,
@@ -1219,7 +1218,7 @@ async function confirmExit() {
 
   //log('silly', response);
   //log('silly', checkboxChecked);
-  g_settingsStore.set("dontConfirmOnExit", checkboxChecked);
+  g_userSettings.set("dontConfirmOnExit", checkboxChecked);
 
   switch (response) {
     case 0: {
@@ -1404,7 +1403,7 @@ const mainMenuTemplate = [
       label: 'Quit',
       //accelerator: 'Command+Q',
       click: async function () {
-        let dontConfirmOnExit = g_settingsStore.get("dontConfirmOnExit");
+        let dontConfirmOnExit = g_userSettings.get("dontConfirmOnExit");
         if (dontConfirmOnExit) {
           app.quit();
         } else {
