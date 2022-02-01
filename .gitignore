@@ -17,7 +17,9 @@ snapmail-*
 # copied binaries
 hc
 lair-keystore
+snapmail-lair-keystore
 holochain
+snapmail-holochain
 
 .DS_Store
 **/.DS_Store

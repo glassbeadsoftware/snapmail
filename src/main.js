@@ -13,12 +13,13 @@ const IS_DEV = require('electron-is-dev');
 // - My Modules
 const {
   DNA_HASH_FILEPATH, CONDUCTOR_CONFIG_FILENAME, APP_CONFIG_FILENAME, CONFIG_PATH, STORAGE_PATH,
-  CURRENT_DIR, DEFAULT_BOOTSTRAP_URL, SNAPMAIL_APP_ID, IS_DEBUG, DEFAULT_PROXY_URL } = require('./globals');
+  CURRENT_DIR, DEFAULT_BOOTSTRAP_URL, SNAPMAIL_APP_ID, IS_DEBUG, DEFAULT_PROXY_URL, LAIR_KEYSTORE_BIN, HOLOCHAIN_BIN } = require('./globals');
 const { log, logger } = require('./logger');
 const {
-  generateConductorConfig, spawnKeystore, getKeystoreVersion, hasActivatedApp, connectToAdmin,
+  generateConductorConfig, spawnKeystore, hasActivatedApp, connectToAdmin,
   connectToApp, installApp, getDnaHash } = require('./config');
 const { SettingsStore } = require('./userSettings');
+const { pingBootstrap, getKeystoreVersion, getHolochainVersion } = require("./spawn");
 
 //--------------------------------------------------------------------------------------------------
 // PRE-INIT
@@ -37,20 +38,11 @@ process.env.RUST_LOG="WARN";
 const REPORT_BUG_URL = `https://github.com/glassbeadsoftware/snapmail/issues/new`;
 
 //const DIST_DIR = IS_DEBUG? "ui_dbg" : "ui";
-
 const DIST_DIR = "ui";
 
-// - Default is linux
+
 var IS_LINUX = false
-var HOLOCHAIN_BIN     = './bin/holochain-linux';
-var LAIR_KEYSTORE_BIN = './bin/lair-keystore-linux';
-if (process.platform === "win32") {
-  HOLOCHAIN_BIN     = 'holochain-win.exe';
-  LAIR_KEYSTORE_BIN = 'lair-keystore-win.exe';
-} else if (process.platform === 'darwin') {
-  HOLOCHAIN_BIN     = './bin/holochain-linux';
-  LAIR_KEYSTORE_BIN = './bin/lair-keystore-linux';
-} else {
+if (process.platform !== "win32" && process.platform !== 'darwin') {
   // TODO: check for android?
   IS_LINUX = true
 }
@@ -395,6 +387,10 @@ ipc.on('newCountAsync', (event, newCount) => {
 // -- Functions
 // ------------------------------------------------------------------------------------------------
 
+function sleep(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
 /**
  *
  */
@@ -514,64 +510,6 @@ function createWindow() {
   // Done
   return mainWindow;
 }
-
-
-function sleep(ms) {
-  return new Promise(resolve => setTimeout(resolve, ms));
-}
-
-/**
- *
- */
-function getHolochainVersion() {
-  let bin = HOLOCHAIN_BIN;
-  let args = ['--version'];
-
-  // Spawn "holochain" subprocess
-  log('info', 'Spawning ' + bin + ' (dirname: ' + CURRENT_DIR + ') | getHolochainVersion()');
-  let holochain_proc = spawnSync(bin, args, {
-    cwd: CURRENT_DIR,
-    detached: false,
-    timeout: 5000,
-    encoding: 'utf8',
-    //stdio: 'pipe',
-    env: {
-      ...process.env,
-      RUST_BACKTRACE: 1,
-    },
-  });
-  log('info', 'getHolochainVersion() result: ' + holochain_proc.stdout);
-  return holochain_proc.stdout;
-
-  // // Handle error output
-  // holochain_proc.stderr.on('data', (data) => log('error', '*** holochain version > ' + data.toString()));
-  // holochain_proc.on('exit', (_code, _signal) => {
-  //   // n/a
-  // });
-  // // Wait for holochain to boot up
-  // await new Promise(async (resolve, reject) => {
-  //   const start_time = Date.now()
-  //   holochain_proc.stdout.on('data', (data) => {
-  //     g_holochain_version = data.toString();
-  //     log('info', 'getHolochainVersion() result: ' + g_holochain_version);
-  //     log('info', 'Killing holochain sub process... ' + holochain_proc.pid);
-  //     kill(holochain_proc.pid, function(err) {
-  //       if(!err) {
-  //         log('info', 'Killed holochain sub process ' + holochain_proc.pid);
-  //       } else {
-  //         log('error', err)
-  //       }
-  //     });
-  //     resolve();
-  //   });
-  //   while(Date.now() - start_time < 5 * 1000) {
-  //     await sleep(100);
-  //   }
-  //   reject(new Error("Failed to retrieve holochain version from child process " + holochain_proc.pid))
-  // });
-  // Done
-}
-
 
 
 /**
@@ -705,6 +643,8 @@ async function startConductorAndLoadPage(canRegenerateConfig) {
 
   let indexUrl;
   try {
+    const res = pingBootstrap(g_bootstrapUrl)
+    log('info', 'bootstrap result: ' + res)
     // - Spawn Conductor
     g_holochain_version = getHolochainVersion();
     // await sleep(1000); // Time buffer to make sure holochain process closed
@@ -1002,6 +942,8 @@ async function promptBootstrapUrl(canExitOnCancel) {
   } else {
     log('debug','result: ' + r);
     g_bootstrapUrl = r;
+    const res = pingBootstrap(r)
+    log('info', 'bootstrap result: ' + res)
   }
   return r !== null
 }

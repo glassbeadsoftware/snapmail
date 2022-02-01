@@ -123,24 +123,26 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
+          cp bin/snapmail-lair-keystore bin/snapmail-lair-keystore-linux
+          cp bin/snapmail-holochain bin/snapmail-holochain-linux
           gh release upload "${GITHUB_REF#refs/tags/}" "out/Snapmail-0.1.5.AppImage" --clobber
-          gh release upload "${GITHUB_REF#refs/tags/}" "bin/lair-keystore-linux" --clobber
-          gh release upload "${GITHUB_REF#refs/tags/}" "bin/holochain-linux" --clobber
+          gh release upload "${GITHUB_REF#refs/tags/}" "bin/snapmail-lair-keystore-linux" --clobber
+          gh release upload "${GITHUB_REF#refs/tags/}" "bin/snapmail-holochain-linux" --clobber
       - name: upload binary (macos only)
         if: ${{ runner.os == 'macOs' }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          cp bin/lair-keystore-linux bin/lair-keystore-mac
-          cp bin/holochain-linux bin/holochain-mac
+          cp bin/snapmail-lair-keystore bin/snapmail-lair-keystore-mac
+          cp bin/snapmail-holochain bin/snapmail-holochain-mac
           gh release upload "${GITHUB_REF#refs/tags/}" "out/Snapmail-0.1.5.dmg" --clobber
-          gh release upload "${GITHUB_REF#refs/tags/}" "bin/lair-keystore-mac" --clobber
-          gh release upload "${GITHUB_REF#refs/tags/}" "bin/holochain-mac" --clobber
+          gh release upload "${GITHUB_REF#refs/tags/}" "bin/snapmail-lair-keystore-mac" --clobber
+          gh release upload "${GITHUB_REF#refs/tags/}" "bin/snapmail-holochain-mac" --clobber
       - name: upload binary (Windows only)
         if: ${{ runner.os == 'Windows' }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           gh release upload "$($env:GITHUB_REF -replace "refs/tags/")" "out/Snapmail Setup 0.1.5.exe" --clobber
-          gh release upload "$($env:GITHUB_REF -replace "refs/tags/")" "bin/lair-keystore-win.exe" --clobber
-          gh release upload "$($env:GITHUB_REF -replace "refs/tags/")" "bin/holochain-win.exe" --clobber
+          gh release upload "$($env:GITHUB_REF -replace "refs/tags/")" "bin/snapmail-lair-keystore.exe" --clobber
+          gh release upload "$($env:GITHUB_REF -replace "refs/tags/")" "bin/snapmail-holochain.exe" --clobber

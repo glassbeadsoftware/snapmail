@@ -5,8 +5,8 @@ echo * Creating new Snapmail happ Release
 echo.
 
 echo Current dependencies in ./bin:
-call "bin/holochain-win.exe" --version
-call "bin/lair-keystore-win.exe" --version
+call "bin/snapmail-holochain.exe" --version
+call "bin/snapmail-lair-keystore.exe" --version
 call hc --version
 echo.
 SET /P CANBUILDHOLOCHAIN=Regenerate holochain from source (Y/[N])?

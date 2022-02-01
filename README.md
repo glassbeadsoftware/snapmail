@@ -27,7 +27,7 @@ See [snapmail-rsm](https://github.com/ddd-mtl/snapmail-rsm) for holochain backen
 ### Troubleshoot
 
 ##### Linux
-- Make sure the following executables have execution rights: `Snapmail`, `lair-keystore`, `holochain`.
+- Make sure the following executables have execution rights: `Snapmail`, `snapmail-lair-keystore`, `snapmail-holochain`.
 
 
 ## Development

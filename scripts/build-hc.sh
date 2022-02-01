@@ -23,7 +23,7 @@ echo
 echo \* Build Holochain
 cd holochain
 cargo build --release -p holochain
-cp target/release/holochain ../../bin/holochain-linux
+cp target/release/holochain ../../bin/snapmail-holochain
 
 
 echo
@@ -36,7 +36,7 @@ echo
 echo \* Build Lair
 cd lair
 cargo build --release
-cp target/release/lair-keystore ../../bin/lair-keystore-linux
+cp target/release/lair-keystore ../../bin/snapmail-lair-keystore
 cd ..
 
 

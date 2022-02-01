@@ -12,8 +12,8 @@ start=`date +%s`
 #fi
 
 echo Current dependecies:
-./bin/holochain-linux --version
-./bin/lair-keystore-linux --version
+./bin/snapmail-holochain --version
+./bin/snapmail-lair-keystore --version
 hc --version
 
 read -p "Regenerate holochain from source (Y/N)? " -n 1 -r
