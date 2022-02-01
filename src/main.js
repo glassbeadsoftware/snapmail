@@ -48,76 +48,59 @@ if (process.platform === "win32") {
   process.env.PATH += ';' + BIN_PATH;
 }
 
+/** Read dna_hash.txt */
+let g_original_hash = '<unknown>';
+if (fs.existsSync(DNA_HASH_FILEPATH)) {
+  g_original_hash = fs.readFileSync(DNA_HASH_FILEPATH, 'utf-8');
+} else  {
+  if (fs.existsSync('resources/app/' + DNA_HASH_FILEPATH)) {
+    g_original_hash = fs.readFileSync('resources/app/' + DNA_HASH_FILEPATH, 'utf-8');
+  } else {
+    if (fs.existsSync(app.getAppPath() + '/' + DNA_HASH_FILEPATH)) {
+      g_original_hash = fs.readFileSync(app.getAppPath() + '/' + DNA_HASH_FILEPATH, 'utf-8');
+    }
+  }
+}
+log('info', "ORIGINAL DNA HASH: " + g_original_hash);
+
+
 //--------------------------------------------------------------------------------------------------
 // --  GLOBALS
 //--------------------------------------------------------------------------------------------------
 
-//const g_adminPort = 1235;
-//const g_adminPort = 1200 + Math.floor(Math.random() * 100); // Randomized admin port on each launch
-//var g_appPort = 8900 + Math.floor(Math.random() * 100); // Randomized port on each launch
-//log('debug',{g_appPort});
-
-let g_adminPort = 0;
-let g_appPort = 0;
-
-let g_lair_version = ""
-let g_holochain_version = ""
-
+/** STATE */
 /**
  * Keep a global reference of the ELECTRON window object, if you don't,
  * the window will be closed automatically when the JavaScript object is garbage collected.
  */
 let g_mainWindow = undefined;
-
-let g_userSettings = undefined;
+let g_tray = null;
+let g_updater = undefined;
 let g_holochain_proc = undefined;
 let g_keystore_proc = undefined;
-let g_canQuit = false;
-let g_canMdns = false;
-let g_bootstrapUrl = '';
-let g_uid = '';
-let g_proxyUrl = '';
-let g_canProxy = false;
-let g_storagePath = undefined;
-let g_configPath = undefined;
 let g_adminWs = undefined;
-let g_uidList = [];
-let g_tray = null;
+let g_canQuit = false;
+let g_uid = '';
+
+/** values retrieved from holochain */
+let g_adminPort = 0;
+let g_appPort = 0;
+let g_lair_version = ""
+let g_holochain_version = ""
 let g_dnaHash = undefined;
 
-/** -- Read dna_hash -- */
-let DNA_HASH = '<unknown>';
-if (fs.existsSync(DNA_HASH_FILEPATH)) {
-  DNA_HASH = fs.readFileSync(DNA_HASH_FILEPATH, 'utf-8');
-} else  {
-  if (fs.existsSync('resources/app/' + DNA_HASH_FILEPATH)) {
-    DNA_HASH = fs.readFileSync('resources/app/' + DNA_HASH_FILEPATH, 'utf-8');
-  } else {
-    if (fs.existsSync(app.getAppPath() + '/' + DNA_HASH_FILEPATH)) {
-      DNA_HASH = fs.readFileSync(app.getAppPath() + '/' + DNA_HASH_FILEPATH, 'utf-8');
-    }
-  }
-}
-log('info', "DNA HASH: " + DNA_HASH);
+/** General settings */
+let g_userSettings = undefined;
+let g_uidList = [];
+let g_storagePath = undefined;
+let g_configPath = undefined;
 
+/*** Network settings */
+let g_canMdns = false;
+let g_bootstrapUrl = '';
+let g_canProxy = false;
+let g_proxyUrl = '';
 
-/** -- Create sys tray -- */
-function create_tray() {
-  try {
-    g_tray = new Tray('web/logo/logo256.png');
-  } catch(e) {
-    try {
-      g_tray = new Tray('resources/app/web/logo/logo256.png');
-    } catch(e) {
-      try {
-        g_tray = new Tray(app.getAppPath() + '/web/logo/logo256.png');
-      } catch(e) {
-        log('error', "Could not find favicon. appPath: " + app.getAppPath());
-        g_tray = new Tray(nativeImage.createEmpty());
-      }
-    }
-  }
-}
 
 //--------------------------------------------------------------------------------------------------
 // -- SETUP
@@ -246,7 +229,6 @@ var autoLauncher = new AutoLaunch({
 // -- Auto Update
 // ------------------------------------------------------------------------------------------------
 
-let g_updater;
 autoUpdater.autoDownload = false;
 
 autoUpdater.on('error', (error) => {
@@ -384,6 +366,27 @@ ipc.on('networkInfo', (event) => {
 function sleep(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
+
+/**
+ * Create sys tray electron object
+ */
+function create_tray() {
+  try {
+    g_tray = new Tray('web/logo/logo256.png');
+  } catch(e) {
+    try {
+      g_tray = new Tray('resources/app/web/logo/logo256.png');
+    } catch(e) {
+      try {
+        g_tray = new Tray(app.getAppPath() + '/web/logo/logo256.png');
+      } catch(e) {
+        log('error', "Could not find favicon. appPath: " + app.getAppPath());
+        g_tray = new Tray(nativeImage.createEmpty());
+      }
+    }
+  }
+}
+
 
 /**
  *
@@ -1126,7 +1129,7 @@ async function showAbout() {
     title: `About ${app.getName()}`,
     message: `${app.getName()} - v${app.getVersion()}`,
     detail: `A minimalist email app on Holochain from Glass Bead Software\n\n`
-      + `Zome hash:\n${DNA_HASH}\n\n`
+      + `Zome hash:\n${g_original_hash}\n\n`
       + `DNA hash of "${g_uid}":\n${netHash}\n\n`
       + '' + g_holochain_version + ''
       + '' + g_lair_version + `\n`,
