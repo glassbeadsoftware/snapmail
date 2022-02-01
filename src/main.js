@@ -94,6 +94,7 @@ let g_userSettings = undefined;
 let g_uidList = [];
 let g_storagePath = undefined;
 let g_configPath = undefined;
+let g_appConfigPath = undefined;
 
 /*** Network settings */
 let g_canMdns = false;
@@ -130,7 +131,7 @@ if (process.argv.length > 2) {
 
 g_storagePath = path.join(STORAGE_PATH, sessionId);
 log('info',{g_storagePath});
-let version_txt = path.join(g_storagePath, "dna_version.txt");
+const version_txt = path.join(g_storagePath, "dna_version.txt");
 // Create storage and setup if none found
 if (!fs.existsSync(g_storagePath)) {
   log('info', "Creating missing dir: " + g_storagePath);
@@ -169,39 +170,45 @@ if (!fs.existsSync(g_storagePath)) {
 
 /** -- Determine final conductor config file path -- */
 g_configPath = path.join(g_storagePath, CONDUCTOR_CONFIG_FILENAME);
+g_appConfigPath = path.join(g_storagePath, APP_CONFIG_FILENAME);
 log('debug',{g_configPath});
-let g_appConfigPath = path.join(g_storagePath, APP_CONFIG_FILENAME);
 
-/** -- Set Globals from current conductor config -- */
+
+/** -- Read Globals from current conductor config -- */
 
 // tryLoadingConfig()
 {
   try {
-    // -- Conductor Config -- //
+    /** -- Conductor Config -- */
     const conductorConfigBuffer = fs.readFileSync(g_configPath);
     const conductorConfig = conductorConfigBuffer.toString();
     // log('debug', {conductorConfig})
-    // Get Admin PORT
+    /** Get Admin PORT */
     let regex = /port: (.*)$/gm;
     let match = regex.exec(conductorConfig);
     // log('silly', {match});
     g_adminPort = match[1];
-    // Get bootstrap server URL
+    /** Get network type */
+    regex = /network_type: (.*)$/gm;
+    match = regex.exec(conductorConfig);
+    g_canMdns = match[1] == 'quic_mdns';
+    /** Get bootstrap server URL */
     regex = /bootstrap_service: (.*)$/gm;
     match = regex.exec(conductorConfig);
     // log('silly', {match});
     g_bootstrapUrl = match[1];
-    // Get proxy server URL
+    /** Get proxy server URL */
     try {
       regex = /proxy_url: (.*)$/gm;
       match = regex.exec(conductorConfig);
       g_proxyUrl = match[1];
+      g_canProxy = true;
       log('debug',{ g_proxyUrl });
     } catch(err) {
       log('info', 'No proxy URL found in config. Using default proxy.');
       g_proxyUrl = DEFAULT_PROXY_URL;
     }
-    // -- APP config -- //
+    /** -- APP config -- */
     log('debug', 'Reading file ' + g_appConfigPath);
     const appConfigString = fs.readFileSync(g_appConfigPath).toString();
     g_uidList = appConfigString.replace(/\r\n/g,'\n').split('\n');
@@ -217,6 +224,7 @@ let g_appConfigPath = path.join(g_storagePath, APP_CONFIG_FILENAME);
     log('error','continuing...');
   }
 }
+
 
 /** -- Check AutoLaunch -- */
 
