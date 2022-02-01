@@ -1,5 +1,5 @@
 const { log } = require("./logger");
-const { CURRENT_DIR, HOLOCHAIN_BIN } = require("./globals");
+const { CURRENT_DIR, HOLOCHAIN_BIN } = require("./constants");
 const { spawnSync } = require("child_process");
 
 

@@ -9,22 +9,48 @@
 </div>
 </head>
 <body>
+
+<!-- Bootstrap / mdns -->
 <div class="activity-message" id="bootstrap-url">
     Checking bootstrap server...
 </div>
 <div class="activity-message" style="margin-left:30px;" id="bootstrap-status"></div>
 
+<div></div>
+
+<!-- PROXY -->
+<div class="activity-message" id="proxy-url">
+    Checking proxy server...
+</div>
+<div class="activity-message" style="margin-left:30px;" id="proxy-status"></div>
+
 <script>
   const ipc = require('electron').ipcRenderer;
   const bootstrapEl = document.getElementById('bootstrap-url')
   const bootStatusEl = document.getElementById('bootstrap-status')
+
+  const proxyEl = document.getElementById('proxy-url')
+  const proxyStatusEl = document.getElementById('proxy-status')
+
+  ipc.on('networkInfoReply', (event, canMdns, canProxy, proxyUrl) => {
+    if (canMdns) {
+      bootstrapEl.innerHTML = "Using MDNS"
+    } else {
+      ipc.send('bootstrapStatus');
+    }
+    if (canProxy) {
+      proxyEl.innerHTML = proxyUrl
+      // proxyStatusEl.innerHTML = status? 'OK' : 'Not responding'
+    } else {
+      proxyEl.innerHTML = 'No proxy used'
+    }
+  })
+
   ipc.on('bootstrapStatusReply', (event, url, status) => {
-    console.log({url})
-    console.log({status})
     bootstrapEl.innerHTML = url
     bootStatusEl.innerHTML = status? 'OK' : 'Not responding'
   })
-  let reply = ipc.send('bootstrapStatus');
+  let reply = ipc.send('networkInfo');
   //console.log(reply);
 </script>
 </body>

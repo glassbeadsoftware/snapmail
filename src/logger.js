@@ -1,5 +1,5 @@
 const electronLogger = require('electron-log');
-const { IS_DEBUG} = require('./globals');
+const {IS_DEBUG} = require('./constants');
 
 function log(level, message) {
   electronLogger[level](message);

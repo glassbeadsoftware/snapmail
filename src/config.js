@@ -1,11 +1,11 @@
 const fs = require('fs');
-const { spawn, spawnSync } = require('child_process');
+const { spawn } = require('child_process');
 const { bytesToBase64 } = require('byte-base64');
 const { AdminWebsocket, AppWebsocket, AppStatusFilter } = require('@holochain/conductor-api');
 //const { AdminWebsocket, AppWebsocket } = require('../holochain-conductor-api');
 
 const { log } = require('./logger');
-const { CURRENT_DIR, SNAPMAIL_APP_ID, DEFAULT_BOOTSTRAP_URL, DEFAULT_PROXY_URL } = require('./globals');
+const { CURRENT_DIR, SNAPMAIL_APP_ID, DEFAULT_BOOTSTRAP_URL, DEFAULT_PROXY_URL } = require('./constants');
 const path = require("path");
 
 // -- CONSTS -- //

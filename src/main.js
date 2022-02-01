@@ -1,6 +1,6 @@
 // - Modules to control application life and create native browser window
 const { app, BrowserWindow, Menu, shell, Tray, screen, Notification, nativeImage, globalShortcut } = require('electron');
-const { spawn, spawnSync } = require('child_process');
+const { spawn } = require('child_process');
 const fs = require('fs');
 const path = require('path');
 const kill = require('tree-kill');
@@ -13,7 +13,9 @@ const IS_DEV = require('electron-is-dev');
 // - My Modules
 const {
   DNA_HASH_FILEPATH, CONDUCTOR_CONFIG_FILENAME, APP_CONFIG_FILENAME, CONFIG_PATH, STORAGE_PATH,
-  CURRENT_DIR, DEFAULT_BOOTSTRAP_URL, SNAPMAIL_APP_ID, IS_DEBUG, DEFAULT_PROXY_URL, LAIR_KEYSTORE_BIN, HOLOCHAIN_BIN } = require('./globals');
+  CURRENT_DIR, DEFAULT_BOOTSTRAP_URL, SNAPMAIL_APP_ID, DEFAULT_PROXY_URL, LAIR_KEYSTORE_BIN,
+  HOLOCHAIN_BIN, REPORT_BUG_URL, NETWORK_URL, INDEX_URL, SWITCHING_URL, ERROR_URL,
+HC_MAGIC_READY_STRING, IS_DEBUG } = require('./constants');
 const { log, logger } = require('./logger');
 const {
   generateConductorConfig, spawnKeystore, hasActivatedApp, connectToAdmin,
@@ -28,40 +30,21 @@ const { pingBootstrap, getKeystoreVersion, getHolochainVersion } = require("./sp
 require('electron-context-menu')();
 require('fix-path')();
 
+/** Set holochain logging output level */
 process.env.WASM_LOG="WARN";
 process.env.RUST_LOG="WARN";
 
-//--------------------------------------------------------------------------------------------------
-// CONSTS
-//--------------------------------------------------------------------------------------------------
-
-const REPORT_BUG_URL = `https://github.com/glassbeadsoftware/snapmail/issues/new`;
-
-//const DIST_DIR = IS_DEBUG? "ui_dbg" : "ui";
-const DIST_DIR = "ui";
-
-
+/** Determine platform */
 var IS_LINUX = false
 if (process.platform !== "win32" && process.platform !== 'darwin') {
   // TODO: check for android?
   IS_LINUX = true
 }
 
-// a special log from the conductor,
-// specifying that the interfaces are ready to receive incoming connections
-const HC_MAGIC_READY_STRING = 'Conductor ready.';
-
-const g_networkUrl = 'file://' + CURRENT_DIR + '/'+ DIST_DIR +'/networking.html';
-const g_switchingUrl = 'file://' + CURRENT_DIR + '/'+ DIST_DIR +'/switching.html';
-const g_errorUrl = 'file://' + CURRENT_DIR + '/'+ DIST_DIR +'/error.html';
-const INDEX_URL = 'file://' + CURRENT_DIR + '/'+ DIST_DIR +'/index.html?APP=';
-log('debug', 'INDEX_URL = ' + INDEX_URL);
-
 /** Add Holochain bins to PATH for windows */
-const BIN_DIR = "bin";
-const BIN_PATH = path.join(CURRENT_DIR, BIN_DIR);
-log('debug', 'BIN_PATH = ' + BIN_PATH);
 if (process.platform === "win32") {
+  const BIN_PATH = path.join(CURRENT_DIR, "bin");
+  log('debug', 'BIN_PATH = ' + BIN_PATH);
   process.env.PATH += ';' + BIN_PATH;
 }
 
@@ -376,9 +359,13 @@ ipc.on('newCountAsync', (event, newCount) => {
  * Receive and reply to asynchronous message
  */
 ipc.on('bootstrapStatus', (event) => {
-  console.log({event})
   const succeeded = pingBootstrap(g_bootstrapUrl);
   event.sender.send('bootstrapStatusReply',g_bootstrapUrl, succeeded);
+});
+
+ipc.on('networkInfo', (event) => {
+  console.log("*** RECEIVED networkInfo: " + g_canMdns)
+  event.sender.send('networkInfoReply',g_canMdns, g_canProxy, g_proxyUrl);
 });
 
 // function showNotification () {
@@ -694,7 +681,7 @@ async function startConductorAndLoadPage(canRegenerateConfig) {
     log('error', 'Conductor setup failed:');
     log('error',{err});
     //indexUrl = INDEX_URL;
-    await g_mainWindow.loadURL(g_errorUrl);
+    await g_mainWindow.loadURL(ERROR_URL);
     return;
     //// Better to kill app if holochain not connected
     //app.quit();
@@ -738,7 +725,7 @@ async function startConductorAndLoadPage(canRegenerateConfig) {
   } catch(err) {
     log('error', "*** Calling zome for initial username failed.");
     log('error', {err});
-    await g_mainWindow.loadURL(g_errorUrl);
+    await g_mainWindow.loadURL(ERROR_URL);
     return;
     //alert("Holochain failed.\n Connection to holochain might be lost.
     // Reload App or refresh web page to attempt reconnection");
@@ -804,7 +791,7 @@ app.on('ready', async function () {
 
   // Load splashscreen
   try {
-    await g_mainWindow.loadURL(g_switchingUrl);
+    await g_mainWindow.loadURL(SWITCHING_URL);
   } catch(err) {
     log('error', 'loadURL() failed:');
     log('error',{err});
@@ -1217,7 +1204,7 @@ const networkMenuTemplate = [
     click: async function () {
       let changed = await promptUid(false);
       if (changed) {
-        await g_mainWindow.loadURL(g_switchingUrl);
+        await g_mainWindow.loadURL(SWITCHING_URL);
         await g_mainWindow.setEnabled(false);
         await installApp(g_adminWs, g_uid);
         await startConductorAndLoadPage(false);
@@ -1231,7 +1218,7 @@ const networkMenuTemplate = [
     click: async function () {
       let changed = await promptUidSelect(false);
       if (changed) {
-        await g_mainWindow.loadURL(g_switchingUrl);
+        await g_mainWindow.loadURL(SWITCHING_URL);
         await g_mainWindow.setEnabled(false);
         await startConductorAndLoadPage(false);
         await g_mainWindow.setEnabled(true);
@@ -1329,10 +1316,10 @@ const debugMenuTemplate = [
     click: async function () {
       const currentURL = g_mainWindow.webContents.getURL();
       const currentFilename = currentURL.substring(currentURL.lastIndexOf('/')+1);
-      const networkFilename = g_networkUrl.substring(g_networkUrl.lastIndexOf('/')+1);
+      const networkFilename = NETWORK_URL.substring(NETWORK_URL.lastIndexOf('/')+1);
       //console.log({currentFilename})
       if (networkFilename != currentFilename) {
-        await g_mainWindow.loadURL(g_networkUrl);
+        await g_mainWindow.loadURL(NETWORK_URL);
         //const succeeded = pingBootstrap(g_bootstrapUrl);
       } else {
         const indexUrl = INDEX_URL + g_appPort + '&UID=' + g_uid;
