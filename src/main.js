@@ -347,6 +347,11 @@ ipc.on('newCountAsync', (event, newCount) => {
   event.returnValue = true;
 });
 
+ipc.on('exitNetworkStatus', (event) => {
+  const indexUrl = INDEX_URL + g_appPort + '&UID=' + g_uid;
+  g_mainWindow.loadURL(indexUrl)
+})
+
 
 /**
  * Receive and reply to asynchronous message
@@ -357,13 +362,16 @@ ipc.on('bootstrapStatus', (event) => {
 });
 
 ipc.on('networkInfo', async (event) => {
-  console.log("*** RECEIVED networkInfo: " + g_canMdns)
+  console.log("*** RECEIVED networkInfo request")
 
   const dump = await g_adminWs.dumpState({cell_id: g_cellId});
+  //const dht_dump = dump[0].integration_dump;
+  //console.log({dht_dump})
   const peer_dump = dump[0].peer_dump;
   //console.log({peer_dump})
+  //console.log(JSON.stringify(peer_dump))
   const peer_count = peer_dump.peers.length;
-  event.sender.send('networkInfoReply',g_canMdns, g_canProxy, g_proxyUrl, peer_count);
+  event.sender.send('networkInfoReply', g_canMdns, g_canProxy, g_proxyUrl, peer_count);
 });
 
 

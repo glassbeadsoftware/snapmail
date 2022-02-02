@@ -1,0 +1,47 @@
+html { box-sizing: border-box; }
+
+*,
+*::before,
+*::after { box-sizing: inherit; }
+
+body * {
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font: normal 100%/1.15 "Merriweather", serif;
+    background-color: #7e6960;
+    color: #fff;
+}
+
+.wrapper {
+    position: relative;
+    max-width: 1298px;
+    height: auto;
+    margin: 2em auto 0 auto;
+}
+
+.box {
+    max-width: 70%;
+    min-height: auto;
+    margin: 0 auto;
+    padding: 1em 1em;
+    text-align: center;
+}
+
+h1, p:not(:last-of-type) { text-shadow: 0 0 6px #737965; }
+
+h1 {
+    margin: 0 0 1rem 0;
+    font-size: 8em;
+}
+
+p {
+    margin-bottom: 0.5em;
+    font-size: 3em;
+}
+
+p:first-of-type { margin-top: 1em; }
+
+p img { vertical-align: bottom; }

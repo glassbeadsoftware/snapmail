@@ -27,11 +27,11 @@ echo platform : $platform
 cd build
 cd holochain
 FIX_SQL_FMT=1 cargo build --release -p holochain
-cp target/release/holochain ../../bin/snapmail-holochain-$platform
+cp target/release/holochain ../../bin/snapmail-holochain
 cd ..
 
 
 cd lair
 FIX_SQL_FMT=1 cargo build --release
-cp target/release/lair-keystore ../../bin/snapmail-lair-keystore-$platform
+cp target/release/lair-keystore ../../bin/snapmail-lair-keystore
 cd ..

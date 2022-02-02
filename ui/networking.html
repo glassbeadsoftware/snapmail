@@ -5,11 +5,12 @@
 <div class="wrapper">
     <div class="box">
         <h1>Network status</h1>
+        <button onclick=exitScreen()>Close</button>
     </div>
 </div>
 </head>
-<body>
 
+<body>
 <!-- Peers -->
 <div class="activity-message" id="peers">
     Peer count
@@ -65,6 +66,12 @@
   })
   let reply = ipc.send('networkInfo');
   //console.log(reply);
+
+  function exitScreen() {
+    ipc.send('exitNetworkStatus');
+  }
+
+
 </script>
 </body>
 </html>

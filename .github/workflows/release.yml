@@ -113,10 +113,14 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           npm run dist-build
-      # upload installers and binaries
-      - name: list builds
+      # list out folder
+      - name: list out folder
         run: ls
         working-directory: out
+      # list bin folder
+      - name: list bin folder
+        run: ls
+        working-directory: bin
       # upload binary for each platform
       - name: upload binary (ubuntu only)
         if: ${{ runner.os == 'Linux' }}
