@@ -1,7 +1,7 @@
 const fs = require('fs');
 const { spawn } = require('child_process');
 const { bytesToBase64 } = require('byte-base64');
-const { AdminWebsocket, AppWebsocket, AppStatusFilter } = require('@holochain/conductor-api');
+const { AdminWebsocket, AppWebsocket, AppStatusFilter } = require('@holochain/client');
 //const { AdminWebsocket, AppWebsocket } = require('../holochain-conductor-api');
 
 const { log } = require('./logger');
