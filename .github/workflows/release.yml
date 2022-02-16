@@ -63,6 +63,7 @@ jobs:
       ##    encodedString: ${{ secrets.CERTIFICATE_WINDOWS_PFX }}
       # rm the dna files from repository
       - name: clearing precompiled dna files
+        continue-on-error: true
         run: |
           rm dna/*.dna
       # Download previously uploaded artifacts and display them in logs
@@ -71,6 +72,7 @@ jobs:
           name: snapmail-artifact
           path: dna
       - name: list downloads
+        continue-on-error: true
         run: ls -R
         working-directory: dna
       # Download other snapmail repos
