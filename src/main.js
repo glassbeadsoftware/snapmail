@@ -365,10 +365,10 @@ ipc.on('networkInfo', async (event) => {
   console.log("*** RECEIVED networkInfo request")
 
   const dump = await g_adminWs.dumpState({cell_id: g_cellId});
-  //const dht_dump = dump[0].integration_dump;
-  //console.log({dht_dump})
+  const dht_dump = dump[0].integration_dump;
+  console.log({dht_dump})
   const peer_dump = dump[0].peer_dump;
-  console.log({peer_dump})
+  //console.log({peer_dump})
   //console.log(JSON.stringify(peer_dump))
   const peer_count = peer_dump.peers.length;
   event.sender.send('networkInfoReply', g_canMdns, g_canProxy, g_proxyUrl, peer_count);

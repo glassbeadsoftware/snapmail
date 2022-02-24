@@ -80,11 +80,11 @@ jobs:
         shell: bash # important because this runs shell scripts
         run: |
           npm run dna-setup
-      # depending on the windows command (when we are ready to build for it), may have to check which os currently on
+      # Install nodejs dependencies
       - name: Install nodejs dependencies
         run: |
           npm install
-          npm run web-install
+          npm run ui-install
       # build snapmail-ui
       - name: build snapmail-ui
         shell: bash

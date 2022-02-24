@@ -29,7 +29,7 @@
     "dna-install"   : "bash scripts/workflow/install-hc-tools.sh",
     "dna-setup"     : "bash scripts/setup.sh",
     "dna-pack"      : "bash scripts/workflow/dna-pack.sh",
-    "web-install"   : "cd build/snapmail-ui && rm package-lock.json && npm install",
+    "ui-install"    : "cd build/snapmail-ui && rm package-lock.json && npm install",
     "build-prod"    : "bash scripts/workflow/build-ui-prod.sh",
     "dist-build"    : "set APP_DEV=false && electron-builder build",
     "build-hc"      : "bash scripts/workflow/build-hc-binaries.sh"
@@ -87,7 +87,8 @@
     "smalltalk": "^4.0.6",
     "sudo-prompt": "^9.0.0",
     "tree-kill": "^1.2.2",
-    "websocket": "^1.0.34"
+    "websocket": "^1.0.34",
+    "ws": "^8.5.0"
   },
   "devDependencies": {
     "bestzip": "^2.2.0",
