@@ -396,13 +396,13 @@ function sleep(ms) {
  */
 function create_tray() {
   try {
-    g_tray = new Tray('web/logo/logo256.png');
+    g_tray = new Tray('assets/favicon16.png');
   } catch(e) {
     try {
-      g_tray = new Tray('resources/app/web/logo/logo256.png');
+      g_tray = new Tray('resources/app/assets/favicon16.png');
     } catch(e) {
       try {
-        g_tray = new Tray(app.getAppPath() + '/web/logo/logo256.png');
+        g_tray = new Tray(app.getAppPath() + '/assets/favicon16.png');
       } catch(e) {
         log('error', "Could not find favicon. appPath: " + app.getAppPath());
         g_tray = new Tray(nativeImage.createEmpty());
