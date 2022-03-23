@@ -18,7 +18,7 @@ echo * Generate latest DNA
 echo.
 cd snapmail-rsm
 git pull
-call scripts/save-dna-hash.bat
+call scripts/write-zome-hash.bat
 call scripts/pack-happ.bat
 echo.
 echo * Generate DONE

@@ -1,25 +1,11 @@
-name: Release x64
+name: test-workflow x64
 
-on:
-  push:
-    tags:
-      - v[0-9]+.*
-
+on: workflow_dispatch
 
 env:
   SNAPMAIL_VERSION: 0.1.5
 
 jobs:
-  # the create-release would be used once we want to create a specific release based on if the commit has a tag
-  create-release:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v2
-      - uses: taiki-e/create-gh-release-action@v1
-        env:
-          # (required)
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
   build-dna:
     runs-on: ubuntu-latest
     steps:
@@ -147,9 +133,9 @@ jobs:
         run: |
           cp bin/snapmail-lair-keystore bin/snapmail-lair-keystore-linux
           cp bin/snapmail-holochain bin/snapmail-holochain-linux
-          gh release upload "${GITHUB_REF#refs/tags/}" "out/Snapmail-$SNAPMAIL_VERSION.AppImage" --clobber
-          gh release upload "${GITHUB_REF#refs/tags/}" "bin/snapmail-lair-keystore-linux" --clobber
-          gh release upload "${GITHUB_REF#refs/tags/}" "bin/snapmail-holochain-linux" --clobber
+          gh release upload "workflow-test" "out/Snapmail-$SNAPMAIL_VERSION.AppImage" --clobber
+          gh release upload "workflow-test" "bin/snapmail-lair-keystore-linux" --clobber
+          gh release upload "workflow-test" "bin/snapmail-holochain-linux" --clobber
       - name: upload binary (macos only)
         if: ${{ runner.os == 'macOs' }}
         env:
@@ -157,14 +143,14 @@ jobs:
         run: |
           cp bin/snapmail-lair-keystore bin/snapmail-lair-keystore-mac
           cp bin/snapmail-holochain bin/snapmail-holochain-mac
-          gh release upload "${GITHUB_REF#refs/tags/}" "out/Snapmail-$SNAPMAIL_VERSION.dmg" --clobber
-          gh release upload "${GITHUB_REF#refs/tags/}" "bin/snapmail-lair-keystore-mac" --clobber
-          gh release upload "${GITHUB_REF#refs/tags/}" "bin/snapmail-holochain-mac" --clobber
+          gh release upload "workflow-test" "out/Snapmail-$SNAPMAIL_VERSION.dmg" --clobber
+          gh release upload "workflow-test" "bin/snapmail-lair-keystore-mac" --clobber
+          gh release upload "workflow-test" "bin/snapmail-holochain-mac" --clobber
       - name: upload binary (Windows only)
         if: ${{ runner.os == 'Windows' }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          gh release upload "$($env:GITHUB_REF -replace "refs/tags/")" "out/Snapmail Setup $SNAPMAIL_VERSION.exe" --clobber
-          gh release upload "$($env:GITHUB_REF -replace "refs/tags/")" "bin/snapmail-lair-keystore.exe" --clobber
-          gh release upload "$($env:GITHUB_REF -replace "refs/tags/")" "bin/snapmail-holochain.exe" --clobber
+          gh release upload "workflow-test" "out/Snapmail Setup $SNAPMAIL_VERSION.exe" --clobber
+          gh release upload "workflow-test" "bin/snapmail-lair-keystore.exe" --clobber
+          gh release upload "workflow-test" "bin/snapmail-holochain.exe" --clobber

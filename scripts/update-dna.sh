@@ -17,7 +17,7 @@ fi
 echo \* Generate DNA
 cd snapmail-rsm
 git pull
-bash ./scripts/save-dna-hash.sh
+bash ./scripts/write-zome-hash.sh
 bash ./scripts/pack-happ.sh
 cp snapmail.dna ../../dna
 cp snapmail.happ ../../dna

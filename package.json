@@ -26,13 +26,14 @@
     "billy"         : "./node_modules/.bin/electron . billy --no-sandbox",
     "camille"       : "./node_modules/.bin/electron . camille --no-sandbox",
     "start-no"      : "./node_modules/.bin/electron electron --no-sandbox --enable-logging",
-    "dna-install"   : "bash scripts/workflow/install-hc-tools.sh",
+    "hc-install"   : "bash scripts/workflow/install-hc-tools.sh",
     "dna-setup"     : "bash scripts/setup.sh",
     "dna-pack"      : "bash scripts/workflow/dna-pack.sh",
     "ui-install"    : "cd build/snapmail-ui && rm package-lock.json && npm install",
     "build-prod"    : "bash scripts/workflow/build-ui-prod.sh",
     "dist-build"    : "set APP_DEV=false && electron-builder build",
-    "build-hc"      : "bash scripts/workflow/build-hc-binaries.sh"
+    "build-hc"      : "bash scripts/workflow/build-hc-binaries.sh",
+    "hash-zome"     : "bash scripts/hash-zome.sh"
   },
   "repository": {
     "type": "git",

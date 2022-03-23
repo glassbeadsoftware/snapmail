@@ -21,7 +21,7 @@ jobs:
       - name: Install hc tool and wasm target
         shell: bash # important because this runs shell scripts
         run: |
-          npm run dna-install
+          npm run hc-install
       # Download other snapmail repos
       - name: Download other snapmail repos
         shell: bash # important because this runs shell scripts
