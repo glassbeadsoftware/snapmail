@@ -1,0 +1,38 @@
+name: build-dna
+
+on:
+  workflow_call:
+
+jobs:
+  build-dna:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      # # install hc tool
+      - name: Install hc tool and wasm target
+        shell: bash # important because this runs shell scripts
+        run: |
+          npm run hc-install
+      # Download snapmail repos (rsm & ui)
+      - name: Download snapmail repos (rsm & ui)
+        shell: bash
+        run: |
+          npm run dna-setup
+      # Build dna
+      - name: Build DNA
+        run: |
+          npm run dna-pack
+      # Hash Zome
+      - name: Hash Zome
+        run: |
+          npm run hash-zome
+      # "upload" dna as build artifact
+      - uses: actions/upload-artifact@master
+        with:
+          name: snapmail-artifact
+          path: dna/snapmail.dna
+      # "upload" zome_hash as build artifact
+      - uses: actions/upload-artifact@master
+        with:
+          name: zome-artifact
+          path: dna/zome_hash.txt
