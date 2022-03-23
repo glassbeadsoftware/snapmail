@@ -21,7 +21,7 @@ const {
   generateConductorConfig, spawnKeystore, hasActivatedApp, connectToAdmin,
   connectToApp, installApp, getDnaHash, loadConductorConfig } = require('./config');
 const { SettingsStore } = require('./userSettings');
-const { setupStorage, loadRunningOriginalDnaHash, loadAppConfig }  = require('./storage');
+const { setupStorage, loadRunningZomeHash, loadAppConfig }  = require('./storage');
 const { pingBootstrap, getKeystoreVersion, getHolochainVersion } = require("./spawn");
 
 //--------------------------------------------------------------------------------------------------
@@ -50,8 +50,8 @@ if (process.platform === "win32") {
 }
 
 /** Read dna_hash.txt in app folder */
-let g_originalHash = loadRunningOriginalDnaHash();
-log('info', "ORIGINAL DNA HASH: " + g_originalHash);
+let g_zomeHash = loadRunningZomeHash();
+log('info', "SNAPMAIL ZOME HASH: " + g_zomeHash);
 
 
 //--------------------------------------------------------------------------------------------------
@@ -680,7 +680,7 @@ app.on('ready', async function () {
   log('info', 'Electron App ready. Init app...');
 
   /** setup storage folder */
-  setupStorage(g_sessionStoragePath)
+  setupStorage(g_sessionStoragePath, g_zomeHash)
 
   /** -- Read Globals from current conductor config -- */
   {
@@ -1051,7 +1051,7 @@ async function showAbout() {
     title: `About ${app.getName()}`,
     message: `${app.getName()} - v${app.getVersion()}`,
     detail: `A minimalist email app on Holochain from Glass Bead Software\n\n`
-      + `Zome hash:\n${g_originalHash}\n\n`
+      + `Zome hash:\n${g_zomeHash}\n\n`
       + `DNA hash of "${g_uid}":\n${netHash}\n\n`
       + '' + g_holochain_version + ''
       + '' + g_lair_version + `\n`,

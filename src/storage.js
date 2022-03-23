@@ -2,21 +2,20 @@ const path = require('path');
 const fs = require('fs');
 const { log } = require('./logger');
 const { app, dialog } = require('electron');
-const { RUNNING_DNA_HASH_FILEPATH } = require('./constants');
+const { RUNNING_ZOME_HASH_FILEPATH, DNA_VERSION_FILENAME } = require('./constants');
 
 
 /**
  *
  */
-function setupStorage(storagePath) {
-  const version_txt = path.join(storagePath, "dna_version.txt");
-// Create storage and setup if none found
+function setupStorage(storagePath, runningDnaHash) {
+  const dna_version_txt = path.join(storagePath, DNA_VERSION_FILENAME);
+  /** Create storage and setup if none found */
   if(!fs.existsSync(storagePath)) {
     log('info', "Creating missing dir: " + storagePath);
     fs.mkdirSync(storagePath)
-    //let appVersion = require("electron").remote.app.getVersion();
     try {
-      fs.writeFileSync(version_txt, app.getVersion(), 'utf-8');
+      fs.writeFileSync(dna_version_txt, runningDnaHash, 'utf-8');
     } catch(e) {
       //showErrorDialog('Failed to save the version_txt file !');
       log('error', 'Failed to save the version_txt file !')
@@ -24,20 +23,19 @@ function setupStorage(storagePath) {
     }
     return;
   }
-  // Make sure its a compatible version
+  /** Make sure its a compatible version */
   try {
-    log('debug', 'Reading: ' + version_txt);
-    const read_version = fs.readFileSync(version_txt, 'utf-8');
-    if(read_version !== app.getVersion()) {
-      // FIXME Check only DNA versions
-      const msg = 'The data found on disk is for a different version of Snapmail:\n' +
-        '   Stored data version: ' + read_version + '\n' +
-        'This running version: ' + app.getVersion();
+    log('debug', 'Reading: ' + dna_version_txt);
+    const storedDnaHash = fs.readFileSync(dna_version_txt, 'utf-8');
+    if(storedDnaHash !== runningDnaHash) {
+      const msg = "The data found on disk is for a different version of Snapmail's core:\n" +
+        '  Stored data version: ' + storedDnaHash + '\n' +
+        'This running version: ' + runningDnaHash;
       log('error', msg)
       const canErase = promptVersionMismatch(msg)
       if (canErase) {
         fs.rmdirSync(storagePath, {force: true, recursive: true})
-        setupStorage(storagePath)
+        setupStorage(storagePath, runningDnaHash)
       }
     }
   } catch(e) {
@@ -79,19 +77,19 @@ module.exports.loadAppConfig = loadAppConfig;
 /**
  * @returns dnaHash
  */
-function loadRunningOriginalDnaHash() {
-  if(fs.existsSync(RUNNING_DNA_HASH_FILEPATH)) {
-    return fs.readFileSync(RUNNING_DNA_HASH_FILEPATH, 'utf-8');
+function loadRunningZomeHash() {
+  if(fs.existsSync(RUNNING_ZOME_HASH_FILEPATH)) {
+    return fs.readFileSync(RUNNING_ZOME_HASH_FILEPATH, 'utf-8');
   }
-  if(fs.existsSync('resources/app/' + RUNNING_DNA_HASH_FILEPATH)) {
-    return fs.readFileSync('resources/app/' + RUNNING_DNA_HASH_FILEPATH, 'utf-8');
+  if(fs.existsSync('resources/app/' + RUNNING_ZOME_HASH_FILEPATH)) {
+    return fs.readFileSync('resources/app/' + RUNNING_ZOME_HASH_FILEPATH, 'utf-8');
   }
-  if(fs.existsSync(app.getAppPath() + '/' + RUNNING_DNA_HASH_FILEPATH)) {
-    return fs.readFileSync(app.getAppPath() + '/' + RUNNING_DNA_HASH_FILEPATH, 'utf-8');
+  if(fs.existsSync(app.getAppPath() + '/' + RUNNING_ZOME_HASH_FILEPATH)) {
+    return fs.readFileSync(app.getAppPath() + '/' + RUNNING_ZOME_HASH_FILEPATH, 'utf-8');
   }
   return '<unknown>';
 }
-module.exports.loadRunningOriginalDnaHash = loadRunningOriginalDnaHash;
+module.exports.loadRunningZomeHash = loadRunningZomeHash;
 
 
 
