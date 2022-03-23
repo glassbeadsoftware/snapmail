@@ -11,7 +11,7 @@ jobs:
 
   # upload the app package for each target os
   upload-assets:
-    needs: build-dna
+    needs: call-build-dna
     strategy:
       matrix:
         os:
