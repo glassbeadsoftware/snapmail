@@ -51,7 +51,7 @@ jobs:
       - uses: actions/upload-artifact@master
         with:
           name: zome-artifact
-          path: zome_hash.txt
+          path: dna/zome_hash.txt
 
   # upload the app package for each target os
   upload-assets:
@@ -77,7 +77,7 @@ jobs:
       - name: clearing precompiled dna files
         continue-on-error: true
         run: |
-          rm dna/*.dna
+          rm dna/*
       # Download previously uploaded artifacts and display them in logs
       - uses: actions/download-artifact@master
         with:

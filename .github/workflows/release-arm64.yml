@@ -47,7 +47,7 @@ jobs:
       # rm the dna files from repository
       - name: clearing precompiled dna files
         run: |
-          rm dna/*.dna
+          rm dna/*
       - uses: actions/download-artifact@master
         with:
           name: snapmail-artifact
