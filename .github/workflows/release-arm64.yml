@@ -61,6 +61,7 @@ jobs:
           arch: aarch64
           distro: ubuntu18.04
           githubToken: ${{ github.token }}
+      - name: Run NPM
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
