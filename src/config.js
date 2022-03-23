@@ -91,31 +91,32 @@ function winPath(path) {
  * Write the conductor config to storage path
  * Using proxy and bootstrap server
  */
-function generateConductorConfig(configPath, bootstrapUrl, storagePath, proxyUrl, adminPort, canMdns, canProxy) {
+function generateConductorConfig(configPath, storagePath, adminPort, networkSettings) {
   log('info', 'generateConductorConfig() with admin port ' + adminPort);
-  if (proxyUrl === undefined || proxyUrl === '') {
-    proxyUrl = DEFAULT_PROXY_URL;
+
+  if (networkSettings.proxyUrl === undefined || networkSettings.proxyUrl === '') {
+    networkSettings.proxyUrl = DEFAULT_PROXY_URL;
   }
   let network_type = "quic_bootstrap";
-  if (canMdns) {
+  if (networkSettings.canMdns) {
     network_type = "quic_mdns";
   }
-  if (bootstrapUrl === undefined) {
-    bootstrapUrl = DEFAULT_BOOTSTRAP_URL;
+  if (networkSettings.bootstrapUrl === undefined) {
+    networkSettings.bootstrapUrl = DEFAULT_BOOTSTRAP_URL;
   }
-  let environment_path = winPath(storagePath);
-  log('debug',{environment_path});
-  let keystore_path = winPath(path.join(environment_path, "keystore"))
-  log('debug',{keystore_path});
+  let environmentPath = winPath(storagePath);
+  log('debug',{environmentPath});
+  let keystorePath = winPath(path.join(environmentPath, "keystore"))
+  log('debug',{keystorePath});
 
   let config;
-  if (canProxy) {
+  if (networkSettings.canProxy) {
     // - Basic Config with Proxy
     config = `---
-environment_path: ${environment_path}
+environment_path: ${environmentPath}
 keystore:
   type: lair_server_legacy_deprecated
-  keystore_path: "${keystore_path}"
+  keystore_path: "${keystorePath}"
   danger_passphrase_insecure_from_config: default-insecure-passphrase
 dpki: ~
 admin_interfaces:
@@ -125,7 +126,7 @@ admin_interfaces:
 db_sync_level: Normal      
 network:
   network_type: ${network_type}
-  bootstrap_service: ${bootstrapUrl}
+  bootstrap_service: ${networkSettings.bootstrapUrl}
   transport_pool:
     - type: proxy
       sub_transport:
@@ -135,15 +136,15 @@ network:
         override_port: ~        
       proxy_config:
         type: remote_proxy_client
-        proxy_url: ${proxyUrl}
+        proxy_url: ${networkSettings.proxyUrl}
         `;
 } else {
     // - No PROXY Config
     config =`---
-environment_path: "${environment_path}"
+environment_path: "${environmentPath}"
 keystore:
   type: lair_server_legacy_deprecated
-  keystore_path: "${keystore_path}"
+  keystore_path: "${keystorePath}"
   danger_passphrase_insecure_from_config: default-insecure-passphrase
 dpki: ~
 admin_interfaces:
@@ -153,7 +154,7 @@ admin_interfaces:
 db_sync_level: Normal      
 network:
   network_type: ${network_type}
-  bootstrap_service: ${bootstrapUrl}
+  bootstrap_service: ${networkSettings.bootstrapUrl}
   transport_pool:
     - type: quic
       bind_to: ~
@@ -165,6 +166,66 @@ network:
   fs.writeFileSync(configPath, config);
 }
 module.exports.generateConductorConfig = generateConductorConfig;
+
+
+/**
+ *
+ * @returns {{networkSettings: {bootstrapUrl: string, proxyUrl: string, canProxy: boolean, canMdns: boolean}, adminPort: number}}
+ */
+function loadConductorConfig(conductorConfigFilePath) {
+  let canMdns;
+  let canProxy;
+  let bootstrapUrl;
+  let proxyUrl;
+  let adminPort = 0;
+  try {
+    /** -- Conductor Config -- */
+    const conductorConfigBuffer = fs.readFileSync(conductorConfigFilePath);
+    const conductorConfig = conductorConfigBuffer.toString();
+    // log('debug', {conductorConfig})
+    /** Get Admin PORT */
+    let regex = /port: (.*)$/gm;
+    let match = regex.exec(conductorConfig);
+    // log('silly', {match});
+    adminPort = match[1];
+    /** Get network type */
+    regex = /network_type: (.*)$/gm;
+    match = regex.exec(conductorConfig);
+    canMdns = match[1] == 'quic_mdns';
+    /** Get bootstrap server URL */
+    regex = /bootstrap_service: (.*)$/gm;
+    match = regex.exec(conductorConfig);
+    // log('silly', {match});
+    bootstrapUrl = match[1];
+    /** Get proxy server URL */
+    try {
+      regex = /proxy_url: (.*)$/gm;
+      match = regex.exec(conductorConfig);
+      proxyUrl = match[1];
+      canProxy = true;
+      log('debug',{ proxyUrl });
+    } catch(err) {
+      log('info', 'No proxy URL found in config. Using default proxy.');
+      proxyUrl = DEFAULT_PROXY_URL;
+    }
+  } catch(err) {
+    if(err.code === 'ENOENT') {
+      log('error', 'File not found: ' + err);
+    } else {
+      log('error','Loading config file failed: ' + err);
+    }
+    log('error','continuing...');
+  }
+
+  let networkSettings = {
+    canMdns, bootstrapUrl, canProxy, proxyUrl
+  };
+  return {
+    networkSettings,
+    adminPort
+  };
+}
+module.exports.loadConductorConfig = loadConductorConfig;
 
 
 // async function isAppInstalled(appPort) {

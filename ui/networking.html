@@ -45,15 +45,15 @@
 
   const peerCountEl = document.getElementById('peer-count')
 
-  ipc.on('networkInfoReply', (event, canMdns, canProxy, proxyUrl, peerCount) => {
+  ipc.on('networkInfoReply', (event, peerCount, networkSettings) => {
     peerCountEl.innerHTML = peerCount
-    if (canMdns) {
+    if (networkSettings.canMdns) {
       bootstrapEl.innerHTML = "Using MDNS"
     } else {
       ipc.send('bootstrapStatus');
     }
-    if (canProxy) {
-      proxyEl.innerHTML = proxyUrl
+    if (networkSettings.canProxy) {
+      proxyEl.innerHTML = networkSettings.proxyUrl
       // proxyStatusEl.innerHTML = status? 'OK' : 'Not responding'
     } else {
       proxyEl.innerHTML = 'No proxy used'

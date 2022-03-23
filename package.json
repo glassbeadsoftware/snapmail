@@ -46,7 +46,7 @@
     "productName": "Snapmail",
     "afterSign": "./afterSignHook.js",
     "appId": "com.harris-braun.snapmail",
-    "copyright": "Copyright © 2021 Harris-Braun Enterprises LLC",
+    "copyright": "Copyright © 2021-2022 Harris-Braun Enterprises LLC",
     "asar": false,
     "files": [
       "src/*",

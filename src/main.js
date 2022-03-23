@@ -12,15 +12,16 @@ const IS_DEV = require('electron-is-dev');
 
 /** My Modules */
 const {
-  DNA_HASH_FILEPATH, CONDUCTOR_CONFIG_FILENAME, APP_CONFIG_FILENAME, CONFIG_PATH, STORAGE_PATH,
-  CURRENT_DIR, DEFAULT_BOOTSTRAP_URL, SNAPMAIL_APP_ID, DEFAULT_PROXY_URL, LAIR_KEYSTORE_BIN,
+  CONDUCTOR_CONFIG_FILENAME, APP_CONFIG_FILENAME, CONFIG_PATH, STORAGE_PATH,
+  CURRENT_DIR, DEFAULT_BOOTSTRAP_URL, SNAPMAIL_APP_ID, LAIR_KEYSTORE_BIN,
   HOLOCHAIN_BIN, REPORT_BUG_URL, NETWORK_URL, INDEX_URL, SWITCHING_URL, ERROR_URL,
 HC_MAGIC_READY_STRING, IS_DEBUG } = require('./constants');
 const { log, logger } = require('./logger');
 const {
   generateConductorConfig, spawnKeystore, hasActivatedApp, connectToAdmin,
-  connectToApp, installApp, getDnaHash } = require('./config');
+  connectToApp, installApp, getDnaHash, loadConductorConfig } = require('./config');
 const { SettingsStore } = require('./userSettings');
+const { setupStorage, loadRunningOriginalDnaHash, loadAppConfig }  = require('./storage');
 const { pingBootstrap, getKeystoreVersion, getHolochainVersion } = require("./spawn");
 
 //--------------------------------------------------------------------------------------------------
@@ -48,20 +49,9 @@ if (process.platform === "win32") {
   process.env.PATH += ';' + BIN_PATH;
 }
 
-/** Read dna_hash.txt */
-let g_original_hash = '<unknown>';
-if (fs.existsSync(DNA_HASH_FILEPATH)) {
-  g_original_hash = fs.readFileSync(DNA_HASH_FILEPATH, 'utf-8');
-} else  {
-  if (fs.existsSync('resources/app/' + DNA_HASH_FILEPATH)) {
-    g_original_hash = fs.readFileSync('resources/app/' + DNA_HASH_FILEPATH, 'utf-8');
-  } else {
-    if (fs.existsSync(app.getAppPath() + '/' + DNA_HASH_FILEPATH)) {
-      g_original_hash = fs.readFileSync(app.getAppPath() + '/' + DNA_HASH_FILEPATH, 'utf-8');
-    }
-  }
-}
-log('info', "ORIGINAL DNA HASH: " + g_original_hash);
+/** Read dna_hash.txt in app folder */
+let g_originalHash = loadRunningOriginalDnaHash();
+log('info', "ORIGINAL DNA HASH: " + g_originalHash);
 
 
 //--------------------------------------------------------------------------------------------------
@@ -90,23 +80,28 @@ let g_lair_version = ""
 let g_holochain_version = ""
 let g_dnaHash = undefined;
 
-/** General settings */
+/** File paths */
+let g_sessionStoragePath = undefined;
+let g_conductorConfigFilePath = undefined;
+let g_appConfigFilePath = undefined;
+
+/** Settings */
 let g_userSettings = undefined;
 let g_uidList = [];
-let g_storagePath = undefined;
-let g_configPath = undefined;
-let g_appConfigPath = undefined;
-
-/*** Network settings */
-let g_canMdns = false;
-let g_bootstrapUrl = '';
-let g_canProxy = false;
-let g_proxyUrl = '';
+let g_networkSettings = undefined;
 
 
 //--------------------------------------------------------------------------------------------------
 // -- SETUP
 //--------------------------------------------------------------------------------------------------
+
+/** -- Check AutoLaunch -- */
+
+var autoLauncher = new AutoLaunch({
+  name: "Snapmail happ",
+  isHidden: true,
+});
+
 
 /** --  Create missing dirs -- */
 
@@ -119,120 +114,24 @@ if (!fs.existsSync(STORAGE_PATH)) {
   fs.mkdirSync(STORAGE_PATH)
 }
 
-/** -- Determine Session ID -- */
 
-let sessionId;
-if (process.argv.length > 2) {
-  sessionId = process.argv[2];
-} else {
-  sessionId = 'default';
-}
-
-/** -- Setup storage folder -- */
-
-g_storagePath = path.join(STORAGE_PATH, sessionId);
-log('info',{g_storagePath});
-const version_txt = path.join(g_storagePath, "dna_version.txt");
-// Create storage and setup if none found
-if (!fs.existsSync(g_storagePath)) {
-  log('info', "Creating missing dir: " + g_storagePath);
-  fs.mkdirSync(g_storagePath)
-  //let appVersion = require("electron").remote.app.getVersion();
-  try { fs.writeFileSync(version_txt, app.getVersion(), 'utf-8'); }
-  catch(e) {
-    //showErrorDialog('Failed to save the version_txt file !');
-    log('error', 'Failed to save the version_txt file !')
-    process.abort();
-  }
-} else {
-  // Make sure its a compatible version
-  try {
-    log('debug', 'Reading: ' + version_txt);
-    const read_version = fs.readFileSync(version_txt, 'utf-8');
-    if (read_version !== app.getVersion()) {
-      // FIXME Check only DNA versions
-      // log('error', 'App Version mismatch :-(')
-      // log('error', read_version);
-      // log('error', app.getVersion());
-      // //dialog.showOpenDialogSync({ properties: ['openFile', 'multiSelections'] })
-      // //showErrorDialog('App Version mismatch :-(');
-      // //app.quit();
-      // process.abort();
-    }
-  }
-  catch(e) {
-    //showErrorDialog('Failed to read the version_txt file !');
-    //app.quit();
-    log('error', 'Failed to read the version_txt file !')
-    log('error', e);
-    process.abort();
-  }
-}
-
-/** -- Determine final conductor config file path -- */
-g_configPath = path.join(g_storagePath, CONDUCTOR_CONFIG_FILENAME);
-g_appConfigPath = path.join(g_storagePath, APP_CONFIG_FILENAME);
-log('debug',{g_configPath});
-
-
-/** -- Read Globals from current conductor config -- */
-
-// tryLoadingConfig()
+/** -- determine session id and session specific folders -- */
 {
-  try {
-    /** -- Conductor Config -- */
-    const conductorConfigBuffer = fs.readFileSync(g_configPath);
-    const conductorConfig = conductorConfigBuffer.toString();
-    // log('debug', {conductorConfig})
-    /** Get Admin PORT */
-    let regex = /port: (.*)$/gm;
-    let match = regex.exec(conductorConfig);
-    // log('silly', {match});
-    g_adminPort = match[1];
-    /** Get network type */
-    regex = /network_type: (.*)$/gm;
-    match = regex.exec(conductorConfig);
-    g_canMdns = match[1] == 'quic_mdns';
-    /** Get bootstrap server URL */
-    regex = /bootstrap_service: (.*)$/gm;
-    match = regex.exec(conductorConfig);
-    // log('silly', {match});
-    g_bootstrapUrl = match[1];
-    /** Get proxy server URL */
-    try {
-      regex = /proxy_url: (.*)$/gm;
-      match = regex.exec(conductorConfig);
-      g_proxyUrl = match[1];
-      g_canProxy = true;
-      log('debug',{ g_proxyUrl });
-    } catch(err) {
-      log('info', 'No proxy URL found in config. Using default proxy.');
-      g_proxyUrl = DEFAULT_PROXY_URL;
-    }
-    /** -- APP config -- */
-    log('debug', 'Reading file ' + g_appConfigPath);
-    const appConfigString = fs.readFileSync(g_appConfigPath).toString();
-    g_uidList = appConfigString.replace(/\r\n/g,'\n').split('\n');
-    g_uidList = g_uidList.filter(function (el) {return el !== '';});
-    log('debug', {g_uidList});
-
-  } catch(err) {
-    if(err.code === 'ENOENT') {
-      log('error', 'File not found: ' + err);
-    } else {
-      log('error','Loading config file failed: ' + err);
-    }
-    log('error','continuing...');
+  let sessionId;
+  if (process.argv.length > 2) {
+    sessionId = process.argv[2];
+  } else {
+    sessionId = 'default';
   }
+
+  g_sessionStoragePath = path.join(STORAGE_PATH, sessionId);
+  log('info', { g_sessionStoragePath });
+  /** -- Determine final conductor config file path -- */
+  g_conductorConfigFilePath = path.join(g_sessionStoragePath, CONDUCTOR_CONFIG_FILENAME);
+  g_appConfigFilePath = path.join(g_sessionStoragePath, APP_CONFIG_FILENAME);
+  log('debug', { g_conductorConfigFilePath });
 }
 
-
-/** -- Check AutoLaunch -- */
-
-var autoLauncher = new AutoLaunch({
-  name: "Snapmail happ",
-  isHidden: true,
-});
 
 // ------------------------------------------------------------------------------------------------
 // -- Auto Update
@@ -357,8 +256,8 @@ ipc.on('exitNetworkStatus', (event) => {
  * Receive and reply to asynchronous message
  */
 ipc.on('bootstrapStatus', (event) => {
-  const succeeded = pingBootstrap(g_bootstrapUrl);
-  event.sender.send('bootstrapStatusReply',g_bootstrapUrl, succeeded);
+  const succeeded = pingBootstrap(g_networkSettings.bootstrapUrl);
+  event.sender.send('bootstrapStatusReply', g_networkSettings.bootstrapUrl, succeeded);
 });
 
 ipc.on('networkInfo', async (event) => {
@@ -371,7 +270,7 @@ ipc.on('networkInfo', async (event) => {
   //console.log({peer_dump})
   //console.log(JSON.stringify(peer_dump))
   const peer_count = peer_dump.peers.length;
-  event.sender.send('networkInfoReply', g_canMdns, g_canProxy, g_proxyUrl, peer_count);
+  event.sender.send('networkInfoReply', peer_count, g_networkSettings);
 });
 
 
@@ -394,7 +293,7 @@ function sleep(ms) {
 /**
  * Create sys tray electron object
  */
-function create_tray() {
+function createTray() {
   try {
     g_tray = new Tray('assets/favicon16.png');
   } catch(e) {
@@ -542,7 +441,7 @@ function createWindow() {
 async function spawnHolochainProc() {
   log('debug','spawnHolochainProc...');
   let bin = HOLOCHAIN_BIN;
-  let args = ['-c', g_configPath];
+  let args = ['-c', g_conductorConfigFilePath];
 
   /** Spawn "holochain" subprocess */
   log('info', 'Spawning ' + bin + ' (dirname: ' + CURRENT_DIR + ') | spawnHolochainProc()');
@@ -657,17 +556,17 @@ async function startConductorAndLoadPage(canRegenerateConfig) {
   //g_canQuit = false;
   await killHolochain(); // Make sure there is no outstanding Holochain & keystore procs
   g_lair_version = getKeystoreVersion(LAIR_KEYSTORE_BIN);
-  g_keystore_proc = await spawnKeystore(LAIR_KEYSTORE_BIN, g_storagePath);
+  g_keystore_proc = await spawnKeystore(LAIR_KEYSTORE_BIN, g_sessionStoragePath);
   //await sleep(2000);
   if (canRegenerateConfig) {
-    generateConductorConfig(g_configPath, g_bootstrapUrl, g_storagePath, g_proxyUrl, g_adminPort, g_canMdns, g_canProxy);
+    generateConductorConfig(g_conductorConfigFilePath, g_sessionStoragePath, g_adminPort, g_networkSettings);
   }
   log('info', 'Launching conductor...');
   //g_canQuit = true;
 
   let indexUrl;
   try {
-    const res = pingBootstrap(g_bootstrapUrl)
+    const res = pingBootstrap(g_networkSettings.bootstrapUrl)
     log('info', 'bootstrap result: ' + res)
     /** - Spawn Conductor */
     g_holochain_version = getHolochainVersion();
@@ -678,7 +577,7 @@ async function startConductorAndLoadPage(canRegenerateConfig) {
     let activeAppPort = await hasActivatedApp(g_adminWs);
     if(activeAppPort === 0) {
       // - Prompt for first UID
-      if (!g_canMdns) {
+      if (!g_networkSettings.canMdns) {
           g_uid = '<my-network-access-key>';
           await promptUid(true);
       } else {
@@ -778,9 +677,20 @@ async function startConductorAndLoadPage(canRegenerateConfig) {
  * Some APIs can only be used after this event occurs.
  */
 app.on('ready', async function () {
-  log('info', 'Electron App readying...');
+  log('info', 'Electron App ready. Init app...');
 
-  // Get Settings
+  /** setup storage folder */
+  setupStorage(g_sessionStoragePath)
+
+  /** -- Read Globals from current conductor config -- */
+  {
+    const { networkSettings, adminPort } = loadConductorConfig(g_conductorConfigFilePath);
+    g_networkSettings = networkSettings;
+    g_adminPort = adminPort;
+  }
+  g_uidList = loadAppConfig(g_appConfigFilePath);
+
+  /** Get user Settings */
   const { width, height } = screen.getPrimaryDisplay().workAreaSize;
   let default_width = Math.min(width, 1400);
   let default_height = Math.min(height, 950);
@@ -812,7 +722,7 @@ app.on('ready', async function () {
   item.checked = g_userSettings.get('canNotify');
 
   /** Create sys tray */
-  create_tray();
+  createTray();
   g_tray.setToolTip('SnapMail v' + app.getVersion());
   const menu = Menu.buildFromTemplate(trayMenuTemplate);
   g_tray.setContextMenu(menu);
@@ -830,11 +740,11 @@ app.on('ready', async function () {
 
   /** Start Conductor */
   /** if bootstrapUrl not set, prompt it, otherwise */
-  if(g_bootstrapUrl === "") {
-    g_bootstrapUrl = DEFAULT_BOOTSTRAP_URL;
+  if(g_networkSettings.bootstrapUrl === "") {
+    g_networkSettings.bootstrapUrl = DEFAULT_BOOTSTRAP_URL;
     await promptNetworkType(true);
-    log('debug', 'network type prompt done. Can MDNS: ' + g_canMdns);
-    if (!g_canMdns) {
+    log('debug', 'network type prompt done. Can MDNS: ' + g_networkSettings.canMdns);
+    if (!g_networkSettings.canMdns) {
       //// Use default bootstrap url
       // await promptBootstrapUrl(true);
     } else {
@@ -939,7 +849,7 @@ async function promptNetworkType(canExitOnCancel) {
     }
   } else {
     log('debug','promptNetworkType result: ' + r);
-    g_canMdns = r === 'true';
+    g_networkSettings.canMdns = r === 'true';
   }
   return r !== null
 }
@@ -955,7 +865,7 @@ async function promptBootstrapUrl(canExitOnCancel) {
     width: 600,
     alwaysOnTop: true,
     label: 'URL:',
-    value: g_bootstrapUrl,
+    value: g_networkSettings.bootstrapUrl,
     inputAttrs: {
       required: true,
       type: 'url'
@@ -969,7 +879,7 @@ async function promptBootstrapUrl(canExitOnCancel) {
     }
   } else {
     log('debug','result: ' + r);
-    g_bootstrapUrl = r;
+    g_networkSettings.bootstrapUrl = r;
     const res = pingBootstrap(r)
     log('info', 'bootstrap result: ' + res)
   }
@@ -1039,7 +949,7 @@ function addUid(newUid) {
   log('debug','addUid(): ' + newUid);
   g_uid = newUid;
   try {
-    fs.appendFileSync(g_appConfigPath, g_uid + '\n');
+    fs.appendFileSync(g_appConfigFilePath, g_uid + '\n');
     g_uidList.push(g_uid);
   } catch (err) {
     log('error','Writing config file failed: ' + err);
@@ -1092,8 +1002,8 @@ async function promptCanProxy() {
     noLink: true,
   });
   log('warn', 'promptCanProxy: ' + response);
-  g_canProxy = response === 0;
-  return g_canProxy;
+  g_networkSettings.canProxy = response === 0;
+  return g_networkSettings.canProxy;
 }
 
 /**
@@ -1106,7 +1016,7 @@ async function promptProxyUrl(canExitOnCancel) {
     width: 800,
     alwaysOnTop: true,
     label: 'URL:',
-    value: g_proxyUrl,
+    value: g_networkSettings.proxyUrl,
     inputAttrs: {
       required: true,
       type: 'url'
@@ -1120,23 +1030,11 @@ async function promptProxyUrl(canExitOnCancel) {
     }
   } else {
     log('debug','result: ' + r);
-    g_proxyUrl = r;
+    g_networkSettings.proxyUrl = r;
   }
   return r !== null
 }
 
-
-// /**
-//  *
-//  */
-// function showErrorDialog(message) {
-//   dialog.showMessageBox(g_mainWindow, {
-//     title: 'Application error',
-//     buttons: ['OK'],
-//     type: 'error',
-//     message,
-//   });
-// }
 
 
 /**
@@ -1153,7 +1051,7 @@ async function showAbout() {
     title: `About ${app.getName()}`,
     message: `${app.getName()} - v${app.getVersion()}`,
     detail: `A minimalist email app on Holochain from Glass Bead Software\n\n`
-      + `Zome hash:\n${g_original_hash}\n\n`
+      + `Zome hash:\n${g_originalHash}\n\n`
       + `DNA hash of "${g_uid}":\n${netHash}\n\n`
       + '' + g_holochain_version + ''
       + '' + g_lair_version + `\n`,
@@ -1268,9 +1166,9 @@ const networkMenuTemplate = [
     click: async function () {
       let changed = await promptNetworkType(false);
       let menu = Menu.getApplicationMenu();
-      menu.getMenuItemById('join-network').enabled = !g_canMdns;
-      menu.getMenuItemById('switch-network').enabled = !g_canMdns;
-      menu.getMenuItemById('change-bootstrap').enabled = !g_canMdns;
+      menu.getMenuItemById('join-network').enabled = !g_networkSettings.canMdns;
+      menu.getMenuItemById('switch-network').enabled = !g_networkSettings.canMdns;
+      menu.getMenuItemById('change-bootstrap').enabled = !g_networkSettings.canMdns;
       if (changed) {
         await startConductorAndLoadPage(true);
       }
@@ -1289,7 +1187,7 @@ const networkMenuTemplate = [
   {
     label: 'Change Proxy Server',
     click: async function () {
-      const prevCanProxy = g_canProxy;
+      const prevCanProxy = g_networkSettings.canProxy;
       let canProxy = await promptCanProxy();
       const proxyChanged = prevCanProxy !== canProxy;
       if (canProxy) {
