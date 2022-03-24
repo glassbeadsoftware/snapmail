@@ -20,8 +20,7 @@ git pull
 bash ./scripts/write-zome-hash.sh
 bash ./scripts/pack-happ.sh
 cp snapmail.dna ../../dna
-cp snapmail.happ ../../dna
-cp dna_hash.txt ../../dna
+cp zome_hash.txt ../../dna
 cd ..
 
 

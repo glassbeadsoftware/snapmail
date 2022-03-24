@@ -33,7 +33,7 @@ See [snapmail-rsm](https://github.com/ddd-mtl/snapmail-rsm) for holochain backen
 ## Development
 
 #### Steps for updating holochain version:
-1. `./scripts/setup.sh`
+1. `npm run setup`
 2. `cd build/snapmail-rsm`
 3. `./scripts/set-holochain-rev.sh <rev>`
 4. `./scripts/write-zome-hash.sh`

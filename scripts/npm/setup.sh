@@ -12,6 +12,11 @@ cd build
 
 
 echo
+echo \* Download latest hash_zome source code
+git clone https://github.com/ddd-mtl/hash_zome
+
+
+echo
 echo \* Download latest DNA source code
 git clone https://github.com/glassbeadsoftware/snapmail-rsm
 
