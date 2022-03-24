@@ -31,8 +31,8 @@
     "hc-install"    : "bash scripts/workflow/install-hc-tools.sh",
     "clean"         : "bash scripts/npm/clean.sh",
     "setup"         : "bash scripts/npm/setup.sh",
+    "dna-pack"      : "bash scripts/npm/dna-pack.sh",
     "hash-zome"     : "bash scripts/npm/hash-zome.sh",
-    "dna-pack"      : "bash scripts/workflow/dna-pack.sh",
     "build-prod"    : "bash scripts/workflow/build-ui-prod.sh",
     "build-hc"      : "bash scripts/workflow/build-hc-binaries.sh"
   },

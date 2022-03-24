@@ -11,7 +11,7 @@ cd hash_zome
 cargo build --release
 cd ..
 # Compute hash of zome
-value=`./hash_zome/target/release/hash_zome ./snapmail-rsm/target/wasm32-unknown-unknown/snapmail.wasm`
+value=`./hash_zome/target/release/hash_zome ./snapmail-rsm/target/wasm32-unknown-unknown/release/snapmail.wasm`
 echo "$value" > zome_hash.txt
 echo
 echo "SNAPMAIL ZOME HASH = $value"
