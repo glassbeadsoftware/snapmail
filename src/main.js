@@ -49,10 +49,6 @@ if (process.platform === "win32") {
   process.env.PATH += ';' + BIN_PATH;
 }
 
-/** Read dna_hash.txt in app folder */
-let g_zomeHash = loadRunningZomeHash();
-log('info', "SNAPMAIL ZOME HASH: " + g_zomeHash);
-
 
 //--------------------------------------------------------------------------------------------------
 // --  GLOBALS
@@ -79,6 +75,7 @@ let g_appPort = 0;
 let g_lair_version = ""
 let g_holochain_version = ""
 let g_dnaHash = undefined;
+let g_zomeHash = '<unknown>'
 
 /** File paths */
 let g_sessionStoragePath = undefined;
@@ -679,6 +676,9 @@ async function startConductorAndLoadPage(canRegenerateConfig) {
 app.on('ready', async function () {
   log('info', 'Electron App ready. Init app...');
 
+  /** Read zome_hash.txt in app folder */
+  g_zomeHash = loadRunningZomeHash();
+  log('info', "SNAPMAIL ZOME HASH: " + g_zomeHash);
   /** setup storage folder */
   setupStorage(g_sessionStoragePath, g_zomeHash)
 

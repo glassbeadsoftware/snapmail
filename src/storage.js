@@ -4,6 +4,22 @@ const { log } = require('./logger');
 const { app, dialog } = require('electron');
 const { RUNNING_ZOME_HASH_FILEPATH, DNA_VERSION_FILENAME } = require('./constants');
 
+/**
+ *
+ */
+function fatalError(message, error) {
+  log('error', message);
+  log('error', error);
+  dialog.showMessageBoxSync({
+    title: 'Snapmail: Fatal error',
+    buttons: ['exit'],
+    type: 'error',
+    message,
+    detail: JSON.stringify(error),
+  });
+  process.abort();
+}
+
 
 /**
  *
@@ -13,37 +29,37 @@ function setupStorage(storagePath, runningDnaHash) {
   /** Create storage and setup if none found */
   if(!fs.existsSync(storagePath)) {
     log('info', "Creating missing dir: " + storagePath);
-    fs.mkdirSync(storagePath)
     try {
+      fs.mkdirSync(storagePath);
       fs.writeFileSync(dna_version_txt, runningDnaHash, 'utf-8');
     } catch(e) {
-      //showErrorDialog('Failed to save the version_txt file !');
-      log('error', 'Failed to save the version_txt file !')
-      process.abort();
+      fatalError('Failed to setup storage folder on disk', e);
     }
     return;
   }
   /** Make sure its a compatible version */
+  let storedDnaHash = '<not found>';
   try {
     log('debug', 'Reading: ' + dna_version_txt);
-    const storedDnaHash = fs.readFileSync(dna_version_txt, 'utf-8');
-    if(storedDnaHash !== runningDnaHash) {
-      const msg = "The data found on disk is for a different version of Snapmail's core:\n" +
-        '  Stored data version: ' + storedDnaHash + '\n' +
-        'This running version: ' + runningDnaHash;
-      log('error', msg)
-      const canErase = promptVersionMismatch(msg)
-      if (canErase) {
-        fs.rmdirSync(storagePath, {force: true, recursive: true})
-        setupStorage(storagePath, runningDnaHash)
+    storedDnaHash = fs.readFileSync(dna_version_txt, 'utf-8');
+  } catch(e) {
+    log('error', 'Failed to read the dna_version_txt file !');
+    log('error', e);
+  }
+  if(storedDnaHash !== runningDnaHash) {
+    const msg = "The data found on disk is for a different version of Snapmail's core:\n" +
+      '  Stored data version: ' + storedDnaHash + '\n' +
+      'This running version: ' + runningDnaHash;
+    log('error', msg);
+    const canErase = promptVersionMismatch(msg);
+    if (canErase) {
+      try {
+        fs.rmdirSync(storagePath, {force: true, recursive: true});
+        setupStorage(storagePath, runningDnaHash);
+      } catch(e) {
+        fatalError('Failed erasing current stored data', e);
       }
     }
-  } catch(e) {
-    //showErrorDialog('Failed to read the version_txt file !');
-    //app.quit();
-    log('error', 'Failed to read the version_txt file !')
-    log('error', e);
-    process.abort();
   }
 }
 module.exports.setupStorage = setupStorage;
@@ -63,11 +79,11 @@ function loadAppConfig(appConfigFilePath) {
     log('debug', {uidList});
   } catch(err) {
     if(err.code === 'ENOENT') {
-      log('error', 'File not found: ' + err);
+      log('warn', 'File not found: ' + err);
     } else {
-      log('error','Loading config file failed: ' + err);
+      log('warn','Loading config file failed: ' + err);
     }
-    log('error','continuing...');
+    log('warn','continuing...');
   }
   return uidList;
 }
@@ -87,7 +103,7 @@ function loadRunningZomeHash() {
   if(fs.existsSync(app.getAppPath() + '/' + RUNNING_ZOME_HASH_FILEPATH)) {
     return fs.readFileSync(app.getAppPath() + '/' + RUNNING_ZOME_HASH_FILEPATH, 'utf-8');
   }
-  return '<unknown>';
+  fatalError("Corrupt installation. Missing zome hash file.");
 }
 module.exports.loadRunningZomeHash = loadRunningZomeHash;
 
