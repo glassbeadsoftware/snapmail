@@ -69,7 +69,7 @@ module.exports.setupStorage = setupStorage;
  *
  */
 function loadAppConfig(appConfigFilePath) {
-  let uidList;
+  let uidList = new Array();
   try {
     /** -- APP config -- */
     log('debug', 'Reading file ' + appConfigFilePath);

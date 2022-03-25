@@ -84,7 +84,7 @@ let g_appConfigFilePath = undefined;
 
 /** Settings */
 let g_userSettings = undefined;
-let g_uidList = [];
+let g_uidList = new Array();
 let g_networkSettings = undefined;
 
 

@@ -1,6 +1,6 @@
 #!/bin/sh
 echo
-echo \* Download the Holochain and Lair version that is stored in holochain_rev.txt
+echo \* Download the Holochain and Lair version that is used by snapmail-rsm
 
 if ! test -d "./build"; then
     echo "$0: Aborting. Missing './build' folder."
@@ -9,7 +9,7 @@ fi
 
 cd build
 
-### snapmail-rsm
+### Get snapmail-rsm in order to extract the holochain version number
 if ! test -d "./snapmail-rsm"; then
   echo \* Download DNA source code
   git clone https://github.com/glassbeadsoftware/snapmail-rsm
@@ -18,15 +18,15 @@ fi
 
 ### Holochain
 echo
-echo \* Extract REV from holochain_rev.txt in snapmail-rsm
-HC_REV=`cat snapmail-rsm/holochain_rev.txt`
+echo \* Extract HOLOCHAIN REV from snapmail-rsm Cargo.toml
+HC_REV=`awk -F'[ ="]+' '$1 == "holochain" { print $4 }' snapmail-rsm/zomes/snapmail/Cargo.toml | sed 's/"//g'`
 echo HC_REV = $HC_REV
 
 echo
 echo \* Download and checkout Holochain REV
 git clone https://github.com/holochain/holochain.git -n
 cd holochain
-git checkout $HC_REV
+git checkout holochain-$HC_REV
 cd ..
 
 
