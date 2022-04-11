@@ -292,13 +292,13 @@ function sleep(ms) {
  */
 function createTray() {
   try {
-    g_tray = new Tray('assets/favicon16.png');
+    g_tray = new Tray('assets/favicon.png');
   } catch(e) {
     try {
-      g_tray = new Tray('resources/app/assets/favicon16.png');
+      g_tray = new Tray('resources/app/assets/favicon.png');
     } catch(e) {
       try {
-        g_tray = new Tray(app.getAppPath() + '/assets/favicon16.png');
+        g_tray = new Tray(app.getAppPath() + '/assets/favicon.png');
       } catch(e) {
         log('error', "Could not find favicon. appPath: " + app.getAppPath());
         g_tray = new Tray(nativeImage.createEmpty());
@@ -836,6 +836,7 @@ async function promptNetworkType(canExitOnCancel) {
     width: 300,
     alwaysOnTop: true,
     label: 'Choose network type:',
+    icon: CURRENT_DIR + `/assets/favicon.png`,
     type: 'select',
     selectOptions: {
       'false': 'Bootstrap server (WAN)',
@@ -865,6 +866,7 @@ async function promptBootstrapUrl(canExitOnCancel) {
     width: 600,
     alwaysOnTop: true,
     label: 'URL:',
+    icon: CURRENT_DIR + `/assets/favicon.png`,
     value: g_networkSettings.bootstrapUrl,
     inputAttrs: {
       required: true,
@@ -897,6 +899,7 @@ async function promptFirstHandle() {
     width: 500,
     alwaysOnTop: true,
     label: 'Username:',
+    icon: CURRENT_DIR + `/assets/favicon.png`,
     value: "<noname>",
     inputAttrs: {
       required: true,
@@ -924,6 +927,7 @@ async function promptUid(canExitOnCancel) {
     width: 500,
     alwaysOnTop: true,
     label: 'Network Access Key:',
+    icon: CURRENT_DIR + `/assets/favicon.png`,
     value: g_uid,
     inputAttrs: {
       minlength: "2",
@@ -973,6 +977,7 @@ async function promptUidSelect(canExitOnCancel) {
     alwaysOnTop: true,
     label: 'Choose network:',
     value: g_uid,
+    icon: CURRENT_DIR + `/assets/favicon.png`,
     type: 'select',
     selectOptions,
   });
@@ -1016,6 +1021,7 @@ async function promptProxyUrl(canExitOnCancel) {
     width: 800,
     alwaysOnTop: true,
     label: 'URL:',
+    icon: CURRENT_DIR + `/assets/favicon.png`,
     value: g_networkSettings.proxyUrl,
     inputAttrs: {
       required: true,
