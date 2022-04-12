@@ -5,15 +5,14 @@ const SNAPMAIL_APP_ID = 'snapmail-app'; // MUST MATCH SNAPMAIL_UI config
 const CONFIG_PATH = path.join(app.getPath('appData'), 'Snapmail');
 const STORAGE_PATH = path.join(CONFIG_PATH, 'storage');
 const CONDUCTOR_CONFIG_FILENAME = 'conductor-config.yaml';
-const APP_CONFIG_FILENAME = 'app-config.txt';
+const UID_LIST_FILENAME = 'uid-list.txt';
 const DEFAULT_BOOTSTRAP_URL = 'https://bootstrap-staging.holo.host';
 const CURRENT_DIR = path.join(__dirname, '..');
 //const DIST_DIR = IS_DEBUG? "ui_dbg" : "ui";
 const DIST_DIR = "ui";
 
-//export const LINUX_ICON_FILE = path.join(__dirname, '../web/logo/icon.png')
 console.log({__dirname})
-const ICON_FILEPATH = path.join(CURRENT_DIR, "/assets/icon.png")
+const ICON_FILEPATH = path.join(CURRENT_DIR, "/assets/icon512.png")
 
 const DNA_VERSION_FILENAME = "dna_version.txt";
 const RUNNING_ZOME_HASH_FILEPATH = 'dna/zome_hash.txt';
@@ -68,5 +67,5 @@ module.exports.DEFAULT_BOOTSTRAP_URL = DEFAULT_BOOTSTRAP_URL;
 module.exports.CONFIG_PATH = CONFIG_PATH;
 module.exports.STORAGE_PATH = STORAGE_PATH;
 module.exports.CONDUCTOR_CONFIG_FILENAME = CONDUCTOR_CONFIG_FILENAME;
-module.exports.APP_CONFIG_FILENAME = APP_CONFIG_FILENAME;
+module.exports.UID_LIST_FILENAME = UID_LIST_FILENAME;
 module.exports.DNA_VERSION_FILENAME = DNA_VERSION_FILENAME;

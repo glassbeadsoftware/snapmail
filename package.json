@@ -58,7 +58,6 @@
       "package.json"
     ],
     "directories": {
-      "buildResources": "assets",
       "output": "out"
     },
     "publish": {

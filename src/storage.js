@@ -68,15 +68,15 @@ module.exports.setupStorage = setupStorage;
 /**
  *
  */
-function loadAppConfig(appConfigFilePath) {
+function loadUidList(filePath) {
   let uidList = new Array();
   try {
     /** -- APP config -- */
-    log('debug', 'Reading file ' + appConfigFilePath);
-    const appConfigString = fs.readFileSync(appConfigFilePath).toString();
-    uidList = appConfigString.replace(/\r\n/g,'\n').split('\n');
-    uidList = g_uidList.filter(function (el) {return el !== '';});
-    log('debug', {uidList});
+    log('info', 'Reading file ' + filePath);
+    const uidListString = fs.readFileSync(filePath).toString();
+    uidList = uidListString.replace(/\r\n/g,'\n').split('\n');
+    uidList = uidList.filter(function (el) {return el != '';});
+    log('info', {uidList});
   } catch(err) {
     if(err.code === 'ENOENT') {
       log('warn', 'File not found: ' + err);
@@ -87,7 +87,7 @@ function loadAppConfig(appConfigFilePath) {
   }
   return uidList;
 }
-module.exports.loadAppConfig = loadAppConfig;
+module.exports.loadUidList = loadUidList;
 
 
 /**

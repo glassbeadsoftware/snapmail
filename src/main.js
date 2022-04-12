@@ -12,7 +12,7 @@ const IS_DEV = require('electron-is-dev');
 
 /** My Modules */
 const {
-  CONDUCTOR_CONFIG_FILENAME, APP_CONFIG_FILENAME, CONFIG_PATH, STORAGE_PATH,
+  CONDUCTOR_CONFIG_FILENAME, UID_LIST_FILENAME, CONFIG_PATH, STORAGE_PATH,
   CURRENT_DIR, DEFAULT_BOOTSTRAP_URL, SNAPMAIL_APP_ID, LAIR_KEYSTORE_BIN,
   HOLOCHAIN_BIN, REPORT_BUG_URL, NETWORK_URL, INDEX_URL, SWITCHING_URL, ERROR_URL,
 HC_MAGIC_READY_STRING, IS_DEBUG, ICON_FILEPATH
@@ -22,7 +22,7 @@ const {
   generateConductorConfig, spawnKeystore, hasActivatedApp, connectToAdmin,
   connectToApp, installApp, getDnaHash, loadConductorConfig } = require('./config');
 const { SettingsStore } = require('./userSettings');
-const { setupStorage, loadRunningZomeHash, loadAppConfig }  = require('./storage');
+const { setupStorage, loadRunningZomeHash, loadUidList }  = require('./storage');
 const { pingBootstrap, getKeystoreVersion, getHolochainVersion } = require("./spawn");
 
 //--------------------------------------------------------------------------------------------------
@@ -81,7 +81,7 @@ let g_zomeHash = '<unknown>'
 /** File paths */
 let g_sessionStoragePath = undefined;
 let g_conductorConfigFilePath = undefined;
-let g_appConfigFilePath = undefined;
+let g_uidListFilePath = undefined;
 
 /** Settings */
 let g_userSettings = undefined;
@@ -126,7 +126,7 @@ if (!fs.existsSync(STORAGE_PATH)) {
   log('info', { g_sessionStoragePath });
   /** -- Determine final conductor config file path -- */
   g_conductorConfigFilePath = path.join(g_sessionStoragePath, CONDUCTOR_CONFIG_FILENAME);
-  g_appConfigFilePath = path.join(g_sessionStoragePath, APP_CONFIG_FILENAME);
+  g_uidListFilePath = path.join(g_sessionStoragePath, UID_LIST_FILENAME);
   log('debug', { g_conductorConfigFilePath });
 }
 
@@ -689,7 +689,7 @@ app.on('ready', async function () {
     g_networkSettings = networkSettings;
     g_adminPort = adminPort;
   }
-  g_uidList = loadAppConfig(g_appConfigFilePath);
+  g_uidList = loadUidList(g_uidListFilePath);
 
   /** Get user Settings */
   const { width, height } = screen.getPrimaryDisplay().workAreaSize;
@@ -954,7 +954,7 @@ function addUid(newUid) {
   log('debug','addUid(): ' + newUid);
   g_uid = newUid;
   try {
-    fs.appendFileSync(g_appConfigFilePath, g_uid + '\n');
+    fs.appendFileSync(g_uidListFilePath, g_uid + '\n');
     g_uidList.push(g_uid);
   } catch (err) {
     log('error','Writing config file failed: ' + err);
@@ -1224,7 +1224,6 @@ const debugMenuTemplate = [
       shell.openExternal('file://' + CONFIG_PATH);
       //shell.openItem(CONFIG_PATH);
     },
-    //icon: 'assets/icon.png'
   },
   {
     label: 'Open Log File',
