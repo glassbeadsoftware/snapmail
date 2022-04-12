@@ -14,8 +14,6 @@
     "dist-mac"      : "electron-builder --mac",
     "dist-win"      : "set APP_DEV=false && electron-builder --win",
     "dist-arm64"    : "electron-builder --arm64 --linux tar.gz",
-    "build-win"     : "./scripts/build-ui.bat prod",
-    "build-win-dev" : "./scripts/build-ui.bat dev",
     "build"         : ". scripts/build-ui.sh prod",
     "build-dev"     : ". scripts/build-ui.sh dev",
     "win"           : "electron . win --no-sandbox",

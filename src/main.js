@@ -15,7 +15,8 @@ const {
   CONDUCTOR_CONFIG_FILENAME, APP_CONFIG_FILENAME, CONFIG_PATH, STORAGE_PATH,
   CURRENT_DIR, DEFAULT_BOOTSTRAP_URL, SNAPMAIL_APP_ID, LAIR_KEYSTORE_BIN,
   HOLOCHAIN_BIN, REPORT_BUG_URL, NETWORK_URL, INDEX_URL, SWITCHING_URL, ERROR_URL,
-HC_MAGIC_READY_STRING, IS_DEBUG } = require('./constants');
+HC_MAGIC_READY_STRING, IS_DEBUG, ICON_FILEPATH
+} = require('./constants');
 const { log, logger } = require('./logger');
 const {
   generateConductorConfig, spawnKeystore, hasActivatedApp, connectToAdmin,
@@ -350,7 +351,7 @@ function createWindow() {
       webgl: false,
       enableWebSQL: false,
     },
-    icon: CURRENT_DIR + `/assets/favicon.png`,
+    icon: ICON_FILEPATH,
     //autoHideMenuBar: true,
   });
   let { x, y } = g_userSettings.get('windowPosition');

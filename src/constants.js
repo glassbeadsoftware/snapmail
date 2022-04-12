@@ -11,6 +11,10 @@ const CURRENT_DIR = path.join(__dirname, '..');
 //const DIST_DIR = IS_DEBUG? "ui_dbg" : "ui";
 const DIST_DIR = "ui";
 
+//export const LINUX_ICON_FILE = path.join(__dirname, '../web/logo/icon.png')
+console.log({__dirname})
+const ICON_FILEPATH = path.join(CURRENT_DIR, "/assets/icon.png")
+
 const DNA_VERSION_FILENAME = "dna_version.txt";
 const RUNNING_ZOME_HASH_FILEPATH = 'dna/zome_hash.txt';
 const DEFAULT_PROXY_URL ='kitsune-proxy://SYVd4CF3BdJ4DS7KwLLgeU3_DbHoZ34Y-qroZ79DOs8/kitsune-quic/h/165.22.32.11/p/5779/--'
@@ -47,6 +51,7 @@ const INDEX_URL = 'file://' + CURRENT_DIR + '/'+ DIST_DIR +'/index.html?APP=';
 
 /** EXPORTS */
 module.exports.HC_MAGIC_READY_STRING = HC_MAGIC_READY_STRING;
+module.exports.ICON_FILEPATH = ICON_FILEPATH;
 module.exports.ERROR_URL = ERROR_URL;
 module.exports.SWITCHING_URL = SWITCHING_URL;
 module.exports.NETWORK_URL = NETWORK_URL;
