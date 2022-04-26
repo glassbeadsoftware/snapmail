@@ -31,6 +31,11 @@ jobs:
         with:
           name: snapmail-artifact
           path: dna/snapmail.dna
+      # "upload" happ as build artifact
+      - uses: actions/upload-artifact@master
+        with:
+          name: snapmail-happ-artifact
+          path: dna/snapmail.happ
       # "upload" zome_hash as build artifact
       - uses: actions/upload-artifact@master
         with:

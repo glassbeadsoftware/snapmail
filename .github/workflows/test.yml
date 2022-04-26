@@ -43,6 +43,10 @@ jobs:
         with:
           name: zome-artifact
           path: dna
+      - uses: actions/download-artifact@master
+        with:
+          name: snapmail-happ-artifact
+          path: dna
       - name: list downloads
         continue-on-error: true
         run: ls -R
@@ -62,6 +66,11 @@ jobs:
         shell: bash
         run: |
           npm run build-prod
+      # build webhapp
+      - name: build webhapp
+        shell: bash
+        run: |
+          npm run build-webapp
       # build holochain and lair
       - name: build holochain and lair
         shell: bash
@@ -103,6 +112,7 @@ jobs:
         run: |
           cp bin/snapmail-lair-keystore bin/snapmail-lair-keystore-linux
           cp bin/snapmail-holochain bin/snapmail-holochain-linux
+          gh release upload "workflow-test" "workdir/snapmail.webhapp" --clobber
           gh release upload "workflow-test" "out/Snapmail-$SNAPMAIL_VERSION.AppImage" --clobber
           gh release upload "workflow-test" "bin/snapmail-lair-keystore-linux" --clobber
           gh release upload "workflow-test" "bin/snapmail-holochain-linux" --clobber
