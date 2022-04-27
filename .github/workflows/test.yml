@@ -77,7 +77,7 @@ jobs:
         if: ${{ runner.os == 'Linux' }}
         shell: bash
         run: |
-          npm run build-webapp
+          npm run package
       # build holochain and lair
       - name: build holochain and lair
         shell: bash
