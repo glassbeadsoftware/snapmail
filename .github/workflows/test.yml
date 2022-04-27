@@ -66,8 +66,15 @@ jobs:
         shell: bash
         run: |
           npm run build-prod
-      # build webhapp
+      # install hc tool (linux)
+      - name: Install hc tool and wasm target
+        if: ${{ runner.os == 'Linux' }}
+        shell: bash # important because this runs shell scripts
+        run: |
+          npm run hc-install
+      # build webhapp (linux)
       - name: build webhapp
+        if: ${{ runner.os == 'Linux' }}
         shell: bash
         run: |
           npm run build-webapp
