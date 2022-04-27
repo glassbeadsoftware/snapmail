@@ -32,8 +32,7 @@
     "dna-pack"      : "bash scripts/npm/dna-pack.sh",
     "hash-zome"     : "bash scripts/npm/hash-zome.sh",
     "build-prod"    : "bash scripts/workflow/build-ui-prod.sh",
-    "build-hc"      : "bash scripts/workflow/build-hc-binaries.sh",
-    "build-webapp"  : "hc web-app pack workdir"
+    "build-hc"      : "bash scripts/workflow/build-hc-binaries.sh"
   },
   "repository": {
     "type": "git",

@@ -81,6 +81,18 @@ jobs:
         shell: bash
         run: |
           npm run build-prod
+      # install hc tool (linux)
+      - name: Install hc tool and wasm target
+        if: ${{ runner.os == 'Linux' }}
+        shell: bash
+        run: |
+          npm run hc-install
+      # build webhapp (linux)
+      - name: build webhapp
+        if: ${{ runner.os == 'Linux' }}
+        shell: bash
+        run: |
+          npm run package
       # build holochain and lair
       - name: build holochain and lair
         shell: bash
