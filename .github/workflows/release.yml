@@ -97,7 +97,7 @@ jobs:
       - name: build holochain and lair
         shell: bash
         run: |
-          npm run build-hc
+          bash scripts/workflow/build-hc-binaries.sh
       # Setup sign & notarize
       - name: Setup sign and notarize (macos only)
         if: ${{ runner.os == 'macOs' }}
