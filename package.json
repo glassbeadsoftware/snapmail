@@ -31,8 +31,8 @@
     "setup"         : "bash scripts/npm/setup.sh",
     "dna-pack"      : "bash scripts/npm/dna-pack.sh",
     "hash-zome"     : "bash scripts/npm/hash-zome.sh",
-    "build-prod"    : "bash scripts/workflow/build-ui-prod.sh",
-    "build-hc"      : "bash scripts/workflow/build-hc-binaries.sh"
+    "build-prod"    : "bash scripts/build-ui.sh prod",
+    "build-hc"      : "bash scripts/workfl ow/build-hc-binaries.sh"
   },
   "repository": {
     "type": "git",

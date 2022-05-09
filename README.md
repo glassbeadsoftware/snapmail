@@ -51,12 +51,6 @@ See [snapmail-rsm](https://github.com/ddd-mtl/snapmail-rsm) for holochain backen
 #### Steps for preparing a new release for all platforms on github:
 1. Tag a new release in the [release page](https://github.com/glassbeadsoftware/snapmail-release/releases).
 2. Wait for CI to complete its [workflow](https://github.com/glassbeadsoftware/snapmail/actions).
- 
-#### Steps for preparing a new release locally on Windows:
-1. `./scripts/release.bat`
-
-#### Steps for preparing a new release locally on Mac / Linux / Android:
-1. `./scripts/release.sh`
 
 #### Steps for publishing the new release on Windows:
 1. `npm run deploy-win`
