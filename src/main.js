@@ -197,7 +197,7 @@ function checkForUpdates(menuItem, _focusedWindow, _event) {
       dialog.showMessageBox({
         title: 'Update unavailable',
         message: 'auto-update not available on linux. Please check and download latest version \
-        from github: https://github.com/glassbeadsoftware/snapmail-release/releases'
+        from github: https://github.com/glassbeadsoftware/snapmail/releases'
       }).then(() => {});
     } else {
       g_updater = menuItem;
