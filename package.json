@@ -61,9 +61,10 @@
       "buildResources": "assets",
       "output": "out"
     },
-    "publish": {
-      "provider": "github"
-    }
+    "win": {
+      "target": "nsis"
+    },
+    "publish": "github"
   },
   "author": "Harris-Braun Enterprises, LLC and contributors",
   "license": "CAL-1.0",
