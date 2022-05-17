@@ -174,7 +174,7 @@ module.exports.generateConductorConfig = generateConductorConfig;
  */
 function loadConductorConfig(conductorConfigFilePath) {
   let canMdns;
-  let canProxy;
+  let canProxy = true;
   let bootstrapUrl;
   let proxyUrl;
   let adminPort = 0;

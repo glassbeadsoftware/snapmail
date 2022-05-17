@@ -136,6 +136,8 @@ if (!fs.existsSync(STORAGE_PATH)) {
 // ------------------------------------------------------------------------------------------------
 
 autoUpdater.autoDownload = false;
+//autoUpdater.logger = require("electron-log")
+//autoUpdater.logger.transports.file.level = "info"
 
 autoUpdater.on('error', (error) => {
   dialog.showErrorBox('Error: ', error == null ? "unknown" : (error.stack || error).toString());
