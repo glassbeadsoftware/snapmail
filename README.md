@@ -3,7 +3,7 @@ SnapMail is an open-source P2P email app based on [Holochain](https://holochain.
 It is the latest iteration of [Snapmail](http://www.glassbead.com/snapmail/index.shtml) from [Glass Bead Software](http://www.glassbead.com/).
 
 
-![sshot](https://github.com/ddd-mtl/snapmail-release/blob/master/assets/snapmail-ui.png)
+![sshot](https://github.com/ddd-mtl/snapmail/blob/master/assets/snapmail-ui.png)
 
 This is the repository for the native application (Electron).  
 See [snapmail-rsm](https://github.com/ddd-mtl/snapmail-rsm) for holochain backend or [snapmail-ui](https://github.com/ddd-mtl/snapmail-ui) for web frontend source code.
@@ -16,7 +16,7 @@ See [snapmail-rsm](https://github.com/ddd-mtl/snapmail-rsm) for holochain backen
  - Linux: `libssl` package must be installed on your system (and possibly `libssl-dev`)
 
 ### Steps
-1. Go to the [release page](https://github.com/glassbeadsoftware/snapmail-release/releases)
+1. Go to the [release page](https://github.com/glassbeadsoftware/snapmail/releases)
 2. Download the latest release file for your platform.
 3. Execute the downloaded installer.
 4. Launch the `Snapmail` executable.
@@ -49,7 +49,7 @@ See [snapmail-rsm](https://github.com/ddd-mtl/snapmail-rsm) for holochain backen
 3. `git commit`
 
 #### Steps for preparing a new release for all platforms on github:
-1. Tag a new release in the [release page](https://github.com/glassbeadsoftware/snapmail-release/releases).
+1. Tag a new release in the [release page](https://github.com/glassbeadsoftware/snapmail/releases).
 2. Wait for CI to complete its [workflow](https://github.com/glassbeadsoftware/snapmail/actions).
 
 #### Steps for publishing the new release on Windows:
