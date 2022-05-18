@@ -123,7 +123,6 @@ jobs:
           gh release upload "workflow-test" "out/Snapmail-$SNAPMAIL_VERSION.AppImage" --clobber
           gh release upload "workflow-test" "bin/snapmail-lair-keystore-linux" --clobber
           gh release upload "workflow-test" "bin/snapmail-holochain-linux" --clobber
-          gh release upload "workflow-test" "out/latest-linux.yml" --clobber
       - name: upload binary (macos only)
         if: ${{ runner.os == 'macOs' }}
         env:
@@ -134,7 +133,6 @@ jobs:
           gh release upload "workflow-test" "out/Snapmail-$SNAPMAIL_VERSION.dmg" --clobber
           gh release upload "workflow-test" "bin/snapmail-lair-keystore-mac" --clobber
           gh release upload "workflow-test" "bin/snapmail-holochain-mac" --clobber
-          gh release upload "workflow-test" "out/latest-mac.yml" --clobber
       - name: upload binary (Windows only)
         if: ${{ runner.os == 'Windows' }}
         env:
@@ -143,4 +141,3 @@ jobs:
           gh release upload "workflow-test" "out/Snapmail Setup $env:SNAPMAIL_VERSION.exe" --clobber
           gh release upload "workflow-test" "bin/snapmail-lair-keystore.exe" --clobber
           gh release upload "workflow-test" "bin/snapmail-holochain.exe" --clobber
-          gh release upload "workflow-test" "out/latest.yml" --clobber

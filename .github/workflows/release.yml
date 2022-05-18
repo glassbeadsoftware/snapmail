@@ -117,7 +117,7 @@ jobs:
           DEBUG: electron-osx-sign*,electron-notarize*
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          npm run dist-build
+          npm run dist-publish
       # list out folder
       - name: list out folder
         run: ls
@@ -138,7 +138,6 @@ jobs:
           gh release upload "${GITHUB_REF#refs/tags/}" "out/Snapmail-$SNAPMAIL_VERSION.AppImage" --clobber
           gh release upload "${GITHUB_REF#refs/tags/}" "bin/snapmail-lair-keystore-linux" --clobber
           gh release upload "${GITHUB_REF#refs/tags/}" "bin/snapmail-holochain-linux" --clobber
-          gh release upload "${GITHUB_REF#refs/tags/}" "out/latest-linux.yml" --clobber
       - name: upload binary (macos only)
         if: ${{ runner.os == 'macOs' }}
         env:
@@ -149,7 +148,6 @@ jobs:
           gh release upload "${GITHUB_REF#refs/tags/}" "out/Snapmail-$SNAPMAIL_VERSION.dmg" --clobber
           gh release upload "${GITHUB_REF#refs/tags/}" "bin/snapmail-lair-keystore-mac" --clobber
           gh release upload "${GITHUB_REF#refs/tags/}" "bin/snapmail-holochain-mac" --clobber
-          gh release upload "${GITHUB_REF#refs/tags/}" "out/latest-mac.yml" --clobber
       - name: upload binary (Windows only)
         if: ${{ runner.os == 'Windows' }}
         env:
@@ -158,4 +156,3 @@ jobs:
           gh release upload "$($env:GITHUB_REF -replace "refs/tags/")" "out/Snapmail Setup $env:SNAPMAIL_VERSION.exe" --clobber
           gh release upload "$($env:GITHUB_REF -replace "refs/tags/")" "bin/snapmail-lair-keystore.exe" --clobber
           gh release upload "$($env:GITHUB_REF -replace "refs/tags/")" "bin/snapmail-holochain.exe" --clobber
-          gh release upload "$($env:GITHUB_REF -replace "refs/tags/")" "out/latest.yml" --clobber
