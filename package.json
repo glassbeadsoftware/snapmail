@@ -61,6 +61,9 @@
       "buildResources": "assets",
       "output": "out"
     },
+    "linux": {
+      "target": "AppImage"
+    },
     "win": {
       "target": "nsis"
     },
