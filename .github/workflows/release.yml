@@ -7,7 +7,7 @@ on:
 
 
 env:
-  SNAPMAIL_VERSION: 0.1.5
+  SNAPMAIL_VERSION: 0.1.6
 
 jobs:
   # the create-release would be used once we want to create a specific release based on if the commit has a tag
@@ -158,4 +158,4 @@ jobs:
           gh release upload "$($env:GITHUB_REF -replace "refs/tags/")" "out/Snapmail Setup $env:SNAPMAIL_VERSION.exe" --clobber
           gh release upload "$($env:GITHUB_REF -replace "refs/tags/")" "bin/snapmail-lair-keystore.exe" --clobber
           gh release upload "$($env:GITHUB_REF -replace "refs/tags/")" "bin/snapmail-holochain.exe" --clobber
-          gh release upload "${GITHUB_REF#refs/tags/}" "out/latest.yml" --clobber
+          gh release upload "$($env:GITHUB_REF -replace "refs/tags/")" "out/latest.yml" --clobber
