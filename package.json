@@ -70,7 +70,11 @@
     "win": {
       "target": "nsis"
     },
-    "publish": "github"
+    "publish": {
+      "provider": "github",
+      "releaseType": "undefined",
+      "publishAutoUpdate": true
+    }
   },
   "author": "Harris-Braun Enterprises, LLC and contributors",
   "license": "CAL-1.0",
