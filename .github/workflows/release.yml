@@ -93,10 +93,6 @@ jobs:
         shell: bash
         run: |
           npm run package
-      # Install snapcraft for publishing (linux)
-      - name: Install Snapcraft
-        if: ${{ runner.os == 'Linux' }}
-        uses: samuelmeuli/action-snapcraft@v1
       # build holochain and lair
       - name: build holochain and lair
         shell: bash
