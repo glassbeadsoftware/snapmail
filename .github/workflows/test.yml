@@ -3,7 +3,7 @@ name: test-workflow x64
 on: workflow_dispatch
 
 env:
-  SNAPMAIL_VERSION: 0.1.6
+  SNAPMAIL_VERSION: 0.1.7
 
 jobs:
   call-build-dna:
