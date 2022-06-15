@@ -7,7 +7,7 @@ on:
 
 
 env:
-  SNAPMAIL_VERSION: 0.1.7
+  SNAPMAIL_VERSION: 0.1.8
 
 jobs:
   # the create-release would be used once we want to create a specific release based on if the commit has a tag
