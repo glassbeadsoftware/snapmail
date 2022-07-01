@@ -18,9 +18,9 @@ const {
 HC_MAGIC_READY_STRING, IS_DEBUG, ICON_FILEPATH
 } = require('./constants');
 const { log, logger } = require('./logger');
-const {
+import {
   generateConductorConfig, spawnKeystore, hasActivatedApp, connectToAdmin,
-  connectToApp, installApp, getDnaHash, loadConductorConfig } = require('./config');
+  connectToApp, installApp, getDnaHash, loadConductorConfig } from './config';
 const { SettingsStore } = require('./userSettings');
 const { setupStorage, loadRunningZomeHash, loadUidList }  = require('./storage');
 const { pingBootstrap, getKeystoreVersion, getHolochainVersion } = require("./spawn");
