@@ -1,0 +1,13 @@
+{
+  "compilerOptions": {
+    "module": "commonjs",
+    "outDir": "dist",
+    "esModuleInterop": true
+  },
+  "include": [
+    "src/**/*"
+  ]
+//  , "references": [
+//    { "path": "../../electron-holochain/" }
+//  ]
+}

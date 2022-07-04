@@ -1,13 +1,11 @@
-const path = require('path');
-const fs = require('fs');
-const { log } = require('./logger');
-const { app, dialog } = require('electron');
-const { RUNNING_ZOME_HASH_FILEPATH, DNA_VERSION_FILENAME } = require('./constants');
+import path from 'path';
+import fs = require('fs');
+import { log } from './logger';
+import { app, dialog } from 'electron';
+import { RUNNING_ZOME_HASH_FILEPATH, DNA_VERSION_FILENAME } from './constants';
 
-/**
- *
- */
-function fatalError(message, error) {
+/** */
+export function fatalError(message:string, error: any | undefined) {
   log('error', message);
   log('error', error);
   dialog.showMessageBoxSync({
@@ -21,10 +19,8 @@ function fatalError(message, error) {
 }
 
 
-/**
- *
- */
-function setupStorage(storagePath, runningDnaHash) {
+/** */
+export function setupStorage(storagePath: string, runningDnaHash: string): void {
   const dna_version_txt = path.join(storagePath, DNA_VERSION_FILENAME);
   /** Create storage and setup if none found */
   if(!fs.existsSync(storagePath)) {
@@ -62,14 +58,11 @@ function setupStorage(storagePath, runningDnaHash) {
     }
   }
 }
-module.exports.setupStorage = setupStorage;
 
 
-/**
- *
- */
-function loadUidList(filePath) {
-  let uidList = new Array();
+/** */
+export function loadUidList(filePath: string): string[] {
+  let uidList = [];
   try {
     /** -- APP config -- */
     log('info', 'Reading file ' + filePath);
@@ -87,13 +80,12 @@ function loadUidList(filePath) {
   }
   return uidList;
 }
-module.exports.loadUidList = loadUidList;
 
 
 /**
  * @returns dnaHash
  */
-function loadRunningZomeHash() {
+export function loadRunningZomeHash(): string {
   if(fs.existsSync(RUNNING_ZOME_HASH_FILEPATH)) {
     return fs.readFileSync(RUNNING_ZOME_HASH_FILEPATH, 'utf-8');
   }
@@ -105,15 +97,12 @@ function loadRunningZomeHash() {
   }
   fatalError("Corrupt installation. Missing zome hash file.");
 }
-module.exports.loadRunningZomeHash = loadRunningZomeHash;
-
-
 
 
 /**
  * Return true if user wants to erase stored data
  */
-function promptVersionMismatch(message) {
+export function promptVersionMismatch(message: string): boolean {
   const result = dialog.showMessageBoxSync({
     width: 900,
     title: `${app.getName()} - v${app.getVersion()}`,

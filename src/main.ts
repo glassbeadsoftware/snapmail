@@ -1,33 +1,34 @@
 // - Modules to control application life and create native browser window
-const { app, BrowserWindow, Menu, shell, Tray, screen, Notification, nativeImage, globalShortcut } = require('electron');
-const { spawn } = require('child_process');
-const fs = require('fs');
-const path = require('path');
-const kill = require('tree-kill');
-const { dialog } = require('electron');
-const prompt = require('electron-prompt');
-const AutoLaunch = require('auto-launch');
-const { autoUpdater } = require('electron-updater');
-const IS_DEV = require('electron-is-dev');
+import { app, BrowserWindow, Menu, shell, Tray, screen, Notification, nativeImage, globalShortcut } from 'electron';
+import { spawn } from 'child_process';
+import fs from 'fs';
+import path from 'path';
+import kill from 'tree-kill';
+import { dialog } from 'electron';
+import prompt from 'electron-prompt';
+import AutoLaunch from 'auto-launch';
+import { autoUpdater } from 'electron-updater';
+import IS_DEV from 'electron-is-dev';
 
 /** My Modules */
-const {
+import {
   CONDUCTOR_CONFIG_FILENAME, UID_LIST_FILENAME, CONFIG_PATH, STORAGE_PATH,
   CURRENT_DIR, DEFAULT_BOOTSTRAP_URL, SNAPMAIL_APP_ID, LAIR_KEYSTORE_BIN,
   HOLOCHAIN_BIN, REPORT_BUG_URL, NETWORK_URL, INDEX_URL, SWITCHING_URL, ERROR_URL,
 HC_MAGIC_READY_STRING, IS_DEBUG, ICON_FILEPATH
-} = require('./constants');
-const { log, logger } = require('./logger');
-const {
+} from './constants';
+import { log, logger } from './logger';
+import {
   generateConductorConfig, spawnKeystore, hasActivatedApp, connectToAdmin,
-  connectToApp, installApp, getDnaHash, loadConductorConfig } = require('./config');
-const { SettingsStore } = require('./userSettings');
-const { setupStorage, loadRunningZomeHash, loadUidList }  = require('./storage');
-const { pingBootstrap, getKeystoreVersion, getHolochainVersion } = require("./spawn");
+  connectToApp, installApp, getDnaHash, loadConductorConfig } from './config';
+import { SettingsStore } from './userSettings';
+import { setupStorage, loadRunningZomeHash, loadUidList } from './storage';
+import { pingBootstrap, getKeystoreVersion, getHolochainVersion } from "./spawn";
+import {AdminWebsocket} from "@holochain/client";
 
-//--------------------------------------------------------------------------------------------------
-// PRE-INIT
-//--------------------------------------------------------------------------------------------------
+/**********************************************************************************************************************/
+/*  PRE-INIT
+/**********************************************************************************************************************/
 
 require('electron-context-menu')();
 require('fix-path')();
@@ -37,7 +38,7 @@ process.env.WASM_LOG="WARN";
 process.env.RUST_LOG="WARN";
 
 /** Determine platform */
-var IS_LINUX = false
+let IS_LINUX = false
 if (process.platform !== "win32" && process.platform !== 'darwin') {
   // TODO: check for android?
   IS_LINUX = true
@@ -51,9 +52,9 @@ if (process.platform === "win32") {
 }
 
 
-//--------------------------------------------------------------------------------------------------
-// --  GLOBALS
-//--------------------------------------------------------------------------------------------------
+/**********************************************************************************************************************/
+/*  GLOBALS
+/**********************************************************************************************************************/
 
 /** STATE */
 /**
@@ -65,8 +66,8 @@ let g_tray = null;
 let g_updater = undefined;
 let g_holochain_proc = undefined;
 let g_keystore_proc = undefined;
-let g_adminWs = undefined;
-let g_cellId = undefined;
+let g_adminWs: AdminWebsocket = undefined;
+let g_cellId: number = undefined;
 let g_canQuit = false;
 let g_uid = '';
 
@@ -79,23 +80,23 @@ let g_dnaHash = undefined;
 let g_zomeHash = '<unknown>'
 
 /** File paths */
-let g_sessionStoragePath = undefined;
-let g_conductorConfigFilePath = undefined;
-let g_uidListFilePath = undefined;
+let g_sessionStoragePath: string = undefined;
+let g_conductorConfigFilePath: string = undefined;
+let g_uidListFilePath: string = undefined;
 
 /** Settings */
 let g_userSettings = undefined;
-let g_uidList = new Array();
+let g_uidList = [];
 let g_networkSettings = undefined;
 
 
-//--------------------------------------------------------------------------------------------------
-// -- SETUP
-//--------------------------------------------------------------------------------------------------
+/**********************************************************************************************************************/
+/*  SETUP
+/**********************************************************************************************************************/
 
 /** -- Check AutoLaunch -- */
 
-var autoLauncher = new AutoLaunch({
+const autoLauncher = new AutoLaunch({
   name: "Snapmail happ",
   isHidden: true,
 });
@@ -115,7 +116,7 @@ if (!fs.existsSync(STORAGE_PATH)) {
 
 /** -- determine session id and session specific folders -- */
 {
-  let sessionId;
+  let sessionId: string;
   if (process.argv.length > 2) {
     sessionId = process.argv[2];
   } else {
@@ -131,9 +132,9 @@ if (!fs.existsSync(STORAGE_PATH)) {
 }
 
 
-// ------------------------------------------------------------------------------------------------
-// -- Auto Update
-// ------------------------------------------------------------------------------------------------
+/**********************************************************************************************************************/
+/*  auto-update
+/**********************************************************************************************************************/
 
 autoUpdater.autoDownload = false;
 //autoUpdater.logger = require("electron-log")
@@ -188,7 +189,7 @@ autoUpdater.on('update-downloaded', () => {
 })
 
 /** export this to MenuItem click callback */
-function checkForUpdates(menuItem, _focusedWindow, _event) {
+function checkForUpdates(menuItem, _focusedWindow, _event): void {
   if(IS_DEBUG || IS_DEV) {
     dialog.showMessageBox({
       title: 'Check for Update failed',
@@ -209,9 +210,10 @@ function checkForUpdates(menuItem, _focusedWindow, _event) {
   }
 }
 
-// ------------------------------------------------------------------------------------------------
-// -- IPC between UI and Main
-// ------------------------------------------------------------------------------------------------
+
+/**********************************************************************************************************************/
+/*  IPC between UI and Main
+/**********************************************************************************************************************/
 
 const ipc = require('electron').ipcMain;
 
@@ -239,7 +241,7 @@ ipc.on('newMailSync', (event, title, body) => {
  * Update sys tray title
  */
 ipc.on('newCountAsync', (event, newCount) => {
-  let append = newCount === 0 ? '' : ' (' + newCount + ')';
+  const append = newCount === 0 ? '' : ' (' + newCount + ')';
   if (g_tray) {
     g_tray.setToolTip('SnapMail v' + app.getVersion() + append);
   }
@@ -274,7 +276,6 @@ ipc.on('networkInfo', async (event) => {
 });
 
 
-
 // function showNotification () {
 //   const NOTIFICATION_TITLE = 'Basic Notification'
 //   const NOTIFICATION_BODY = 'Notification from the Main process'
@@ -282,39 +283,40 @@ ipc.on('networkInfo', async (event) => {
 // }
 
 
-// ------------------------------------------------------------------------------------------------
-// -- Functions
-// ------------------------------------------------------------------------------------------------
+/**********************************************************************************************************************/
+/*  Functions
+/**********************************************************************************************************************/
 
-function sleep(ms) {
+
+/** */
+function sleep(ms:number): Promise<void> {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
 
-/**
- * Create sys tray electron object
- */
-function createTray() {
+
+/** Create sys tray electron object */
+function createTray(): Tray {
+  let tray = undefined
   try {
-    g_tray = new Tray('assets/favicon.png');
+    tray = new Tray('assets/favicon.png');
   } catch(e) {
     try {
-      g_tray = new Tray('resources/app/assets/favicon.png');
+      tray = new Tray('resources/app/assets/favicon.png');
     } catch(e) {
       try {
-        g_tray = new Tray(app.getAppPath() + '/assets/favicon.png');
+        tray = new Tray(app.getAppPath() + '/assets/favicon.png');
       } catch(e) {
         log('error', "Could not find favicon. appPath: " + app.getAppPath());
-        g_tray = new Tray(nativeImage.createEmpty());
+        tray = new Tray(nativeImage.createEmpty());
       }
     }
   }
+  return tray;
 }
 
 
-/**
- *
- */
-function updateAutoLaunchSetting(canAutoLaunch) {
+/** */
+function updateAutoLaunchSetting(canAutoLaunch: boolean | undefined): void {
   if (canAutoLaunch === undefined) {
     canAutoLaunch = g_userSettings.get('canAutoLaunch');
   }
@@ -327,10 +329,8 @@ function updateAutoLaunchSetting(canAutoLaunch) {
 }
 
 
-/**
- *
- */
-function updateNotificationSetting(canNotify) {
+/** */
+function updateNotificationSetting(canNotify: boolean): void {
   if (canNotify === undefined) {
     canNotify = g_userSettings.get('canNotify');
   }
@@ -338,12 +338,10 @@ function updateNotificationSetting(canNotify) {
 }
 
 
-/**
- * Create the main window global
- */
-function createWindow() {
-  let { width, height } = g_userSettings.get('windowBounds');
-  let mainWindow = new BrowserWindow({
+/** Create the main window global */
+function createWindow(): BrowserWindow {
+  const { width, height } = g_userSettings.get('windowBounds');
+  const mainWindow = new BrowserWindow({
     width,
     height,
     webPreferences: {
@@ -356,7 +354,7 @@ function createWindow() {
     icon: ICON_FILEPATH,
     //autoHideMenuBar: true,
   });
-  let { x, y } = g_userSettings.get('windowPosition');
+  const { x, y } = g_userSettings.get('windowPosition');
   mainWindow.setPosition(x, y);
 
   globalShortcut.register('f5', function() {
@@ -372,7 +370,7 @@ function createWindow() {
     /** The event doesn't pass us the window size,
      * so we call the `getBounds` method which returns an object with
      * the height, width, and x and y coordinates.*/
-    let { width, height } = mainWindow.getBounds();
+    const { width, height } = mainWindow.getBounds();
     /** Now that we have them, save them using the `set` method. */
     g_userSettings.set('windowBounds', { width, height });
   });
@@ -389,7 +387,7 @@ function createWindow() {
   /** Emitted on request to close window */
   mainWindow.on('close', (event) => {
     log('debug', '*** mainWindow "close" - ' + g_canQuit);
-    let positions = mainWindow.getPosition();
+    const positions = mainWindow.getPosition();
     g_userSettings.set('windowPosition', { x: Math.floor(positions[0]), y: Math.floor(positions[1]) });
     if (g_canQuit) {
       mainWindow = null;
@@ -411,7 +409,7 @@ function createWindow() {
       log('error', err);
     }
     /** Wait for kill subprocess to finish on slow machines */
-    let start = Date.now();
+    const start = Date.now();
     let diff = 0;
     do {
       diff = Date.now() - start;
@@ -435,17 +433,15 @@ function createWindow() {
 }
 
 
-/**
- *
- */
-async function spawnHolochainProc() {
+/** */
+async function spawnHolochainProc(): Promise<void> {
   log('debug','spawnHolochainProc...');
-  let bin = HOLOCHAIN_BIN;
-  let args = ['-c', g_conductorConfigFilePath];
+  const bin = HOLOCHAIN_BIN;
+  const args = ['-c', g_conductorConfigFilePath];
 
   /** Spawn "holochain" subprocess */
   log('info', 'Spawning ' + bin + ' (dirname: ' + CURRENT_DIR + ') | spawnHolochainProc()');
-  let holochain_proc = spawn(bin, args, {
+  const holochain_proc = spawn(bin, args, {
     cwd: CURRENT_DIR,
     detached: false,
     //stdio: 'pipe',
@@ -474,12 +470,12 @@ async function spawnHolochainProc() {
     const start_time = Date.now()
     let total_output = ""
     holochain_proc.stdout.on('data', (data) => {
-      let output = data.toString();
+      const output = data.toString();
       total_output += output
       log('info', 'holochain: ' + output);
       if(output.indexOf(HC_MAGIC_READY_STRING) > -1) {
-        let regex = /###ADMIN_PORT:([0-9]*)###/gm;
-        let match = regex.exec(total_output);
+        const regex = /###ADMIN_PORT:([0-9]*)###/gm;
+        const match = regex.exec(total_output);
         //log('debug', {match});
         if (match === undefined || match === null || match.length === 0) {
           log('warn', 'ADMIN port not found in holochain total_output:');
@@ -503,10 +499,8 @@ async function spawnHolochainProc() {
 }
 
 
-/**
- * Make sure there is no outstanding holochain procs
- */
-async function killHolochain() {
+/** * Make sure there is no outstanding holochain procs */
+async function killHolochain(): Promise<void> {
   /** SIGTERM by default */
   let canWaitForHolochain = false;
   if(g_holochain_proc && g_holochain_proc.pid) {
@@ -552,7 +546,7 @@ async function killHolochain() {
  * Prepare conductor config and spawn holochain subprocess
  * @param canRegenerateConfig - Regenerate the conductor config before relaunching the holochain process.
  */
-async function startConductorAndLoadPage(canRegenerateConfig) {
+async function startConductorAndLoadPage(canRegenerateConfig: boolean): Promise<void> {
   //g_canQuit = false;
   await killHolochain(); // Make sure there is no outstanding Holochain & keystore procs
   g_lair_version = getKeystoreVersion(LAIR_KEYSTORE_BIN);
@@ -574,7 +568,7 @@ async function startConductorAndLoadPage(canRegenerateConfig) {
     await spawnHolochainProc();
     /** - Connect to Conductor and activate app */
     g_adminWs = await connectToAdmin(g_adminPort);
-    let activeAppPort = await hasActivatedApp(g_adminWs);
+    const activeAppPort = await hasActivatedApp(g_adminWs);
     if(activeAppPort === 0) {
       // - Prompt for first UID
       if (!g_networkSettings.canMdns) {
@@ -593,7 +587,7 @@ async function startConductorAndLoadPage(canRegenerateConfig) {
       g_appPort = activeAppPort;
       /** - Prompt for UID selection or prefered UID if multiple uid found */
       if (g_uid === '' && g_uidList !== undefined && g_uidList.length > 0) {
-        let maybe_uid = g_userSettings.get('uid');
+        const maybe_uid = g_userSettings.get('uid');
         if (maybe_uid !== undefined) {
           g_uid = maybe_uid;
         } else {
@@ -620,14 +614,14 @@ async function startConductorAndLoadPage(canRegenerateConfig) {
   try
   {
     const installed_app_id = SNAPMAIL_APP_ID + '-' + g_uid;
-    let appWs = await connectToApp(g_appPort);
+    const appWs = await connectToApp(g_appPort);
     const appInfo = await appWs.appInfo({ installed_app_id }, 3000);
     log('debug', {appInfo});
     if (appInfo === null) {
       throw new Error("happ not installed in conductor: " + installed_app_id)
     }
     g_cellId = appInfo.cell_data[0].cell_id;
-    let username = await appWs.callZome({
+    const username = await appWs.callZome({
         cap: null,
         cell_id: g_cellId,
         zome_name: "snapmail",
@@ -639,8 +633,8 @@ async function startConductorAndLoadPage(canRegenerateConfig) {
     );
     log('debug', "username found: " + username);
     if (username === "<noname>") {
-      let firstUsername = await promptFirstHandle(true);
-      let result = await appWs.callZome({
+      const firstUsername = await promptFirstHandle(true);
+      const result = await appWs.callZome({
           cap: null,
           cell_id: g_cellId,
           zome_name: "snapmail",
@@ -695,11 +689,11 @@ app.on('ready', async function () {
 
   /** Get user Settings */
   const { width, height } = screen.getPrimaryDisplay().workAreaSize;
-  let default_width = Math.min(width, 1400);
-  let default_height = Math.min(height, 950);
+  const default_width = Math.min(width, 1400);
+  const default_height = Math.min(height, 950);
 
-  let x = Math.floor((width - default_width) / 2);
-  let y = Math.floor((height - default_height) / 2);
+  const x = Math.floor((width - default_width) / 2);
+  const y = Math.floor((height - default_height) / 2);
 
   g_userSettings = new SettingsStore({
     /** We'll call our data file 'user-preferences' */
@@ -717,15 +711,15 @@ app.on('ready', async function () {
   updateAutoLaunchSetting();
 
   /** Modify main menu */
-  let mainMenu = Menu.getApplicationMenu();
-  let item = mainMenu.getMenuItemById('launch-at-startup');
+  const mainMenu = Menu.getApplicationMenu();
+  const item = mainMenu.getMenuItemById('launch-at-startup');
   item.checked = g_userSettings.get('canAutoLaunch');
 
   item = mainMenu.getMenuItemById('notify-msg');
   item.checked = g_userSettings.get('canNotify');
 
   /** Create sys tray */
-  createTray();
+  g_tray = createTray();
   g_tray.setToolTip('SnapMail v' + app.getVersion());
   const menu = Menu.buildFromTemplate(trayMenuTemplate);
   g_tray.setContextMenu(menu);
@@ -751,7 +745,7 @@ app.on('ready', async function () {
       //// Use default bootstrap url
       // await promptBootstrapUrl(true);
     } else {
-      let menu = Menu.getApplicationMenu();
+      const menu = Menu.getApplicationMenu();
       menu.getMenuItemById('join-network').enabled = false;
       menu.getMenuItemById('switch-network').enabled = false;
       menu.getMenuItemById('change-bootstrap').enabled = false;
@@ -799,9 +793,7 @@ app.on('window-all-closed', function () {
 });
 
 
-/**
- *
- */
+/** */
 app.on('activate', function () {
   log('debug','*** App "activate"');
   /**
@@ -816,24 +808,22 @@ app.on('activate', function () {
 });
 
 
-/**
- *
- */
+/** */
 app.on('before-quit', function () {
   log('debug','*** App "before-quit"');
   g_canQuit = true;
 });
 
 
-//--------------------------------------------------------------------------------------------------
-// -- PROMPTS
-//--------------------------------------------------------------------------------------------------
+/**********************************************************************************************************************/
+/*  PROMPTS
+/**********************************************************************************************************************/
 
 /**
  * @returns false if user cancelled
  */
-async function promptNetworkType(canExitOnCancel) {
-  let r = await prompt({
+async function promptNetworkType(canExitOnCancel: boolean): Promise<boolean> {
+  const r = await prompt({
     title: 'Select network type',
     height: 180,
     width: 300,
@@ -862,8 +852,8 @@ async function promptNetworkType(canExitOnCancel) {
 /**
  * @returns false if user cancelled
  */
-async function promptBootstrapUrl(canExitOnCancel) {
-  let r = await prompt({
+async function promptBootstrapUrl(canExitOnCancel: boolean): Promise<boolean> {
+  const r = await prompt({
     title: 'SnapMail: Bootstrap Server URL',
     height: 180,
     width: 600,
@@ -892,11 +882,9 @@ async function promptBootstrapUrl(canExitOnCancel) {
 }
 
 
-/**
- *
- */
-async function promptFirstHandle() {
-  let r = await prompt({
+/** */
+async function promptFirstHandle(): Promise<boolean> {
+  const r = await prompt({
     title: 'SnapMail: Starting Username',
     height: 180,
     width: 500,
@@ -923,8 +911,8 @@ async function promptFirstHandle() {
 /**
  * @returns false if user cancelled
  */
-async function promptUid(canExitOnCancel) {
-  let r = await prompt({
+async function promptUid(canExitOnCancel: boolean): Promise<boolean> {
+  const r = await prompt({
     title: 'SnapMail: Join new Network',
     height: 180,
     width: 500,
@@ -952,7 +940,7 @@ async function promptUid(canExitOnCancel) {
 }
 
 
-function addUid(newUid) {
+function addUid(newUid: string): void {
   log('debug','addUid(): ' + newUid);
   g_uid = newUid;
   try {
@@ -967,13 +955,13 @@ function addUid(newUid) {
 /**
  * @returns false if user cancelled
  */
-async function promptUidSelect(canExitOnCancel) {
-  let selectOptions = {};
+async function promptUidSelect(canExitOnCancel: boolean): Promise<boolean> {
+  const selectOptions = {};
   const uniq = [...new Set(g_uidList)];
   for (const uid of uniq) {
     selectOptions[uid] = uid;
   }
-  let r = await prompt({
+  const r = await prompt({
     title: 'Select network',
     height: 180,
     width: 300,
@@ -1000,8 +988,8 @@ async function promptUidSelect(canExitOnCancel) {
 /**
  * @returns false if user cancelled
  */
-async function promptCanProxy() {
-  let {response} = await dialog.showMessageBox(g_mainWindow, {
+async function promptCanProxy(): Promise<boolean> {
+  const {response} = await dialog.showMessageBox(g_mainWindow, {
     title: `Proxy`,
     message: "Do you want to use a proxy?",
     defaultId: 0,
@@ -1014,11 +1002,12 @@ async function promptCanProxy() {
   return g_networkSettings.canProxy;
 }
 
+
 /**
  * @returns false if user cancelled
  */
-async function promptProxyUrl(canExitOnCancel) {
-  let r = await prompt({
+async function promptProxyUrl(canExitOnCancel: boolean): Promise<boolean> {
+  const r = await prompt({
     title: 'Proxy Server URL',
     height: 180,
     width: 800,
@@ -1049,11 +1038,11 @@ async function promptProxyUrl(canExitOnCancel) {
 /**
  *
  */
-async function showAbout() {
+async function showAbout(): Promise<void> {
   if (g_dnaHash === undefined) {
     g_dnaHash = await getDnaHash(g_adminWs, g_uid);
   }
-  let netHash = g_dnaHash || "(unknown)";
+  const netHash = g_dnaHash || "(unknown)";
   log("info", `[${g_holochain_version}] DNA hash of "${g_uid}": ${netHash}\n`)
   await dialog.showMessageBox({
     width: 900,
@@ -1076,10 +1065,10 @@ async function showAbout() {
 /**
  *
  */
-async function confirmExit() {
-  let dontConfirmOnExit = g_userSettings.get("dontConfirmOnExit");
+async function confirmExit(): Promise<boolean> {
+  const dontConfirmOnExit = g_userSettings.get("dontConfirmOnExit");
   //let r = await prompt({
-  let {response, checkboxChecked} = await dialog.showMessageBox(g_mainWindow, {
+  const {response, checkboxChecked} = await dialog.showMessageBox(g_mainWindow, {
     //width: 800,
     title: `Confirm Exit`,
     message: "Incoming messages will not arrive until you relaunch SnapMail.\n" +
@@ -1111,9 +1100,10 @@ async function confirmExit() {
   return false;
 }
 
-//--------------------------------------------------------------------------------------------------
-// -- MENUS
-//--------------------------------------------------------------------------------------------------
+
+/**********************************************************************************************************************/
+/*  MENUS
+/**********************************************************************************************************************/
 
 const optionsMenuTemplate = [
   {
@@ -1144,7 +1134,7 @@ const networkMenuTemplate = [
     id: 'join-network',
     label: 'Join new Network',
     click: async function () {
-      let changed = await promptUid(false);
+      const changed = await promptUid(false);
       if (changed) {
         await g_mainWindow.loadURL(SWITCHING_URL);
         await g_mainWindow.setEnabled(false);
@@ -1158,7 +1148,7 @@ const networkMenuTemplate = [
     id: 'switch-network',
     label: 'Switch Network',
     click: async function () {
-      let changed = await promptUidSelect(false);
+      const changed = await promptUidSelect(false);
       if (changed) {
         await g_mainWindow.loadURL(SWITCHING_URL);
         await g_mainWindow.setEnabled(false);
@@ -1173,8 +1163,8 @@ const networkMenuTemplate = [
   {
     label: 'Change Network type',
     click: async function () {
-      let changed = await promptNetworkType(false);
-      let menu = Menu.getApplicationMenu();
+      const changed = await promptNetworkType(false);
+      const menu = Menu.getApplicationMenu();
       menu.getMenuItemById('join-network').enabled = !g_networkSettings.canMdns;
       menu.getMenuItemById('switch-network').enabled = !g_networkSettings.canMdns;
       menu.getMenuItemById('change-bootstrap').enabled = !g_networkSettings.canMdns;
@@ -1187,7 +1177,7 @@ const networkMenuTemplate = [
     id: 'change-bootstrap',
     label: 'Change Bootstrap Server',
     click: async function () {
-      let changed = await promptBootstrapUrl(false);
+      const changed = await promptBootstrapUrl(false);
       if (changed) {
         await startConductorAndLoadPage(true);
       }
@@ -1197,10 +1187,10 @@ const networkMenuTemplate = [
     label: 'Change Proxy Server',
     click: async function () {
       const prevCanProxy = g_networkSettings.canProxy;
-      let canProxy = await promptCanProxy();
+      const canProxy = await promptCanProxy();
       const proxyChanged = prevCanProxy !== canProxy;
       if (canProxy) {
-        let changed = await promptProxyUrl(false);
+        const changed = await promptProxyUrl(false);
         if(changed || proxyChanged) {
           await startConductorAndLoadPage(true);
         }
@@ -1299,11 +1289,11 @@ const mainMenuTemplate = [
       label: 'Quit',
       //accelerator: 'Command+Q',
       click: async function () {
-        let dontConfirmOnExit = g_userSettings.get("dontConfirmOnExit");
+        const dontConfirmOnExit = g_userSettings.get("dontConfirmOnExit");
         if (dontConfirmOnExit) {
           app.quit();
         } else {
-          let canExit = await confirmExit();
+          const canExit = await confirmExit();
           if (canExit) {
             app.quit();
           }
@@ -1355,7 +1345,7 @@ const trayMenuTemplate = [
   {
     label: 'Switch network',
     click: async function () {
-      let changed = await promptUidSelect(false);
+      const changed = await promptUidSelect(false);
       if(changed) {
         await g_mainWindow.setEnabled(false);
         await startConductorAndLoadPage(false);
@@ -1371,8 +1361,8 @@ const trayMenuTemplate = [
 ];
 
 
-//--------------------------------------------------------------------------------------------------
-// -- FINALIZE
-//--------------------------------------------------------------------------------------------------
+/**********************************************************************************************************************/
+/*  FINALIZE
+/**********************************************************************************************************************/
 
 Menu.setApplicationMenu(Menu.buildFromTemplate(mainMenuTemplate));

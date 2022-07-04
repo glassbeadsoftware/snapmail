@@ -1,18 +1,16 @@
-const { log } = require("./logger");
-const { CURRENT_DIR, HOLOCHAIN_BIN } = require("./constants");
-const { spawnSync } = require("child_process");
+import { log } from "./logger";
+import { CURRENT_DIR, HOLOCHAIN_BIN } from "./constants";
+import { spawnSync } from "child_process";
 
 
-/**
- *
- */
-function pingBootstrap(url) {
-  let bin = "ping";
-  let args = ['-n', 1, url.substring(8)];
+/** */
+export function pingBootstrap(url:string): boolean {
+  const bin = "ping";
+  const args: any[] = ['-n', 1, url.substring(8)];
 
-  // Spawn "holochain" subprocess
+  /** Spawn "holochain" subprocess */
   log('info', 'Spawning ' + bin + ' (url: ' + url + ')');
-  let holochain_proc = spawnSync(bin, args, {
+  const holochain_proc = spawnSync(bin, args, {
     cwd: CURRENT_DIR, detached: false, timeout: 5000, encoding: 'utf8', //stdio: 'pipe',
     env: {
       ... process.env, RUST_BACKTRACE: 1,
@@ -21,19 +19,16 @@ function pingBootstrap(url) {
   log('info', 'ping result: ' + holochain_proc.stdout);
   return holochain_proc.status == null || holochain_proc.status == 0;
 }
-module.exports.pingBootstrap = pingBootstrap;
 
 
-/**
- *
- */
-function getHolochainVersion() {
-  let bin = HOLOCHAIN_BIN;
-  let args = ['--version'];
+/** */
+export function getHolochainVersion(): Buffer & string {
+  const bin = HOLOCHAIN_BIN;
+  const args = ['--version'];
 
-  // Spawn "holochain" subprocess
+  /** Spawn "holochain" subprocess */
   log('info', 'Spawning ' + bin + ' (dirname: ' + CURRENT_DIR + ') | getHolochainVersion()');
-  let holochain_proc = spawnSync(bin, args, {
+  const holochain_proc = spawnSync(bin, args, {
     cwd: CURRENT_DIR,
     detached: false,
     timeout: 5000,
@@ -75,16 +70,15 @@ function getHolochainVersion() {
   // });
   // Done
 }
-module.exports.getHolochainVersion = getHolochainVersion;
 
 
 /**
  * Spawn 'lair-keystore --version' process
  */
-function getKeystoreVersion(keystore_bin) {
-  // -- Spawn Keystore -- //
-  let bin = keystore_bin;
-  let args = ["--version"];
+export function getKeystoreVersion(keystore_bin: string): Buffer & string {
+  /** Spawn Keystore */
+  const bin = keystore_bin;
+  const args = ["--version"];
   log('info', 'Spawning ' + bin + ' (dirname: ' + CURRENT_DIR + ') | getKeystoreVersion()');
   const keystore_proc = spawnSync(bin, args, {
     cwd: CURRENT_DIR,
@@ -121,4 +115,3 @@ function getKeystoreVersion(keystore_bin) {
   // // Done
   // return version;
 }
-module.exports.getKeystoreVersion = getKeystoreVersion;

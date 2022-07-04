@@ -1,12 +1,12 @@
-const path = require('path');
-const fs = require('fs');
-const { app, remote } = require('electron');
+import path from 'path';
+import fs from 'fs';
+import { app, remote } from 'electron';
 
 
 /**
  * Object for handling/storing all user preferences
  */
-class SettingsStore {
+export class SettingsStore {
   constructor(opts) {
     // Renderer process has to get `app` module via `remote`, whereas the main process can get it directly
     // app.getPath('userData') will return a string of the user's app data directory path.
@@ -33,7 +33,9 @@ class SettingsStore {
   }
 }
 
-function parseSettingsFile(filePath, defaults) {
+
+/** */
+export function parseSettingsFile(filePath, defaults) {
   // We'll try/catch it in case the file doesn't exist yet, which will be the case on the first application run.
   // `fs.readFileSync` will return a JSON string which we then parse into a Javascript object
   try {
@@ -43,6 +45,3 @@ function parseSettingsFile(filePath, defaults) {
     return defaults;
   }
 }
-
-// expose the class
-module.exports.SettingsStore = SettingsStore;
