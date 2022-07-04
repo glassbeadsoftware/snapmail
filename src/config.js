@@ -1,8 +1,7 @@
 const fs = require('fs');
 const { spawn } = require('child_process');
 const { bytesToBase64 } = require('byte-base64');
-//const { AdminWebsocket, AppWebsocket, AppStatusFilter } = require('@holochain/client');
-import { AdminWebsocket, AppWebsocket, AppStatusFilter } from '@holochain/client';
+const { AdminWebsocket, AppWebsocket, AppStatusFilter } = require('@holochain/client');
 //const { AdminWebsocket, AppWebsocket } = require('../holochain-conductor-api');
 
 const { log } = require('./logger');
@@ -27,7 +26,7 @@ function htos(u8array) {
 /**
  * Spawn 'lair-keystore' process
  */
-export async function spawnKeystore(keystore_bin, storagePath) {
+async function spawnKeystore(keystore_bin, storagePath) {
   // -- Spawn Keystore -- //
   let bin = keystore_bin;
   const lair_dir = winPath(path.join(storagePath, "keystore"))
@@ -72,6 +71,7 @@ export async function spawnKeystore(keystore_bin, storagePath) {
   // Done
   return keystore_proc;
 }
+module.exports.spawnKeystore = spawnKeystore;
 
 
 /**
@@ -91,7 +91,7 @@ function winPath(path) {
  * Write the conductor config to storage path
  * Using proxy and bootstrap server
  */
-export function generateConductorConfig(configPath, storagePath, adminPort, networkSettings) {
+function generateConductorConfig(configPath, storagePath, adminPort, networkSettings) {
   log('info', 'generateConductorConfig() with admin port ' + adminPort);
 
   if (networkSettings.proxyUrl === undefined || networkSettings.proxyUrl === '') {
@@ -165,13 +165,14 @@ network:
 
   fs.writeFileSync(configPath, config);
 }
+module.exports.generateConductorConfig = generateConductorConfig;
 
 
 /**
  *
  * @returns {{networkSettings: {bootstrapUrl: string, proxyUrl: string, canProxy: boolean, canMdns: boolean}, adminPort: number}}
  */
-export function loadConductorConfig(conductorConfigFilePath) {
+function loadConductorConfig(conductorConfigFilePath) {
   let canMdns;
   let canProxy = true;
   let bootstrapUrl;
@@ -224,6 +225,8 @@ export function loadConductorConfig(conductorConfigFilePath) {
     adminPort
   };
 }
+module.exports.loadConductorConfig = loadConductorConfig;
+
 
 // async function isAppInstalled(appPort) {
 //   const adminWs = await AdminWebsocket.connect(`ws://localhost:${adminPort}`);
@@ -237,7 +240,7 @@ export function loadConductorConfig(conductorConfigFilePath) {
  *
  * @returns {Promise<AdminWebsocket>}
  */
-export async function connectToAdmin(adminPort) {
+async function connectToAdmin(adminPort) {
   log('info','Connecting to admin at ' + adminPort + ' ...');
   let adminWs = undefined
   //try {
@@ -249,12 +252,13 @@ export async function connectToAdmin(adminPort) {
   //}
   return adminWs;
 }
+module.exports.connectToAdmin = connectToAdmin;
 
 
 /**
  *
  */
-export async function connectToApp(appPort) {
+async function connectToApp(appPort) {
   let appWs = undefined
   //try {
     appWs = await AppWebsocket.connect(`ws://localhost:${ appPort }`, 30000);
@@ -265,6 +269,7 @@ export async function connectToApp(appPort) {
   //}
   return appWs;
 }
+module.exports.connectToApp = connectToApp;
 
 
 /**
@@ -272,7 +277,7 @@ export async function connectToApp(appPort) {
  * @param adminWs
  * @returns {Promise<string|undefined>}
  */
-export async function getDnaHash(adminWs, uid) {
+async function getDnaHash(adminWs, uid) {
   const apps = await adminWs.listApps("running");
   log('info','getDnaHash('+ uid +') - Found ' + apps.length + ' app(s):');
   for (let app of apps) {
@@ -290,6 +295,7 @@ export async function getDnaHash(adminWs, uid) {
   }
   return undefined;
 }
+module.exports.getDnaHash = getDnaHash;
 
 
 /**
@@ -297,7 +303,7 @@ export async function getDnaHash(adminWs, uid) {
  * @param adminWs
  * @returns {Promise<number>}
  */
-export async function hasActivatedApp(adminWs) {
+async function hasActivatedApp(adminWs) {
   const dnas = await adminWs.listDnas();
   log('debug','Found ' + dnas.length + ' dna(s)');
   for (let dna of dnas) {
@@ -327,12 +333,13 @@ export async function hasActivatedApp(adminWs) {
   }
   return activeAppPort;
 }
+module.exports.hasActivatedApp = hasActivatedApp;
 
 
 /**
  * Uninstall current App and reinstall with new uid
  */
-export async function cloneCell(adminWs, uid) {
+async function cloneCell(adminWs, uid) {
   log('debug', 'cloneCell()');
 
   // Check if cell exists
@@ -366,12 +373,13 @@ export async function cloneCell(adminWs, uid) {
   // Done
   return true;
 }
+module.exports.cloneCell = cloneCell;
 
 
 /**
  *  Connect to Admin interface, install App and attach a port
  */
-export async function installApp(adminWs, uid) {
+async function installApp(adminWs, uid) {
   //const installed_app_id = SNAPMAIL_APP_ID;
   const installed_app_id = SNAPMAIL_APP_ID + '-' + uid;
   log('info', '     Installing  app: ' + installed_app_id);
@@ -413,3 +421,4 @@ export async function installApp(adminWs, uid) {
   log('info','App activated');
   return htos(hash);
 }
+module.exports.installApp = installApp;
