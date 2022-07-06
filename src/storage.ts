@@ -1,10 +1,11 @@
-import path from 'path';
+/*
+import * as path from 'path'
 import fs = require('fs');
 import { log } from './logger';
 import { app, dialog } from 'electron';
 import { RUNNING_ZOME_HASH_FILEPATH, DNA_VERSION_FILENAME } from './constants';
 
-/** */
+/!** *!/
 export function fatalError(message:string, error: any | undefined) {
   log('error', message);
   log('error', error);
@@ -19,10 +20,10 @@ export function fatalError(message:string, error: any | undefined) {
 }
 
 
-/** */
+/!** *!/
 export function setupStorage(storagePath: string, runningDnaHash: string): void {
   const dna_version_txt = path.join(storagePath, DNA_VERSION_FILENAME);
-  /** Create storage and setup if none found */
+  /!** Create storage and setup if none found *!/
   if(!fs.existsSync(storagePath)) {
     log('info', "Creating missing dir: " + storagePath);
     try {
@@ -33,7 +34,7 @@ export function setupStorage(storagePath: string, runningDnaHash: string): void 
     }
     return;
   }
-  /** Make sure its a compatible version */
+  /!** Make sure its a compatible version *!/
   let storedDnaHash = '<not found>';
   try {
     log('debug', 'Reading: ' + dna_version_txt);
@@ -50,7 +51,7 @@ export function setupStorage(storagePath: string, runningDnaHash: string): void 
     const canErase = promptVersionMismatch(msg);
     if (canErase) {
       try {
-        fs.rmdirSync(storagePath, {force: true, recursive: true});
+        fs.rmdirSync(storagePath, {/!*force: true,*!/ recursive: true});
         setupStorage(storagePath, runningDnaHash);
       } catch(e) {
         fatalError('Failed erasing current stored data', e);
@@ -60,11 +61,11 @@ export function setupStorage(storagePath: string, runningDnaHash: string): void 
 }
 
 
-/** */
+/!** *!/
 export function loadUidList(filePath: string): string[] {
   let uidList = [];
   try {
-    /** -- APP config -- */
+    /!** -- APP config -- *!/
     log('info', 'Reading file ' + filePath);
     const uidListString = fs.readFileSync(filePath).toString();
     uidList = uidListString.replace(/\r\n/g,'\n').split('\n');
@@ -82,9 +83,9 @@ export function loadUidList(filePath: string): string[] {
 }
 
 
-/**
+/!**
  * @returns dnaHash
- */
+ *!/
 export function loadRunningZomeHash(): string {
   if(fs.existsSync(RUNNING_ZOME_HASH_FILEPATH)) {
     return fs.readFileSync(RUNNING_ZOME_HASH_FILEPATH, 'utf-8');
@@ -95,16 +96,16 @@ export function loadRunningZomeHash(): string {
   if(fs.existsSync(app.getAppPath() + '/' + RUNNING_ZOME_HASH_FILEPATH)) {
     return fs.readFileSync(app.getAppPath() + '/' + RUNNING_ZOME_HASH_FILEPATH, 'utf-8');
   }
-  fatalError("Corrupt installation. Missing zome hash file.");
+  fatalError("Corrupt installation. Missing zome hash file.", undefined);
 }
 
 
-/**
+/!**
  * Return true if user wants to erase stored data
- */
+ *!/
 export function promptVersionMismatch(message: string): boolean {
   const result = dialog.showMessageBoxSync({
-    width: 900,
+    /!*width: 900,*!/
     title: `${app.getName()} - v${app.getVersion()}`,
     message: `Version mismatch`,
     detail: message,
@@ -130,3 +131,4 @@ export function promptVersionMismatch(message: string): boolean {
   }
   return false;
 }
+*/

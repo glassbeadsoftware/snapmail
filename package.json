@@ -2,7 +2,11 @@
   "name": "Snapmail",
   "version": "0.1.9",
   "description": "A minimalist email application on holochain",
-  "main": "src/main.js",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/glassbeadsoftware/snapmail.git"
+  },
+  "main": "dist/main.js",
   "scripts": {
     "package": "rimraf ui.zip && cd ui && bestzip ../ui.zip * && cd .. && hc web-app pack workdir",
     "postinstall": "electron-builder install-app-deps",
@@ -20,30 +24,29 @@
     "build-dev": ". scripts/build-ui.sh dev",
     "win": "electron . win --no-sandbox",
     "win-dev": "set APP_DEV=true && electron . win --no-sandbox",
-    "start": "./node_modules/.bin/electron electron",
+    "start": "tsc && electron .",
     "empty": "./node_modules/.bin/electron .",
     "alex": "./node_modules/.bin/electron . alex --no-sandbox",
     "billy": "./node_modules/.bin/electron . billy --no-sandbox",
     "camille": "./node_modules/.bin/electron . camille --no-sandbox",
     "start-no": "./node_modules/.bin/electron electron --no-sandbox --enable-logging",
     "ui-install": "cd build/snapmail-ui && rm package-lock.json && npm install",
-    "hc-install": "bash scripts/workflow/install-hc-tools.sh",
+    "ci:hc-install": "bash scripts/workflow/install-hc-tools.sh",
     "clean": "bash scripts/npm/clean.sh",
     "setup": "bash scripts/npm/setup.sh",
     "dna-pack": "bash scripts/npm/dna-pack.sh",
+    "hash-zome-install": "bash scripts/download-hash-zome.sh",
     "hash-zome": "bash scripts/npm/hash-zome.sh",
     "tsc": "tsc",
     "lint": "eslint --ext .ts src",
     "build-prod": "bash scripts/build-ui.sh prod"
   },
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/glassbeadsoftware/snapmail.git"
-  },
   "keywords": [
     "Electron",
     "Holochain"
   ],
+  "author": "Harris-Braun Enterprises, LLC and contributors",
+  "license": "CAL-1.0",
   "build": {
     "productName": "Snapmail",
     "afterSign": "./afterSignHook.js",
@@ -78,8 +81,6 @@
       "publishAutoUpdate": true
     }
   },
-  "author": "Harris-Braun Enterprises, LLC and contributors",
-  "license": "CAL-1.0",
   "devDependencies": {
     "@typescript-eslint/eslint-plugin": "^5.30.4",
     "@typescript-eslint/parser": "^5.30.4",
@@ -87,8 +88,8 @@
     "concurrently": "^6.2.1",
     "concurrently-repeat": "^0.0.1",
     "cross-env": "^7.0.3",
-    "electron": "12.0.6",
-    "electron-builder": "^22.11.7",
+    "electron": "17.1.1",
+    "electron-builder": "^22.14.13",
     "electron-notarize": "^1.0.0",
     "eslint": "^8.19.0"
   },

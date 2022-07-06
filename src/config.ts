@@ -41,7 +41,7 @@ export async function spawnKeystore(keystore_bin, storagePath: string): Promise<
   });
   /** Handle Outputs */
   /** Wait for holochain to boot up */
-  await new Promise((resolve, reject) => {
+  const promise: Promise<void> = new Promise((resolve, reject) => {
     keystore_proc.stdout.on('data', (data) => {
       log('info', 'lair-keystore: ' + data.toString());
       if(data.toString().indexOf(LAIR_MAGIC_READY_STRING) > -1) {
@@ -67,6 +67,7 @@ export async function spawnKeystore(keystore_bin, storagePath: string): Promise<
       // app.quit();
     });
   });
+  await promise;
   /** Done */
   return keystore_proc;
 }
@@ -248,7 +249,7 @@ export async function connectToAdmin(adminPort: number): Promise<AdminWebsocket>
 
 
 /** */
-export async function connectToApp(appPort: number): Promise<AppWebsocket> {
+export async function connectToApp(appPort: string): Promise<AppWebsocket> {
   let appWs = undefined
   //try {
     appWs = await AppWebsocket.connect(`ws://localhost:${ appPort }`, 30000);
@@ -263,7 +264,7 @@ export async function connectToApp(appPort: number): Promise<AppWebsocket> {
 
 /** */
 export async function getDnaHash(adminWs: AdminWebsocket, uid: string): Promise<string|undefined> {
-  const apps = await adminWs.listApps("running");
+  const apps = await adminWs.listApps({status_filter: AppStatusFilter.Running });
   log('info','getDnaHash('+ uid +') - Found ' + apps.length + ' app(s):');
   for (const app of apps) {
     log('info',' -  ' + app.installed_app_id);
@@ -289,7 +290,7 @@ export async function hasActivatedApp(adminWs: AdminWebsocket): Promise<number> 
   const dnas = await adminWs.listDnas();
   log('debug','Found ' + dnas.length + ' dna(s)');
   for (const dna of dnas) {
-    log('debug',' -  ' + htos(dna));
+    log('debug',' -  ' + dna); //htos()
   }
 
   /** Active Apps */

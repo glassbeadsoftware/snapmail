@@ -1,7 +1,7 @@
 import * as path from 'path'
 import { app } from 'electron'
 import { HolochainRunnerOptions, StateSignal, PathOptions } from 'electron-holochain'
-import {MAIN_APP_ID, COMMUNITY_PROXY_URL} from './constants'
+import { SNAPMAIL_APP_ID } from './constants'
 
 // these messages get seen on the splash page
 export enum StateSignalText {
@@ -66,7 +66,7 @@ function createHolochainOptions(uid: string, storagePath: string): HolochainRunn
   const options: HolochainRunnerOptions = {
     happPath: whereDnaPath,
     datastorePath: path.join(storagePath, 'databases-' + app.getVersion()),
-    appId: MAIN_APP_ID + '-' + uid,
+    appId: SNAPMAIL_APP_ID + '-' + uid,
     //appId: MAIN_APP_ID,
     appWsPort: 0,
     adminWsPort: 1235,

@@ -12,9 +12,13 @@ jobs:
       - name: Install hc tool and wasm target
         shell: bash # important because this runs shell scripts
         run: |
-          npm run hc-install
+          npm run ci:hc-install
+      # Install hash-zome binary
+      - name: Hash Zome Install
+        run: |
+          npm run hash-zome-install
       # Download snapmail repos (rsm & ui)
-      - name: Download snapmail repos (rsm & ui)
+      - name: Download snapmail-ui repo
         shell: bash
         run: |
           npm run setup

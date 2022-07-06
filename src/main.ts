@@ -1,30 +1,70 @@
-// - Modules to control application life and create native browser window
-import { app, BrowserWindow, Menu, shell, Tray, screen, Notification, nativeImage, globalShortcut } from 'electron';
-import { spawn } from 'child_process';
+import {
+  app,
+  BrowserWindow,
+  Menu,
+  shell,
+  Tray,
+  Notification,
+  nativeImage,
+  globalShortcut,
+  MenuItemConstructorOptions, RelaunchOptions
+} from 'electron';
 import fs from 'fs';
-import path from 'path';
-import kill from 'tree-kill';
+import * as path from 'path'
 import { dialog } from 'electron';
 import prompt from 'electron-prompt';
 import AutoLaunch from 'auto-launch';
 import { autoUpdater } from 'electron-updater';
 import IS_DEV from 'electron-is-dev';
 
+import {AdminWebsocket} from "@holochain/client";
+import {CellId} from "@holochain/client/lib/types/common";
+
+import initAgent, {
+  getRunnerVersion, getLairVersion,
+  StateSignal,
+  STATUS_EVENT,
+  APP_PORT_EVENT,
+  ERROR_EVENT,
+  HOLOCHAIN_RUNNER_QUIT,
+  LAIR_KEYSTORE_QUIT,
+} from 'electron-holochain'
+
 /** My Modules */
 import {
-  CONDUCTOR_CONFIG_FILENAME, UID_LIST_FILENAME, CONFIG_PATH, STORAGE_PATH,
-  CURRENT_DIR, DEFAULT_BOOTSTRAP_URL, SNAPMAIL_APP_ID, LAIR_KEYSTORE_BIN,
-  HOLOCHAIN_BIN, REPORT_BUG_URL, NETWORK_URL, INDEX_URL, SWITCHING_URL, ERROR_URL,
-HC_MAGIC_READY_STRING, IS_DEBUG, ICON_FILEPATH
+  CONDUCTOR_CONFIG_FILENAME,
+  UID_LIST_FILENAME,
+  CONFIG_PATH,
+  CURRENT_DIR,
+  DEFAULT_BOOTSTRAP_URL,
+  SNAPMAIL_APP_ID,
+  LAIR_KEYSTORE_BIN,
+  HOLOCHAIN_BIN,
+  REPORT_BUG_URL,
+  NETWORK_URL,
+  INDEX_URL,
+  SWITCHING_URL,
+  ERROR_URL,
+  HC_MAGIC_READY_STRING,
+  IS_DEBUG,
+  ICON_FILEPATH,
+  BACKGROUND_COLOR,
+  LINUX_ICON_FILE,
+  SPLASH_FILE,
+  DEVELOPMENT_UI_URL,
+  USER_DATA_PATH, APP_DATA_PATH, DNA_VERSION_FILENAME, RUNNING_ZOME_HASH_FILEPATH, MAIN_FILE
 } from './constants';
-import { log, logger } from './logger';
+import { log, electronLogger } from './logger';
 import {
   generateConductorConfig, spawnKeystore, hasActivatedApp, connectToAdmin,
   connectToApp, installApp, getDnaHash, loadConductorConfig } from './config';
 import { SettingsStore } from './userSettings';
-import { setupStorage, loadRunningZomeHash, loadUidList } from './storage';
-import { pingBootstrap, getKeystoreVersion, getHolochainVersion } from "./spawn";
-import {AdminWebsocket} from "@holochain/client";
+import { pingBootstrap } from "./spawn";
+
+import  { loadUserSettings } from './userSettings'
+import {addUidToDisk, initApp} from "./init";
+import {BINARY_PATHS, createHolochainOptions, stateSignalToText} from "./holochain";
+
 
 /**********************************************************************************************************************/
 /*  PRE-INIT
@@ -67,14 +107,22 @@ let g_updater = undefined;
 let g_holochain_proc = undefined;
 let g_keystore_proc = undefined;
 let g_adminWs: AdminWebsocket = undefined;
-let g_cellId: number = undefined;
+let g_cellId: CellId = undefined;
 let g_canQuit = false;
 let g_uid = '';
 
+
+/** */
+let g_sessionDataPath = undefined;
+let g_runner_version = 'holochain runner version (unknown)'
+let g_lair_version = 'lair version (unknown)'
+let g_statusEmitter = undefined;
+let g_shutdown = undefined;
+
+
 /** values retrieved from holochain */
 let g_adminPort = 0;
-let g_appPort = 0;
-let g_lair_version = ""
+let g_appPort = '';
 let g_holochain_version = ""
 let g_dnaHash = undefined;
 let g_zomeHash = '<unknown>'
@@ -102,34 +150,35 @@ const autoLauncher = new AutoLaunch({
 });
 
 
-/** --  Create missing dirs -- */
+//
+// /** --  Create missing dirs -- */
+//
+// if (!fs.existsSync(CONFIG_PATH)) {
+//   log('info', "Creating missing dir: " + CONFIG_PATH);
+//   fs.mkdirSync(CONFIG_PATH)
+// }
+// if (!fs.existsSync(STORAGE_PATH)) {
+//   log('info', "Creating missing dir: " + STORAGE_PATH);
+//   fs.mkdirSync(STORAGE_PATH)
+// }
 
-if (!fs.existsSync(CONFIG_PATH)) {
-  log('info', "Creating missing dir: " + CONFIG_PATH);
-  fs.mkdirSync(CONFIG_PATH)
-}
-if (!fs.existsSync(STORAGE_PATH)) {
-  log('info', "Creating missing dir: " + STORAGE_PATH);
-  fs.mkdirSync(STORAGE_PATH)
-}
-
-
-/** -- determine session id and session specific folders -- */
-{
-  let sessionId: string;
-  if (process.argv.length > 2) {
-    sessionId = process.argv[2];
-  } else {
-    sessionId = 'default';
-  }
-
-  g_sessionStoragePath = path.join(STORAGE_PATH, sessionId);
-  log('info', { g_sessionStoragePath });
-  /** -- Determine final conductor config file path -- */
-  g_conductorConfigFilePath = path.join(g_sessionStoragePath, CONDUCTOR_CONFIG_FILENAME);
-  g_uidListFilePath = path.join(g_sessionStoragePath, UID_LIST_FILENAME);
-  log('debug', { g_conductorConfigFilePath });
-}
+//
+// /** -- determine session id and session specific folders -- */
+// {
+//   let sessionId: string;
+//   if (process.argv.length > 2) {
+//     sessionId = process.argv[2];
+//   } else {
+//     sessionId = 'default';
+//   }
+//
+//   g_sessionStoragePath = path.join(STORAGE_PATH, sessionId);
+//   log('info', { g_sessionStoragePath });
+//   /** -- Determine final conductor config file path -- */
+//   g_conductorConfigFilePath = path.join(g_sessionStoragePath, CONDUCTOR_CONFIG_FILENAME);
+//   g_uidListFilePath = path.join(g_sessionStoragePath, UID_LIST_FILENAME);
+//   log('debug', { g_conductorConfigFilePath });
+// }
 
 
 /**********************************************************************************************************************/
@@ -189,7 +238,7 @@ autoUpdater.on('update-downloaded', () => {
 })
 
 /** export this to MenuItem click callback */
-function checkForUpdates(menuItem, _focusedWindow, _event): void {
+function checkForUpdates(menuItem, /*_focusedWindow, _event*/): void {
   if(IS_DEBUG || IS_DEV) {
     dialog.showMessageBox({
       title: 'Check for Update failed',
@@ -289,7 +338,7 @@ ipc.on('networkInfo', async (event) => {
 
 
 /** */
-function sleep(ms:number): Promise<void> {
+function delay(ms:number): Promise<void> {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
 
@@ -338,23 +387,74 @@ function updateNotificationSetting(canNotify: boolean): void {
 }
 
 
-/** Create the main window global */
-function createWindow(): BrowserWindow {
-  const { width, height } = g_userSettings.get('windowBounds');
-  const mainWindow = new BrowserWindow({
-    width,
-    height,
+
+/**
+ *
+ */
+const createSplashWindow = (): BrowserWindow => {
+  /** Create the browser window */
+  const splashWindow = new BrowserWindow({
+    height: 450,
+    width: 850,
+    center: true,
+    resizable: false,
+    frame: false,
+    show: false,
+    backgroundColor: BACKGROUND_COLOR,
     webPreferences: {
-      nodeIntegration: true,
       contextIsolation: false,
+      nodeIntegration: true,
       devTools: true,
       webgl: false,
       enableWebSQL: false,
     },
-    icon: ICON_FILEPATH,
-    //autoHideMenuBar: true,
-  });
-  const { x, y } = g_userSettings.get('windowPosition');
+    icon: process.platform === 'linux'? LINUX_ICON_FILE : ICON_FILEPATH,
+  })
+  /** and load it */
+  if (app.isPackaged) {
+    splashWindow.loadFile(SPLASH_FILE)
+  } else {
+    /** development */
+    //splashWindow.webContents.openDevTools();
+    splashWindow.loadURL(`${DEVELOPMENT_UI_URL}/splashscreen.html`)
+  }
+  /** once its ready to show, show */
+  splashWindow.once('ready-to-show', () => {
+    splashWindow.show()
+  })
+  /** Done */
+  return splashWindow
+}
+
+
+
+/**
+ *
+ */
+const createMainWindow = async (appPort: string): Promise<BrowserWindow> => {
+  /** Create the browser window */
+  let { width, height } = g_userSettings.get('windowBounds');
+  let title = "Where v" + app.getVersion() + " - " + g_uid
+  const options: Electron.BrowserWindowConstructorOptions = {
+    height,
+    width,
+    title: IS_DEBUG? "[DEBUG] " + title : title,
+    show: false,
+    backgroundColor: BACKGROUND_COLOR,
+    // use these settings so that the ui can check paths
+    webPreferences: {
+      contextIsolation: false,
+      nodeIntegration: true,
+      devTools: true,
+      webgl: false,
+      enableWebSQL: false,
+    },
+    icon: process.platform === 'linux'? LINUX_ICON_FILE : ICON_FILEPATH,
+  }
+  let mainWindow = new BrowserWindow(options)
+
+  /** Things to setup at start */
+  let { x, y } = g_userSettings.get('windowPosition');
   mainWindow.setPosition(x, y);
 
   globalShortcut.register('f5', function() {
@@ -362,34 +462,48 @@ function createWindow(): BrowserWindow {
     mainWindow.reload()
   })
 
-  /**
-   * The BrowserWindow class extends the node.js core EventEmitter class, so we use that API
-   * to listen to events on the BrowserWindow. The resize event is emitted when the window size changes.
-   */
+  if (IS_DEBUG) {
+    mainWindow.webContents.openDevTools();
+  }
+
+  /** load the index.html of the app */
+  let mainUrl = app.isPackaged? MAIN_FILE : path.join(DEVELOPMENT_UI_URL, "index.html")
+  mainUrl += "?PORT=" + appPort + "&UID=" + g_uid
+  log('info', "createMainWindow ; mainUrl = " + mainUrl)
+  try {
+    await mainWindow.loadURL("file://" + mainUrl)
+  } catch(err) {
+    log('error', 'loadURL() failed:');
+    log('error',{err});
+  }
+
+  /** Open <a href='' target='_blank'> with default system browser */
+  mainWindow.webContents.on('new-window', function (event, url) {
+    event.preventDefault()
+    log('info', "new-window ; open: " + url)
+    shell.openExternal(url).then(_r => {});
+  })
+  /** once its ready to show, show */
+  mainWindow.once('ready-to-show', () => {
+    mainWindow.show()
+  })
+
   mainWindow.on('resize', () => {
-    /** The event doesn't pass us the window size,
-     * so we call the `getBounds` method which returns an object with
-     * the height, width, and x and y coordinates.*/
-    const { width, height } = mainWindow.getBounds();
-    /** Now that we have them, save them using the `set` method. */
+    // The event doesn't pass us the window size,
+    // so we call the `getBounds` method which returns an object with
+    // the height, width, and x and y coordinates.
+    let { width, height } = mainWindow.getBounds();
+    // Now that we have them, save them using the `set` method.
     g_userSettings.set('windowBounds', { width, height });
   });
 
-  // Open <a href='' target='_blank'> with default system browser
-  mainWindow.webContents.on('new-window', function (event, url) {
-    event.preventDefault();
-    shell.openExternal(url).then(_r => {});
-  });
-
-  /** Open DevTools */
-  if (IS_DEBUG) mainWindow.webContents.openDevTools();
-
-  /** Emitted on request to close window */
-  mainWindow.on('close', (event) => {
-    log('debug', '*** mainWindow "close" - ' + g_canQuit);
-    const positions = mainWindow.getPosition();
+  /** Save position on close */
+  mainWindow.on('close', async (event) => {
+    let positions = mainWindow.getPosition();
     g_userSettings.set('windowPosition', { x: Math.floor(positions[0]), y: Math.floor(positions[1]) });
     if (g_canQuit) {
+      log('info', 'WINDOW EVENT "close" -> canQuit')
+      //await try_shutdown();
       mainWindow = null;
     } else {
       event.preventDefault();
@@ -398,361 +512,572 @@ function createWindow(): BrowserWindow {
   })
 
   /** Emitted when the window is closed. */
-  mainWindow.on('closed', function () {
-    log('debug', '*** mainWindow "closed"');
-    try {
-      killHolochain().then(() => {
-        log('info', '*** Holochain promise Closed');
-      });
-    } catch (err) {
-      log('error', '*** Error while closing Holochain:');
-      log('error', err);
-    }
-    /** Wait for kill subprocess to finish on slow machines */
-    const start = Date.now();
-    let diff = 0;
-    do {
-      diff = Date.now() - start;
-    } while(diff < 1000);
-    log('info', '*** Holochain Closed');
+  mainWindow.on('closed', async function () {
+    log('info', 'WINDOW EVENT "closed"');
+    // await try_shutdown();
+    // /** Wait for kill subprocess to finish on slow machines */
+    // let start = Date.now();
+    // let diff = 0;
+    // do {
+    //   diff = Date.now() - start;
+    // } while(diff < 1000);
+    // log('info', '*** Holochain Closed\n');
     /**
      * Dereference the window object, usually you would store windows
      * in an array if your app supports multi windows, this is the time
      * when you should delete the corresponding element.
      */
     g_mainWindow = null;
+    // g_statusEmitter = null;
   });
-
-  //// Check for update
-  //mainWindow.once('ready-to-show', () => {
-  //  autoUpdater.checkForUpdatesAndNotify();
-  //});
 
   /** Done */
-  return mainWindow;
+  return mainWindow
 }
 
 
-/** */
-async function spawnHolochainProc(): Promise<void> {
-  log('debug','spawnHolochainProc...');
-  const bin = HOLOCHAIN_BIN;
-  const args = ['-c', g_conductorConfigFilePath];
 
-  /** Spawn "holochain" subprocess */
-  log('info', 'Spawning ' + bin + ' (dirname: ' + CURRENT_DIR + ') | spawnHolochainProc()');
-  const holochain_proc = spawn(bin, args, {
-    cwd: CURRENT_DIR,
-    detached: false,
-    //stdio: 'pipe',
-    env: {
-      ...process.env,
-      RUST_BACKTRACE: 1,
-    },
-  });
-  /** Handle error output */
-  holochain_proc.stderr.on('data', (data) => log('error', '*** holochain > ' + data.toString()));
-  /** if "holochain" exit, close the app */
-  holochain_proc.on('exit', (code, signal) => {
-    if (signal) {
-      log('info', `holochain process terminated due to receipt of signal ${signal}`)
-    } else {
-      log('info', `holochain process terminated with exit code ${code}`)
-    }
-    // g_canQuit = true;
-    if (g_canQuit) {
-      app.quit();
-    }
-  });
-  /** Wait for holochain to boot up */
-  log('info', 'holochain <-> waiting for magic ready string');
-  await new Promise(async (resolve, reject) => {
-    const start_time = Date.now()
-    let total_output = ""
-    holochain_proc.stdout.on('data', (data) => {
-      const output = data.toString();
-      total_output += output
-      log('info', 'holochain: ' + output);
-      if(output.indexOf(HC_MAGIC_READY_STRING) > -1) {
-        const regex = /###ADMIN_PORT:([0-9]*)###/gm;
-        const match = regex.exec(total_output);
-        //log('debug', {match});
-        if (match === undefined || match === null || match.length === 0) {
-          log('warn', 'ADMIN port not found in holochain total_output:');
-          log('warn', {total_output});
-          return;
-        }
-        g_adminPort = match[1];
-        //log('info', {total_output});
-        resolve();
-      } else {
-        log('info', 'holochain <- waiting for magic ready string');
-      }
-    });
-    while(Date.now() - start_time < 60 * 1000) {
-      await sleep(100);
-    }
-    reject(new Error("Failed to retrieve holochain's magic ready string from child process"))
-  });
-  /** Done */
-  g_holochain_proc = holochain_proc;
-}
+//
+// /** Create the main window global */
+// function createWindow(): BrowserWindow {
+//   const { width, height } = g_userSettings.get('windowBounds');
+//   let title = "Where v" + app.getVersion() + " - " + g_uid
+//   let mainWindow = new BrowserWindow({
+//     width,
+//     height,
+//     title,
+//     webPreferences: {
+//       nodeIntegration: true,
+//       contextIsolation: false,
+//       devTools: true,
+//       webgl: false,
+//       enableWebSQL: false,
+//     },
+//     icon: ICON_FILEPATH,
+//     //autoHideMenuBar: true,
+//   });
+//   const { x, y } = g_userSettings.get('windowPosition');
+//   mainWindow.setPosition(x, y);
+//
+//   globalShortcut.register('f5', function() {
+//     //console.log('f5 is pressed')
+//     mainWindow.reload()
+//   })
+//
+//   if (IS_DEBUG) {
+//     mainWindow.webContents.openDevTools();
+//   }
+//
+//   /**
+//    * The BrowserWindow class extends the node.js core EventEmitter class, so we use that API
+//    * to listen to events on the BrowserWindow. The resize event is emitted when the window size changes.
+//    */
+//   mainWindow.on('resize', () => {
+//     /** The event doesn't pass us the window size,
+//      * so we call the `getBounds` method which returns an object with
+//      * the height, width, and x and y coordinates.*/
+//     const { width, height } = mainWindow.getBounds();
+//     /** Now that we have them, save them using the `set` method. */
+//     g_userSettings.set('windowBounds', { width, height });
+//   });
+//
+//   // Open <a href='' target='_blank'> with default system browser
+//   mainWindow.webContents.on('new-window', function (event, url) {
+//     event.preventDefault();
+//     shell.openExternal(url).then(_r => {});
+//   });
+//
+//   /** Open DevTools */
+//   if (IS_DEBUG) mainWindow.webContents.openDevTools();
+//
+//   /** Emitted on request to close window */
+//   mainWindow.on('close', (event) => {
+//     log('debug', '*** mainWindow "close" - ' + g_canQuit);
+//     const positions = mainWindow.getPosition();
+//     g_userSettings.set('windowPosition', { x: Math.floor(positions[0]), y: Math.floor(positions[1]) });
+//     if (g_canQuit) {
+//       mainWindow = null;
+//     } else {
+//       event.preventDefault();
+//       mainWindow.hide();
+//     }
+//   })
+//
+//   /** Emitted when the window is closed. */
+//   mainWindow.on('closed', function () {
+//     log('debug', '*** mainWindow "closed"');
+//     try {
+//       killHolochain().then(() => {
+//         log('info', '*** Holochain promise Closed');
+//       });
+//     } catch (err) {
+//       log('error', '*** Error while closing Holochain:');
+//       log('error', err);
+//     }
+//     /** Wait for kill subprocess to finish on slow machines */
+//     const start = Date.now();
+//     let diff = 0;
+//     do {
+//       diff = Date.now() - start;
+//     } while(diff < 1000);
+//     log('info', '*** Holochain Closed');
+//     /**
+//      * Dereference the window object, usually you would store windows
+//      * in an array if your app supports multi windows, this is the time
+//      * when you should delete the corresponding element.
+//      */
+//     g_mainWindow = null;
+//   });
+//
+//   //// Check for update
+//   //mainWindow.once('ready-to-show', () => {
+//   //  autoUpdater.checkForUpdatesAndNotify();
+//   //});
+//
+//   /** Done */
+//   return mainWindow;
+// }
 
 
-/** * Make sure there is no outstanding holochain procs */
-async function killHolochain(): Promise<void> {
-  /** SIGTERM by default */
-  let canWaitForHolochain = false;
-  if(g_holochain_proc && g_holochain_proc.pid) {
-    canWaitForHolochain = true;
-    log('info', 'Killing holochain sub processes...');
-    kill(g_holochain_proc.pid, function(err) {
-      canWaitForHolochain = false;
-      if(!err) {
-        log('info', 'killed all holochain sub processes');
-      } else {
-        log('error', err)
-      }
-    });
-  }
-  let canWaitForKeystore = false;
-  if(g_keystore_proc && g_keystore_proc.pid) {
-    canWaitForKeystore = true;
-    log('info', 'Killing lair-keystore sub processes...');
-    kill(g_keystore_proc.pid, function(err) {
-      canWaitForKeystore = false;
-      if(!err) {
-        log('info', 'killed all lair-keystore sub processes');
-      } else {
-        log('error', err)
-      }
-    });
-  }
-  /* Wait for the kill commands to complete */
-  log('info', 'waiting...');
-  const start_time = Date.now()
-  while(canWaitForHolochain || canWaitForKeystore) {
-    await sleep(10);
-    if (Date.now() - start_time > 5 * 1000) {
-      log('error', 'Killing sub-processes TIMED-OUT. Aborted.');
-      break;
-    }
-  }
-  log('info', 'Killing sub-processes DONE.');
-}
+
+//
+// /** */
+// async function spawnHolochainProc(): Promise<ChildProcessWithoutNullStreams> {
+//   log('debug','spawnHolochainProc...');
+//   const bin = HOLOCHAIN_BIN;
+//   const args = ['-c', g_conductorConfigFilePath];
+//
+//   /** Spawn "holochain" subprocess */
+//   log('info', 'Spawning ' + bin + ' (dirname: ' + CURRENT_DIR + ') | spawnHolochainProc()');
+//   const holochain_proc = spawn(bin, args, {
+//     cwd: CURRENT_DIR,
+//     detached: false,
+//     //stdio: 'pipe',
+//     env: {
+//       ...process.env,
+//       RUST_BACKTRACE: "1",
+//     },
+//   });
+//   if (!holochain_proc) {
+//     throw new Error("Failed to spawn holochain's magic ready string from child process");
+//   }
+//   /** Handle error output */
+//   holochain_proc.stderr.on('data', (data) => log('error', '*** holochain > ' + data.toString()));
+//   /** if "holochain" exit, close the app */
+//   holochain_proc.on('exit', (code, signal) => {
+//     if (signal) {
+//       log('info', `holochain process terminated due to receipt of signal ${signal}`)
+//     } else {
+//       log('info', `holochain process terminated with exit code ${code}`)
+//     }
+//     // g_canQuit = true;
+//     if (g_canQuit) {
+//       app.quit();
+//     }
+//   });
+//   /** Wait for holochain to boot up */
+//   log('info', 'holochain <-> waiting for magic ready string');
+//   const promise: Promise<void> = await new Promise(async (resolve, reject) => {
+//     const start_time = Date.now()
+//     let total_output = ""
+//     holochain_proc.stdout.on('data', (data) => {
+//       const output = data.toString();
+//       total_output += output
+//       log('info', 'holochain: ' + output);
+//       if(output.indexOf(HC_MAGIC_READY_STRING) > -1) {
+//         const regex = /###ADMIN_PORT:([0-9]*)###/gm;
+//         const match = regex.exec(total_output);
+//         //log('debug', {match});
+//         if (match === undefined || match === null || match.length === 0) {
+//           log('warn', 'ADMIN port not found in holochain total_output:');
+//           log('warn', {total_output});
+//           return;
+//         }
+//         g_adminPort = parseInt(match[1]);
+//         //log('info', {total_output});
+//         resolve();
+//       } else {
+//         log('info', 'holochain <- waiting for magic ready string');
+//       }
+//     });
+//     while(Date.now() - start_time < 60 * 1000) {
+//       await delay(100);
+//     }
+//     reject(new Error("Failed to retrieve holochain's magic ready string from child process"))
+//   });
+//   /** Done */
+//   await promise;
+//   return holochain_proc;
+// }
+
+
+// /** * Make sure there is no outstanding holochain procs */
+// async function killHolochain(): Promise<void> {
+//   /** SIGTERM by default */
+//   let canWaitForHolochain = false;
+//   if(g_holochain_proc && g_holochain_proc.pid) {
+//     canWaitForHolochain = true;
+//     log('info', 'Killing holochain sub processes...');
+//     kill(g_holochain_proc.pid, function(err) {
+//       canWaitForHolochain = false;
+//       if(!err) {
+//         log('info', 'killed all holochain sub processes');
+//       } else {
+//         log('error', err)
+//       }
+//     });
+//   }
+//   let canWaitForKeystore = false;
+//   if(g_keystore_proc && g_keystore_proc.pid) {
+//     canWaitForKeystore = true;
+//     log('info', 'Killing lair-keystore sub processes...');
+//     kill(g_keystore_proc.pid, function(err) {
+//       canWaitForKeystore = false;
+//       if(!err) {
+//         log('info', 'killed all lair-keystore sub processes');
+//       } else {
+//         log('error', err)
+//       }
+//     });
+//   }
+//   /* Wait for the kill commands to complete */
+//   log('info', 'waiting...');
+//   const start_time = Date.now()
+//   while(canWaitForHolochain || canWaitForKeystore) {
+//     await delay(10);
+//     if (Date.now() - start_time > 5 * 1000) {
+//       log('error', 'Killing sub-processes TIMED-OUT. Aborted.');
+//       break;
+//     }
+//   }
+//   log('info', 'Killing sub-processes DONE.');
+// }
+
+
+// /**
+//  * Prepare conductor config and spawn holochain subprocess
+//  * @param canRegenerateConfig - Regenerate the conductor config before relaunching the holochain process.
+//  */
+// async function startConductorAndLoadPage(canRegenerateConfig: boolean): Promise<void> {
+//   //g_canQuit = false;
+//   await killHolochain(); // Make sure there is no outstanding Holochain & keystore procs
+//   g_lair_version = getKeystoreVersion(LAIR_KEYSTORE_BIN);
+//   g_keystore_proc = await spawnKeystore(LAIR_KEYSTORE_BIN, g_sessionStoragePath);
+//   //await sleep(2000);
+//   if (canRegenerateConfig) {
+//     generateConductorConfig(g_conductorConfigFilePath, g_sessionStoragePath, g_adminPort, g_networkSettings);
+//   }
+//   log('info', 'Launching conductor...');
+//   //g_canQuit = true;
+//
+//   let indexUrl;
+//   try {
+//     const res = pingBootstrap(g_networkSettings.bootstrapUrl)
+//     log('info', 'bootstrap result: ' + res)
+//     /** - Spawn Conductor */
+//     g_holochain_version = getHolochainVersion();
+//     // await sleep(1000); // Time buffer to make sure holochain process closed
+//     g_holochain_proc = await spawnHolochainProc();
+//     /** - Connect to Conductor and activate app */
+//     g_adminWs = await connectToAdmin(g_adminPort);
+//     const activeAppPort = await hasActivatedApp(g_adminWs);
+//     if(activeAppPort === 0) {
+//       // - Prompt for first UID
+//       if (!g_networkSettings.canMdns) {
+//           g_uid = '<my-network-access-key>';
+//           await promptUid(true, g_mainWindow);
+//       } else {
+//         addUid("local-mdns")
+//       }
+//       await installApp(g_adminWs, g_uid);
+//       // log('debug','Attaching to app at ' + g_appPort + ' ...');
+//       g_appPort = await g_adminWs.attachAppInterface({port: undefined});
+//       log('debug', {g_appPort});
+//       g_appPort = g_appPort.port;
+//       log('info','App Interface attached: ' + g_appPort);
+//     } else {
+//       g_appPort = activeAppPort;
+//       /** - Prompt for UID selection or prefered UID if multiple uid found */
+//       if (g_uid === '' && g_uidList !== undefined && g_uidList.length > 0) {
+//         const maybe_uid = g_userSettings.get('uid');
+//         if (maybe_uid !== undefined) {
+//           g_uid = maybe_uid;
+//         } else {
+//           g_uid = g_uidList[0];
+//           if(g_uidList.length > 1) {
+//             await promptUidSelect(false);
+//           }
+//         }
+//       }
+//     }
+//     indexUrl = INDEX_URL + g_appPort + '&UID=' + g_uid;
+//     log('debug', indexUrl);
+//     g_dnaHash = await getDnaHash(g_adminWs, g_uid);
+//   } catch (err) {
+//     log('error', 'Conductor setup failed:');
+//     log('error',{err});
+//     //indexUrl = INDEX_URL;
+//     await g_mainWindow.loadURL(ERROR_URL);
+//     return;
+//     //// Better to kill app if holochain not connected
+//     //app.quit();
+//   }
+//   /** -- Check username -- */
+//   try
+//   {
+//     const installed_app_id = SNAPMAIL_APP_ID + '-' + g_uid;
+//     const appWs = await connectToApp(g_appPort);
+//     const appInfo = await appWs.appInfo({ installed_app_id }, 3000);
+//     log('debug', {appInfo});
+//     if (appInfo === null) {
+//       throw new Error("happ not installed in conductor: " + installed_app_id)
+//     }
+//     g_cellId = appInfo.cell_data[0].cell_id;
+//     const username = await appWs.callZome({
+//         cap: null,
+//         cell_id: g_cellId,
+//         zome_name: "snapmail",
+//         fn_name: "get_my_handle",
+//         provenance: g_cellId[1],
+//         payload: undefined,
+//       }
+//       , 9999
+//     );
+//     log('debug', "username found: " + username);
+//     if (username === "<noname>") {
+//       const firstUsername = await promptFirstHandle(true);
+//       const result = await appWs.callZome({
+//           cap: null,
+//           cell_id: g_cellId,
+//           zome_name: "snapmail",
+//           fn_name: "set_handle",
+//           provenance: g_cellId[1],
+//           payload: firstUsername,
+//         }
+//         , 9999
+//       );
+//       log('debug', "username set: " + JSON.stringify(result));
+//     }
+//   } catch(err) {
+//     log('error', "*** Calling zome for initial username failed.");
+//     log('error', {err});
+//     await g_mainWindow.loadURL(ERROR_URL);
+//     return;
+//     //alert("Holochain failed.\n Connection to holochain might be lost.
+//     // Reload App or refresh web page to attempt reconnection");
+//   }
+//   /** -- trigger refresh once we know interfaces have booted up -- **/
+//   log('debug',"Loading index.html: " + indexUrl);
+//   try {
+//     await g_mainWindow.loadURL(indexUrl);
+//   } catch(err) {
+//     log('error', 'loadURL() failed:');
+//     log('error',{err});
+//   }
+// }
+
 
 
 /**
- * Prepare conductor config and spawn holochain subprocess
- * @param canRegenerateConfig - Regenerate the conductor config before relaunching the holochain process.
+ *
  */
-async function startConductorAndLoadPage(canRegenerateConfig: boolean): Promise<void> {
-  //g_canQuit = false;
-  await killHolochain(); // Make sure there is no outstanding Holochain & keystore procs
-  g_lair_version = getKeystoreVersion(LAIR_KEYSTORE_BIN);
-  g_keystore_proc = await spawnKeystore(LAIR_KEYSTORE_BIN, g_sessionStoragePath);
-  //await sleep(2000);
-  if (canRegenerateConfig) {
-    generateConductorConfig(g_conductorConfigFilePath, g_sessionStoragePath, g_adminPort, g_networkSettings);
-  }
-  log('info', 'Launching conductor...');
-  //g_canQuit = true;
-
-  let indexUrl;
-  try {
-    const res = pingBootstrap(g_networkSettings.bootstrapUrl)
-    log('info', 'bootstrap result: ' + res)
-    /** - Spawn Conductor */
-    g_holochain_version = getHolochainVersion();
-    // await sleep(1000); // Time buffer to make sure holochain process closed
-    await spawnHolochainProc();
-    /** - Connect to Conductor and activate app */
-    g_adminWs = await connectToAdmin(g_adminPort);
-    const activeAppPort = await hasActivatedApp(g_adminWs);
-    if(activeAppPort === 0) {
-      // - Prompt for first UID
-      if (!g_networkSettings.canMdns) {
-          g_uid = '<my-network-access-key>';
-          await promptUid(true);
-      } else {
-        addUid("local-mdns")
-      }
-      await installApp(g_adminWs, g_uid);
-      // log('debug','Attaching to app at ' + g_appPort + ' ...');
-      g_appPort = await g_adminWs.attachAppInterface({port: undefined});
-      log('debug', {g_appPort});
-      g_appPort = g_appPort.port;
-      log('info','App Interface attached: ' + g_appPort);
+async function startMainWindow(splashWindow: BrowserWindow) {
+  /** Init conductor */
+  const opts = createHolochainOptions(g_uid, g_sessionDataPath)
+  log('debug', {opts})
+  const {statusEmitter, shutdown } = await initAgent(app, opts, BINARY_PATHS)
+  g_statusEmitter = statusEmitter;
+  g_shutdown = shutdown;
+  statusEmitter.on(STATUS_EVENT, async (state: StateSignal) => {
+    //log('debug', "STATUS EVENT: " + stateSignalToText(state) + " (" + state + ")")
+    switch (state) {
+      case StateSignal.IsReady:
+        log('debug', "STATUS EVENT: IS READY")
+        // Its important to create the window before closing the current one
+        // otherwise this triggers the 'all-windows-closed' event
+        g_mainWindow = await createMainWindow(g_appPort)
+        splashWindow.close()
+        g_mainWindow.show()
+        break
+      default:
+        if (splashWindow) {
+          splashWindow.webContents.send('status', stateSignalToText(state))
+        }
+    }
+  })
+  statusEmitter.on(APP_PORT_EVENT, (appPort: string) => {
+    //log('debug', "APP_PORT_EVENT: " + appPort)
+    g_appPort = appPort
+  })
+  statusEmitter.on(ERROR_EVENT, (error: Error) => {
+    const error_msg = error;
+    log('error', error_msg)
+    if (g_mainWindow == null && splashWindow) {
+      splashWindow.webContents.send('status', error_msg)
+    }
+  })
+  statusEmitter.on(HOLOCHAIN_RUNNER_QUIT, () => {
+    const msg = "HOLOCHAIN_RUNNER_QUIT event received"
+    log('warn', msg)
+    if (g_mainWindow) {
+      promptHolochainError(g_mainWindow, msg)
     } else {
-      g_appPort = activeAppPort;
-      /** - Prompt for UID selection or prefered UID if multiple uid found */
-      if (g_uid === '' && g_uidList !== undefined && g_uidList.length > 0) {
-        const maybe_uid = g_userSettings.get('uid');
-        if (maybe_uid !== undefined) {
-          g_uid = maybe_uid;
-        } else {
-          g_uid = g_uidList[0];
-          if(g_uidList.length > 1) {
-            await promptUidSelect(false);
-          }
-        }
+      if (splashWindow) {
+        splashWindow.webContents.send('status', msg)
       }
     }
-    indexUrl = INDEX_URL + g_appPort + '&UID=' + g_uid;
-    log('debug', indexUrl);
-    g_dnaHash = await getDnaHash(g_adminWs, g_uid);
-  } catch (err) {
-    log('error', 'Conductor setup failed:');
-    log('error',{err});
-    //indexUrl = INDEX_URL;
-    await g_mainWindow.loadURL(ERROR_URL);
-    return;
-    //// Better to kill app if holochain not connected
-    //app.quit();
-  }
-  /** -- Check username -- */
-  try
-  {
-    const installed_app_id = SNAPMAIL_APP_ID + '-' + g_uid;
-    const appWs = await connectToApp(g_appPort);
-    const appInfo = await appWs.appInfo({ installed_app_id }, 3000);
-    log('debug', {appInfo});
-    if (appInfo === null) {
-      throw new Error("happ not installed in conductor: " + installed_app_id)
-    }
-    g_cellId = appInfo.cell_data[0].cell_id;
-    const username = await appWs.callZome({
-        cap: null,
-        cell_id: g_cellId,
-        zome_name: "snapmail",
-        fn_name: "get_my_handle",
-        provenance: g_cellId[1],
-        payload: undefined,
+    //app.quit()
+  })
+  statusEmitter.on(LAIR_KEYSTORE_QUIT, (e) => {
+    let msg = "LAIR_KEYSTORE_QUIT event received"
+    log('warn', msg)
+    if (g_mainWindow) {
+      promptHolochainError(g_mainWindow, msg)
+    } else {
+      if (splashWindow) {
+        splashWindow.webContents.send('status', msg)
       }
-      , 9999
-    );
-    log('debug', "username found: " + username);
-    if (username === "<noname>") {
-      const firstUsername = await promptFirstHandle(true);
-      const result = await appWs.callZome({
-          cap: null,
-          cell_id: g_cellId,
-          zome_name: "snapmail",
-          fn_name: "set_handle",
-          provenance: g_cellId[1],
-          payload: firstUsername,
-        }
-        , 9999
-      );
-      log('debug', "username set: " + JSON.stringify(result));
     }
-  } catch(err) {
-    log('error', "*** Calling zome for initial username failed.");
-    log('error', {err});
-    await g_mainWindow.loadURL(ERROR_URL);
-    return;
-    //alert("Holochain failed.\n Connection to holochain might be lost.
-    // Reload App or refresh web page to attempt reconnection");
-  }
-  /** -- trigger refresh once we know interfaces have booted up -- **/
-  log('debug',"Loading index.html: " + indexUrl);
-  try {
-    await g_mainWindow.loadURL(indexUrl);
-  } catch(err) {
-    log('error', 'loadURL() failed:');
-    log('error',{err});
-  }
+    //app.quit()
+  })
 }
 
 
 /**
- * This method will be called when Electron has finished initialization
- * and is ready to create browser windows.
+ * This method will be called when Electron has finished initialization and is ready to create browser windows.
  * Some APIs can only be used after this event occurs.
  */
-app.on('ready', async function () {
-  log('info', 'Electron App ready. Init app...');
-
-  /** Read zome_hash.txt in app folder */
-  g_zomeHash = loadRunningZomeHash();
-  log('info', "SNAPMAIL ZOME HASH: " + g_zomeHash);
-  /** setup storage folder */
-  setupStorage(g_sessionStoragePath, g_zomeHash)
-
-  /** -- Read Globals from current conductor config -- */
+app.on('ready', async () => {
+  log('debug', "ELECTRON READY - " + __dirname)
+  const splashWindow = createSplashWindow()
+  /** Load user settings */
+  g_userSettings = loadUserSettings(1920, 1080);
+  /** init app */
   {
-    const { networkSettings, adminPort } = loadConductorConfig(g_conductorConfigFilePath);
-    g_networkSettings = networkSettings;
-    g_adminPort = adminPort;
+    const {sessionDataPath, uidList} = initApp(USER_DATA_PATH, APP_DATA_PATH, DNA_VERSION_FILENAME, RUNNING_ZOME_HASH_FILEPATH, UID_LIST_FILENAME);
+    g_sessionDataPath = sessionDataPath
+    g_uidList = uidList
   }
-  g_uidList = loadUidList(g_uidListFilePath);
-
-  /** Get user Settings */
-  const { width, height } = screen.getPrimaryDisplay().workAreaSize;
-  const default_width = Math.min(width, 1400);
-  const default_height = Math.min(height, 950);
-
-  const x = Math.floor((width - default_width) / 2);
-  const y = Math.floor((height - default_height) / 2);
-
-  g_userSettings = new SettingsStore({
-    /** We'll call our data file 'user-preferences' */
-    configName: 'user-preferences',
-    defaults: {
-      windowBounds: { width: default_width, height: default_height },
-      canAutoLaunch: false,
-      windowPosition: {x, y},
-      dontConfirmOnExit: false,
-      canNotify: false,
+  /** Determine starting UID */
+  const maybeUid = g_userSettings.get("lastUid")
+  const hasUid = maybeUid? g_uidList.includes(maybeUid): false;
+  if (hasUid) {
+    g_uid = maybeUid
+  } else {
+    if (g_uidList.length == 0) {
+      while (!splashWindow.isVisible()) {
+        await delay(20)
+      }
+      await promptUid(true, splashWindow);
     }
-  });
-
-  /** Check AutoLaunch */
-  updateAutoLaunchSetting();
-
-  /** Modify main menu */
-  const mainMenu = Menu.getApplicationMenu();
-  const item = mainMenu.getMenuItemById('launch-at-startup');
-  item.checked = g_userSettings.get('canAutoLaunch');
-
-  item = mainMenu.getMenuItemById('notify-msg');
-  item.checked = g_userSettings.get('canNotify');
+    g_uid = g_uidList[0]
+    g_userSettings.set('lastUid', g_uid)
+  }
+  log('debug', "g_uid: " + g_uid);
+  g_sessionDataPath = path.join(g_sessionDataPath, g_uid)
+  log('debug', "g_sessionDataPath: " + g_sessionDataPath);
+  /** Get Versions */
+  g_runner_version = getRunnerVersion(BINARY_PATHS?.holochainRunnerBinaryPath)
+  g_lair_version = getLairVersion(BINARY_PATHS?.lairKeystoreBinaryPath)
 
   /** Create sys tray */
   g_tray = createTray();
-  g_tray.setToolTip('SnapMail v' + app.getVersion());
+  g_tray.setToolTip('Snapmail v' + app.getVersion());
   const menu = Menu.buildFromTemplate(trayMenuTemplate);
   g_tray.setContextMenu(menu);
 
-  /** Create main window */
-  g_mainWindow = createWindow();
+  /** Start holochain and main window */
+  await startMainWindow(splashWindow)
+})
 
-  /** Load splashscreen */
-  try {
-    await g_mainWindow.loadURL(SWITCHING_URL);
-  } catch(err) {
-    log('error', 'loadURL() failed:');
-    log('error',{err});
-  }
-
-  /** Start Conductor */
-  /** if bootstrapUrl not set, prompt it, otherwise */
-  if(g_networkSettings.bootstrapUrl === "") {
-    g_networkSettings.bootstrapUrl = DEFAULT_BOOTSTRAP_URL;
-    await promptNetworkType(true);
-    log('debug', 'network type prompt done. Can MDNS: ' + g_networkSettings.canMdns);
-    if (!g_networkSettings.canMdns) {
-      //// Use default bootstrap url
-      // await promptBootstrapUrl(true);
-    } else {
-      const menu = Menu.getApplicationMenu();
-      menu.getMenuItemById('join-network').enabled = false;
-      menu.getMenuItemById('switch-network').enabled = false;
-      menu.getMenuItemById('change-bootstrap').enabled = false;
-    }
-  }
-  await startConductorAndLoadPage(true);
-});
+//
+// /**
+//  * This method will be called when Electron has finished initialization and is ready to create browser windows.
+//  * Some APIs can only be used after this event occurs.
+//  */
+// app.on('ready', async function () {
+//   log('info', 'Electron App ready. Init app...');
+//
+//   /** Read zome_hash.txt in app folder */
+//   g_zomeHash = loadRunningZomeHash();
+//   log('info', "SNAPMAIL ZOME HASH: " + g_zomeHash);
+//   /** setup storage folder */
+//   setupStorage(g_sessionStoragePath, g_zomeHash)
+//
+//   /** -- Read Globals from current conductor config -- */
+//   {
+//     const { networkSettings, adminPort } = loadConductorConfig(g_conductorConfigFilePath);
+//     g_networkSettings = networkSettings;
+//     g_adminPort = adminPort;
+//   }
+//   g_uidList = loadUidList(g_uidListFilePath);
+//
+//   /** Get user Settings */
+//   const { width, height } = screen.getPrimaryDisplay().workAreaSize;
+//   const default_width = Math.min(width, 1400);
+//   const default_height = Math.min(height, 950);
+//
+//   const x = Math.floor((width - default_width) / 2);
+//   const y = Math.floor((height - default_height) / 2);
+//
+//   g_userSettings = new SettingsStore({
+//     /** We'll call our data file 'user-preferences' */
+//     configName: 'user-preferences',
+//     defaults: {
+//       windowBounds: { width: default_width, height: default_height },
+//       canAutoLaunch: false,
+//       windowPosition: {x, y},
+//       dontConfirmOnExit: false,
+//       canNotify: false,
+//     }
+//   });
+//
+//   /** Check AutoLaunch */
+//   updateAutoLaunchSetting();
+//
+//   /** Modify main menu */
+//   const mainMenu = Menu.getApplicationMenu();
+//   const item = mainMenu.getMenuItemById('launch-at-startup');
+//   item.checked = g_userSettings.get('canAutoLaunch');
+//
+//   item = mainMenu.getMenuItemById('notify-msg');
+//   item.checked = g_userSettings.get('canNotify');
+//
+//   /** Create sys tray */
+//   g_tray = createTray();
+//   g_tray.setToolTip('SnapMail v' + app.getVersion());
+//   const menu = Menu.buildFromTemplate(trayMenuTemplate);
+//   g_tray.setContextMenu(menu);
+//
+//   /** Create main window */
+//   g_mainWindow = createWindow();
+//
+//   /** Load splashscreen */
+//   try {
+//     await g_mainWindow.loadURL(SWITCHING_URL);
+//   } catch(err) {
+//     log('error', 'loadURL() failed:');
+//     log('error',{err});
+//   }
+//
+//   /** Start Conductor */
+//   /** if bootstrapUrl not set, prompt it, otherwise */
+//   if(g_networkSettings.bootstrapUrl === "") {
+//     g_networkSettings.bootstrapUrl = DEFAULT_BOOTSTRAP_URL;
+//     await promptNetworkType(true);
+//     log('debug', 'network type prompt done. Can MDNS: ' + g_networkSettings.canMdns);
+//     if (!g_networkSettings.canMdns) {
+//       //// Use default bootstrap url
+//       // await promptBootstrapUrl(true);
+//     } else {
+//       const menu = Menu.getApplicationMenu();
+//       menu.getMenuItemById('join-network').enabled = false;
+//       menu.getMenuItemById('switch-network').enabled = false;
+//       menu.getMenuItemById('change-bootstrap').enabled = false;
+//     }
+//   }
+//   await startConductorAndLoadPage(true);
+// });
 
 
 /**
@@ -772,7 +1097,6 @@ app.on('will-quit', (event) => {
   log('debug','*** App "will-quit"');
   if (!g_canQuit) {
     event.preventDefault();
-    //killHolochain();
   }
 });
 
@@ -780,30 +1104,22 @@ app.on('will-quit', (event) => {
 /**
  * Quit when all windows are closed.
  */
-app.on('window-all-closed', function () {
-  log('debug','*** App "window-all-closed"');
-  /**
-   * On macOS it is common for applications and their menu bar
-   * to stay active until the user quits explicitly with Cmd + Q
-   */
+app.on('window-all-closed', async () => {
+  log('info', 'APP EVENT "window-all-closed"')
   if (process.platform !== 'darwin') {
-    //g_canQuit = true;
-    app.quit();
+    await tryToShutdown();
+    app.quit()
   }
 });
 
 
 /** */
-app.on('activate', function () {
+app.on('activate', async () => {
   log('debug','*** App "activate"');
-  /**
-   * On macOS it's common to re-create a window in the app when the
-   * dock icon is clicked and there are no other windows open.
-   */
-  if (g_mainWindow === null || g_mainWindow === undefined) {
-    g_mainWindow = createWindow();
-  } else {
-    g_mainWindow.show();
+  // On OS X it's common to re-create a window in the app when the
+  // dock icon is clicked and there are no other windows open.
+  if (BrowserWindow.getAllWindows().length === 0) {
+    await createMainWindow(g_appPort)
   }
 });
 
@@ -813,6 +1129,56 @@ app.on('before-quit', function () {
   log('debug','*** App "before-quit"');
   g_canQuit = true;
 });
+
+
+/**
+ *
+ */
+async function tryToShutdown() {
+  try {
+    if (g_shutdown) {
+      log('info', 'calling g_shutdown()...');
+      await g_shutdown();
+    }
+  } catch (e) {
+    log('error', 'g_shutdown() failed: '+ e);
+  }
+}
+
+
+
+async function restart() {
+  log('debug', "*** Restarting...");
+  g_mainWindow = null;
+  //g_statusEmitter = null;
+  //await try_shutdown();
+  log('debug', "*** Restarting: RELAUNCH");
+
+  if (app.isPackaged && process.env.APPIMAGE) {
+    log('debug', "*** ... with APPIMAGE: " + process.env.APPIMAGE);
+    //log('debug', "*** ... with execPath: " + process.execPath);
+
+    // // Pipe errors if console.log() is called + plus possible other issues when relaunching again
+    // const options: RelaunchOptions = {
+    //   args: process.argv.slice(1).concat(['--relaunch']),
+    //   execPath: process.execPath
+    // };
+    // execFile(process.env.APPIMAGE, options.args);
+    // app.quit();
+    // return;
+
+    // FUSE can still fail
+    let options: RelaunchOptions = {
+      execPath: process.env.APPIMAGE,
+      args:['--appimage-extract-and-run']
+    };
+    //console.log({options})
+    app.relaunch(options)
+  } else {
+    app.relaunch()
+  }
+  app.exit(0)
+}
 
 
 /**********************************************************************************************************************/
@@ -911,7 +1277,7 @@ async function promptFirstHandle(): Promise<boolean> {
 /**
  * @returns false if user cancelled
  */
-async function promptUid(canExitOnCancel: boolean): Promise<boolean> {
+async function promptUid(canExitOnCancel: boolean, parentBrowserWindow: BrowserWindow): Promise<boolean> {
   const r = await prompt({
     title: 'SnapMail: Join new Network',
     height: 180,
@@ -920,6 +1286,7 @@ async function promptUid(canExitOnCancel: boolean): Promise<boolean> {
     label: 'Network Access Key:',
     icon: CURRENT_DIR + `/assets/favicon.png`,
     value: g_uid,
+    parentBrowserWindow,
     inputAttrs: {
       minlength: "2",
       required: true,
@@ -934,22 +1301,31 @@ async function promptUid(canExitOnCancel: boolean): Promise<boolean> {
       app.quit();
     }
   } else {
-    addUid(r)
+    let sessionPath = g_sessionDataPath;
+    if (g_uid) {
+      sessionPath = path.join(g_sessionDataPath, "../")
+    }
+    const succeeded = addUidToDisk(r, sessionPath, UID_LIST_FILENAME);
+    if (succeeded) {
+      g_uid = r
+      g_uidList.push(r)
+      g_userSettings.set('lastUid', g_uid);
+    }
   }
   return r !== null
 }
 
 
-function addUid(newUid: string): void {
-  log('debug','addUid(): ' + newUid);
-  g_uid = newUid;
-  try {
-    fs.appendFileSync(g_uidListFilePath, g_uid + '\n');
-    g_uidList.push(g_uid);
-  } catch (err) {
-    log('error','Writing config file failed: ' + err);
-  }
-}
+// function addUid(newUid: string): void {
+//   log('debug','addUid(): ' + newUid);
+//   g_uid = newUid;
+//   try {
+//     fs.appendFileSync(g_uidListFilePath, g_uid + '\n');
+//     g_uidList.push(g_uid);
+//   } catch (err) {
+//     log('error','Writing config file failed: ' + err);
+//   }
+// }
 
 
 /**
@@ -957,7 +1333,8 @@ function addUid(newUid: string): void {
  */
 async function promptUidSelect(canExitOnCancel: boolean): Promise<boolean> {
   const selectOptions = {};
-  const uniq = [...new Set(g_uidList)];
+  const uidSet = new Set(g_uidList)
+  const uniq = Array.from(uidSet.values());
   for (const uid of uniq) {
     selectOptions[uid] = uid;
   }
@@ -1034,31 +1411,26 @@ async function promptProxyUrl(canExitOnCancel: boolean): Promise<boolean> {
 }
 
 
-
 /**
  *
  */
-async function showAbout(): Promise<void> {
-  if (g_dnaHash === undefined) {
-    g_dnaHash = await getDnaHash(g_adminWs, g_uid);
-  }
-  const netHash = g_dnaHash || "(unknown)";
-  log("info", `[${g_holochain_version}] DNA hash of "${g_uid}": ${netHash}\n`)
-  await dialog.showMessageBox({
-    width: 900,
+async function showAbout() {
+  log("info", `[${g_runner_version}] DNA hash of "${g_uid}": ${g_dnaHash}\n`)
+  await dialog.showMessageBoxSync(g_mainWindow, {
+    //width: 900,
     title: `About ${app.getName()}`,
     message: `${app.getName()} - v${app.getVersion()}`,
     detail: `A minimalist email app on Holochain from Glass Bead Software\n\n`
-      + `Zome hash:\n${g_zomeHash}\n\n`
-      + `DNA hash of "${g_uid}":\n${netHash}\n\n`
-      + '' + g_holochain_version + ''
+      // + `Zome hash:\n${DNA_HASH}\n\n`
+      + `DNA hash of "${g_uid}":\n${g_dnaHash}\n\n`
+      + '' + g_runner_version + ''
       + '' + g_lair_version + `\n`,
     buttons: ['OK'],
     type: "info",
     //iconIndex: 0,
     //icon: CONFIG.ICON,
     //icon: app.getFileIcon(path)
-  }, {});
+  });
 }
 
 
@@ -1101,11 +1473,26 @@ async function confirmExit(): Promise<boolean> {
 }
 
 
+/**
+ *
+ */
+async function promptHolochainError(browserWindow: BrowserWindow, msg: string) {
+  await dialog.showMessageBoxSync(browserWindow, {
+    //width: 900,
+    title: `Fatal Error`,
+    message: `Holochain not running`,
+    detail: `${msg}`,
+    buttons: ['OK'],
+    type: "error",
+  });
+}
+
+
 /**********************************************************************************************************************/
 /*  MENUS
 /**********************************************************************************************************************/
 
-const optionsMenuTemplate = [
+const optionsMenuTemplate: Array<MenuItemConstructorOptions> = [
   {
     id: 'launch-at-startup',
     label: 'Launch at startup',
@@ -1129,31 +1516,24 @@ const optionsMenuTemplate = [
  * In this file you can include the rest of your app's specific main process code.
  * You can also put them in separate files and require them here.
  */
-const networkMenuTemplate = [
+const networkMenuTemplate: Array<MenuItemConstructorOptions> = [
   {
     id: 'join-network',
     label: 'Join new Network',
-    click: async function () {
-      const changed = await promptUid(false);
+    click: async function (menuItem, browserWindow, _event) {
+      let changed = await promptUid(false, g_mainWindow);
       if (changed) {
-        await g_mainWindow.loadURL(SWITCHING_URL);
-        await g_mainWindow.setEnabled(false);
-        await installApp(g_adminWs, g_uid);
-        await startConductorAndLoadPage(false);
-        await g_mainWindow.setEnabled(true);
+        await restart();
       }
     },
   },
   {
     id: 'switch-network',
     label: 'Switch Network',
-    click: async function () {
-      const changed = await promptUidSelect(false);
+    click: async function (menuItem, _browserWindow, _event) {
+      let changed = await promptUidSelect(false);
       if (changed) {
-        await g_mainWindow.loadURL(SWITCHING_URL);
-        await g_mainWindow.setEnabled(false);
-        await startConductorAndLoadPage(false);
-        await g_mainWindow.setEnabled(true);
+        await restart();
       }
     },
   },
@@ -1164,12 +1544,8 @@ const networkMenuTemplate = [
     label: 'Change Network type',
     click: async function () {
       const changed = await promptNetworkType(false);
-      const menu = Menu.getApplicationMenu();
-      menu.getMenuItemById('join-network').enabled = !g_networkSettings.canMdns;
-      menu.getMenuItemById('switch-network').enabled = !g_networkSettings.canMdns;
-      menu.getMenuItemById('change-bootstrap').enabled = !g_networkSettings.canMdns;
       if (changed) {
-        await startConductorAndLoadPage(true);
+        await restart();
       }
     },
   },
@@ -1179,7 +1555,7 @@ const networkMenuTemplate = [
     click: async function () {
       const changed = await promptBootstrapUrl(false);
       if (changed) {
-        await startConductorAndLoadPage(true);
+        await restart();
       }
     }
   },
@@ -1192,11 +1568,11 @@ const networkMenuTemplate = [
       if (canProxy) {
         const changed = await promptProxyUrl(false);
         if(changed || proxyChanged) {
-          await startConductorAndLoadPage(true);
+          await restart();
         }
       } else  {
         if(proxyChanged) {
-          await startConductorAndLoadPage(true);
+          await restart();
         }
       }
     }
@@ -1204,7 +1580,8 @@ const networkMenuTemplate = [
 ];
 
 
-const debugMenuTemplate = [
+/** */
+const debugMenuTemplate: Array<MenuItemConstructorOptions> = [
   // {
   //   label: 'Dump logs', click: function() {
   //     log('debug', {process})
@@ -1220,16 +1597,16 @@ const debugMenuTemplate = [
   {
     label: 'Open Log File',
     click: function () {
-      shell.openExternal('file://' + logger.transports.file.file);
+      shell.openExternal('file://' + electronLogger.transports.file.file);
       //shell.openItem(logger.transports.file.file);
     },
   },
   {
     label: 'devTools',
-    // role: "toggleDevTools",
-    click: function () {
-      g_mainWindow.webContents.openDevTools();
-    },
+    role: "toggleDevTools",
+    // click: function () {
+    //   g_mainWindow.webContents.openDevTools();
+    // },
   },
   // {
   //   label: 'Show PATHS',
@@ -1261,7 +1638,7 @@ const debugMenuTemplate = [
   {
     label: 'Restart Conductor',
     click: async function () {
-      await startConductorAndLoadPage(false);
+      await restart()
     }
   },
   {
@@ -1275,10 +1652,8 @@ const debugMenuTemplate = [
 ];
 
 
-/**
- *
- */
-const mainMenuTemplate = [
+/** */
+const mainMenuTemplate: Array<MenuItemConstructorOptions> = [
   {
     label: 'File', submenu: [{
         label:`Check for Update`,
@@ -1317,7 +1692,7 @@ const mainMenuTemplate = [
   {
     label: 'Help', submenu: [{
       label: 'Report bug / issue',
-      click: function () {
+      click: function (menuItem, _browserWindow, _event) {
         shell.openExternal(REPORT_BUG_URL)
         //g_mainWindow.loadURL(REPORT_BUG_URL)
        }
@@ -1328,7 +1703,7 @@ const mainMenuTemplate = [
       {
       label: 'About',
       //accelerator: 'Command+A',
-      click: async function () {
+      click: async function (menuItem, _browserWindow, _event) {
         await showAbout();
       },
     },],
@@ -1339,25 +1714,23 @@ const mainMenuTemplate = [
 /**
  *
  */
-const trayMenuTemplate = [
-  { label: 'Tray / Untray', click: function () { g_mainWindow.isVisible()? g_mainWindow.hide() : g_mainWindow.show();  }  },
+const trayMenuTemplate: Array<MenuItemConstructorOptions> = [
+  { label: 'Tray / Untray', click: function (menuItem, _browserWindow, _event) { g_mainWindow.isVisible()? g_mainWindow.hide() : g_mainWindow.show();  }  },
   //{ label: 'Settings', submenu: networkMenuTemplate },
   {
     label: 'Switch network',
-    click: async function () {
-      const changed = await promptUidSelect(false);
+    click: async function (menuItem, _browserWindow, _event) {
+      let changed = await promptUidSelect(false);
       if(changed) {
-        await g_mainWindow.setEnabled(false);
-        await startConductorAndLoadPage(false);
-        await g_mainWindow.setEnabled(true);
+        await restart()
       }
     }
   },
   //{ label: 'Debug', submenu: debugMenuTemplate },
   { type: 'separator' },
-  { label: 'About', click: async function () { await showAbout(); } },
+  { label: 'About', click: async function (menuItem, _browserWindow, _event) { await showAbout(); } },
   { type: 'separator' },
-  { label: 'Exit', click: function () { app.quit() } }
+  { label: 'Exit', role: 'quit' }
 ];
 
 
