@@ -12,8 +12,8 @@ import IS_DEV from 'electron-is-dev';
 
 /** Holochain Modules */
 
-import {AdminWebsocket} from "@holochain/client";
-import {CellId} from "@holochain/client/lib/types/common";
+//import {AdminWebsocket} from "@holochain/client";
+//import {CellId} from "@holochain/client";
 
 import initAgent, {
   getRunnerVersion, getLairVersion,
@@ -27,33 +27,27 @@ import initAgent, {
 
 /** My Modules */
 import {
-  CONDUCTOR_CONFIG_FILENAME,
   UID_LIST_FILENAME,
   CONFIG_PATH,
   CURRENT_DIR,
-  DEFAULT_BOOTSTRAP_URL,
-  SNAPMAIL_APP_ID,
-  LAIR_KEYSTORE_BIN,
-  HOLOCHAIN_BIN,
   REPORT_BUG_URL,
   NETWORK_URL,
   INDEX_URL,
-  SWITCHING_URL,
-  ERROR_URL,
-  HC_MAGIC_READY_STRING,
   IS_DEBUG,
   ICON_FILEPATH,
   BACKGROUND_COLOR,
   LINUX_ICON_FILE,
   SPLASH_FILE,
   DEVELOPMENT_UI_URL,
-  USER_DATA_PATH, APP_DATA_PATH, DNA_VERSION_FILENAME, RUNNING_ZOME_HASH_FILEPATH, MAIN_FILE, BINARY_PATHS
+  USER_DATA_PATH,
+  APP_DATA_PATH,
+  DNA_VERSION_FILENAME,
+  RUNNING_ZOME_HASH_FILEPATH,
+  MAIN_FILE,
+  BINARY_PATHS,
+  RUNNER_VERSION, LAIR_VERSION
 } from './constants';
 import { log, electronLogger } from './logger';
-import {
-  generateConductorConfig, spawnKeystore, hasActivatedApp, connectToAdmin,
-  connectToApp, installApp, getDnaHash, loadConductorConfig } from './config';
-import { SettingsStore } from './userSettings';
 import { pingBootstrap } from "./spawn";
 
 import  { loadUserSettings } from './userSettings'
@@ -99,33 +93,25 @@ if (process.platform === "win32") {
 let g_mainWindow = undefined;
 let g_tray = null;
 let g_updater = undefined;
-let g_holochain_proc = undefined;
-let g_keystore_proc = undefined;
-let g_adminWs: AdminWebsocket = undefined;
-let g_cellId: CellId = undefined;
+// let g_holochain_proc = undefined;
+// let g_keystore_proc = undefined;
+// let g_adminWs: AdminWebsocket = undefined;
+// let g_cellId: CellId = undefined;
 let g_canQuit = false;
 let g_uid = '';
 
 
 /** */
 let g_sessionDataPath = undefined;
-let g_runner_version = 'holochain runner version (unknown)'
-let g_lair_version = 'lair version (unknown)'
+//let g_runner_version = 'holochain runner version (unknown)'
+//let g_lair_version = 'lair version (unknown)'
 let g_statusEmitter = undefined;
 let g_shutdown = undefined;
 
 
 /** values retrieved from holochain */
-let g_adminPort = 0;
 let g_appPort = '';
-let g_holochain_version = ""
 let g_dnaHash = undefined;
-let g_zomeHash = '<unknown>'
-
-/** File paths */
-let g_sessionStoragePath: string = undefined;
-let g_conductorConfigFilePath: string = undefined;
-let g_uidListFilePath: string = undefined;
 
 /** Settings */
 let g_userSettings = undefined;
@@ -143,37 +129,6 @@ const autoLauncher = new AutoLaunch({
   name: "Snapmail happ",
   isHidden: true,
 });
-
-
-//
-// /** --  Create missing dirs -- */
-//
-// if (!fs.existsSync(CONFIG_PATH)) {
-//   log('info', "Creating missing dir: " + CONFIG_PATH);
-//   fs.mkdirSync(CONFIG_PATH)
-// }
-// if (!fs.existsSync(STORAGE_PATH)) {
-//   log('info', "Creating missing dir: " + STORAGE_PATH);
-//   fs.mkdirSync(STORAGE_PATH)
-// }
-
-//
-// /** -- determine session id and session specific folders -- */
-// {
-//   let sessionId: string;
-//   if (process.argv.length > 2) {
-//     sessionId = process.argv[2];
-//   } else {
-//     sessionId = 'default';
-//   }
-//
-//   g_sessionStoragePath = path.join(STORAGE_PATH, sessionId);
-//   log('info', { g_sessionStoragePath });
-//   /** -- Determine final conductor config file path -- */
-//   g_conductorConfigFilePath = path.join(g_sessionStoragePath, CONDUCTOR_CONFIG_FILENAME);
-//   g_uidListFilePath = path.join(g_sessionStoragePath, UID_LIST_FILENAME);
-//   log('debug', { g_conductorConfigFilePath });
-// }
 
 
 /**********************************************************************************************************************/
@@ -309,13 +264,13 @@ ipc.on('bootstrapStatus', (event) => {
 ipc.on('networkInfo', async (event) => {
   console.log("*** RECEIVED networkInfo request")
 
-  const dump = await g_adminWs.dumpState({cell_id: g_cellId});
-  const dht_dump = dump[0].integration_dump;
-  console.log({dht_dump})
-  const peer_dump = dump[0].peer_dump;
+  // const dump = await g_adminWs.dumpState({cell_id: g_cellId});
+  // const dht_dump = dump[0].integration_dump;
+  // console.log({dht_dump})
+  // const peer_dump = dump[0].peer_dump;
   //console.log({peer_dump})
   //console.log(JSON.stringify(peer_dump))
-  const peer_count = peer_dump.peers.length;
+  const peer_count = 42; // FIXME peer_dump.peers.length;
   event.sender.send('networkInfoReply', peer_count, g_networkSettings);
 });
 
@@ -340,7 +295,7 @@ function delay(ms:number): Promise<void> {
 
 /** Create sys tray electron object */
 function createTray(): Tray {
-  let tray = undefined
+  let tray;
   try {
     tray = new Tray('electron-ui/favicon.png');
   } catch(e) {
@@ -389,8 +344,8 @@ function updateNotificationSetting(canNotify: boolean): void {
 const createSplashWindow = (): BrowserWindow => {
   /** Create the browser window */
   const splashWindow = new BrowserWindow({
-    height: 450,
-    width: 850,
+    height: 350,
+    width: 650,
     center: true,
     resizable: false,
     frame: false,
@@ -405,6 +360,10 @@ const createSplashWindow = (): BrowserWindow => {
     },
     icon: process.platform === 'linux'? LINUX_ICON_FILE : ICON_FILEPATH,
   })
+  // /** Things to setup at start */
+  // let { x, y } = g_userSettings.get('windowPosition');
+  // splashWindow.setPosition(x, y);
+
   /** and load it */
   if (app.isPackaged) {
     splashWindow.loadFile(SPLASH_FILE)
@@ -463,7 +422,7 @@ const createMainWindow = async (appPort: string): Promise<BrowserWindow> => {
 
   /** load the index.html of the app */
   let mainUrl = app.isPackaged? MAIN_FILE : path.join(DEVELOPMENT_UI_URL, "index.html")
-  mainUrl += "?PORT=" + appPort + "&UID=" + g_uid
+  mainUrl += "?APP=" + appPort + "&UID=" + g_uid
   log('info', "createMainWindow ; mainUrl = " + mainUrl)
   try {
     await mainWindow.loadURL("file://" + mainUrl)
@@ -944,9 +903,10 @@ async function startMainWindow(splashWindow: BrowserWindow) {
  */
 app.on('ready', async () => {
   log('debug', "ELECTRON READY - " + __dirname)
-  const splashWindow = createSplashWindow()
   /** Load user settings */
   g_userSettings = loadUserSettings(1920, 1080);
+  /** Show splashscreen */
+  const splashWindow = createSplashWindow()
   /** init app */
   {
     const {sessionDataPath, uidList} = initApp(USER_DATA_PATH, APP_DATA_PATH, DNA_VERSION_FILENAME, RUNNING_ZOME_HASH_FILEPATH, UID_LIST_FILENAME);
@@ -972,8 +932,8 @@ app.on('ready', async () => {
   g_sessionDataPath = path.join(g_sessionDataPath, g_uid)
   log('debug', "g_sessionDataPath: " + g_sessionDataPath);
   /** Get Versions */
-  g_runner_version = getRunnerVersion(BINARY_PATHS?.holochainRunnerBinaryPath)
-  g_lair_version = getLairVersion(BINARY_PATHS?.lairKeystoreBinaryPath)
+  //g_runner_version = getRunnerVersion(BINARY_PATHS?.holochainRunnerBinaryPath)
+  //g_lair_version = getLairVersion(BINARY_PATHS?.lairKeystoreBinaryPath)
 
   /** Create sys tray */
   g_tray = createTray();
@@ -1410,7 +1370,7 @@ async function promptProxyUrl(canExitOnCancel: boolean): Promise<boolean> {
  *
  */
 async function showAbout() {
-  log("info", `[${g_runner_version}] DNA hash of "${g_uid}": ${g_dnaHash}\n`)
+  log("info", `[${RUNNER_VERSION}] DNA hash of "${g_uid}": ${g_dnaHash}\n`)
   await dialog.showMessageBoxSync(g_mainWindow, {
     //width: 900,
     title: `About ${app.getName()}`,
@@ -1418,8 +1378,8 @@ async function showAbout() {
     detail: `A minimalist email app on Holochain from Glass Bead Software\n\n`
       // + `Zome hash:\n${DNA_HASH}\n\n`
       + `DNA hash of "${g_uid}":\n${g_dnaHash}\n\n`
-      + '' + g_runner_version + ''
-      + '' + g_lair_version + `\n`,
+      + '' + RUNNER_VERSION + ''
+      + '' + LAIR_VERSION + `\n`,
     buttons: ['OK'],
     type: "info",
     //iconIndex: 0,

@@ -1,7 +1,7 @@
 {
   "name": "Snapmail",
   "version": "0.1.9",
-  "description": "A minimalist email application on holochain",
+  "description": "A minimalist P2P email application on holochain",
   "repository": {
     "type": "git",
     "url": "https://github.com/glassbeadsoftware/snapmail.git"
@@ -14,7 +14,7 @@
     "setup": "bash scripts/npm/setup.sh",
     "install:ui": "cd submodules/snapmail-ui && rm package-lock.json && npm install",
     "install:hash-zome": "bash scripts/npm/install-hash-zome.sh",
-    "dna-pack": "bash scripts/npm/dna-pack.sh",
+    "dist:dna": "bash scripts/npm/dist-dna.sh",
     "hash-zome": "bash scripts/npm/hash-zome.sh",
     "tsc": "tsc",
     "lint": "eslint --ext .ts electron-src",
@@ -22,8 +22,8 @@
     "build-prod": ". scripts/build-ui.sh prod",
     "win": "electron . win --no-sandbox",
     "win-dev": "set APP_DEV=true && electron . win --no-sandbox",
-    "start": "tsc && electron .",
-    "empty": "./node_modules/.bin/electron .",
+    "start": "npm run build-prod && tsc && electron .",
+    "electron": "electron .",
     "alex": "./node_modules/.bin/electron . alex --no-sandbox",
     "billy": "./node_modules/.bin/electron . billy --no-sandbox",
     "camille": "./node_modules/.bin/electron . camille --no-sandbox",
@@ -33,12 +33,12 @@
     "deploy-mac": "electron-builder build --mac --publish always",
     "dist-publish": "set APP_DEV=false && electron-builder build --publish onTag",
     "dist": "electron-builder",
-    "dist-build": "set APP_DEV=false && electron-builder build",
-    "dist-linux": "electron-builder --linux tar.gz",
-    "dist-linux-app": "electron-builder --linux AppImage",
-    "dist-mac": "electron-builder --mac",
-    "dist-win": "set APP_DEV=false && electron-builder --win",
-    "dist-arm64": "electron-builder --arm64 --linux tar.gz"
+    "dist:build": "set APP_DEV=false && electron-builder build",
+    "dist:linux": "electron-builder --linux tar.gz",
+    "dist:linux-app": "electron-builder --linux AppImage",
+    "dist:mac": "electron-builder --mac",
+    "dist:win": "set APP_DEV=false && electron-builder --win",
+    "dist:arm64": "electron-builder --arm64 --linux tar.gz"
   },
   "keywords": [
     "Electron",
@@ -91,14 +91,13 @@
     "eslint": "^8.19.0"
   },
   "dependencies": {
-    "@holochain/client": "0.3.2",
+    "electron-holochain": "0.0.38",
     "auto-launch": "^5.0.5",
     "byte-base64": "^1.1.0",
     "command-exists": "^1.2.8",
     "dialogs": "^2.0.1",
     "electron-context-menu": "^0.12.1",
     "electron-debug": "^3.0.1",
-    "electron-holochain": "0.0.35",
     "electron-is-dev": "^1.2.0",
     "electron-log": "^4.4.6",
     "electron-notarize": "^1.1.1",

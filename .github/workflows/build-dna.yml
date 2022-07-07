@@ -16,7 +16,7 @@ jobs:
       # Install hash-zome binary
       - name: Hash Zome Install
         run: |
-          npm run hash-zome-install
+          npm run install:hash-zome
       # Download snapmail repos (rsm & ui)
       - name: Download snapmail-ui repo
         shell: bash
@@ -25,7 +25,7 @@ jobs:
       # Build dna
       - name: Build DNA
         run: |
-          npm run dna-pack
+          npm run dist:dna
       # Hash Zome
       - name: Hash Zome
         run: |

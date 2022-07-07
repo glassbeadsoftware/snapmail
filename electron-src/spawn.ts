@@ -1,5 +1,5 @@
 import { log } from "./logger";
-import { CURRENT_DIR, HOLOCHAIN_BIN } from "./constants";
+import { CURRENT_DIR } from "./constants";
 import { spawnSync } from "child_process";
 
 

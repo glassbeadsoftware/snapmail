@@ -1,7 +1,7 @@
 import * as path from 'path'
 import { app } from 'electron'
-import { HolochainRunnerOptions, StateSignal, PathOptions } from 'electron-holochain'
-import { DNA_PATH, SNAPMAIL_APP_ID, BINARY_PATHS } from './constants'
+import { HolochainRunnerOptions, StateSignal } from 'electron-holochain'
+import { DNA_PATH, SNAPMAIL_APP_ID } from './constants'
 
 // these messages get seen on the splash page
 export enum StateSignalText {
