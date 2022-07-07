@@ -8,22 +8,22 @@ if [ $# != 1 ]; then
   exit 2
 fi
 
-if ! test -d "./build"; then
-    echo "$0: Aborting. Missing './build' folder."
+if ! test -d "./submodules"; then
+    echo "$0: Aborting. Missing './submodules' folder."
     exit 1
 fi
-if ! test -d "./build/snapmail-ui"; then
-    echo "$0: Aborting. Missing './build/snapmail-ui' folder."
+if ! test -d "./submodules/snapmail-ui"; then
+    echo "$0: Aborting. Missing './submodules/snapmail-ui' folder."
     exit 1
 fi
 
 # Start
-cd build
+cd submodules
 
 # Generate Web UI
 cd snapmail-ui
 npm run $1
-cp -r dist/* ../../ui
+cp -r dist/* ../../electron-ui
 cd ..
 
 # Done

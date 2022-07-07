@@ -1,11 +1,11 @@
 {
   "compilerOptions": {
     "module": "commonjs",
-    "outDir": "dist",
+    "outDir": "out-tsc",
     "esModuleInterop": true
   },
   "include": [
-    "src/**/*"
+    "electron-src/**/*"
   ]
 //  , "references": [
 //    { "path": "../../electron-holochain/" }

@@ -8,8 +8,6 @@ It is the latest iteration of [Snapmail](http://www.glassbead.com/snapmail/index
 This is the repository for the native application (Electron).  
 See [snapmail-rsm](https://github.com/glassbeadsoftware/snapmail-rsm) for holochain backend or [snapmail-ui](https://github.com/glassbeadsoftware/snapmail-ui) for web frontend source code.
 
-(CI and NIX configs are not set up for the moment.)
-
 ## Installation
 
 ### Prerequisite 
@@ -29,17 +27,6 @@ See [snapmail-rsm](https://github.com/glassbeadsoftware/snapmail-rsm) for holoch
 ##### Linux
 - Make sure the following executables have execution rights: `Snapmail`, `snapmail-lair-keystore`, `snapmail-holochain`.
 
-
-## Development
-
-#### Steps for updating holochain version:
-1. `npm run setup`
-2. `cd build/snapmail-rsm`
-3. `./scripts/set-holochain-rev.sh <rev>`
-4. `./scripts/write-zome-hash.sh`
-5. `./scripts/pack-happ.sh`
-6. `git commit`
-
  
 ## Releasing
 
@@ -57,3 +44,38 @@ See [snapmail-rsm](https://github.com/glassbeadsoftware/snapmail-rsm) for holoch
 
 #### Steps for publishing the new release on Mac:
 1. `npm run deploy-mac`
+
+
+## Development
+
+#### Steps for updating holochain version:
+1. `npm run setup`
+2. Update the holochain dependencies in `snapmail-rsm`:
+    1. `cd build/snapmail-rsm`
+    2. update file `zomes/snapmail/Cargo.toml`
+    3. update file `sweettest/Cargo.toml`
+    4. `git commit`
+3. Update the holochain dependencies in `snapmail-ui`:
+    1. `cd build/snapmail-ui`
+    2. update file `package.json`
+    3. `npm install`
+    4. `git commit`
+4. Update file `scripts/workflow/install-hc-tools.sh`
+5. Update file `package.json`
+6. `git commit`
+
+
+### Toolchain
+
+Typescript
+electron-holochain
+electron-builder
+
+1. `/electron-src`: The electron app source code
+2. `/assets`: Original media files used throughout the code base
+3. `/electron-ui`: Final artifacts for the electron app (includes output from snapmail-ui)
+4. `/bin`: All the binaries we are dependent on on must ship with the app
+5. `/submodules`: Temp folder for the code dependencies
+6. `/out-tsc`: Typescript output folder
+7. `/out-builder`: electron-builder output folder
+8. `/dna.workdir`: webhapp stuff

@@ -5,10 +5,10 @@ npm install
 
 
 echo
-echo \* Create 'build' folder
-rm -rf build
-mkdir build
-cd build
+echo \* Create 'submodules' folder
+rm -rf submodules
+mkdir submodules
+cd submodules
 
 
 echo

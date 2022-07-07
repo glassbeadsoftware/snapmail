@@ -20,8 +20,8 @@ echo
 
 
 # Change build/snapmail-ui/package.json
-OLD_VER=`awk -F ":" '/"version"/ {print $2}' ./build/snapmail-ui/package.json | sed 's/"//g' | sed 's/,//g' | sed 's/ //g'`
-sed -i "s/\"version\": \"$OLD_VER\"/\"version\": \"$1\"/" ./build/snapmail-ui/package.json
+OLD_VER=`awk -F ":" '/"version"/ {print $2}' ./submodules/snapmail-ui/package.json | sed 's/"//g' | sed 's/,//g' | sed 's/ //g'`
+sed -i "s/\"version\": \"$OLD_VER\"/\"version\": \"$1\"/" ./submodules/snapmail-ui/package.json
 
 
 # Change .github/workflows/release.yml

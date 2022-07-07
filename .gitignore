@@ -1,7 +1,7 @@
 .cargo
 
 # build dependencies
-ui
+electron-ui
 dna
 snapmail-ui
 

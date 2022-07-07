@@ -6,9 +6,9 @@
     "type": "git",
     "url": "https://github.com/glassbeadsoftware/snapmail.git"
   },
-  "main": "dist/main.js",
+  "main": "out-tsc/main.js",
   "scripts": {
-    "package": "rimraf ui.zip && cd ui && bestzip ../ui.zip * && cd .. && hc web-app pack workdir",
+    "package": "rimraf ui.zip && cd electron-ui && bestzip ../ui.zip * && cd .. && hc web-app pack workdir",
     "postinstall": "electron-builder install-app-deps",
     "deploy-win": "set APP_DEV=false && electron-builder build --win --publish always",
     "deploy-mac": "electron-builder build --mac --publish always",
@@ -30,15 +30,15 @@
     "billy": "./node_modules/.bin/electron . billy --no-sandbox",
     "camille": "./node_modules/.bin/electron . camille --no-sandbox",
     "start-no": "./node_modules/.bin/electron electron --no-sandbox --enable-logging",
-    "ui-install": "cd build/snapmail-ui && rm package-lock.json && npm install",
-    "ci:hc-install": "bash scripts/workflow/install-hc-tools.sh",
+    "ui-install": "cd submodules/snapmail-ui && rm package-lock.json && npm install",
+    "ci:hc-install": "bash scripts/install-hc-tools.sh",
     "clean": "bash scripts/npm/clean.sh",
     "setup": "bash scripts/npm/setup.sh",
     "dna-pack": "bash scripts/npm/dna-pack.sh",
     "hash-zome-install": "bash scripts/download-hash-zome.sh",
     "hash-zome": "bash scripts/npm/hash-zome.sh",
     "tsc": "tsc",
-    "lint": "eslint --ext .ts src",
+    "lint": "eslint --ext .ts electron-src",
     "build-prod": "bash scripts/build-ui.sh prod"
   },
   "keywords": [
@@ -54,9 +54,8 @@
     "copyright": "Copyright © 2021-2022 Harris-Braun Enterprises LLC",
     "asar": false,
     "files": [
-      "src/*",
-      "ui/**/*",
-      "dna/*",
+      "electron-src/*",
+      "electron-ui/**/*",
       "bin/*",
       "node_modules/**/*",
       "assets/**",
@@ -64,7 +63,7 @@
     ],
     "directories": {
       "buildResources": "assets",
-      "output": "out"
+      "output": "out-builder"
     },
     "linux": {
       "target": "AppImage"
@@ -112,7 +111,6 @@
     "lint": "^0.7.0",
     "open": "^6.3.0",
     "request": "^2.88.2",
-    "smalltalk": "^4.0.6",
     "sudo-prompt": "^9.0.0",
     "tree-kill": "^1.2.2",
     "websocket": "^1.0.34",
