@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Snapmail</title>
+    <link rel="stylesheet" type="text/css" href="splashscreen.css" />
+  </head>
+  <body>
+    <div class="splash-wrapper">
+      <div class="splash-image-wrapper">
+        <!-- <div class="splash-image-caption">Photograph by</div> -->
+      </div>
+      <div class="splash-content-wrapper">
+        <div>
+          <div class="splash-logo">Snapmail</div>
+          <div class="splash-version">version 0.1.9</div>
+        </div>
+        <div class="splash-loading-message" id="activity">
+          Setting up Holochain...
+        </div>
+        <div class="splash-description">
+          A minimalist email application on holochain
+        </div>
+        <div class="splash-license">
+          © 2021-2022 Harris-Braun Enterprises, LLC.
+          <br />
+          Licensed under the Cryptographic Autonomy License v1.0.
+        </div>
+      </div>
+    </div>
+    <script>
+      const el = document.getElementById('activity')
+      require('electron').ipcRenderer.on('status', (event, message) => {
+        el.innerHTML = message
+      })
+    </script>
+  </body>
+</html>
