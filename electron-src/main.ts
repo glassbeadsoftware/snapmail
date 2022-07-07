@@ -347,13 +347,13 @@ function delay(ms:number): Promise<void> {
 function createTray(): Tray {
   let tray = undefined
   try {
-    tray = new Tray('assets/favicon.png');
+    tray = new Tray('electron-ui/favicon.png');
   } catch(e) {
     try {
-      tray = new Tray('resources/app/assets/favicon.png');
+      tray = new Tray('resources/app/electron-ui/favicon.png');
     } catch(e) {
       try {
-        tray = new Tray(app.getAppPath() + '/assets/favicon.png');
+        tray = new Tray(app.getAppPath() + '/electron-ui/favicon.png');
       } catch(e) {
         log('error', "Could not find favicon. appPath: " + app.getAppPath());
         tray = new Tray(nativeImage.createEmpty());
@@ -1195,7 +1195,7 @@ async function promptNetworkType(canExitOnCancel: boolean): Promise<boolean> {
     width: 300,
     alwaysOnTop: true,
     label: 'Choose network type:',
-    icon: CURRENT_DIR + `/assets/favicon.png`,
+    icon: CURRENT_DIR + `/electron-ui/favicon.png`,
     type: 'select',
     selectOptions: {
       'false': 'Bootstrap server (WAN)',
@@ -1225,7 +1225,7 @@ async function promptBootstrapUrl(canExitOnCancel: boolean): Promise<boolean> {
     width: 600,
     alwaysOnTop: true,
     label: 'URL:',
-    icon: CURRENT_DIR + `/assets/favicon.png`,
+    icon: CURRENT_DIR + `/electron-ui/favicon.png`,
     value: g_networkSettings.bootstrapUrl,
     inputAttrs: {
       required: true,
@@ -1256,7 +1256,7 @@ async function promptFirstHandle(): Promise<boolean> {
     width: 500,
     alwaysOnTop: true,
     label: 'Username:',
-    icon: CURRENT_DIR + `/assets/favicon.png`,
+    icon: CURRENT_DIR + `/electron-ui/favicon.png`,
     value: "<noname>",
     inputAttrs: {
       required: true,
@@ -1284,7 +1284,7 @@ async function promptUid(canExitOnCancel: boolean, parentBrowserWindow: BrowserW
     width: 500,
     alwaysOnTop: true,
     label: 'Network Access Key:',
-    icon: CURRENT_DIR + `/assets/favicon.png`,
+    icon: CURRENT_DIR + `/electron-ui/favicon.png`,
     value: g_uid,
     parentBrowserWindow,
     inputAttrs: {
@@ -1345,7 +1345,7 @@ async function promptUidSelect(canExitOnCancel: boolean): Promise<boolean> {
     alwaysOnTop: true,
     label: 'Choose network:',
     value: g_uid,
-    icon: CURRENT_DIR + `/assets/favicon.png`,
+    icon: CURRENT_DIR + `/electron-ui/favicon.png`,
     type: 'select',
     selectOptions,
   });
@@ -1390,7 +1390,7 @@ async function promptProxyUrl(canExitOnCancel: boolean): Promise<boolean> {
     width: 800,
     alwaysOnTop: true,
     label: 'URL:',
-    icon: CURRENT_DIR + `/assets/favicon.png`,
+    icon: CURRENT_DIR + `/electron-ui/favicon.png`,
     value: g_networkSettings.proxyUrl,
     inputAttrs: {
       required: true,

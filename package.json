@@ -58,7 +58,6 @@
       "electron-ui/**/*",
       "bin/*",
       "node_modules/**/*",
-      "assets/**",
       "package.json"
     ],
     "directories": {

@@ -372,7 +372,7 @@ export async function installApp(adminWs: AdminWebsocket, uid: string): Promise<
     hash = await adminWs.registerDna({
       uid,
       properties: undefined,
-      path: './dna/snapmail.dna',
+      path: './bin/snapmail.dna',
     });
   } catch (err) {
     log('error','[admin] registerDna() failed:');

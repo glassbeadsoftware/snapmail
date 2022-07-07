@@ -1,7 +1,7 @@
 import * as path from 'path'
 import { app } from 'electron'
 import { HolochainRunnerOptions, StateSignal, PathOptions } from 'electron-holochain'
-import { SNAPMAIL_APP_ID } from './constants'
+import { DNA_PATH, SNAPMAIL_APP_ID, BINARY_PATHS } from './constants'
 
 // these messages get seen on the splash page
 export enum StateSignalText {
@@ -33,38 +33,13 @@ export function stateSignalToText(state: StateSignal): StateSignalText {
   }
 }
 
-const whereDnaPath = app.isPackaged
-  ? path.join(app.getAppPath(), '../app/binaries/where.happ')
-  : path.join(app.getAppPath(), '../dna/workdir/happ-where/where.happ')
-
-//console.log({whereDnaPath})
-
-// in production
-// must point to unpacked versions, not in an asar archive
-// in development
-// fall back on defaults in the electron-holochain package
-const fileExt = process.platform === 'win32' ? '.exe' : '';
-const BINARY_PATHS: PathOptions | undefined = app.isPackaged
-  ? {
-      holochainRunnerBinaryPath: path.join(
-        __dirname,
-        `../../app/binaries/holochain-runner${fileExt}`
-      ),
-      lairKeystoreBinaryPath: path.join(
-        __dirname,
-        `../../app/binaries/lair-keystore${fileExt}`,
-      ),
-    }
-  : undefined
-
-//console.log({BINARY_PATHS})
 
 /**
  *
  */
 function createHolochainOptions(uid: string, storagePath: string): HolochainRunnerOptions {
   const options: HolochainRunnerOptions = {
-    happPath: whereDnaPath,
+    happPath: DNA_PATH,
     datastorePath: path.join(storagePath, 'databases-' + app.getVersion()),
     appId: SNAPMAIL_APP_ID + '-' + uid,
     //appId: MAIN_APP_ID,
@@ -78,4 +53,4 @@ function createHolochainOptions(uid: string, storagePath: string): HolochainRunn
   return options;
 }
 
-export { whereDnaPath, BINARY_PATHS, createHolochainOptions }
+export { createHolochainOptions }

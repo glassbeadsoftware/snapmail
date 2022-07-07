@@ -51,12 +51,12 @@ See [snapmail-rsm](https://github.com/glassbeadsoftware/snapmail-rsm) for holoch
 #### Steps for updating holochain version:
 1. `npm run setup`
 2. Update the holochain dependencies in `snapmail-rsm`:
-    1. `cd build/snapmail-rsm`
+    1. `cd submodules/snapmail-rsm`
     2. update file `zomes/snapmail/Cargo.toml`
     3. update file `sweettest/Cargo.toml`
     4. `git commit`
 3. Update the holochain dependencies in `snapmail-ui`:
-    1. `cd build/snapmail-ui`
+    1. `cd submodules/snapmail-ui`
     2. update file `package.json`
     3. `npm install`
     4. `git commit`
