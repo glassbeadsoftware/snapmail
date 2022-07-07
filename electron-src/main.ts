@@ -429,7 +429,7 @@ const createSplashWindow = (): BrowserWindow => {
 const createMainWindow = async (appPort: string): Promise<BrowserWindow> => {
   /** Create the browser window */
   let { width, height } = g_userSettings.get('windowBounds');
-  let title = "Where v" + app.getVersion() + " - " + g_uid
+  let title = "Snapmail v" + app.getVersion() + " - " + g_uid
   const options: Electron.BrowserWindowConstructorOptions = {
     height,
     width,
@@ -536,7 +536,7 @@ const createMainWindow = async (appPort: string): Promise<BrowserWindow> => {
 // /** Create the main window global */
 // function createWindow(): BrowserWindow {
 //   const { width, height } = g_userSettings.get('windowBounds');
-//   let title = "Where v" + app.getVersion() + " - " + g_uid
+//   let title = "Snapmail v" + app.getVersion() + " - " + g_uid
 //   let mainWindow = new BrowserWindow({
 //     width,
 //     height,

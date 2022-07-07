@@ -5,7 +5,7 @@ import { DNA_PATH, SNAPMAIL_APP_ID, BINARY_PATHS } from './constants'
 
 // these messages get seen on the splash page
 export enum StateSignalText {
-  IsFirstRun = 'Welcome to Where...',
+  IsFirstRun = 'Welcome to Snapmail...',
   IsNotFirstRun = 'Loading...',
   CreatingKeys = 'Creating cryptographic keys...',
   RegisteringDna = 'Registering Profiles DNA to Holochain...',
