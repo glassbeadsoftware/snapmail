@@ -81,8 +81,9 @@ export const BACKGROUND_COLOR = '#fbf9f7'
 export const ICON_FILEPATH = path.join(CURRENT_DIR, "/electron-ui/icon.png")
 export const LINUX_ICON_FILE = path.join(__dirname, '../electron-ui/icon.png')
 export const SPLASH_FILE = path.join(__dirname, '../electron-ui/splashscreen.html')
-export const MAIN_FILE = path.join(__dirname, '../electron-ui/index.html')
+export const MAIN_FILE = path.join(__dirname, '../electron-ui/switching.html')
 
+//export const SWITCHING_FILE = path.join(__dirname, '../electron-ui/switching.html')
 
 /** HTML PAGES */
 export const NETWORK_URL = 'file://' + CURRENT_DIR + '/'+ DIST_DIR +'/networking.html';

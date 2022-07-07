@@ -44,38 +44,33 @@ jobs:
       ##  with:
       ##    fileName: 'win-certificate.pfx'
       ##    encodedString: ${{ secrets.CERTIFICATE_WINDOWS_PFX }}
-      # rm the dna files from repository
-      - name: clearing precompiled dna files
-        continue-on-error: true
-        run: |
-          rm dna/*
       # Download previously uploaded artifacts and display them in logs
       - uses: actions/download-artifact@master
         with:
           name: snapmail-artifact
-          path: dna
+          path: bin
       - uses: actions/download-artifact@master
         with:
           name: zome-artifact
-          path: dna
+          path: bin
       - uses: actions/download-artifact@master
         with:
           name: snapmail-happ-artifact
-          path: dna
-      - name: list downloads
-        continue-on-error: true
-        run: ls -R
-        working-directory: dna
+          path: bin
       # Download snapmail-ui repo
       - name: Download snapmail-ui repo
         shell: bash # important because this runs shell scripts
         run: |
           npm run setup
+      - name: list downloads
+        continue-on-error: true
+        run: ls -R
+        working-directory: bin
       # Install nodejs dependencies
       - name: Install nodejs dependencies
         run: |
           npm install
-          npm run ui-install
+          npm run install:ui
       # build snapmail-ui
       - name: build snapmail-ui
         shell: bash
@@ -86,18 +81,13 @@ jobs:
         if: ${{ runner.os == 'Linux' }}
         shell: bash
         run: |
-          npm run hc-install
+          npm run ci:hc-install
       # build webhapp (linux)
       - name: build webhapp
         if: ${{ runner.os == 'Linux' }}
         shell: bash
         run: |
-          npm run package
-      # build holochain and lair
-      - name: build holochain and lair
-        shell: bash
-        run: |
-          bash scripts/workflow/build-hc-binaries.sh
+          npm run dist:webhapp
       # Setup sign & notarize
       - name: Setup sign and notarize (macos only)
         if: ${{ runner.os == 'macOs' }}
@@ -117,11 +107,11 @@ jobs:
           DEBUG: electron-osx-sign*,electron-notarize*
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          npm run dist-build
-      # list out folder
-      - name: list out folder
+          npm run dist:build
+      # list out-builder folder
+      - name: list out-builder folder
         run: ls
-        working-directory: out
+        working-directory: out-builder
       # list bin folder
       - name: list bin folder
         run: ls
@@ -132,30 +122,20 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          cp bin/snapmail-lair-keystore bin/snapmail-lair-keystore-linux
-          cp bin/snapmail-holochain bin/snapmail-holochain-linux
-          gh release upload "${GITHUB_REF#refs/tags/}" "workdir/snapmail.webhapp" --clobber          
-          gh release upload "${GITHUB_REF#refs/tags/}" "out/Snapmail-$SNAPMAIL_VERSION.AppImage" --clobber
-          gh release upload "${GITHUB_REF#refs/tags/}" "bin/snapmail-lair-keystore-linux" --clobber
-          gh release upload "${GITHUB_REF#refs/tags/}" "bin/snapmail-holochain-linux" --clobber
-          gh release upload "${GITHUB_REF#refs/tags/}" "out/latest-linux.yml" --clobber
+          gh release upload "${GITHUB_REF#refs/tags/}" "dna.workdir/snapmail.webhapp" --clobber          
+          gh release upload "${GITHUB_REF#refs/tags/}" "out-builder/Snapmail-$SNAPMAIL_VERSION.AppImage" --clobber
+          gh release upload "${GITHUB_REF#refs/tags/}" "out-builder/latest-linux.yml" --clobber
       - name: upload binary (macos only)
         if: ${{ runner.os == 'macOs' }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          cp bin/snapmail-lair-keystore bin/snapmail-lair-keystore-mac
-          cp bin/snapmail-holochain bin/snapmail-holochain-mac
-          gh release upload "${GITHUB_REF#refs/tags/}" "out/Snapmail-$SNAPMAIL_VERSION.dmg" --clobber
-          gh release upload "${GITHUB_REF#refs/tags/}" "bin/snapmail-lair-keystore-mac" --clobber
-          gh release upload "${GITHUB_REF#refs/tags/}" "bin/snapmail-holochain-mac" --clobber
-          gh release upload "${GITHUB_REF#refs/tags/}" "out/latest-mac.yml" --clobber
+          gh release upload "${GITHUB_REF#refs/tags/}" "out-builder/Snapmail-$SNAPMAIL_VERSION.dmg" --clobber
+          gh release upload "${GITHUB_REF#refs/tags/}" "out-builder/latest-mac.yml" --clobber
       - name: upload binary (Windows only)
         if: ${{ runner.os == 'Windows' }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          gh release upload "$($env:GITHUB_REF -replace "refs/tags/")" "out/Snapmail Setup $env:SNAPMAIL_VERSION.exe" --clobber
-          gh release upload "$($env:GITHUB_REF -replace "refs/tags/")" "bin/snapmail-lair-keystore.exe" --clobber
-          gh release upload "$($env:GITHUB_REF -replace "refs/tags/")" "bin/snapmail-holochain.exe" --clobber
-          gh release upload "$($env:GITHUB_REF -replace "refs/tags/")" "out/latest.yml" --clobber
+          gh release upload "$($env:GITHUB_REF -replace "refs/tags/")" "out-builder/Snapmail Setup $env:SNAPMAIL_VERSION.exe" --clobber
+          gh release upload "$($env:GITHUB_REF -replace "refs/tags/")" "out-builder/latest.yml" --clobber

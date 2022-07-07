@@ -3,7 +3,7 @@ import { app } from 'electron'
 import { HolochainRunnerOptions, StateSignal } from 'electron-holochain'
 import { DNA_PATH, SNAPMAIL_APP_ID } from './constants'
 
-// these messages get seen on the splash page
+/** Messages displayed on the splashscreen */
 export enum StateSignalText {
   IsFirstRun = 'Welcome to Snapmail...',
   IsNotFirstRun = 'Loading...',
@@ -14,6 +14,8 @@ export enum StateSignalText {
   AddingAppInterface = 'Attaching API network port...',
 }
 
+
+/** */
 export function stateSignalToText(state: StateSignal): StateSignalText {
   switch (state) {
     case StateSignal.IsFirstRun:

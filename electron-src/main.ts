@@ -108,6 +108,8 @@ let g_sessionDataPath = undefined;
 let g_statusEmitter = undefined;
 let g_shutdown = undefined;
 
+let g_startingHandle = undefined;
+
 
 /** values retrieved from holochain */
 let g_appPort = '';
@@ -219,6 +221,19 @@ const ipc = require('electron').ipcMain;
 // ipc.on('app_version', (event) => {
 //   event.sender.send('app_version', { version: app.getVersion() });
 // });
+
+
+ipc.on('startingHandle', async (event, startingHandle) => {
+  g_startingHandle = startingHandle;
+  log('debug', "startingHandle = " + startingHandle);
+  let firstUsername = "<noname>";
+  if (g_startingHandle === "<noname>") {
+    firstUsername = await promptFirstHandle();
+    //await ipc.call("setHandle", firstUsername)
+    log('debug', "firstUsername set: " + firstUsername);
+  }
+  event.returnValue = firstUsername;
+});
 
 
 /**
@@ -344,8 +359,8 @@ function updateNotificationSetting(canNotify: boolean): void {
 const createSplashWindow = (): BrowserWindow => {
   /** Create the browser window */
   const splashWindow = new BrowserWindow({
-    height: 350,
-    width: 650,
+    height: 450,
+    width: 850,
     center: true,
     resizable: false,
     frame: false,
@@ -931,9 +946,6 @@ app.on('ready', async () => {
   log('debug', "g_uid: " + g_uid);
   g_sessionDataPath = path.join(g_sessionDataPath, g_uid)
   log('debug', "g_sessionDataPath: " + g_sessionDataPath);
-  /** Get Versions */
-  //g_runner_version = getRunnerVersion(BINARY_PATHS?.holochainRunnerBinaryPath)
-  //g_lair_version = getLairVersion(BINARY_PATHS?.lairKeystoreBinaryPath)
 
   /** Create sys tray */
   g_tray = createTray();
@@ -943,9 +955,18 @@ app.on('ready', async () => {
 
   /** Start holochain and main window */
   await startMainWindow(splashWindow)
+
+  /** -- Check username -- */
+  let time = 0;
+  while (!g_startingHandle && time < 10 * 1000) {
+    await delay(100);
+    time += 100;
+  }
+  log('debug', "g_startingHandle found: " + g_startingHandle);
 })
 
-//
+
+
 // /**
 //  * This method will be called when Electron has finished initialization and is ready to create browser windows.
 //  * Some APIs can only be used after this event occurs.
@@ -1204,7 +1225,7 @@ async function promptBootstrapUrl(canExitOnCancel: boolean): Promise<boolean> {
 
 
 /** */
-async function promptFirstHandle(): Promise<boolean> {
+async function promptFirstHandle(): Promise<string> {
   const r = await prompt({
     title: 'SnapMail: Starting Username',
     height: 180,
