@@ -24,6 +24,6 @@ echo platform : $platform
 
 value=`curl -s https://api.github.com/repos/ddd-mtl/hash_zome/releases/latest | grep "/hash_zome-x86_64-$platform.tar.gz" | cut -d '"' -f 4`
 echo $value
-wget -q $value
+wget --directory-prefix=submodules -q $value
 
-tar -xvzf hash_zome-x86_64-$platform.tar.gz
+tar -xvzf submodules/hash_zome-x86_64-$platform.tar.gz -C ./submodules

@@ -1,21 +1,16 @@
+/** Public Modules */
+import * as path from 'path'
 import {
-  app,
-  BrowserWindow,
-  Menu,
-  shell,
-  Tray,
-  Notification,
-  nativeImage,
-  globalShortcut,
+  app, BrowserWindow, Menu, shell, Tray, Notification,
+  nativeImage, globalShortcut, dialog,
   MenuItemConstructorOptions, RelaunchOptions
 } from 'electron';
-import fs from 'fs';
-import * as path from 'path'
-import { dialog } from 'electron';
 import prompt from 'electron-prompt';
 import AutoLaunch from 'auto-launch';
 import { autoUpdater } from 'electron-updater';
 import IS_DEV from 'electron-is-dev';
+
+/** Holochain Modules */
 
 import {AdminWebsocket} from "@holochain/client";
 import {CellId} from "@holochain/client/lib/types/common";
@@ -52,7 +47,7 @@ import {
   LINUX_ICON_FILE,
   SPLASH_FILE,
   DEVELOPMENT_UI_URL,
-  USER_DATA_PATH, APP_DATA_PATH, DNA_VERSION_FILENAME, RUNNING_ZOME_HASH_FILEPATH, MAIN_FILE
+  USER_DATA_PATH, APP_DATA_PATH, DNA_VERSION_FILENAME, RUNNING_ZOME_HASH_FILEPATH, MAIN_FILE, BINARY_PATHS
 } from './constants';
 import { log, electronLogger } from './logger';
 import {
@@ -63,7 +58,7 @@ import { pingBootstrap } from "./spawn";
 
 import  { loadUserSettings } from './userSettings'
 import {addUidToDisk, initApp} from "./init";
-import {BINARY_PATHS, createHolochainOptions, stateSignalToText} from "./holochain";
+import {createHolochainOptions, stateSignalToText} from "./holochain";
 
 
 /**********************************************************************************************************************/
