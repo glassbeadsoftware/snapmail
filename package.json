@@ -9,7 +9,7 @@
   "main": "out-tsc/main.js",
   "scripts": {
     "postinstall": "electron-builder install-app-deps",
-    "ci:hc-install": "bash scripts/install-hc-tools.sh",
+    "ci:hc-install": "bash scripts/ci/install-hc-tools.sh",
     "clean": "bash scripts/npm/clean.sh",
     "setup": "bash scripts/npm/setup.sh",
     "install:ui": "cd submodules/snapmail-ui && rm package-lock.json && npm install",
