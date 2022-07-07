@@ -28,7 +28,7 @@
     "billy": "./node_modules/.bin/electron . billy --no-sandbox",
     "camille": "./node_modules/.bin/electron . camille --no-sandbox",
     "start-no": "./node_modules/.bin/electron electron --no-sandbox --enable-logging",
-    "dist:webhapp": "rm -f ui.zip && cd electron-ui && bestzip ../dna.workdir/ui.zip * && cd .. && hc web-app pack dna.workdir",
+    "dist:webhapp": "rm -f ui.zip && cd electron-ui && bestzip ../webhapp.workdir/ui.zip * && cd .. && hc web-app pack webhapp.workdir",
     "deploy-win": "set APP_DEV=false && electron-builder build --win --publish always",
     "deploy-mac": "electron-builder build --mac --publish always",
     "dist-publish": "set APP_DEV=false && electron-builder build --publish onTag",
