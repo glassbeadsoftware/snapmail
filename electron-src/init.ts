@@ -90,13 +90,9 @@ export function initApp(
 }
 
 
-/**
- *
- */
+/** */
 function setupSessionStorage(sessionPath: string, dnaHash: string, dnaVersionFilename: string) {
-
   const dna_version_txt = path.join(sessionPath, dnaVersionFilename);
-
   // Create storage and setup if none found
   if (!fs.existsSync(sessionPath)) {
     log('info', "Creating missing dir: " + sessionPath);
@@ -134,6 +130,7 @@ function setupSessionStorage(sessionPath: string, dnaHash: string, dnaVersionFil
     }
   }
 }
+
 
 /** */
 export function addUidToDisk(newUid: string, sessionDataPath: string, uidListFilename: string,): boolean {

@@ -26,9 +26,8 @@ export const DEFAULT_PROXY_URL ='kitsune-proxy://SYVd4CF3BdJ4DS7KwLLgeU3_DbHoZ34
 /** PATHS */
 export const CONFIG_PATH = path.join(app.getPath('appData'), 'Snapmail');
 //export const STORAGE_PATH = path.join(CONFIG_PATH, 'storage');
-export const CONDUCTOR_CONFIG_FILENAME = 'conductor-config.yaml';
 export const UID_LIST_FILENAME = 'uid-list.txt';
-
+export const NETWORK_SETTINGS_FILENAME = 'network-preferences.json';
 export const CURRENT_DIR = path.join(__dirname, '..');
 //const DIST_DIR = IS_DEBUG? "ui_dbg" : "ui";
 export const DIST_DIR = "electron-ui";
@@ -81,12 +80,10 @@ export const BACKGROUND_COLOR = '#fbf9f7'
 export const ICON_FILEPATH = path.join(CURRENT_DIR, "/electron-ui/icon.png")
 export const LINUX_ICON_FILE = path.join(__dirname, '../electron-ui/icon.png')
 export const SPLASH_FILE = path.join(__dirname, '../electron-ui/splashscreen.html')
-export const MAIN_FILE = path.join(__dirname, '../electron-ui/switching.html')
+export const MAIN_FILE = path.join(__dirname, '../electron-ui/index.html')
 
-//export const SWITCHING_FILE = path.join(__dirname, '../electron-ui/switching.html')
 
 /** HTML PAGES */
 export const NETWORK_URL = 'file://' + CURRENT_DIR + '/'+ DIST_DIR +'/networking.html';
-export const SWITCHING_URL = 'file://' + CURRENT_DIR + '/'+ DIST_DIR +'/switching.html';
 export const ERROR_URL = 'file://' + CURRENT_DIR + '/'+ DIST_DIR +'/error.html';
 export const INDEX_URL = 'file://' + CURRENT_DIR + '/'+ DIST_DIR +'/index.html?APP=';

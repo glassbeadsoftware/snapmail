@@ -7,7 +7,7 @@ import { bytesToBase64 } from 'byte-base64';
 import { log } from './logger';
 import { CURRENT_DIR, SNAPMAIL_APP_ID, DEFAULT_BOOTSTRAP_URL, DEFAULT_PROXY_URL } from './constants';
 import  path from "path";
-import {NetworkSettings} from "./types";
+import {NetworkSettings} from "./networkSettings";
 
 
 /** Convert holo hash to readable string */

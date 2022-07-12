@@ -16,7 +16,6 @@ import IS_DEV from 'electron-is-dev';
 //import {CellId} from "@holochain/client";
 
 import initAgent, {
-  getRunnerVersion, getLairVersion,
   StateSignal,
   STATUS_EVENT,
   APP_PORT_EVENT,
@@ -45,14 +44,16 @@ import {
   RUNNING_ZOME_HASH_FILEPATH,
   MAIN_FILE,
   BINARY_PATHS,
-  RUNNER_VERSION, LAIR_VERSION
+  RUNNER_VERSION, LAIR_VERSION, DEFAULT_BOOTSTRAP_URL, DEFAULT_PROXY_URL
 } from './constants';
 import { log, electronLogger } from './logger';
 import { pingBootstrap } from "./spawn";
 
 import  { loadUserSettings } from './userSettings'
 import {addUidToDisk, initApp} from "./init";
-import {createHolochainOptions, stateSignalToText} from "./holochain";
+import {createHolochainOptions, loadDnaVersion, stateSignalToText} from "./holochain";
+import {NetworkSettings} from "./networkSettings";
+import {loadNetworkConfig, saveNetworkConfig} from "./networkSettings";
 
 
 /**********************************************************************************************************************/
@@ -114,11 +115,17 @@ let g_startingHandle = undefined;
 /** values retrieved from holochain */
 let g_appPort = '';
 let g_dnaHash = undefined;
+let g_dnaVersion = undefined;
 
 /** Settings */
 let g_userSettings = undefined;
 let g_uidList = [];
-let g_networkSettings = undefined;
+let g_networkSettings: NetworkSettings = {
+  canProxy: true,
+  canMdns: false,
+  bootstrapUrl: DEFAULT_BOOTSTRAP_URL,
+  proxyUrl: DEFAULT_PROXY_URL,
+}
 
 
 /**********************************************************************************************************************/
@@ -223,14 +230,15 @@ const ipc = require('electron').ipcMain;
 // });
 
 
-ipc.on('startingHandle', async (event, startingHandle) => {
+ipc.on('startingInfo', async (event, startingHandle, dnaHash) => {
   g_startingHandle = startingHandle;
-  log('debug', "startingHandle = " + startingHandle);
+  g_dnaHash = Buffer.from(dnaHash).toString('base64')
+  log('info', "startingHandle = " + startingHandle);
   let firstUsername = "<noname>";
   if (g_startingHandle === "<noname>") {
     firstUsername = await promptFirstHandle();
     //await ipc.call("setHandle", firstUsername)
-    log('debug', "firstUsername set: " + firstUsername);
+    log('info', "firstUsername set: " + firstUsername);
   }
   event.returnValue = firstUsername;
 });
@@ -472,7 +480,7 @@ const createMainWindow = async (appPort: string): Promise<BrowserWindow> => {
     g_userSettings.set('windowPosition', { x: Math.floor(positions[0]), y: Math.floor(positions[1]) });
     if (g_canQuit) {
       log('info', 'WINDOW EVENT "close" -> canQuit')
-      //await try_shutdown();
+      //await tryToShutdown();
       mainWindow = null;
     } else {
       event.preventDefault();
@@ -483,7 +491,7 @@ const createMainWindow = async (appPort: string): Promise<BrowserWindow> => {
   /** Emitted when the window is closed. */
   mainWindow.on('closed', async function () {
     log('info', 'WINDOW EVENT "closed"');
-    // await try_shutdown();
+    //await tryToShutdown();
     // /** Wait for kill subprocess to finish on slow machines */
     // let start = Date.now();
     // let diff = 0;
@@ -852,8 +860,8 @@ const createMainWindow = async (appPort: string): Promise<BrowserWindow> => {
  */
 async function startMainWindow(splashWindow: BrowserWindow) {
   /** Init conductor */
-  const opts = createHolochainOptions(g_uid, g_sessionDataPath)
-  log('debug', {opts})
+  const opts = createHolochainOptions(g_uid, g_sessionDataPath, g_networkSettings)
+  log('info', {opts})
   const {statusEmitter, shutdown } = await initAgent(app, opts, BINARY_PATHS)
   g_statusEmitter = statusEmitter;
   g_shutdown = shutdown;
@@ -927,6 +935,12 @@ app.on('ready', async () => {
     const {sessionDataPath, uidList} = initApp(USER_DATA_PATH, APP_DATA_PATH, DNA_VERSION_FILENAME, RUNNING_ZOME_HASH_FILEPATH, UID_LIST_FILENAME);
     g_sessionDataPath = sessionDataPath
     g_uidList = uidList
+    g_dnaVersion = loadDnaVersion(sessionDataPath)
+    /** Load network settings */
+    const maybeNetworkSettings = loadNetworkConfig(g_sessionDataPath)
+    if (maybeNetworkSettings) {
+      g_networkSettings = maybeNetworkSettings;
+    }
   }
   /** Determine starting UID */
   const maybeUid = g_userSettings.get("lastUid")
@@ -1112,6 +1126,7 @@ app.on('before-quit', function () {
  */
 async function tryToShutdown() {
   try {
+    log('debug', {g_shutdown})
     if (g_shutdown) {
       log('info', 'calling g_shutdown()...');
       await g_shutdown();
@@ -1127,7 +1142,7 @@ async function restart() {
   log('debug', "*** Restarting...");
   g_mainWindow = null;
   //g_statusEmitter = null;
-  //await try_shutdown();
+  //await tryToShutdown();
   log('debug', "*** Restarting: RELAUNCH");
 
   if (app.isPackaged && process.env.APPIMAGE) {
@@ -1186,6 +1201,7 @@ async function promptNetworkType(canExitOnCancel: boolean): Promise<boolean> {
   } else {
     log('debug','promptNetworkType result: ' + r);
     g_networkSettings.canMdns = r === 'true';
+    saveNetworkConfig(g_sessionDataPath, g_networkSettings);
   }
   return r !== null
 }
@@ -1217,6 +1233,7 @@ async function promptBootstrapUrl(canExitOnCancel: boolean): Promise<boolean> {
   } else {
     log('debug','result: ' + r);
     g_networkSettings.bootstrapUrl = r;
+    saveNetworkConfig(g_sessionDataPath, g_networkSettings);
     const res = pingBootstrap(r)
     log('info', 'bootstrap result: ' + res)
   }
@@ -1382,6 +1399,7 @@ async function promptProxyUrl(canExitOnCancel: boolean): Promise<boolean> {
   } else {
     log('debug','result: ' + r);
     g_networkSettings.proxyUrl = r;
+    saveNetworkConfig(g_sessionDataPath, g_networkSettings);
   }
   return r !== null
 }
@@ -1397,7 +1415,7 @@ async function showAbout() {
     title: `About ${app.getName()}`,
     message: `${app.getName()} - v${app.getVersion()}`,
     detail: `A minimalist email app on Holochain from Glass Bead Software\n\n`
-      // + `Zome hash:\n${DNA_HASH}\n\n`
+      + `DNA Version:\n${g_dnaVersion}\n`
       + `DNA hash of "${g_uid}":\n${g_dnaHash}\n\n`
       + '' + RUNNER_VERSION + ''
       + '' + LAIR_VERSION + `\n`,
@@ -1548,6 +1566,7 @@ const networkMenuTemplate: Array<MenuItemConstructorOptions> = [
         }
       } else  {
         if(proxyChanged) {
+          saveNetworkConfig(g_sessionDataPath, g_networkSettings);
           await restart();
         }
       }
