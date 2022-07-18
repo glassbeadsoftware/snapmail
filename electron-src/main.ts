@@ -54,6 +54,7 @@ import {addUidToDisk, initApp} from "./init";
 import {createHolochainOptions, loadDnaVersion, stateSignalToText} from "./holochain";
 import {NetworkSettings} from "./networkSettings";
 import {loadNetworkConfig, saveNetworkConfig} from "./networkSettings";
+import MenuItem = Electron.MenuItem;
 
 
 /**********************************************************************************************************************/
@@ -197,7 +198,7 @@ autoUpdater.on('update-downloaded', () => {
 })
 
 /** export this to MenuItem click callback */
-function checkForUpdates(menuItem, /*_focusedWindow, _event*/): void {
+function checkForUpdates(menuItem: MenuItem, /*_focusedWindow, _event*/): void {
   if(IS_DEBUG || IS_DEV) {
     dialog.showMessageBox({
       title: 'Check for Update failed',
@@ -234,6 +235,7 @@ ipc.on('startingInfo', async (event, startingHandle, dnaHash) => {
   g_startingHandle = startingHandle;
   g_dnaHash = Buffer.from(dnaHash).toString('base64')
   log('info', "startingHandle = " + startingHandle);
+  //log('info', "dnaHash = " + g_dnaHash);
   let firstUsername = "<noname>";
   if (g_startingHandle === "<noname>") {
     firstUsername = await promptFirstHandle();
@@ -1652,8 +1654,9 @@ const mainMenuTemplate: Array<MenuItemConstructorOptions> = [
   {
     label: 'File', submenu: [{
         label:`Check for Update`,
-      click: function () {
-          checkForUpdates(this);
+      click: function (menuItem: MenuItem, _browserWindow: (BrowserWindow) | (undefined), _event: KeyboardEvent) {
+          //log('info', menuItem)
+          checkForUpdates(menuItem);
         }
       }, {
       label: 'Quit',
