@@ -112,17 +112,17 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          gh release upload "workflow-test" "workdir/snapmail.webhapp" --clobber
-          gh release upload "workflow-test" "out/Snapmail-$SNAPMAIL_VERSION.AppImage" --clobber
+          gh release upload "workflow-test" "webhapp.workdir/snapmail.webhapp" --clobber
+          gh release upload "workflow-test" "out-builder/Snapmail-$SNAPMAIL_VERSION.AppImage" --clobber
       - name: upload binary (macos only)
         if: ${{ runner.os == 'macOs' }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          gh release upload "workflow-test" "out/Snapmail-$SNAPMAIL_VERSION.dmg" --clobber
+          gh release upload "workflow-test" "out-builder/Snapmail-$SNAPMAIL_VERSION.dmg" --clobber
       - name: upload binary (Windows only)
         if: ${{ runner.os == 'Windows' }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          gh release upload "workflow-test" "out/Snapmail Setup $env:SNAPMAIL_VERSION.exe" --clobber
+          gh release upload "workflow-test" "out-builder/Snapmail Setup $env:SNAPMAIL_VERSION.exe" --clobber
