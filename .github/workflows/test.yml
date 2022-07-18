@@ -61,6 +61,11 @@ jobs:
         shell: bash
         run: |
           npm run build-prod
+      # build electron-src
+      - name: build electron-src
+        shell: bash
+        run: |
+          npm run tsc
       # install hc tool (linux)
       - name: Install hc tool and wasm target
         if: ${{ runner.os == 'Linux' }}
