@@ -65,13 +65,13 @@ export function htos(u8array: number[] | Uint8Array): string {
 // }
 
 
-/** Sanitize path for Windows */
-export function winPath(path) {
-  if (process.platform !== "win32") {
-    return path;
-  }
-  return path.replace(/\\/g, "\\\\");
-}
+// /** Sanitize path for Windows */
+// export function winPath(path) {
+//   if (process.platform !== "win32") {
+//     return path;
+//   }
+//   return path.replace(/\\/g, "\\\\");
+// }
 
 //
 // /**
