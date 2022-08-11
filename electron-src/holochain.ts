@@ -1,6 +1,6 @@
 import * as path from 'path'
 import { app } from 'electron'
-import { HolochainRunnerOptions, StateSignal } from 'electron-holochain'
+import { ElectronHolochainOptions, StateSignal } from "@sprillow-connor/electron-holochain"
 import {DNA_PATH, DNA_VERSION_FILENAME, NETWORK_SETTINGS_FILENAME, SNAPMAIL_APP_ID} from './constants'
 import {NetworkSettings} from "./networkSettings";
 import fs from "fs";
@@ -40,8 +40,8 @@ export function stateSignalToText(state: StateSignal): StateSignalText {
 
 
 /** */
-export function createHolochainOptions(uid: string, storagePath: string, networkSettings: NetworkSettings): HolochainRunnerOptions {
-  const options: HolochainRunnerOptions = {
+export function createHolochainOptions(uid: string, storagePath: string, networkSettings: NetworkSettings): ElectronHolochainOptions {
+  const options: ElectronHolochainOptions = {
     happPath: DNA_PATH,
     datastorePath: path.join(storagePath, 'databases-' + app.getVersion()),
     appId: SNAPMAIL_APP_ID + '-' + uid,
@@ -52,6 +52,7 @@ export function createHolochainOptions(uid: string, storagePath: string, network
     proxyUrl: networkSettings.proxyUrl,
     bootstrapUrl: networkSettings.canProxy? networkSettings.bootstrapUrl : '',
     uid,
+    passphrase: "",
   }
   return options;
 }

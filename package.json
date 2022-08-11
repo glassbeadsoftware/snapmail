@@ -90,7 +90,7 @@
     "eslint": "^8.19.0"
   },
   "dependencies": {
-    "electron-holochain": "0.0.38",
+    "@sprillow-connor/electron-holochain": "0.0.40",
     "auto-launch": "^5.0.5",
     "byte-base64": "^1.1.0",
     "command-exists": "^1.2.8",

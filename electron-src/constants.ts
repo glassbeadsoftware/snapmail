@@ -1,6 +1,6 @@
 import * as path from 'path'
 import { app } from 'electron';
-import {getLairVersion, getRunnerVersion, PathOptions} from "electron-holochain";
+import {getLairVersion, getRunnerVersion, PathOptions} from "@sprillow-connor/electron-holochain"
 
 console.log({__dirname})
 
