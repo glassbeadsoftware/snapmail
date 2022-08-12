@@ -78,4 +78,4 @@ electron-builder
 5. `/submodules`: Temp folder for the code dependencies
 6. `/out-tsc`: Typescript output folder
 7. `/out-builder`: electron-builder output folder
-8. `/dna.workdir`: webhapp stuff
+8. `/webhapp.workdir`: webhapp stuff
