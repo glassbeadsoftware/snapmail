@@ -37,7 +37,8 @@
     "dist:linux-app": "electron-builder --linux AppImage",
     "dist:mac": "electron-builder --mac",
     "dist:win": "set APP_DEV=false && electron-builder --win",
-    "dist:arm64": "electron-builder --arm64 --linux tar.gz"
+    "dist:arm64": "electron-builder --arm64 --linux tar.gz",
+    "version": "hc --version && holochain --version && lair-keystore --version"
   },
   "keywords": [
     "Electron",
