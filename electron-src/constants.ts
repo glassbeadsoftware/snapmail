@@ -1,6 +1,6 @@
 import * as path from 'path'
 import { app } from 'electron';
-import {getLairVersion, getRunnerVersion, PathOptions} from "@sprillow-connor/electron-holochain"
+import {getLairVersion, getRunnerVersion, PathOptions} from "@lightningrodlabs/electron-holochain"
 
 console.log({__dirname})
 
@@ -39,7 +39,7 @@ export const DNA_PATH = app.isPackaged
 
 export const APP_DATA_PATH = IS_DEBUG
   ? path.join(__dirname, '../../.dev-app-data')
-  : path.join(app.getPath('appData'), 'snapmail')
+  : path.join(app.getPath('appData'), 'Snapmail')
 export const USER_DATA_PATH = path.join(APP_DATA_PATH, 'users');
 
 

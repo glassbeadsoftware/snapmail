@@ -16,7 +16,7 @@ export interface NetworkSettings {
 /** */
 export function loadNetworkConfig(sessionDataPath): NetworkSettings | undefined  {
   let settings = undefined;
-  let configFilePath = path.join(sessionDataPath, NETWORK_SETTINGS_FILENAME);
+  const configFilePath = path.join(sessionDataPath, NETWORK_SETTINGS_FILENAME);
   try {
     settings = JSON.parse(fs.readFileSync(configFilePath).toString());
   } catch(error) {
@@ -30,7 +30,7 @@ export function loadNetworkConfig(sessionDataPath): NetworkSettings | undefined 
 /** */
 export function saveNetworkConfig(sessionDataPath: string, networkSettings: NetworkSettings, ): boolean {
 
-  let filepath = path.join(sessionDataPath, NETWORK_SETTINGS_FILENAME);
+  const filepath = path.join(sessionDataPath, NETWORK_SETTINGS_FILENAME);
   try {
     fs.writeFileSync(filepath, JSON.stringify(networkSettings));
   } catch (err) {

@@ -1,13 +1,15 @@
-import fs from 'fs';
-import { spawn, ChildProcessWithoutNullStreams } from 'child_process';
+// import fs from 'fs';
+// import { spawn, ChildProcessWithoutNullStreams } from 'child_process';
+
 import { bytesToBase64 } from 'byte-base64';
+
 //import { AdminWebsocket, AppWebsocket, AppStatusFilter } from '@holochain/client';
 //const { AdminWebsocket, AppWebsocket } = require('../holochain-conductor-api');
 
-import { log } from './logger';
-import { CURRENT_DIR, SNAPMAIL_APP_ID, DEFAULT_BOOTSTRAP_URL, DEFAULT_PROXY_URL } from './constants';
-import  path from "path";
-import {NetworkSettings} from "./networkSettings";
+// import { log } from './logger';
+// import { CURRENT_DIR, SNAPMAIL_APP_ID, DEFAULT_BOOTSTRAP_URL, DEFAULT_PROXY_URL } from './constants';
+// import  path from "path";
+// import {NetworkSettings} from "./networkSettings";
 
 
 /** Convert holo hash to readable string */

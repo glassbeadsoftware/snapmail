@@ -1,6 +1,6 @@
 import * as path from 'path'
 import { app } from 'electron'
-import { ElectronHolochainOptions, StateSignal } from "@sprillow-connor/electron-holochain"
+import { ElectronHolochainOptions, StateSignal } from "@lightningrodlabs/electron-holochain"
 import {DNA_PATH, DNA_VERSION_FILENAME, NETWORK_SETTINGS_FILENAME, SNAPMAIL_APP_ID} from './constants'
 import {NetworkSettings} from "./networkSettings";
 import fs from "fs";
@@ -41,18 +41,20 @@ export function stateSignalToText(state: StateSignal): StateSignalText {
 
 /** */
 export function createHolochainOptions(uid: string, storagePath: string, networkSettings: NetworkSettings): ElectronHolochainOptions {
+  const keystorePath = path.join(storagePath, 'keystore-' + app.getVersion())
+  const datastorePath =  path.join(storagePath, 'databases-' + app.getVersion())
   const options: ElectronHolochainOptions = {
     happPath: DNA_PATH,
-    datastorePath: path.join(storagePath, 'databases-' + app.getVersion()),
+    datastorePath,
     appId: SNAPMAIL_APP_ID + '-' + uid,
     //appId: MAIN_APP_ID,
     appWsPort: 0,
     adminWsPort: 1235,
-    keystorePath: path.join(storagePath, 'keystore-' + app.getVersion()),
+    //keystorePath: keystorePath.replace(/\\/g, "/").replace(/:/g, ""),
+    keystorePath,
     proxyUrl: networkSettings.proxyUrl,
     bootstrapUrl: networkSettings.canProxy? networkSettings.bootstrapUrl : '',
-    uid,
-    passphrase: "",
+    passphrase: "test-passphrase",
   }
   return options;
 }
@@ -61,8 +63,8 @@ export function createHolochainOptions(uid: string, storagePath: string, network
 /** */
 export function loadDnaVersion(sessionDataPath): string | undefined  {
   let dnaVersion = undefined;
-  //let configFilePath = path.join(sessionDataPath, '../');
-  let configFilePath = path.join(sessionDataPath, DNA_VERSION_FILENAME);
+  //const configFilePath = path.join(sessionDataPath, '../');
+  const configFilePath = path.join(sessionDataPath, DNA_VERSION_FILENAME);
   try {
     dnaVersion = fs.readFileSync(configFilePath).toString();
   } catch(error) {

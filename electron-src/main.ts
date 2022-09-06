@@ -22,7 +22,7 @@ import initAgent, {
   ERROR_EVENT,
   HOLOCHAIN_RUNNER_QUIT,
   LAIR_KEYSTORE_QUIT,
-} from "@sprillow-connor/electron-holochain"
+} from "@lightningrodlabs/electron-holochain"
 
 /** My Modules */
 import {
@@ -412,8 +412,8 @@ const createSplashWindow = (): BrowserWindow => {
  */
 const createMainWindow = async (appPort: string): Promise<BrowserWindow> => {
   /** Create the browser window */
-  let { width, height } = g_userSettings.get('windowBounds');
-  let title = "Snapmail v" + app.getVersion() + " - " + g_uid
+  const { width, height } = g_userSettings.get('windowBounds');
+  const title = "Snapmail v" + app.getVersion() + " - " + g_uid
   const options: Electron.BrowserWindowConstructorOptions = {
     height,
     width,
@@ -433,7 +433,7 @@ const createMainWindow = async (appPort: string): Promise<BrowserWindow> => {
   let mainWindow = new BrowserWindow(options)
 
   /** Things to setup at start */
-  let { x, y } = g_userSettings.get('windowPosition');
+  const { x, y } = g_userSettings.get('windowPosition');
   mainWindow.setPosition(x, y);
 
   globalShortcut.register('f5', function() {
@@ -471,14 +471,14 @@ const createMainWindow = async (appPort: string): Promise<BrowserWindow> => {
     // The event doesn't pass us the window size,
     // so we call the `getBounds` method which returns an object with
     // the height, width, and x and y coordinates.
-    let { width, height } = mainWindow.getBounds();
+    const { width, height } = mainWindow.getBounds();
     // Now that we have them, save them using the `set` method.
     g_userSettings.set('windowBounds', { width, height });
   });
 
   /** Save position on close */
   mainWindow.on('close', async (event) => {
-    let positions = mainWindow.getPosition();
+    const positions = mainWindow.getPosition();
     g_userSettings.set('windowPosition', { x: Math.floor(positions[0]), y: Math.floor(positions[1]) });
     if (g_canQuit) {
       log('info', 'WINDOW EVENT "close" -> canQuit')
@@ -908,7 +908,7 @@ async function startMainWindow(splashWindow: BrowserWindow) {
     //app.quit()
   })
   statusEmitter.on(LAIR_KEYSTORE_QUIT, (e) => {
-    let msg = "LAIR_KEYSTORE_QUIT event received"
+    const msg = "LAIR_KEYSTORE_QUIT event received"
     log('warn', msg)
     if (g_mainWindow) {
       promptHolochainError(g_mainWindow, msg)
@@ -1161,7 +1161,7 @@ async function restart() {
     // return;
 
     // FUSE can still fail
-    let options: RelaunchOptions = {
+    const options: RelaunchOptions = {
       execPath: process.env.APPIMAGE,
       args:['--appimage-extract-and-run']
     };
@@ -1517,7 +1517,7 @@ const networkMenuTemplate: Array<MenuItemConstructorOptions> = [
     id: 'join-network',
     label: 'Join new Network',
     click: async function (menuItem, browserWindow, _event) {
-      let changed = await promptUid(false, g_mainWindow);
+      const changed = await promptUid(false, g_mainWindow);
       if (changed) {
         await restart();
       }
@@ -1527,7 +1527,7 @@ const networkMenuTemplate: Array<MenuItemConstructorOptions> = [
     id: 'switch-network',
     label: 'Switch Network',
     click: async function (menuItem, _browserWindow, _event) {
-      let changed = await promptUidSelect(false);
+      const changed = await promptUidSelect(false);
       if (changed) {
         await restart();
       }
@@ -1718,7 +1718,7 @@ const trayMenuTemplate: Array<MenuItemConstructorOptions> = [
   {
     label: 'Switch network',
     click: async function (menuItem, _browserWindow, _event) {
-      let changed = await promptUidSelect(false);
+      const changed = await promptUidSelect(false);
       if(changed) {
         await restart()
       }

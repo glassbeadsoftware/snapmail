@@ -62,7 +62,7 @@ export function initApp(
   /** -- UID List -- **/
   let uidList = []
   try {
-    let uidListPath = path.join(sessionDataPath, uidListFilename);
+    const uidListPath = path.join(sessionDataPath, uidListFilename);
     log('debug', 'Reading file ' + uidListPath);
     const uidListStr = fs.readFileSync(uidListPath).toString();
     uidList = uidListStr.replace(/\r\n/g,'\n').split('\n');
@@ -136,7 +136,7 @@ function setupSessionStorage(sessionPath: string, dnaHash: string, dnaVersionFil
 export function addUidToDisk(newUid: string, sessionDataPath: string, uidListFilename: string,): boolean {
   //log('info','addUidToDisk(): ' + newUid);
   //log('info','addUidToDisk() sessionDataPath = ' + sessionDataPath);
-  let uidListPath = path.join(sessionDataPath, uidListFilename);
+  const uidListPath = path.join(sessionDataPath, uidListFilename);
   try {
     fs.appendFileSync(uidListPath, newUid + '\n');
   } catch (err) {
