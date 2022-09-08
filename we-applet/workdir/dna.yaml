@@ -1,0 +1,16 @@
+---
+manifest_version: "1"
+name: snapmail-test
+uuid: ~
+properties: ~
+origin_time: 2022-08-02T08:55:49.200Z
+integrity:
+  zomes:
+    - name: snapmail_model
+      bundled: ../../submodules/snapmail-rsm/target/wasm32-unknown-unknown/release/snapmail_model.wasm
+coordinator:
+  zomes:
+    - name: snapmail
+      bundled: ../../submodules/snapmail-rsm/target/wasm32-unknown-unknown/release/snapmail.wasm
+      dependencies:
+        - name: snapmail_model
