@@ -9,6 +9,8 @@
     "esModuleInterop": false,
     "allowSyntheticDefaultImports": true,
     "experimentalDecorators": true,
+    "resolveJsonModule": true,
+    "skipLibCheck": true,
     "importHelpers": true,
     "sourceMap": true,
     "inlineSources": true,

@@ -251,7 +251,7 @@ const snapmailApplet: WeApplet = {
                                   <vaadin-grid theme="no-row-borders" id="contactGrid" style="height: 100%; min-width: 50px;">
                                       <vaadin-grid-column path="status" width="30px" flex-grow="0" header=" "></vaadin-grid-column>
                                       <vaadin-grid-column auto-width path="username" header=" "></vaadin-grid-column>
-                                      <vaadin-grid-column auto-width path="recepientType" header=" "></vaadin-grid-column>
+                                      <vaadin-grid-column auto-width path="recipientType" header=" "></vaadin-grid-column>
                                       <vaadin-grid-column path="agentId" hidden></vaadin-grid-column>
                                   </vaadin-grid>
                               </vaadin-vertical-layout>

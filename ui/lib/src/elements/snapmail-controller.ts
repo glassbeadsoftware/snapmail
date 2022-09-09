@@ -6,18 +6,19 @@ import type {UploadElement} from '@vaadin/vaadin-upload';
 import type {TextFieldElement} from '@vaadin/vaadin-text-field';
 import type {MenuBarElement} from '@vaadin/vaadin-menu-bar';
 // import '@vaadin/vaadin-list-box';
-import type {SplitLayoutElement} from '@vaadin/vaadin-split-layout';
+//import type {SplitLayoutElement} from '@vaadin/vaadin-split-layout';
 import type {ProgressBarElement} from '@vaadin/vaadin-progress-bar';
-import type {VerticalLayoutElement, HorizontalLayouElement} from '@vaadin/vaadin-ordered-layout';
+import type {VerticalLayoutElement} from '@vaadin/vaadin-ordered-layout/vaadin-vertical-layout.js';
+import type {HorizontalLayoutElement} from '@vaadin/vaadin-ordered-layout/vaadin-horizontal-layout.js';
 import type {ComboBoxElement} from '@vaadin/vaadin-combo-box';
 import type {TextAreaElement} from '@vaadin/vaadin-text-field/vaadin-text-area';
-import {GridColumnGroupElement} from '@vaadin/vaadin-grid/vaadin-grid-column-group';
-import {GridFilterElement} from '@vaadin/vaadin-grid/vaadin-grid-filter';
-import {GridFilterColumnElement} from '@vaadin/vaadin-grid/vaadin-grid-filter-column';
-import {GridTreeToggleElement} from '@vaadin/vaadin-grid/vaadin-grid-tree-toggle';
+// import {GridColumnGroupElement} from '@vaadin/vaadin-grid/vaadin-grid-column-group';
+// import {GridFilterElement} from '@vaadin/vaadin-grid/vaadin-grid-filter';
+// import {GridFilterColumnElement} from '@vaadin/vaadin-grid/vaadin-grid-filter-column';
+// import {GridTreeToggleElement} from '@vaadin/vaadin-grid/vaadin-grid-tree-toggle';
+// import {GridSortColumnElement} from '@vaadin/vaadin-grid/vaadin-grid-sort-column';
+// import {GridSorterElement} from '@vaadin/vaadin-grid/vaadin-grid-sorter';
 import {GridSelectionColumnElement} from '@vaadin/vaadin-grid/vaadin-grid-selection-column';
-import {GridSortColumnElement} from '@vaadin/vaadin-grid/vaadin-grid-sort-column';
-import {GridSorterElement} from '@vaadin/vaadin-grid/vaadin-grid-sorter';
 import type {NotificationElement} from '@vaadin/vaadin-notification';
 import type {DialogElement} from '@vaadin/vaadin-dialog';
 import '@vaadin/vaadin-icons';
@@ -27,13 +28,21 @@ import '@vaadin/vaadin-lumo-styles/icons';
 import '@vaadin/vaadin-ordered-layout';
 //import '@vaadin-component-factory/vcf-tooltip';
 
-import * as DNA from './rsm_bridge'
-import {sha256, arrayBufferToBase64, base64ToArrayBuffer, splitFile, sleep, base64regex, htos, stoh} from './utils'
-import {systemFolders, isMailDeleted, determineMailCssClass, into_gridItem, into_mailText, is_OutMail, customDateString} from './mail'
+import * as DNA from '../rsm_bridge'
+import {arrayBufferToBase64, base64ToArrayBuffer, splitFile,  htos, stoh} from '../utils'
+import {systemFolders, isMailDeleted, determineMailCssClass, into_gridItem, into_mailText, is_OutMail, customDateString} from '../mail'
 
-import {version} from '../package.json';
-import { checkAckInbox, IS_ELECTRON, NETWORK_ID } from "./rsm_bridge";
-import {FileManifest, HandleItem, Mail, MailItem, UsernameMap} from "../types";
+import {version} from '../../package.json';
+import {
+  ContactGridItem,
+  FileManifest,
+  HandleItem,
+  Mail,
+  MailGridItem,
+  MailItem,
+  SendMailInput,
+  UsernameMap
+} from "../types";
 import {DnaHash} from "@holochain/client/lib/types";
 import {ActionHash, EntryHash} from "@holochain/client";
 import {PolymerElement} from "@polymer/polymer";
@@ -105,7 +114,7 @@ let g_responseMap = new Map();
 // Map of (mailId -> mailItem)
 let g_mailMap = new Map();
 
-let g_dnaId: DnaHash;
+let g_dnaId: string;
 let g_myAgentHash = null;
 let g_myAgentId: string | null = null;
 let g_myHandle = '<unknown>';
@@ -205,7 +214,7 @@ function handleSignal(signalwrapper:any/*FIXME*/) {
       const pingedAgentB64 = htos(mail.author);
       storePingResult({}, pingedAgentB64);
 
-      if (IS_ELECTRON && window.require) {
+      if (DNA.IS_ELECTRON && window.require) {
         //console.log("handleSignal for ELECTRON");
 
         console.log(mail);
@@ -293,7 +302,7 @@ function createNewGroup(dialog: DialogElement, textField: TextFieldElement) {
 
 
 /** Find and collect grid items that have the given agentIds */
-function ids_to_items(ids: string[], items) {
+function ids_to_items(ids: string[], items: any) {
   let filtered = [];
   for (let id of ids) {
     for (let item of items) {
@@ -412,7 +421,8 @@ function initGroupsDialog() {
     okButton.addEventListener('click', function() {
       let ids = [];
       for (let item of grid.selectedItems!) {
-        ids.push(htos(item.agentId));
+        const contactItem: ContactGridItem = item as ContactGridItem;
+        ids.push(htos(contactItem.agentId));
       }
       g_groupList.set(g_currentGroup, ids);
       grid.selectedItems = [];
@@ -531,7 +541,7 @@ function initUpload(): void {
       allowActionMenu(false)
 
       const file = event.detail.file;
-      const xhr = event.detail.xhr;
+      //const xhr = event.detail.xhr;
       console.log('upload-before event: ');
 
       event.preventDefault(); // Prevent the upload request
@@ -657,7 +667,7 @@ async function initDna() {
     //DNA.findAgent(handleButton.textContent, handle_findAgent);
 
     /** -- Change title color in debug -- */
-    const titleLayout = document.getElementById('titleLayout') as HorizontalLayouElement;
+    const titleLayout = document.getElementById('titleLayout') as HorizontalLayoutElement;
     if (process.env.NODE_ENV !== 'prod') {
       titleLayout.style.backgroundColor = "#ec8383d1";
     }
@@ -700,8 +710,9 @@ async function setHandle() {
   // - Update my Handle in the contacts grid
   const contactGrid = document.querySelector('#contactGrid') as GridElement;
   for (const item of contactGrid.items!) {
-    if (htos(item.agentId) === g_myAgentId) {
-      item.username = newHandle;
+    let contactItem: ContactGridItem = item as ContactGridItem;
+    if (htos(contactItem.agentId) === g_myAgentId) {
+      contactItem.username = newHandle;
     }
   }
   contactGrid.render();
@@ -754,9 +765,10 @@ function updateRecepients(canReset: boolean) {
   let prevSelected = [];
   let typeMap = new Map();
   for (const item of contactGrid.selectedItems!) {
-    let agentId = htos(item.agentId);
+    let contactItem: ContactGridItem = item as ContactGridItem;
+    let agentId = htos(contactItem.agentId);
     prevSelected.push(agentId);
-    typeMap.set(agentId, item.recepientType);
+    typeMap.set(agentId, contactItem.recipientType);
   }
   console.log({typeMap});
   let selected = [];
@@ -772,12 +784,12 @@ function updateRecepients(canReset: boolean) {
     }
     //const status = blueDot
     let item = {
-      "username": username, "agentId": agentHash, "recepientType": '', status,
+      "username": username, "agentId": agentHash, "recipientType": '', status,
     };
     // - Retrieve selected
     if (!canReset && prevSelected.includes(agentId)) {
       console.log("keep selected: " + item.username);
-      item.recepientType = typeMap.get(agentId);
+      item.recipientType = typeMap.get(agentId);
       selected.push(item);
     }
     items.push(item);
@@ -785,11 +797,11 @@ function updateRecepients(canReset: boolean) {
 
   // // Test Content
   // items = [
-  //   { "username": "Bob", "agentId": 11, "recepientType": '', "status": blueDot },
-  //   { "username": "Alice", "agentId": 222, "recepientType": '', "status": blueDot },
-  //   { "username": "Camille", "agentId": 333, "recepientType": '', "status": blueDot },
-  //   { "username": "Daniel", "agentId": 444, "recepientType": '', "status": blueDot },
-  //   { "username": "Eve", "agentId": 555, "recepientType": '', "status": blueDot },
+  //   { "username": "Bob", "agentId": 11, "recipientType": '', "status": blueDot },
+  //   { "username": "Alice", "agentId": 222, "recipientType": '', "status": blueDot },
+  //   { "username": "Camille", "agentId": 333, "recipientType": '', "status": blueDot },
+  //   { "username": "Daniel", "agentId": 444, "recipientType": '', "status": blueDot },
+  //   { "username": "Eve", "agentId": 555, "recipientType": '', "status": blueDot },
   // ];
 
   /* Reset search filter */
@@ -839,7 +851,7 @@ function initMenuBar() {
       const a = document.createElement('a');
       a.href = url;
       a.download = mailItem.mail.subject + ".txt";
-      a.addEventListener('click', {}, false);
+      a.addEventListener('click', () => {}, false);
       a.click();
     }
     /* -- Handle 'Trash' -- */
@@ -864,7 +876,8 @@ function initMenuBar() {
       g_replyOf = g_currentMailItem.id;
       console.log("g_replyOf set ", g_replyOf)
       resetContactGrid(contactGrid);
-      for (let contactItem of contactGrid.items!) {
+      for (let item of contactGrid.items!) {
+        let contactItem: ContactGridItem = item as ContactGridItem;
         if (contactItem.username === g_currentMailItem.username) {
           contactGrid.selectedItems = [contactItem];
           contactGrid.activeItem = contactItem;
@@ -883,17 +896,17 @@ function initMenuBar() {
         // TO
         for(let agentId of mailItem.mail.to) {
           let to_username = g_usernameMap.get(htos(agentId));
-          selectUsername(contactGrid, to_username, 1);
+          selectUsername(contactGrid, to_username!, 1);
         }
         // CC
         for(let agentId of mailItem.mail.cc) {
           let cc_username = g_usernameMap.get(htos(agentId));
-          selectUsername(contactGrid, cc_username, 2);
+          selectUsername(contactGrid, cc_username!, 2);
         }
         // BCC
         for(let agentId of mailItem.bcc) {
           let bcc_username = g_usernameMap.get(htos(agentId));
-          selectUsername(contactGrid, bcc_username, 3);
+          selectUsername(contactGrid, bcc_username!, 3);
         }
         // Done
         contactGrid.render();
@@ -922,13 +935,14 @@ function initMenuBar() {
 
 
 /** */
-function selectUsername(contactGrid, candidat, count) {
-  for(let contactItem of contactGrid.items) {
+function selectUsername(contactGrid: GridElement, candidat: string, count: number): void {
+  for(let item of contactGrid.items!) {
+    let contactItem: ContactGridItem = item as ContactGridItem;
     if(contactItem.username === candidat) {
       for (let i = 0; i < count; i++) {
         toggleContact(contactGrid, contactItem);
       }
-      contactGrid.selectedItems.push(contactItem);
+      contactGrid.selectedItems!.push(contactItem);
       contactGrid.activeItem = contactItem;
       break;
     }
@@ -940,7 +954,7 @@ function selectUsername(contactGrid, candidat, count) {
 function update_mailGrid(folder: string): void {
   const mailGrid = document.querySelector('#mailGrid') as GridElement;
   let folderItems = [];
-  const activeItem: GridItem = mailGrid.activeItem;
+  const activeItem: MailGridItem = mailGrid.activeItem as MailGridItem;
   let codePoint = folder.codePointAt(0);
   console.log('update_mailGrid: ' + folder + ' (' + codePoint + ')');
 
@@ -994,8 +1008,9 @@ function update_mailGrid(folder: string): void {
   // - Re-activate activeItem
   if (activeItem !== undefined && activeItem !== null) {
     for(const item of Object.values(mailGrid.items)) {
+      const mailGridItem: MailGridItem = item as MailGridItem;
       //console.log('Item id = ' + item.id);
-      if(activeItem.id === item.id) {
+      if(activeItem.id === mailGridItem.id) {
         //console.log('activeItem match found');
         mailGrid.activeItem = item;
         mailGrid.selectedItems = [item];
@@ -1012,7 +1027,7 @@ function update_mailGrid(folder: string): void {
  *
  */
 function initFileBox() {
-  const fileboxBar = document.querySelector('#fileboxBar') as HorizontalLayouElement;
+  const fileboxBar = document.querySelector('#fileboxBar') as HorizontalLayoutElement;
   if (process.env.NODE_ENV !== 'prod') {
     fileboxBar.style.backgroundColor = "rgba(241,154,154,0.82)";
   }
@@ -1074,7 +1089,7 @@ function initFileBox() {
       if (missingCount > 0) {
         DNA.getMissingAttachments(mailItem.author, mailItem.ah)
           .then((missingCount:number) => handle_missingAttachments(missingCount))
-          .err((err:any) => {
+          .catch((err:any) => {
             console.error('MissingAttachments zome call failed');
             console.error(err);
           })
@@ -1217,13 +1232,13 @@ function initAttachmentGrid() {
          const types = fields[1].split(';');
          filetype = types[0];
        }
-       let byteArray = base64ToArrayBuffer(manifest.content)
+       let byteArray = base64ToArrayBuffer(manifest.content!)
        const blob = new Blob([byteArray], { type: filetype});
        const url = URL.createObjectURL(blob);
        const a = document.createElement('a');
        a.href = url;
        a.download = item.filename || 'download';
-       a.addEventListener('click', {}, false);
+       a.addEventListener('click', () => {}, false);
        a.click();
        attachmentGrid.activeItem = null;
        attachmentGrid.selectedItems = [];
@@ -1322,9 +1337,9 @@ function initContactsArea() {
     if (column.path === 'status') {
       classes += ' statusColumn';
     }
-    if (rowData.item.recepientType !== '') { classes += ' newmail' }
-    if (rowData.item.recepientType === 'cc') { classes += ' myCc' }
-    if (rowData.item.recepientType === 'bcc') { classes += ' myBcc' }
+    if (rowData.item.recipientType !== '') { classes += ' newmail' }
+    if (rowData.item.recipientType === 'cc') { classes += ' myCc' }
+    if (rowData.item.recipientType === 'bcc') { classes += ' myBcc' }
     return classes;
   };
   /** ON SELECT */
@@ -1337,24 +1352,25 @@ function initContactsArea() {
   });
   /** ON CLICK */
   contactGrid.addEventListener('click', function(e) {
-    const item = contactGrid.getEventContext(e)!.item;
+    const eventContext: any /* FIXME */ = contactGrid.getEventContext(e)!;
     //contactGrid.selectedItems = item ? [item] : [];
-    toggleContact(contactGrid, item);
+    toggleContact(contactGrid, eventContext.item);
     setState_SendButton(contactGrid.selectedItems!.length == 0);
     contactGrid.render();
   });
   /** -- Contacts search bar -- */
   let contactSearch = document.getElementById('contactSearch') as TextFieldElement;
   contactSearch.addEventListener('value-changed', function(e: any/*: TextFieldValueChangedEvent*/) {
-    contactGrid.items = filterContacts(contactGrid.selectedItems, e.detail.value);
+    const selectedItems = contactGrid.selectedItems! as ContactGridItem[];
+    contactGrid.items = filterContacts(selectedItems, e.detail.value);
     contactGrid.render();
   });
 }
 
 
 /** */
-function filterContacts(selectedItems: ItemElement[], searchValue: string) {
-  console.log("filterContacts:");
+function filterContacts(selectedItems: ContactGridItem[], searchValue: string): ContactGridItem[] {
+  console.log("filterContacts() called");
   /** Get contacts from current group only */
   let items = g_contactItems;
   //console.log({items});
@@ -1383,12 +1399,12 @@ function filterContacts(selectedItems: ItemElement[], searchValue: string) {
 
 
 /** */
-function toggleContact(contactGrid: GridElement, contactItem?: any /* FIXME*/) {
+function toggleContact(contactGrid: GridElement, contactItem?: ContactGridItem) {
   if (!contactItem) {
     return;
   }
   let nextType = '';
-  switch(contactItem.recepientType) {
+  switch(contactItem.recipientType) {
     case '': nextType = 'to'; break;
     case 'to': nextType = 'cc'; break;
     case 'cc': nextType = 'bcc'; break;
@@ -1401,17 +1417,18 @@ function toggleContact(contactGrid: GridElement, contactItem?: any /* FIXME*/) {
       }
       break;
     }
-    default: console.error('unknown recepientType');
+    default: console.error('unknown recipientType');
   }
-  contactItem.recepientType = nextType;
+  contactItem.recipientType = nextType;
 }
 
 
 /** */
 function resetContactGrid(contactGrid: GridElement): void {
   if (contactGrid.items && contactGrid.items.length > 0) {
-    for(let contactItem of contactGrid.items) {
-      contactItem.recepientType = '';
+    for(let item of contactGrid.items) {
+      let contactItem: ContactGridItem = item as ContactGridItem;
+      contactItem.recipientType = '';
     }
   }
   contactGrid.selectedItems = [];
@@ -1506,7 +1523,7 @@ async function sendAction(): Promise<void> {
 
   /* Get contact Lists */
   const contactGrid = document.querySelector('#contactGrid') as GridElement;
-  const selection: GridItem|null = contactGrid.selectedItems;
+  const selection: ContactGridItem[] = contactGrid.selectedItems! as ContactGridItem[];
   console.log('selection: ' + JSON.stringify(selection));
   if (!selection || selection.length == 0) {
     console.log('Send Mail Failed: No receipient selected')
@@ -1518,18 +1535,19 @@ async function sendAction(): Promise<void> {
   let bccList = [];
   /* Get recipients from contactGrid */
   for (let contactItem of selection) {
-    console.log('recepientType: ' + contactItem.recepientType);
-    switch (contactItem.recepientType) {
+    console.log('recipientType: ' + contactItem.recipientType);
+    switch (contactItem.recipientType) {
       case '': break;
       case 'to': toList.push(contactItem.agentId); break;
       case 'cc': ccList.push(contactItem.agentId); break;
       case 'bcc': bccList.push(contactItem.agentId); break;
-      default: console.err('unknown recepientType');
+      default: console.error('unknown recipientType');
     }
   }
   /* Create Mail */
   const outMailSubjectArea = document.querySelector('#outMailSubjectArea') as TextFieldElement;
-  const mail = {
+  const outMailContentArea = document.querySelector('#outMailContentArea') as TextAreaElement;
+  const mail: SendMailInput = {
     subject: outMailSubjectArea.value,
     payload: outMailContentArea.value,
     reply_of: g_replyOf,
@@ -1643,7 +1661,8 @@ function handle_getAllMails(callResult: any) {
   /** Get currently selected hashs */
   let prevSelected = [];
   for (const item of mailGrid.selectedItems!) {
-    prevSelected.push(htos(item.id));
+    let mailItem: MailGridItem = item as MailGridItem;
+    prevSelected.push(htos(mailItem.id));
   }
 
   let allCount = mailList.length;
@@ -1727,7 +1746,7 @@ function handle_getAllMails(callResult: any) {
 
 /** */
 function updateTray(newCount: number): void {
-  if (IS_ELECTRON && window.require) {
+  if (DNA.IS_ELECTRON && window.require) {
     //console.log("handleSignal for ELECTRON");
     const ipc = window.require('electron').ipcRenderer;
     let reply = ipc.send('newCountAsync', newCount);
@@ -1738,18 +1757,19 @@ function updateTray(newCount: number): void {
 
 /** Post callback for getAllMails() */
 function handle_post_getAllMails(): void {
-  /** Update mailGrid */
   try {
+    /** Update mailGrid */
     const folder = document.querySelector('#fileboxFolder') as ComboBoxElement;
     update_mailGrid(folder.value);
     /** Update active Item */
     const mailGrid = document.querySelector('#mailGrid') as GridElement;
-    const activeItem = mailGrid.activeItem;
+    const activeItem: MailGridItem = mailGrid.activeItem as MailGridItem;
     console.log('handle_getAllMails ; activeItem = ');
     console.log({activeItem})
     if(activeItem) {
       let newActiveItem = null;
-      for(let mailItem of mailGrid.items!) {
+      for(let item of mailGrid.items!) {
+        const mailItem: MailGridItem = item as MailGridItem;
         if(mailItem.id === activeItem.id) {
           newActiveItem = mailItem;
           break;
@@ -1823,7 +1843,7 @@ function handle_getAllHandles(callResult: any): void {
     g_usernameMap.clear();
     for(let handleItem of handleList) {
       /* TODO: exclude self from list when in prod? */
-      let agentId = htos(Object.values(handleItem.agentId));
+      let agentId = htos(handleItem.agentId);
       console.log('' + handleItem.name + ': ' + agentId);
       g_usernameMap.set(agentId, handleItem.name);
       if(g_pingMap.get(agentId) === undefined) {

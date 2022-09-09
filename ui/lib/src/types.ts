@@ -79,9 +79,9 @@ export interface SendMailInput {
   subject: String,
   payload: String,
   reply_of: ActionHash | null,
-  to: AgentPubKey[],
-  cc: AgentPubKey[],
-  bcc: AgentPubKey[],
+  to: Uint8Array[],
+  cc: Uint8Array[],
+  bcc: Uint8Array[],
   manifest_address_list: ActionHash[],
 }
 
@@ -100,4 +100,22 @@ export interface FileChunk {
   data_hash: string,
   chunk_index: number,
   chunk: string,
+}
+
+
+export interface ContactGridItem {
+  status: string,
+  username: string,
+  recipientType: string,
+  agentId: Uint8Array,
+}
+
+
+export interface MailGridItem {
+  id: Uint8Array,
+  status: string,
+  username: string,
+  subject: string,
+  date: string,
+  attachment: string,
 }
