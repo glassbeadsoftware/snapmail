@@ -49,7 +49,7 @@ if (process.env.NODE_ENV === 'prod') {
 /**
  * Setup recurrent pull from DHT ever 10 seconds
  */
-let myVar = setInterval(onEvery10sec, 10 * 1000);
+let _10sec = setInterval(onEvery10sec, 10 * 1000);
 function onEvery10sec() {
   console.log("**** onEvery10sec CALLED ****");
   if (process.env.NODE_ENV === 'prod') {
@@ -64,7 +64,7 @@ function onEvery10sec() {
 /**
  * Setup recurrent pull from DHT ever 10 seconds
  */
-let myVar = setInterval(onEverySec, 1 * 1000);
+let _1Sec = setInterval(onEverySec, 1 * 1000);
 function onEverySec() {
   if (process.env.NODE_ENV === 'prod') {
     console.log("**** onEverySec CALLED ****");
@@ -291,10 +291,9 @@ function createNewGroup(dialog: DialogElement, textField: TextFieldElement) {
   dialog.opened = false;
 }
 
-/**
- * Find and collect grid items that have the given agentIds
- */
-function ids_to_items(ids, items) {
+
+/** Find and collect grid items that have the given agentIds */
+function ids_to_items(ids: string[], items) {
   let filtered = [];
   for (let id of ids) {
     for (let item of items) {
@@ -335,7 +334,7 @@ function initGroupsDialog() {
     vaadin.pattern = "[a-zA-Z0-9_.]{0,20}";
     vaadin.addEventListener("keyup", (event) => {
       if (event.keyCode == 13) {
-        createNewGroup(dialog, vaadin);
+        createNewGroup(dialog!, vaadin);
       }
     });
 
@@ -345,7 +344,7 @@ function initGroupsDialog() {
     okButton.textContent = 'OK';
     okButton.setAttribute('style', 'margin-right: 1em');
     okButton.addEventListener('click', function() {
-      createNewGroup(dialog, vaadin);
+      createNewGroup(dialog!, vaadin);
     });
     /** Cancel Button */
     const cancelButton = window.document.createElement('vaadin-button') as ButtonElement;
@@ -376,7 +375,9 @@ function initGroupsDialog() {
       let grid = root.children[1] as GridElement;
       grid.items = g_contactItems;
       const groupIds = g_groupList.get(g_currentGroup);
-      grid.selectedItems = ids_to_items(groupIds, grid.items);
+      if (groupIds) {
+        grid.selectedItems = ids_to_items(groupIds, grid.items);
+      }
       return;
     }
     /** Title */
@@ -399,8 +400,8 @@ function initGroupsDialog() {
     grid.heightByRows = true;
     grid.setAttribute('style', 'width: 360px;');
     grid.items = g_contactItems;
-    const groupIds = g_groupList.get(g_currentGroup);;
-    const items = ids_to_items(groupIds, grid.items)
+    const groupIds = g_groupList.get(g_currentGroup);
+    const items = ids_to_items(groupIds!, grid.items)
     //grid.selectedItems = items; // does not work here
     /** Confirm Button */
     const okButton = window.document.createElement('vaadin-button');
@@ -536,7 +537,7 @@ function initUpload(): void {
       event.preventDefault(); // Prevent the upload request
 
       let reader = new FileReader();
-      reader.onload = function(e) {
+      reader.onload = function(e: any) {
         console.log('FileReader onload event: ');
         const content = arrayBufferToBase64(e.target.result); // reader.result
 
@@ -863,7 +864,7 @@ function initMenuBar() {
       g_replyOf = g_currentMailItem.id;
       console.log("g_replyOf set ", g_replyOf)
       resetContactGrid(contactGrid);
-      for (let contactItem of contactGrid.items) {
+      for (let contactItem of contactGrid.items!) {
         if (contactItem.username === g_currentMailItem.username) {
           contactGrid.selectedItems = [contactItem];
           contactGrid.activeItem = contactItem;
@@ -936,7 +937,7 @@ function selectUsername(contactGrid, candidat, count) {
 
 
 /** */
-function update_mailGrid(folder) {
+function update_mailGrid(folder: string): void {
   const mailGrid = document.querySelector('#mailGrid') as GridElement;
   let folderItems = [];
   const activeItem: GridItem = mailGrid.activeItem;
@@ -1360,7 +1361,7 @@ function filterContacts(selectedItems: ItemElement[], searchValue: string) {
   if (g_currentGroup !== SYSTEM_GROUP_LIST[0]) {
     const ids = g_groupList.get(g_currentGroup);
     //console.log({ids});
-    items = ids_to_items(ids, items);
+    items = ids_to_items(ids!, items);
     //console.log({items});
   }
   /** Set filter */
@@ -1608,22 +1609,19 @@ function setState_ReplyButton(isDisabled: boolean): void {
 // Zome call Callbacks
 //---------------------------------------------------------------------------------------------------------------------
 
-/**
- * Generic callback: log response
- */
-function logCallResult(callResult) {
-  if (callResult === undefined || callResult.Err !== undefined) {
-    const err = callResult.Err || 'unknown error';
-    console.error('Zome call failed:');
-    console.error(err);
-    return;
-  }
-  //console.debug('callResult = ' + JSON.stringify(callResult));
-}
+// /** Generic callback: log response */
+// function logCallResult(callResult) {
+//   if (callResult === undefined || callResult.Err !== undefined) {
+//     const err = callResult.Err || 'unknown error';
+//     console.error('Zome call failed:');
+//     console.error(err);
+//     return;
+//   }
+//   //console.debug('callResult = ' + JSON.stringify(callResult));
+// }
 
-/**
- * Generic callback: Refresh my handle
- */
+
+/** Generic callback: Refresh my handle */
 function showHandle(myHandle: string) {
   //console.log('showHandle call result = ' + JSON.stringify(callResult))
   let handleButton = document.getElementById('handleText') as ButtonElement;
@@ -1631,9 +1629,7 @@ function showHandle(myHandle: string) {
 }
 
 
-/**
- * Refresh mailGrid
- */
+/** Refresh mailGrid */
 function handle_getAllMails(callResult: any) {
   if (callResult === undefined || callResult.Err !== undefined) {
     //const err = callResult.Err;
@@ -1644,9 +1640,9 @@ function handle_getAllMails(callResult: any) {
   let mailGrid = document.querySelector('#mailGrid') as GridElement;
   let mailList: MailItem[] = callResult;
 
-  // Get currently selected hashs
+  /** Get currently selected hashs */
   let prevSelected = [];
-  for (const item of mailGrid.selectedItems) {
+  for (const item of mailGrid.selectedItems!) {
     prevSelected.push(htos(item.id));
   }
 
@@ -1668,7 +1664,7 @@ function handle_getAllMails(callResult: any) {
     let isDeleted = isMailDeleted(mailItem);
     let isOutMail = is_OutMail(mailItem);
 
-    // Counters
+    /** Counters */
     if (isOutMail) {
       sentCount = sentCount + 1;
     }
@@ -1682,8 +1678,7 @@ function handle_getAllMails(callResult: any) {
       newCount = newCount + 1;
     }
 
-
-    // Determine if should add to grid depending on current folder
+    /** Determine if should add to grid depending on current folder */
     if (isDeleted && selectedBox !== systemFolders.TRASH.codePointAt(0)) {
       continue;
     }
@@ -1693,9 +1688,9 @@ function handle_getAllMails(callResult: any) {
     if (!isOutMail && selectedBox === systemFolders.SENT.codePointAt(0)) {
       continue;
     }
-    //items.push(into_gridItem(g_usernameMap, mailItem));
+    // items.push(into_gridItem(g_usernameMap, mailItem));
     let gridItem = into_gridItem(g_usernameMap, mailItem);
-    //console.log('gridItem.id = ' + gridItem.id);
+    // console.log('gridItem.id = ' + gridItem.id);
     items.push(gridItem);
     if (prevSelected.includes(htos(gridItem.id))) {
       selected.push(gridItem);
@@ -1808,7 +1803,7 @@ function pingNextAgent(): void {
 
 
 /** */
-function storePingResult(callResult: any, agentB64) {
+function storePingResult(callResult: any, agentB64: string) {
   const isAgentPresent = callResult !== undefined && callResult.Err === undefined
   console.log("storePingResult() " + agentB64 + " | " + isAgentPresent)
   g_responseMap.set(agentB64, isAgentPresent);
