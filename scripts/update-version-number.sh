@@ -1,7 +1,6 @@
 #!/bin/sh
 
-# Script for updating electron ui and web ui version number
-# Setup script must be called first
+# Script for updating version number across the code base
 
 # Check pre-conditions
 if [ $# != 1 ]; then
@@ -18,10 +17,17 @@ echo
 echo "Updating version number '$OLD_VER' -> '$1'"
 echo
 
+# Change electron/package.json
+OLD_VER=`awk -F ":" '/"version"/ {print $2}' ./electron/package.json | sed 's/"//g' | sed 's/,//g' | sed 's/ //g'`
+sed -i "s/\"version\": \"$OLD_VER\"/\"version\": \"$1\"/" ./electron/package.json
 
-# Change build/snapmail-ui/package.json
-OLD_VER=`awk -F ":" '/"version"/ {print $2}' ./submodules/snapmail-ui/package.json | sed 's/"//g' | sed 's/,//g' | sed 's/ //g'`
-sed -i "s/\"version\": \"$OLD_VER\"/\"version\": \"$1\"/" ./submodules/snapmail-ui/package.json
+# Change we-applet/package.json
+OLD_VER=`awk -F ":" '/"version"/ {print $2}' ./we-applet/package.json | sed 's/"//g' | sed 's/,//g' | sed 's/ //g'`
+sed -i "s/\"version\": \"$OLD_VER\"/\"version\": \"$1\"/" ./we-applet/package.json
+
+# Change ui/lib/package.json
+OLD_VER=`awk -F ":" '/"version"/ {print $2}' ./ui/lib/package.json | sed 's/"//g' | sed 's/,//g' | sed 's/ //g'`
+sed -i "s/\"version\": \"$OLD_VER\"/\"version\": \"$1\"/" ./ui/lib/package.json
 
 
 # Change .github/workflows/release.yml

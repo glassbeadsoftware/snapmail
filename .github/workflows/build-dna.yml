@@ -17,8 +17,8 @@ jobs:
       - name: Hash Zome Install
         run: |
           npm run install:hash-zome
-      # Download snapmail repos (rsm & ui)
-      - name: Download snapmail-ui repo
+      # Download rsm repo
+      - name: Download rsm
         shell: bash
         run: |
           npm run setup

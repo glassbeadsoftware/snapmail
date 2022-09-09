@@ -1,9 +1,7 @@
 .cargo
 
 # build dependencies
-electron-ui
-dna
-snapmail-ui
+bin
 
 # build generated
 snapmail_dna_address

@@ -6,7 +6,7 @@ It is the latest iteration of [Snapmail](http://www.glassbead.com/snapmail/index
 ![sshot](https://github.com/glassbeadsoftware/snapmail/blob/master/assets/snapmail-ui.png)
 
 This is the repository for the native application (Electron).  
-See [snapmail-rsm](https://github.com/glassbeadsoftware/snapmail-rsm) for holochain backend or [snapmail-ui](https://github.com/glassbeadsoftware/snapmail-ui) for web frontend source code.
+See [snapmail-rsm](https://github.com/glassbeadsoftware/snapmail-rsm) for holochain backend source code.
 
 ## Installation
 
@@ -32,8 +32,7 @@ See [snapmail-rsm](https://github.com/glassbeadsoftware/snapmail-rsm) for holoch
 
 #### Steps required for updating version number:
 1. `./scripts/update-version-number.sh <semver>`
-2. `cd build/snapmail-ui`
-3. `git commit`
+
 
 #### Steps for preparing a new release for all platforms on github:
 1. Tag a new release in the [release page](https://github.com/glassbeadsoftware/snapmail/releases).
@@ -55,11 +54,10 @@ See [snapmail-rsm](https://github.com/glassbeadsoftware/snapmail-rsm) for holoch
     2. update file `zomes/snapmail/Cargo.toml`
     3. update file `sweettest/Cargo.toml`
     4. `git commit`
-3. Update the holochain dependencies in `snapmail-ui`:
-    1. `cd submodules/snapmail-ui`
+3. Update the holochain dependencies in `web-ui`:
+    1. `cd web-ui`
     2. update file `package.json`
     3. `npm install`
-    4. `git commit`
 4. Update file `scripts/workflow/install-hc-tools.sh`
 5. Update file `package.json`
 6. `git commit`
@@ -67,15 +65,22 @@ See [snapmail-rsm](https://github.com/glassbeadsoftware/snapmail-rsm) for holoch
 
 ### Toolchain
 
+webpack
 Typescript
 electron-holochain
 electron-builder
 
-1. `/electron-src`: The electron app source code
+### Folder structure
+
 2. `/assets`: Original media files used throughout the code base
-3. `/electron-ui`: Final artifacts for the electron app (includes output from snapmail-ui)
-4. `/bin`: All the binaries we are dependent on on must ship with the app
-5. `/submodules`: Temp folder for the code dependencies
-6. `/out-tsc`: Typescript output folder
-7. `/out-builder`: electron-builder output folder
-8. `/webhapp.workdir`: webhapp stuff
+3. `/bin`: All the binaries we are dependent on on must ship with the app
+4. `/electron`: The electron app source code
+5. `/electron/web`: Final artifacts for the electron app (includes output from `ui`)
+6. `/electron/binaries`: All the binaries we are dependent on and must ship with the app
+7. `/submodules`: Temp folder for the code dependencies (snapmail-rsm)
+5. `/ui/apps/snapmail`: The "normal" webapp bundled in electron & web-happ 
+9. `/ui/lib`: source code of the web ui components 
+10. `/out-tsc`: Typescript output folder
+11. `/out-builder`: electron-builder output folder
+12. `/we-applet`: The applet for We integration
+13. `/webhapp.workdir`: webhapp work directory

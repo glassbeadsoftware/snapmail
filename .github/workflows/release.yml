@@ -57,8 +57,8 @@ jobs:
         with:
           name: snapmail-happ-artifact
           path: bin
-      # Download snapmail-ui repo
-      - name: Download snapmail-ui repo
+      # Download rsm repo
+      - name: Download rsm repo
         shell: bash # important because this runs shell scripts
         run: |
           npm run setup
@@ -71,8 +71,8 @@ jobs:
         run: |
           npm install
           npm run install:ui
-      # build snapmail-ui
-      - name: build snapmail-ui
+      # build web-ui
+      - name: build web-ui
         shell: bash
         run: |
           npm run build-prod
