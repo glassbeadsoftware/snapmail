@@ -1,6 +1,5 @@
 import type {ButtonElement} from '@vaadin/vaadin-button';
-import type {GridElement, GridItem} from '@vaadin/vaadin-grid';
-import type {ItemElement} from '@vaadin/vaadin-item';
+import type {GridElement} from '@vaadin/vaadin-grid';
 import type {UploadElement} from '@vaadin/vaadin-upload';
 //import {} from '@vaadin/vaadin-upload/vaadin-upload.js';
 import type {TextFieldElement} from '@vaadin/vaadin-text-field';
@@ -43,7 +42,6 @@ import {
   SendMailInput,
   UsernameMap
 } from "../types";
-import {DnaHash} from "@holochain/client/lib/types";
 import {ActionHash, EntryHash} from "@holochain/client";
 import {PolymerElement} from "@polymer/polymer";
 
@@ -55,10 +53,9 @@ if (process.env.NODE_ENV === 'prod') {
   console.log = () => {};
 }
 
-/**
- * Setup recurrent pull from DHT ever 10 seconds
- */
-let _10sec = setInterval(onEvery10sec, 10 * 1000);
+
+/** Setup recurrent pull from DHT every 10 seconds */
+/*let _10sec =*/ setInterval(onEvery10sec, 10 * 1000);
 function onEvery10sec() {
   console.log("**** onEvery10sec CALLED ****");
   if (process.env.NODE_ENV === 'prod') {
@@ -70,10 +67,8 @@ function onEvery10sec() {
   }
 }
 
-/**
- * Setup recurrent pull from DHT ever 10 seconds
- */
-let _1Sec = setInterval(onEverySec, 1 * 1000);
+/** Setup recurrent pull from DHT every 10 seconds */
+/*let _1Sec =*/ setInterval(onEverySec, 1 * 1000);
 function onEverySec() {
   if (process.env.NODE_ENV === 'prod') {
     console.log("**** onEverySec CALLED ****");
@@ -456,7 +451,7 @@ function initGroupsDialog() {
     root.appendChild(okButton);
     root.appendChild(delButton);
     root.appendChild(cancelButton);
-    /** Set selected at the end otherwise it wont register */
+    /** Set selected at the end otherwise it won't register */
     grid.selectedItems = items;
   };
 
@@ -703,7 +698,7 @@ async function setHandle() {
   let input = document.getElementById('myNewHandleInput') as TextFieldElement;
   const newHandle = input.value;
   console.log('new handle = ' + newHandle);
-  const callResult = await DNA.setHandle(newHandle)
+  /*const callResult =*/ await DNA.setHandle(newHandle)
   showHandle(newHandle);
   input.value = '';
   setState_ChangeHandleBar(true);
@@ -758,8 +753,8 @@ function initTitleBar() {
 
 
 /** */
-function updateRecepients(canReset: boolean) {
-  console.log('updateRecepients() - START ; canReset = ' + canReset)
+function updateRecipients(canReset: boolean) {
+  console.log('updateRecipients() - START ; canReset = ' + canReset)
   const contactGrid = document.querySelector('#contactGrid') as GridElement;
   /* Get currently selected items' hash */
   let prevSelected = [];
@@ -816,7 +811,7 @@ function updateRecepients(canReset: boolean) {
   contactGrid.activeItem = null;
   contactGrid.render();
   console.log({contactGrid});
-  console.log('updateRecepients() - END')
+  console.log('updateRecipients() - END')
 }
 
 
@@ -858,7 +853,7 @@ function initMenuBar() {
     if (e.detail.value.text === 'Trash') {
       g_replyOf = null;
       DNA.deleteMail(g_currentMailItem.id)
-        .then((maybeAh: ActionHash | null) => getAllMails()) // On delete, refresh filebox
+        .then((/*maybeAh: ActionHash | null*/) => getAllMails()) // On delete, refresh filebox
       const mailGrid = document.querySelector('#mailGrid') as GridElement;
       mailGrid.selectedItems = [];
       mailGrid.activeItem = null;
@@ -1120,7 +1115,7 @@ function filterMails(searchValue: string) {
   const matchesTerm = (value: string) => {
     return value.toLowerCase().indexOf(searchTerm.toLowerCase()) >= 0;
   };
-  let filteredItems = g_mailItems.filter((item) => {
+  const filteredItems = g_mailItems.filter((item) => {
     //console.log({item});
     return (
       !searchTerm
@@ -1146,7 +1141,7 @@ async function fillAttachmentGrid(mail: Mail): Promise<number> {
     handle_getManifest(callResult)
 
     const hasAttachment = g_hasAttachment > 0;
-    missingCount += 0 + Number(!hasAttachment);
+    missingCount += Number(!hasAttachment);
     let item = {
       "fileId": attachmentInfo.data_hash,
       "filename": attachmentInfo.filename,
@@ -1252,7 +1247,7 @@ function initAttachmentGrid() {
 async function getFile(fileId: ActionHash): Promise<FileManifest | null> {
   const callResult = await DNA.findManifest(fileId);
   let manifest = handle_findManifest(callResult)
-  if (!manifest || manifest === null) {
+  if (!manifest) {
     return null;
   }
   let chunks = [];
@@ -1459,7 +1454,7 @@ function initActionBar() {
       outMailContentArea.value = '';
       /** clear each attachment */
       upload.files = [];
-      updateRecepients(true);
+      updateRecipients(true);
       return;
     }
     /** Send clicked */
@@ -1526,7 +1521,7 @@ async function sendAction(): Promise<void> {
   const selection: ContactGridItem[] = contactGrid.selectedItems! as ContactGridItem[];
   console.log('selection: ' + JSON.stringify(selection));
   if (!selection || selection.length == 0) {
-    console.log('Send Mail Failed: No receipient selected')
+    console.log('Send Mail Failed: No recipient selected')
     return;
   }
 
@@ -1571,7 +1566,7 @@ async function sendAction(): Promise<void> {
   outMailContentArea.value = '';
   contactGrid.selectedItems = [];
   contactGrid.activeItem = null;
-  updateRecepients(false);
+  updateRecipients(false);
   console.log('sendMail -> getAllMails');
   await getAllMails();
   upload.files = [];
@@ -1697,7 +1692,7 @@ function handle_getAllMails(callResult: any) {
       newCount = newCount + 1;
     }
 
-    /** Determine if should add to grid depending on current folder */
+    /** Determine if we should add to grid depending on current folder */
     if (isDeleted && selectedBox !== systemFolders.TRASH.codePointAt(0)) {
       continue;
     }
@@ -1854,7 +1849,7 @@ function handle_getAllHandles(callResult: any): void {
     }
   }
   /* Reset contactGrid */
-  updateRecepients(false)
+  updateRecipients(false)
   const contactsMenu = document.querySelector('#ContactsMenu') as MenuBarElement;
   if (contactsMenu.items.length > 0) {
     contactsMenu.items[0].disabled = false;
@@ -1882,7 +1877,7 @@ function handle_getAllHandles(callResult: any): void {
 
 /** Add chunk to chunkList */
 function handle_writeChunk(callResult: any): void {
-  if (callResult === undefined || callResult.Err !== undefined) {
+  if (!callResult || callResult.Err !== undefined) {
     const err = callResult.Err;
     console.error('writeChunk zome call failed');
     console.error(err);
@@ -1896,7 +1891,7 @@ function handle_writeChunk(callResult: any): void {
 /** Add manifest to fileList */
 function handle_writeManifest(callResult: any): void {
   //console.log('writeManifestResult: ' + JSON.stringify(callResult));
-  if (callResult === undefined || callResult.Err !== undefined) {
+  if (!callResult || callResult.Err !== undefined) {
     const err = callResult.Err;
     console.error('writeManifest zome call failed');
     console.error(err);
@@ -1909,7 +1904,7 @@ function handle_writeManifest(callResult: any): void {
 
 /** */
 function handle_getManifest(callResult: any): void {
-  if (callResult === undefined || callResult.Err !== undefined) {
+  if (!callResult || callResult.Err !== undefined) {
     const err = callResult.Err;
     console.error('GetManifest zome call failed');
     console.error(err);
@@ -1930,7 +1925,7 @@ function handle_missingAttachments(missingCount: number): void {
 
 /** */
 function handle_acknowledgeMail(callResult: any): void {
-  if (callResult === undefined || callResult.Err !== undefined) {
+  if (!callResult || callResult.Err !== undefined) {
     const err = callResult.Err;
     console.error('AcknowledgeMail zome call failed');
     console.error(err);
@@ -1942,7 +1937,7 @@ function handle_acknowledgeMail(callResult: any): void {
 
 /** */
 function handle_getChunk(callResult: any): string | null {
-  if (callResult === undefined || callResult.Err !== undefined) {
+  if (!callResult || callResult.Err !== undefined) {
     const err = callResult.Err;
     console.error('GetChunk zome call failed');
     console.error(err);
@@ -1956,7 +1951,7 @@ function handle_getChunk(callResult: any): string | null {
 
 /** */
 function handle_findManifest(callResult: any): FileManifest | null {
-  if (callResult === undefined || callResult.Err !== undefined) {
+  if (!callResult || callResult.Err !== undefined) {
     const err = callResult.Err;
     console.error('FindManifest zome call failed');
     console.error(err);
