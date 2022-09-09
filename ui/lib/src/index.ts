@@ -1,5 +1,5 @@
-// Import the container media queries mixin
-//import 'cqfill';
+/** Import the container media queries mixin */
+import 'cqfill';
 
 
 /**  Change exports to be available for consumer packages */

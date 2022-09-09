@@ -1,9 +1,10 @@
 
-import {ActionHash, AdminWebsocket, AgentPubKey, AppSignal, AppWebsocket, CellId, EntryHash} from '@holochain/client';
+import {ActionHash, AdminWebsocket, AgentPubKey, AppWebsocket, CellId, EntryHash} from '@holochain/client';
+//import {AppSignal} from '@holochain/client';
 //import { AdminWebsocket, AppWebsocket } from '../../holochain-conductor-api/lib';
 import { htos } from './utils';
-import {Mail, MailItem, SendMailInput} from "./types";
-import {CapSecret} from "@holochain/client/lib/hdk/capabilities";
+import {SendMailInput} from "./types";
+//import {CapSecret} from "@holochain/client/lib/hdk/capabilities";
 
 const DEFAULT_TIMEOUT = 9999
 
@@ -19,7 +20,7 @@ export const IS_ELECTRON = (HREF_PORT === ""); // No HREF PORT when run by Elect
 if (IS_ELECTRON) {
   APP_ID = 'snapmail-app'
   ADMIN_PORT = 1235
-  let searchParams = new URLSearchParams(window.location.search);
+  const searchParams = new URLSearchParams(window.location.search);
   APP_PORT = searchParams.get("APP");
   NETWORK_ID = searchParams.get("UID");
   console.log({APP_ID})
@@ -33,13 +34,13 @@ let g_cellId: CellId
 let g_appWs: AppWebsocket
 
 
-/** Default signal callback */
-let receiveSignal = (signal: AppSignal) => {
-  // impl...
-  console.log('Received signal:')
-  console.log({signal})
-  //resolve()
-}
+// /** Default signal callback */
+// const receiveSignal = (signal: AppSignal) => {
+//   // impl...
+//   console.log('Received signal:')
+//   console.log({signal})
+//   //resolve()
+// }
 
 
 // -- micro API -- //
@@ -58,7 +59,7 @@ let receiveSignal = (signal: AppSignal) => {
 
 /**  */
 export async function rsmConnectApp(signalCallback: any) {
-  let env = window.location;
+  const env = window.location;
   const installed_app_id = NETWORK_ID !== '' ? APP_ID + '-' + NETWORK_ID : APP_ID;
   console.log('*** installed_app_id = ' + installed_app_id)
   console.log(env);
@@ -86,10 +87,10 @@ export async function rsmConnectApp(signalCallback: any) {
   /** Get handle from electron */
   if (IS_ELECTRON && window.require) {
     console.log("Calling getMyHandle() for ELECTRON");
-    let startingHandle = await getMyHandle();
+    const startingHandle = await getMyHandle();
     console.log("getMyHandle() returned: " + startingHandle);
     const ipc = window.require('electron').ipcRenderer;
-    let reply = ipc.sendSync('startingInfo', startingHandle, g_cellId[0]);
+    const reply = ipc.sendSync('startingInfo', startingHandle, g_cellId[0]);
     console.log({reply});
     if (reply != "<noname>") {
       const callResult = await setHandle(reply);

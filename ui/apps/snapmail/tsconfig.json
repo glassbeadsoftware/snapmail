@@ -9,14 +9,12 @@
     "esModuleInterop": false,
     "allowSyntheticDefaultImports": true,
     "experimentalDecorators": true,
-    "resolveJsonModule": true,
-    "skipLibCheck": true,
     "importHelpers": true,
     "sourceMap": true,
     "inlineSources": true,
-    "outDir": "dist",
-    "declarationDir": "dist",
+    "outDir": "out-tsc",
     "rootDir": "./src",
-    "declaration": true
-  }
+    "declaration": false
+  },
+  "include": ["src/**/*.ts"]
 }

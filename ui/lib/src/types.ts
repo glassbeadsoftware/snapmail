@@ -76,8 +76,8 @@ export interface AttachmentInfo {
 
 
 export interface SendMailInput {
-  subject: String,
-  payload: String,
+  subject: string,
+  payload: string,
   reply_of: ActionHash | null,
   to: Uint8Array[],
   cc: Uint8Array[],
