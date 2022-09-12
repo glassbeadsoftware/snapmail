@@ -72,17 +72,17 @@ electron-builder
 
 ## Project structure
 
-| Directory                                  | Description                                                                                                                 |
-| :----------------------------------------- | :-------------------------------------------------------------------------------------------------------------------------- |
-|`/assets`| Original media files used throughout the code base
-|`/bin`| All the binaries we are dependent on on must ship with the app
-|`/electron`| The electron app source code
-|`/electron/web`| Final artifacts for the electron app (includes output from `ui`)
-|`/electron/binaries`| All the binaries we are dependent on and must ship with the app
-|`/submodules`| Temp folder for the code dependencies (snapmail-rsm)
-|`/ui/apps/snapmail`| The "normal" webapp bundled in electron & web-happ 
-|`/ui/lib`| source code of the web ui components 
-|`/out-tsc`| Typescript output folder
-|`/out-builder`| electron-builder output folder
-|`/we-applet`| The applet for We integration
-|`/webhapp.workdir`| webhapp work directory
+| Directory            | Description                                                                                                                 |
+|:---------------------| :-------------------------------------------------------------------------------------------------------------------------- |
+| `/assets/`           | Original media files used throughout the code base
+| `/bin/`              | All the binaries we are dependent on on must ship with the app
+| `/electron/`         | The electron app directory
+| `  src/`             | The electron app source code
+| `  web/`             | Final artifacts for the electron app (includes output from `ui`)
+| `  binaries/`        | All the binaries we are dependent on and must ship with the app
+| `/submodules/`       | Temp folder for the code dependencies (snapmail-rsm)
+| `/ui/apps/snapmail/` | The "normal" webapp bundled in electron & web-happ 
+| `/ui/lib/`           | source code of the web ui components
+| `/out-builder/`      | electron-builder output folder
+| `/we-applet/`        | The applet for We integration
+| `/webhapp.workdir/`  | webhapp work directory

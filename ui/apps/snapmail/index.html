@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+  <head>
+    <meta charset="utf-8" />
+    <style>
+      body {
+        background: #fafafa;
+      }
+    </style>
+    <script>
+      if (global === undefined) {
+        var global = window;
+      }
+    </script>
+  </head>
+  <body style="background-color: white;margin:0px 3px 0px 5px; height:100%;">
+    <snapmail-app></snapmail-app>
+
+    <script type="module">
+      import { SnapmailApp } from "./out-tsc";
+      customElements.define("snapmail-app", SnapmailApp);
+    </script>
+  </body>
+</html>

@@ -2,9 +2,10 @@
  * Functions for manipulating mailItems
  */
 
+import {AgentPubKey} from "@holochain/client";
+
 import {htos} from './utils'
 import {InMailState, MailItem, OutMailState, UsernameMap} from "./types";
-import {AgentPubKey} from "@holochain/client";
 //import { default as DNA } from "./rsm_bridge";
 //import * as DNA from './rsm_bridge'
 

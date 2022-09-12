@@ -37,6 +37,6 @@
     "@holochain/client": "^0.7.0",
     "@lit-labs/context": "^0.1.2",
     "@snapmail/elements": "file:../../lib",
-    "lit": "^2.1.1"
+    "lit": "2.3.1"
   }
 }
