@@ -77,9 +77,9 @@ electron-builder
 | `/assets/`           | Original media files used throughout the code base
 | `/bin/`              | All the binaries we are dependent on on must ship with the app
 | `/electron/`         | The electron app directory
-|    `src/`            | The electron app source code
-|    `web/`            | Final artifacts for the electron app (includes output from `ui`)
-|    `binaries/`       | All the binaries we are dependent on and must ship with the app
+| &nbsp;&nbsp;&nbsp;&nbsp;`src/`               | The electron app source code
+| &nbsp;&nbsp;&nbsp;&nbsp;`web/`               | Final artifacts for the electron app (includes output from `ui`)
+| &nbsp;&nbsp;&nbsp;&nbsp;`binaries/`          | All the binaries we are dependent on and must ship with the app
 | `/submodules/`       | Temp folder for the code dependencies (snapmail-rsm)
 | `/ui/apps/snapmail/` | The "normal" webapp bundled in electron & web-happ 
 | `/ui/lib/`           | source code of the web ui components
