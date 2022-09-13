@@ -1,16 +1,10 @@
 import { LitElement, html } from "lit";
 import { state } from "lit/decorators.js";
 import { ScopedElementsMixin } from "@open-wc/scoped-elements";
-import {CellId} from "@holochain/client";
+//import {CellId} from "@holochain/client";
 import {HolochainClient} from "@holochain-open-dev/cell-client";
-import {ContextProvider} from "@lit-labs/context";
+//import {ContextProvider} from "@lit-labs/context";
 import {serializeHash} from '@holochain-open-dev/utils';
-
-// import {
-//   PlaceController,
-//   PlaceStore,
-//   placeContext,
-// } from "@place/elements";
 import {AppWebsocket} from "@holochain/client";
 import {SnapmailController} from "@snapmail/elements";
 
@@ -34,22 +28,23 @@ console.log("HC_PORT = " + HC_PORT + " || " + process.env.HC_PORT);
 
 
 /** */
-export class PlaceApp extends ScopedElementsMixin(LitElement) {
+export class SnapmailApp extends ScopedElementsMixin(LitElement) {
 
   @state() loaded = false;
 
 
   /** */
   async firstUpdated() {
+    /** Connect appWebsocket */
     const wsUrl = `ws://localhost:${HC_PORT}`
+     const appWebsocket = await AppWebsocket.connect(wsUrl);
+    console.log({appWebsocket})
+    const hcClient = new HolochainClient(appWebsocket)
+    /** Get appInfo */
     const installed_app_id = NETWORK_ID == null || NETWORK_ID == ''
       ? APP_ID
       : APP_ID + '-' + NETWORK_ID;
     console.log({installed_app_id})
-
-    const appWebsocket = await AppWebsocket.connect(wsUrl);
-    console.log({appWebsocket})
-    const hcClient = new HolochainClient(appWebsocket)
     const appInfo = await hcClient.appWebsocket.appInfo({installed_app_id});
     const cellId  = appInfo.cell_data[0].cell_id;
     /** Send dnaHash to electron */

@@ -4,4 +4,4 @@ name: snapmail-applet
 ui:
   bundled: "../ui.zip"
 happ_manifest:
-  bundled: "snapmail-applet.happ"
+  bundled: "../submodules/snapmail.happ"

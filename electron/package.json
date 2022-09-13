@@ -11,16 +11,8 @@
   "main": "out-tsc/main.js",
   "scripts": {
     "postinstall": "electron-builder install-app-deps",
-    "ci:hc-install": "bash scripts/npm/install-hc-tools.sh",
-    "setup": "bash scripts/npm/setup.sh",
-    "install:hash-zome": "bash scripts/npm/install-hash-zome.sh",
-    "build:happ": "bash scripts/npm/dist-dna.sh",
-    "hash-zome": "bash scripts/npm/hash-zome.sh",
     "tsc": "tsc",
     "lint": "eslint --ext .ts electron-src",
-    "build-dev": "bash scripts/build-ui.sh dev",
-    "build-prod": "bash scripts/build-ui.sh prod",
-    "start": "npm run build-prod && tsc && electron .",
     "electron": "tsc && electron .",
     "electron-dev": "tsc && set APP_DEV=true && electron . dev --no-sandbox",
     "alex": "tsc && ./node_modules/.bin/electron . alex --no-sandbox",
@@ -37,8 +29,7 @@
     "dist:linux-app": "electron-builder --linux AppImage",
     "dist:mac": "electron-builder --mac",
     "dist:win": "set APP_DEV=false && electron-builder --win",
-    "dist:arm64": "electron-builder --arm64 --linux tar.gz",
-    "clean": "bash scripts/npm/clean.sh"
+    "dist:arm64": "electron-builder --arm64 --linux tar.gz"
   },
   "build": {
     "productName": "Snapmail",
