@@ -8,10 +8,10 @@ if [ $# != 1 ]; then
   exit 2
 fi
 
-# Generate Web UI
-cd ui/lib
+# Generate Web app
+cd webapp
 npm run $1
-cp -r dist/* ../../electron-ui
+cp -r dist/* ../../electron/web
 cd ..
 
 # Done

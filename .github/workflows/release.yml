@@ -71,11 +71,11 @@ jobs:
         run: |
           npm install
           npm run install:ui
-      # build web-ui
-      - name: build web-ui
+      # build webapp
+      - name: build webapp
         shell: bash
         run: |
-          npm run build-prod
+          npm run build:webapp-prod
       # build electron-src
       - name: build electron-src
         shell: bash
@@ -127,7 +127,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          gh release upload "${GITHUB_REF#refs/tags/}" "webhapp.workdir/snapmail.webhapp" --clobber          
+          gh release upload "${GITHUB_REF#refs/tags/}" "webapp/webhapp.workdir/snapmail.webhapp" --clobber          
           gh release upload "${GITHUB_REF#refs/tags/}" "out-builder/Snapmail-$SNAPMAIL_VERSION.AppImage" --clobber
           gh release upload "${GITHUB_REF#refs/tags/}" "out-builder/latest-linux.yml" --clobber
       - name: upload binary (macos only)

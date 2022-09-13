@@ -4,4 +4,4 @@ name: snapmail
 ui:
   bundled: "./ui.zip"
 happ_manifest:
-  bundled: "../bin/snapmail.happ"
+  bundled: "../../submodules/snapmail.happ"

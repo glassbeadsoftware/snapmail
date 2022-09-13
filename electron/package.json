@@ -12,10 +12,9 @@
   "scripts": {
     "postinstall": "electron-builder install-app-deps",
     "ci:hc-install": "bash scripts/npm/install-hc-tools.sh",
-    "clean": "bash scripts/npm/clean.sh",
     "setup": "bash scripts/npm/setup.sh",
     "install:hash-zome": "bash scripts/npm/install-hash-zome.sh",
-    "dist:dna": "bash scripts/npm/dist-dna.sh",
+    "build:happ": "bash scripts/npm/dist-dna.sh",
     "hash-zome": "bash scripts/npm/hash-zome.sh",
     "tsc": "tsc",
     "lint": "eslint --ext .ts electron-src",
@@ -28,7 +27,7 @@
     "billy": "tsc && ./node_modules/.bin/electron . billy --no-sandbox",
     "camille": "tsc && ./node_modules/.bin/electron . camille --no-sandbox",
     "start-no": "./node_modules/.bin/electron electron --no-sandbox --enable-logging",
-    "dist:webhapp": "rm -f ui.zip && cd electron-ui && bestzip ../webhapp.workdir/ui.zip * && cd .. && hc web-app pack webhapp.workdir",
+    "dist:webhapp": "rm -f ui.zip && cd electron-ui && bestzip ../webapp/webhapp.workdir/ui.zip * && cd ../webapp && hc web-app pack webhapp.workdir",
     "deploy-win": "set APP_DEV=false && electron-builder build --win --publish always",
     "deploy-mac": "electron-builder build --mac --publish always",
     "dist:publish": "set APP_DEV=false && electron-builder build --publish onTag",
@@ -38,7 +37,8 @@
     "dist:linux-app": "electron-builder --linux AppImage",
     "dist:mac": "electron-builder --mac",
     "dist:win": "set APP_DEV=false && electron-builder --win",
-    "dist:arm64": "electron-builder --arm64 --linux tar.gz"
+    "dist:arm64": "electron-builder --arm64 --linux tar.gz",
+    "clean": "bash scripts/npm/clean.sh"
   },
   "build": {
     "productName": "Snapmail",

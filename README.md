@@ -5,7 +5,7 @@ It is the latest iteration of [Snapmail](http://www.glassbead.com/snapmail/index
 
 ![sshot](https://github.com/glassbeadsoftware/snapmail/blob/master/assets/snapmail-ui.png)
 
-This is the repository for the native application (Electron).  
+This is the repository for the different native applications 
 See [snapmail-rsm](https://github.com/glassbeadsoftware/snapmail-rsm) for holochain backend source code.
 
 ## Installation
@@ -54,8 +54,8 @@ See [snapmail-rsm](https://github.com/glassbeadsoftware/snapmail-rsm) for holoch
     2. update file `zomes/snapmail/Cargo.toml`
     3. update file `sweettest/Cargo.toml`
     4. `git commit`
-3. Update the holochain dependencies in `web-ui`:
-    1. `cd web-ui`
+3. Update the holochain dependencies in `webapp`:
+    1. `cd webapp`
     2. update file `package.json`
     3. `npm install`
 4. Update file `scripts/workflow/install-hc-tools.sh`
@@ -75,7 +75,6 @@ electron-builder
 | Directory                                  | Description                                                                                                                 |
 |:-------------------------------------------| :-------------------------------------------------------------------------------------------------------------------------- |
 | `/assets/`                                 | Original media files used throughout the code base
-| `/bin/`                                    | All the binaries we are dependent on on must ship with the app
 | `/electron/`                               | The electron app directory
 | &nbsp;&nbsp;&nbsp;&nbsp;`src/`             | The electron app source code
 | &nbsp;&nbsp;&nbsp;&nbsp;`web/`             | Final artifacts for the electron app (includes output from `ui`)

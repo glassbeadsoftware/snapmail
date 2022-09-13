@@ -7,10 +7,16 @@ rm .hc_live*
 rm -rf out-builder
 rm -rf node_modules
 rm package-lock.json
-# UI LIB
-rm -rf ui/lib/dist
-rm -rf ui/lib/node_modules
-rm ui/lib/package-lock.json
+# WEBCOMPONENTS
+rm -rf webcomponents/dist
+rm -rf webcomponents/node_modules
+rm webcomponents/package-lock.json
+# WEB-APP
+rm -rf webapp/dist
+rm -rf webapp/out-tsc
+rm -rf webapp/node_modules
+rm webapp/package-lock.json
+rm webapp/ui.zip
 # ELECTRON
 rm -rf electron/out-tsc
 rm -rf electron/node_modules
@@ -20,9 +26,3 @@ rm -rf we-applet/out-tsc
 rm -rf we-applet/node_modules
 rm we-applet/package-lock.json
 rm we-applet/.hc_live*
-# WE APPLET
-rm -rf ui/apps/snapmail/dist
-rm -rf ui/apps/snapmail/out-tsc
-rm -rf ui/apps/snapmail/node_modules
-rm ui/apps/snapmail/package-lock.json
-rm ui/apps/snapmail/ui.zip

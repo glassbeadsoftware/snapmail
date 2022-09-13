@@ -1,11 +1,13 @@
 {
-  "name": "snapmail-webapp",
+  "name": "snapmail",
   "version": "0.0.1",
   "scripts": {
-    "build": "tsc",
+    "lint": "eslint --ext .ts .",
+    "tsc": "tsc",
+    "build": "rm -rf dist && rollup -c",
     "build:watch": "run-singleton \"tsc -w --incremental --preserveWatchOutput\"",
     "start": "concurrently --names tsc,dev-server \"npm run build:watch\" \"web-dev-server --config ./web-dev-server.config.mjs\"",
-    "package": "rm -rf ui.zip && rm -rf dist && tsc && rollup --config rollup.config.js && cd dist && cp * ../../../../electron/web && bestzip ../ui.zip *"
+    "package": "rm -rf ui.zip && rm -rf dist && tsc && rollup --config rollup.config.js && cd dist && cp * ../../electron/web && bestzip ../ui.zip *"
 
   },
   "devDependencies": {
@@ -15,6 +17,7 @@
     "@rollup/plugin-node-resolve": "^13.0.4",
     "@rollup/plugin-replace": "^3.0.0",
     "@rollup/plugin-typescript": "^8.2.5",
+    "@web/dev-server": "^0.1.21",
     "@web/dev-server": "^0.1.21",
     "@web/rollup-plugin-html": "^1.9.1",
     "@web/rollup-plugin-import-meta-assets": "^1.0.7",
@@ -31,7 +34,11 @@
     "rollup-plugin-workbox": "^6.2.0",
     "run-singleton-cli": "^0.0.5",
     "tslib": "^2.3.1",
-    "typescript": "4.3.5"
+    "typescript": "4.3.5",
+    "@typescript-eslint/eslint-plugin": "^5.36.2",
+    "@typescript-eslint/parser": "^5.36.2",
+    "eslint": "^7.25.0",
+    "eslint-plugin-import": "^2.22.1"
   },
   "dependencies": {
     "@holochain/client": "^0.7.0",

@@ -2,8 +2,8 @@
 
 echo $OSTYPE
 
-binFolder="bin"
-moduleFolder="electron/node_modules/@lightningrodlabs/electron-holochain/binaries"
+binFolder="electron/bin"
+moduleFolder="node_modules/@lightningrodlabs/electron-holochain/binaries"
 
 if [[ $OSTYPE == 'darwin'* ]]; then
   cp $moduleFolder/lair-keystore $binFolder/lair-keystore
