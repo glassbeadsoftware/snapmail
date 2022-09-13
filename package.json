@@ -27,7 +27,7 @@
     "start:agent": "cross-env HC_PORT=33735 ADMIN_PORT=33736 concurrently \"npm run build:ui-lib\" \"npm run start:happ-proxied\" \"sleep 10 && npm run start -w snapmail-webapp\"",
 
     "start:happ": "RUST_LOG=warn echo \"pass\" | hc s --piped -f=44242 generate bin/snapmail.happ --run=33735 -a snapmail network mdns",
-    "start:happ-proxied": "RUST_LOG=warn echo \"pass\" | hc s --piped -f=$ADMIN_PORT  generate bin/snapmail.happ --run=$HC_PORT -a snapmail network --bootstrap https://bootstrap-staging.holo.host/ quic -p=kitsune-proxy://SYVd4CF3BdJ4DS7KwLLgeU3_DbHoZ34Y-qroZ79DOs8/kitsune-quic/h/165.22.32.11/p/5779/--",
+    "start:happ-proxied": "RUST_LOG=warn echo \"pass\" | hc s --piped -f=$ADMIN_PORT generate bin/snapmail.happ --run=$HC_PORT -a snapmail network --bootstrap https://bootstrap-staging.holo.host/ quic -p=kitsune-proxy://SYVd4CF3BdJ4DS7KwLLgeU3_DbHoZ34Y-qroZ79DOs8/kitsune-quic/h/165.22.32.11/p/5779/--",
 
     "old:start": "npm run build-prod && tsc && electron .",
     "old:start-no": "./node_modules/.bin/electron electron --no-sandbox --enable-logging",
