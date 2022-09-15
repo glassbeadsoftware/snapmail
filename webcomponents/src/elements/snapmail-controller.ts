@@ -18,7 +18,7 @@ import '@vaadin/text-area';
 import '@vaadin/grid';
 //import '@vaadin/grid/vaadin-grid-sort-column.js';
 import '@vaadin/grid/vaadin-grid-sort-column';
-//import '@vaadin/grid/vaadin-grid-column';
+import '@vaadin/grid/vaadin-grid-column';
 import '@vaadin/notification';
 import '@vaadin/dialog';
 import '@vaadin/split-layout';

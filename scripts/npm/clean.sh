@@ -3,10 +3,10 @@
 # TOP LEVEL
 #rm -rf bin/*
 #rm -rf submodules
-rm .hc_live*
 rm -rf out-builder
 rm -rf node_modules
 rm package-lock.json
+rm .hc_live*
 # WEBCOMPONENTS
 rm -rf webcomponents/dist
 rm -rf webcomponents/node_modules
