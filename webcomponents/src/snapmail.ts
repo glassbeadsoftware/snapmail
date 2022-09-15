@@ -403,7 +403,7 @@ function initGroupsDialog() {
     grid.appendChild(selectColumn);
     grid.appendChild(column);
     grid.id = "groupGrid";
-    grid.heightByRows = true;
+    //grid.heightByRows = true;
     grid.setAttribute('style', 'width: 360px;');
     grid.items = g_contactItems;
     const groupIds = g_groupList.get(g_currentGroup);
@@ -557,9 +557,10 @@ function initUpload(): void {
         console.log({e});
         console.log('file: ' + file.name + ' ; size: ' + Math.ceil(content.length / 1024) + ' KiB ; type: ' + file.type);
 
-        upload.set(['files', upload.files.indexOf(file), 'progress'], 100)
-        upload.set(['files', upload.files.indexOf(file), 'complete'], true)
-        upload.set(['files', upload.files.indexOf(file), 'content'], content)
+        // FIXME
+        //upload.set(['files', upload.files.indexOf(file), 'progress'], 100)
+        //upload.set(['files', upload.files.indexOf(file), 'complete'], true)
+        //upload.set(['files', upload.files.indexOf(file), 'content'], content)
 
         allowActionMenu(true)
       };
@@ -712,7 +713,7 @@ async function setHandle() {
       contactItem.username = newHandle;
     }
   }
-  contactGrid.render();
+  //contactGrid.render();
 }
 
 
@@ -811,7 +812,7 @@ function updateRecipients(canReset: boolean) {
   contactGrid.items = filterContacts([], contactSearch.value);
   contactGrid.selectedItems = selected;
   contactGrid.activeItem = null;
-  contactGrid.render();
+  //contactGrid.render();
   console.log({contactGrid});
   console.log('updateRecipients() - END')
 }
@@ -879,7 +880,7 @@ function initMenuBar() {
           contactGrid.selectedItems = [contactItem];
           contactGrid.activeItem = contactItem;
           toggleContact(contactGrid, contactItem);
-          contactGrid.render();
+          //contactGrid.render();
           break;
         }
       }
@@ -906,7 +907,7 @@ function initMenuBar() {
           selectUsername(contactGrid, bcc_username!, 3);
         }
         // Done
-        contactGrid.render();
+        //contactGrid.render();
       }
     }
     if (e.detail.value.text === 'Forward') {
@@ -932,10 +933,10 @@ function initMenuBar() {
 
 
 /** */
-function selectUsername(contactGrid: Grid, candidat: string, count: number): void {
+function selectUsername(contactGrid: Grid, candidate: string, count: number): void {
   for(const item of contactGrid.items!) {
     const contactItem: ContactGridItem = item as ContactGridItem;
-    if(contactItem.username === candidat) {
+    if(contactItem.username === candidate) {
       for (let i = 0; i < count; i++) {
         toggleContact(contactGrid, contactItem);
       }
@@ -1016,7 +1017,7 @@ function update_mailGrid(folder: string): void {
     }
   }
   //
-  mailGrid.render();
+  //mailGrid.render();
 }
 
 
@@ -1106,7 +1107,7 @@ function initFileBox() {
   const mailSearch = document.getElementById('mailSearch') as TextField;
   mailSearch.addEventListener('value-changed', function(e:any /*TextFieldValueChangedEvent*/) {
     mailGrid.items = filterMails(e.detail.value);
-    mailGrid.render();
+    //mailGrid.render();
   });
 }
 
@@ -1158,7 +1159,7 @@ async function fillAttachmentGrid(mail: Mail): Promise<number> {
   attachmentGrid.items = items;
   attachmentGrid.selectedItems = [];
   attachmentGrid.activeItem = null;
-  attachmentGrid.render();
+  //attachmentGrid.render();
   //console.log({missingCount})
   return missingCount;
 }
@@ -1205,7 +1206,7 @@ function initAttachmentGrid() {
       item.status = String.fromCodePoint(0x23F3);
       attachmentGrid.selectedItems.push(item);
       item.disabled = true;
-      attachmentGrid.render();
+      //attachmentGrid.render();
     }
 
     /** Get File on source chain */
@@ -1239,7 +1240,7 @@ function initAttachmentGrid() {
        a.click();
        attachmentGrid.activeItem = null;
        attachmentGrid.selectedItems = [];
-       attachmentGrid.render();
+       //attachmentGrid.render();
      });
   });
 }
@@ -1291,7 +1292,7 @@ function setCurrentGroup(groupName: string): void {
   setState_DeleteButton(true);
   setState_ReplyButton(true);
   console.log({contactGrid});
-  contactGrid.render();
+  //contactGrid.render();
   window.localStorage[g_dnaId] = JSON.stringify(Array.from(g_groupList.entries()));
 }
 
@@ -1306,7 +1307,7 @@ function initContactsArea() {
       console.log(JSON.stringify(e.detail.value));
       if(e.detail.value.text === 'Refresh') {
         contactsMenu.items[0].disabled = true;
-        contactsMenu.render();
+        //contactsMenu.render();
         getAllHandles();
       }
     });
@@ -1353,14 +1354,14 @@ function initContactsArea() {
     //contactGrid.selectedItems = item ? [item] : [];
     toggleContact(contactGrid, eventContext.item);
     setState_SendButton(contactGrid.selectedItems!.length == 0);
-    contactGrid.render();
+    //contactGrid.render();
   });
   /** -- Contacts search bar -- */
   const contactSearch = document.getElementById('contactSearch') as TextField;
   contactSearch.addEventListener('value-changed', function(e: any/*: TextFieldValueChangedEvent*/) {
     const selectedItems = contactGrid.selectedItems! as ContactGridItem[];
     contactGrid.items = filterContacts(selectedItems, e.detail.value);
-    contactGrid.render();
+    //contactGrid.render();
   });
 }
 
@@ -1602,7 +1603,7 @@ function setState_SendButton(isDisabled: boolean): void {
   const actionMenu = document.querySelector('#ActionBar') as MenuBar;
   //actionMenu.items[1].disabled = isDisabled;
   actionMenu.items[2].disabled = isDisabled;
-  actionMenu.render();
+  //actionMenu.render();
 }
 
 function setState_DeleteButton(isDisabled: boolean): void {
@@ -1610,14 +1611,14 @@ function setState_DeleteButton(isDisabled: boolean): void {
   //console.log('menu.items = ' + JSON.stringify(menu.items))
   menu.items[2].disabled = isDisabled;
   menu.items[3].disabled = isDisabled;
-  menu.render();
+  //menu.render();
 }
 
 function setState_ReplyButton(isDisabled: boolean): void {
   const menu = document.querySelector('#MenuBar') as MenuBar;
   //console.log('menu.items = ' + JSON.stringify(menu.items))
   menu.items[1].disabled = isDisabled;
-  menu.render();
+  //menu.render();
 }
 
 //---------------------------------------------------------------------------------------------------------------------
@@ -1808,13 +1809,13 @@ function pingNextAgent(): void {
     .then((result: boolean) => {
       storePingResult(result, pingedAgentB64);
       g_canPing = true;
-      contactGrid.render();
+      //contactGrid.render();
     })
     .catch((error: any) => {
       console.error('Ping failed for: ' + pingedAgentB64);
       console.error({ error })
       storePingResult(undefined, pingedAgentB64);
-      contactGrid.render();
+      //contactGrid.render();
     })
 }
 
@@ -1855,7 +1856,7 @@ function handle_getAllHandles(callResult: any): void {
   const contactsMenu = document.querySelector('#ContactsMenu') as MenuBar;
   if (contactsMenu.items.length > 0) {
     contactsMenu.items[0].disabled = false;
-    contactsMenu.render();
+    //contactsMenu.render();
   }
   /* Update mailGrid */
   const folder = document.querySelector('#fileboxFolder') as ComboBox;
@@ -1920,7 +1921,7 @@ function handle_getManifest(callResult: any): void {
 /** */
 function handle_missingAttachments(missingCount: number): void {
   const attachmentGrid = document.querySelector('#attachmentGrid') as Grid;
-  attachmentGrid!.render();
+  //attachmentGrid!.render();
 }
 
 

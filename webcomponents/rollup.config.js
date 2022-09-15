@@ -22,9 +22,7 @@ export default {
       plugins: [postcssCQFill],
     }),
     postcssLit(),
-    typescript({
-      target: "es6",
-    }),
+    typescript({ target: "es6", }),
     resolve(),
     commonjs(),
   ],
