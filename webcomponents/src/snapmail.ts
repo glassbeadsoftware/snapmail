@@ -1,13 +1,6 @@
 import type {Grid} from '@vaadin/grid';
 
-// import '@vaadin/vaadin-icons';
-// import '@vaadin/vaadin-icons/vaadin-icons';
-// import '@vaadin/vaadin-lumo-styles';
-// import '@vaadin/vaadin-lumo-styles/icons';
-// import '@vaadin/vaadin-ordered-layout';
-// //import '@vaadin-component-factory/vcf-tooltip';
-
-import * as DNA from './rsm_bridge'
+//import * as DNA from './dna_bridge'
 import {htos} from './utils'
 
 import {
@@ -16,16 +9,10 @@ import {
 } from "./types";
 
 
-//---------------------------------------------------------------------------------------------------------------------
-// DEBUG MODE
-//---------------------------------------------------------------------------------------------------------------------
-
+/** Remove console.log() in PROD */
 if (process.env.NODE_ENV === 'prod') {
   console.log = () => {};
 }
-
-
-//window.Buffer = require('buffer/').Buffer;
 
 
 /** Find and collect grid items that have the given agentIds */
@@ -124,12 +111,12 @@ export function selectUsername(contactGrid: Grid, candidate: string, count: numb
 
 /** */
 export function updateTray(newCount: number): void {
-  if (DNA.IS_ELECTRON && window.require) {
-    //console.log("handleSignal for ELECTRON");
-    const ipc = window.require('electron').ipcRenderer;
-    const reply = ipc.send('newCountAsync', newCount);
-    console.log(reply);
-  }
+  // if (DNA.IS_ELECTRON && window.require) {
+  //   //console.log("handleSignal for ELECTRON");
+  //   const ipc = window.require('electron').ipcRenderer;
+  //   const reply = ipc.send('newCountAsync', newCount);
+  //   console.log(reply);
+  // }
 }
 
 

@@ -73,7 +73,7 @@ import {PolymerElement} from "@polymer/polymer";
 import {GridSelectionColumn} from "@vaadin/grid/vaadin-grid-selection-column";
 import {VerticalLayout} from "@vaadin/vertical-layout";
 import {AgentPubKey} from "@holochain/client/lib/types";
-import {DnaBridge} from "../rsm_bridge";
+import {DnaBridge} from "../dna_bridge";
 
 
 

@@ -1,16 +1,20 @@
 .cargo
+.idea
+.hc*
+*/.running
+*/*.tsbuildinfo
+
+submodules/**
 
 # build dependencies
 bin
+package-lock.json
 
 # build generated
 snapmail_dna_address
 
 # runtime data
 storage/**/*
-
-# electron-packager folders
-snapmail-*
 
 # copied binaries
 hc
