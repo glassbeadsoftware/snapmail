@@ -31,7 +31,8 @@
     "style-loader": "^3.0.0"
   },
   "dependencies": {
-    "@holochain/client": "0.7.0",
+    "@holochain/client": "0.8.0",
+    "@holochain-open-dev/cell-client": "^0.7.3",
     "lit": "2.3.1",
     "@rollup/plugin-commonjs": "^15.1.0",
     "@rollup/plugin-node-resolve": "^9.0.0",

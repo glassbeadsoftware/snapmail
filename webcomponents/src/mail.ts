@@ -6,8 +6,6 @@ import {AgentPubKey} from "@holochain/client";
 
 import {htos} from './utils'
 import {InMailState, MailItem, OutMailState, UsernameMap} from "./types";
-//import { default as DNA } from "./rsm_bridge";
-//import * as DNA from './rsm_bridge'
 
 const checkMarkEmoji = String.fromCodePoint(0x2714); //FE0F
 const suspensionPoints = String.fromCodePoint(0x2026);

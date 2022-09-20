@@ -183,7 +183,7 @@ const snapmailApplet: WeApplet = {
                       <vaadin-combo-box id="fileboxFolder" style="user-select: none;
             -khtml-user-select: none;
             -webkit-user-select: none;"></vaadin-combo-box>
-                      <vaadin-menu-bar open-on-hover id="MenuBar" style="margin-top:2px"></vaadin-menu-bar>
+                      <vaadin-menu-bar open-on-hover id="fileboxMenu" style="margin-top:2px"></vaadin-menu-bar>
                       <span style="padding:12px 0px 0px 5px;margin-right: 10px;">messages: <span id="messageCount">0</span></span>
                       <vaadin-text-field id="mailSearch" clear-button-visible placeholder="Search" style="width: 25%; margin-left: auto;margin-right: 5px;">
                           <iron-icon slot="prefix" icon="lumo:search"></iron-icon>
