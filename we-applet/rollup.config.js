@@ -28,6 +28,7 @@ export default {
       preferBuiltins: false,
     }),
     replace({
+      "preventAssignment": true,
       "process.env.NODE_ENV": '"production"',
     }),
     // copy({
