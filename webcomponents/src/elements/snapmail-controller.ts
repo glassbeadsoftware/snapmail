@@ -13,7 +13,7 @@ import {
   SendMailInput,
   UsernameMap
 } from "../types";
-//import {ScopedElementsMixin} from "@open-wc/scoped-elements";
+import {ScopedElementsMixin} from "@open-wc/scoped-elements";
 
 
 import '@vaadin/progress-bar';
@@ -32,10 +32,12 @@ import '@vaadin/dialog';
 import '@vaadin/split-layout';
 import '@vaadin/vertical-layout';
 import '@vaadin/horizontal-layout';
+
+import {PolymerElement} from "@polymer/polymer";
 import {ProgressBar} from "@vaadin/progress-bar";
 import {Button} from "@vaadin/button";
 import {TextField} from "@vaadin/text-field";
-import {Grid} from "@vaadin/grid";
+import {Grid, GridColumn} from "@vaadin/grid";
 import {MenuBar} from "@vaadin/menu-bar";
 import {TextArea} from "@vaadin/text-area";
 import {ComboBox} from "@vaadin/combo-box";
@@ -43,9 +45,11 @@ import {HorizontalLayout} from "@vaadin/horizontal-layout";
 import {Dialog} from "@vaadin/dialog";
 import {Upload} from "@vaadin/upload";
 import {Notification} from "@vaadin/notification";
-import {PolymerElement} from "@polymer/polymer";
 import {GridSelectionColumn} from "@vaadin/grid/vaadin-grid-selection-column";
 import {VerticalLayout} from "@vaadin/vertical-layout";
+import {GridSortColumn} from "@vaadin/grid/vaadin-grid-sort-column";
+import {SplitLayout} from "@vaadin/split-layout";
+import {Icon} from "@vaadin/vaadin-icon";
 
 //import '@vaadin-component-factory/vcf-tooltip';
 
@@ -79,6 +83,7 @@ import {DnaBridge} from "../dna_bridge";
 
 
 
+
 /** ----- */
 
 
@@ -97,9 +102,9 @@ const whiteDot  = String.fromCodePoint(0x26AA);
 const SYSTEM_GROUP_LIST = ['All', 'new...'];
 
 
-/** */
-@customElement('snapmail-controller')
-export class SnapmailController extends LitElement {
+/** @element snapmail-controller */
+//@customElement('snapmail-controller')
+export class SnapmailController extends ScopedElementsMixin(LitElement) {
   constructor() {
     super();
   }
@@ -1955,7 +1960,7 @@ export class SnapmailController extends LitElement {
                 <vaadin-menu-bar open-on-hover id="fileboxMenu" style="margin-top:2px"></vaadin-menu-bar>
                 <span style="padding:12px 0px 0px 5px;margin-right: 10px;">messages: <span id="messageCount">0</span></span>
                 <vaadin-text-field id="mailSearch" clear-button-visible placeholder="Search" style="width: 25%; margin-left: auto;margin-right: 5px;">
-                    <iron-icon slot="prefix" icon="lumo:search"></iron-icon>
+                    <vaadin-icon slot="prefix" icon="lumo:search"></vaadin-icon>
                 </vaadin-text-field>
             </vaadin-horizontal-layout>
 
@@ -2011,9 +2016,11 @@ export class SnapmailController extends LitElement {
                             <vaadin-horizontal-layout theme="spacing-xs" style="background-color: #f7f7f1; width: 100%;">
                                 <h4 style="min-width:85px;text-align: center; font-size: large; padding: 10px 10px 10px 10px; margin: 0px 0px 0px 5px;">📇 Groups</h4>
                                 <vaadin-combo-box id="groupCombo" style="min-width:100px;max-width:200px;"></vaadin-combo-box>
-                                <vaadin-button id="groupsBtn" style="margin: 5px; min-width: 40px; padding-left: 5px;"><iron-icon icon="lumo:edit" slot="suffix"></iron-icon></vaadin-button>
+                                <vaadin-button id="groupsBtn" style="margin: 5px; min-width: 40px; padding-left: 5px;">
+                                    <vaadin-icon icon="lumo:edit" slot="suffix"></vaadin-icon>
+                                </vaadin-button>
                                 <vaadin-text-field id="contactSearch" clear-button-visible placeholder="Search" style="width: 35%; min-width:100px; margin-left: auto;margin-right: 3px;">
-                                    <iron-icon slot="prefix" icon="lumo:search"></iron-icon>
+                                    <vaadin-icon slot="prefix" icon="lumo:search"></vaadin-icon>
                                 </vaadin-text-field>
                             </vaadin-horizontal-layout>
                             <!-- CONTACTS GRID -->
@@ -2041,16 +2048,16 @@ export class SnapmailController extends LitElement {
                             <h4 style="margin: 14px 10px 0px 0px;">Username:</h4>
                             <abbr title="handle" id="handleAbbr" style="margin-left:0px;">
                                 <vaadin-button id="handleDisplay" style="min-width: 100px;" @click=${() => {this.setState_ChangeHandleBar(false);}}>
-                                    <span id="handleText"></span><iron-icon icon="lumo:edit" slot="suffix"></iron-icon>
+                                    <span id="handleText"></span><vaadin-icon icon="lumo:edit" slot="suffix"></vaadin-icon>
                                 </vaadin-button>
                             </abbr>
                             <!-- <vcf-tooltip id="handleDisplayTT" for="handleDisplay" position="bottom">fucking tooltip</vcf-tooltip> -->
                             <vaadin-text-field clear-button-visible id="myNewHandleInput" placeholder="username"></vaadin-text-field>
                             <vaadin-button theme="icon" id="setMyHandleButton" title="unknown" @click=${this.setHandle}>
-                                <iron-icon icon="lumo:checkmark" slot="prefix"></iron-icon>
+                                <vaadin-icon icon="lumo:checkmark" slot="prefix"></vaadin-icon>
                             </vaadin-button>
                             <vaadin-button theme="icon" id="cancelHandleButton" @click=${() => {this.setState_ChangeHandleBar(true);}}>
-                                <vaadin-icon icon="lumo:cross" slot="prefix"></iron-icon>
+                                <vaadin-icon icon="lumo:cross" slot="prefix"></vaadin-icon>
                             </vaadin-button>
                         </div>
                         <vaadin-menu-bar open-on-hover id="ContactsMenu" style="margin-top:2px;"></vaadin-menu-bar>
@@ -2073,34 +2080,32 @@ export class SnapmailController extends LitElement {
   }
 
 
-  // /** */
-  // static get scopedElements() {
-  //   return {
-  //     //'iron-icon':,
-  //     "vaadin-progress-bar": ProgressBarElement,
-  //     'vaadin-button':ButtonElement,
-  //     'vaadin-upload': UploadElement,
-  //     'vaadin-grid':GridElement,
-  //     'vaadin-menu-bar':MenuBarElement,
-  //     'vaadin-combo-box':ComboBoxElement,
-  //     'vaadin-text-field':TextFieldElement,
-  //     'vaadin-notification': NotificationElement,
-  //     'vaadin-text-area':TextAreaElement,
-  //     'vaadin-dialog':DialogElement,
-  //      //'vaadin-vertical-layout': VerticalLayoutElement,
-  //      //'vaadin-horizontal-layout': HorizontalLayoutElement,
-  //      'vaadin-split-layout': SplitLayoutElement,
-  //     'vaadin-grid-column':GridColumnElement,
-  //     'vaadin-grid-sort-column':GridSortColumnElement,
-  //   };
-  // }
+  /** */
+  static get scopedElements() {
+    return {
+      "vaadin-icon": Icon,
+      "vaadin-progress-bar": ProgressBar,
+      'vaadin-button':Button,
+      'vaadin-upload': Upload,
+      'vaadin-grid':Grid,
+      'vaadin-menu-bar':MenuBar,
+      'vaadin-combo-box':ComboBox,
+      'vaadin-text-field':TextField,
+      'vaadin-text-area':TextArea,
+      'vaadin-notification': Notification,
+      'vaadin-dialog':Dialog,
+      'vaadin-vertical-layout': VerticalLayout,
+      'vaadin-horizontal-layout': HorizontalLayout,
+      'vaadin-split-layout': SplitLayout,
+      'vaadin-grid-column':GridColumn,
+      'vaadin-grid-sort-column':GridSortColumn,
+    };
+  }
 
 
   /** */
   static get styles() {
     return [
-      //CSSModule('lumo-typography'),
-      //unsafeCSS(styles),
       css`
         /* Background needs a stronger selector to not be overridden */
         [part~="cell"].male {
