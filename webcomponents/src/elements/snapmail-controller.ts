@@ -269,19 +269,19 @@ export class SnapmailController extends ScopedElementsMixin(LitElement) {
   showHandle(myHandle: string) {
     //console.log('showHandle call result = ' + JSON.stringify(callResult))
     const handleButton = this.shadowRoot!.getElementById('handleText') as Button;
+    handleButton.textContent = myHandle
     this._myHandle = handleButton.textContent? handleButton.textContent : myHandle;
   }
 
 
   /** */
   async setHandle(e?:any) {
-    const input = this.shadowRoot!.getElementById('myNewHandleInput') as TextField;
-    const newHandle = input.value;
+    const newHandle = this.handleInputElem.value;
     console.log('new handle = ' + newHandle);
     /*const callResult =*/ await this._dna!.setHandle(newHandle)
     this.showHandle(newHandle);
-    input.value = '';
-    this.setState_ChangeHandleBar(true);
+    this.handleInputElem.value = '';
+    this.hideHandleInput(true);
     // - Update my Handle in the contacts grid
     for (const item of this.contactGridElem.items!) {
       const contactItem: ContactGridItem = item as ContactGridItem;
@@ -294,19 +294,19 @@ export class SnapmailController extends ScopedElementsMixin(LitElement) {
 
 
   /** */
-  setState_ChangeHandleBar(hidden: boolean): void {
-    this.handleButtonElem.hidden = !hidden;
-    this.handleInputElem.hidden = hidden;
-    if (!hidden) {
+  hideHandleInput(hideInput: boolean): void {
+    this.handleButtonElem.hidden = !hideInput;
+    this.handleInputElem.hidden = hideInput;
+    if (!hideInput) {
       this.handleInputElem.focus();
     }
 
     const updateButton = this.shadowRoot!.getElementById('setMyHandleButton') as Button;
     const cancelButton = this.shadowRoot!.getElementById('cancelHandleButton') as Button;
-    updateButton.hidden = hidden;
-    cancelButton.hidden = hidden;
+    updateButton.hidden = hideInput;
+    cancelButton.hidden = hideInput;
 
-    if (!hidden && this._myHandle !== '<noname>') {
+    if (!hideInput && this._myHandle !== '<noname>') {
       this.handleInputElem.value = this._myHandle
     } else {
       this.handleInputElem.value = ''
@@ -320,8 +320,7 @@ export class SnapmailController extends ScopedElementsMixin(LitElement) {
     /** Title bar buttons */
     const controller = this;
     customElements.whenDefined('vaadin-button').then(() => {
-      const handleInput = this.shadowRoot!.querySelector('#myNewHandleInput') as TextField;
-      handleInput.addEventListener("keyup", (event) => {
+      this.handleInputElem.addEventListener("keyup", (event) => {
         if (event.keyCode == 13) {
           controller.setHandle();
         }
@@ -1891,12 +1890,12 @@ export class SnapmailController extends ScopedElementsMixin(LitElement) {
 
   /** */
   initUi() {
-    //this.setState_ChangeHandleBar(true);
     this.initTitleBar();
     this.initFileboxMenu();
     this.initFileBox();
     this.initInMail();
     this.initContactsArea();
+    this.hideHandleInput(true)
     this.initActionBar();
     this.initUpload();
     //getMyAgentId(logResult)
@@ -1915,7 +1914,7 @@ export class SnapmailController extends ScopedElementsMixin(LitElement) {
     this.loadGroupList('');
     this.initUi()
     /*let _10sec =*/ setInterval(this.onEvery10sec, 10 * 1000);
-    ///*let _1Sec =*/ setInterval(this.onEverySec, 1 * 1000);
+    // /*let _1Sec =*/ setInterval(this.onEverySec, 1 * 1000);
   }
 
 
@@ -2047,8 +2046,9 @@ export class SnapmailController extends ScopedElementsMixin(LitElement) {
                         <div style="margin-left: auto;display: flex;">
                             <h4 style="margin: 14px 10px 0px 0px;">Username:</h4>
                             <abbr title="handle" id="handleAbbr" style="margin-left:0px;">
-                                <vaadin-button id="handleDisplay" style="min-width: 100px;" @click=${() => {this.setState_ChangeHandleBar(false);}}>
-                                    <span id="handleText"></span><vaadin-icon icon="lumo:edit" slot="suffix"></vaadin-icon>
+                                <vaadin-button id="handleDisplay" style="min-width: 100px;" @click=${() => {this.hideHandleInput(false);}}>
+                                    <span id="handleText"></span>
+                                    <vaadin-icon icon="lumo:edit" slot="suffix"></vaadin-icon>
                                 </vaadin-button>
                             </abbr>
                             <!-- <vcf-tooltip id="handleDisplayTT" for="handleDisplay" position="bottom">fucking tooltip</vcf-tooltip> -->
@@ -2056,7 +2056,7 @@ export class SnapmailController extends ScopedElementsMixin(LitElement) {
                             <vaadin-button theme="icon" id="setMyHandleButton" title="unknown" @click=${this.setHandle}>
                                 <vaadin-icon icon="lumo:checkmark" slot="prefix"></vaadin-icon>
                             </vaadin-button>
-                            <vaadin-button theme="icon" id="cancelHandleButton" @click=${() => {this.setState_ChangeHandleBar(true);}}>
+                            <vaadin-button theme="icon" id="cancelHandleButton" @click=${() => {this.hideHandleInput(true);}}>
                                 <vaadin-icon icon="lumo:cross" slot="prefix"></vaadin-icon>
                             </vaadin-button>
                         </div>
