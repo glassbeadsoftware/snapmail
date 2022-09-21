@@ -151,6 +151,16 @@ export class SnapmailController extends ScopedElementsMixin(LitElement) {
   _mailMap = new Map();
 
 
+
+  private _actionMenuItems = [
+    { text: 'Clear' },
+    //{ text: '+File', disabled: true },
+    { text: 'Snap', disabled: true },
+    { text: 'Send', disabled: true }
+  ];
+
+
+
   /** --  -- */
 
   get handleButtonElem() : Button {
@@ -202,6 +212,17 @@ export class SnapmailController extends ScopedElementsMixin(LitElement) {
     return this.shadowRoot!.getElementById("inMailArea") as TextArea;
   }
 
+  get outMailSubjectElem() : TextField {
+    return this.shadowRoot!.getElementById("outMailSubjectArea") as TextField;
+  }
+
+  get outMailContentElem() : TextArea {
+    return this.shadowRoot!.getElementById("outMailContentArea") as TextArea;
+  }
+
+  get uploadElem() : Upload {
+    return this.shadowRoot!.getElementById("myUpload") as Upload;
+  }
 
   /** --  -- */
 
@@ -340,26 +361,6 @@ export class SnapmailController extends ScopedElementsMixin(LitElement) {
     // console.assert(rootTitle);
     // const maybeUid = DNA.NETWORK_ID != ""? "  - " + DNA.NETWORK_ID : "";
     // rootTitle.textContent = "SnapMail v" + version + maybeUid;
-  }
-
-
-  /** */
-  selectUsername(contactGrid: Grid, candidate: string, count: number): void {
-    for(const item of contactGrid.items!) {
-      const contactItem: ContactGridItem = item as ContactGridItem;
-      if(contactItem.username === candidate) {
-        for (let i = 0; i < count; i++) {
-          toggleContact(contactGrid, contactItem);
-        }
-        if (!contactGrid.selectedItems) {
-          contactGrid.selectedItems = [contactItem];
-        } else {
-          contactGrid.selectedItems!.push(contactItem);
-        }
-        contactGrid.activeItem = contactItem;
-        break;
-      }
-    }
   }
 
 
@@ -731,21 +732,23 @@ export class SnapmailController extends ScopedElementsMixin(LitElement) {
 
 
   /** */
-  setState_SendButton(isDisabled: boolean): void {
+  disableSendButton(isDisabled: boolean): void {
     //actionMenu.items[1].disabled = isDisabled;
     this.actionMenuElem.items[2].disabled = isDisabled;
-    //actionMenu.render();
+    //this.actionMenuElem.render()
+    //this.requestUpdate();
+    this.render()
   }
 
-  setState_DeleteButton(isDisabled: boolean): void {
-    //console.log('menu.items = ' + JSON.stringify(menu.items))
+  disableDeleteButton(isDisabled: boolean): void {
+    //console.log('menu.items =', menu.items)
     this.fileboxMenuElem.items[2].disabled = isDisabled;
     this.fileboxMenuElem.items[3].disabled = isDisabled;
     //menu.render();
   }
 
-  setState_ReplyButton(isDisabled: boolean): void {
-    //console.log('menu.items = ' + JSON.stringify(menu.items))
+  disableReplyButton(isDisabled: boolean): void {
+    //console.log('menu.items =', menu.items)
     this.fileboxMenuElem.items[1].disabled = isDisabled;
     //menu.render();
   }
@@ -793,8 +796,8 @@ export class SnapmailController extends ScopedElementsMixin(LitElement) {
         mailGrid.selectedItems = [];
         mailGrid.activeItem = null;
         controller.inMailAreaElem.value = ""
-        controller.setState_DeleteButton(true)
-        controller.setState_ReplyButton(true)
+        controller.disableDeleteButton(true)
+        controller.disableReplyButton(true)
       }
       /* -- Handle 'Reply' -- */
       const outMailSubjectArea = this.shadowRoot!.querySelector('#outMailSubjectArea') as TextField;
@@ -844,7 +847,6 @@ export class SnapmailController extends ScopedElementsMixin(LitElement) {
       if (e.detail.value.text === 'Forward') {
         outMailSubjectArea.value = 'Fwd: ' + controller._currentMailItem.subject;
         controller.resetContactGrid();
-        const outMailContentArea = this.shadowRoot!.querySelector('#outMailContentArea') as TextArea;
         const mailItem = controller._mailMap.get(htos(controller._currentMailItem.id));
         let fwd = '\n\n';
         fwd += '> ' + 'Mail from: ' + controller._usernameMap.get(htos(mailItem.author)) + ' at ' + customDateString(mailItem.date) + '\n';
@@ -852,7 +854,7 @@ export class SnapmailController extends ScopedElementsMixin(LitElement) {
         for (const line of arrayOfLines) {
           fwd += '> ' + line + '\n';
         }
-        outMailContentArea.value = fwd;
+        controller.outMailContentElem.value = fwd;
       }
       // -- Handle 'Refresh' -- //
       if (e.detail.value.text === 'Refresh') {
@@ -940,8 +942,8 @@ export class SnapmailController extends ScopedElementsMixin(LitElement) {
       controller._replyOf = null;
       controller.update_mailGrid(event.target.value)
       controller._currentFolder = event.target.value;
-      controller.setState_DeleteButton(true)
-      controller.setState_ReplyButton(true)
+      controller.disableDeleteButton(true)
+      controller.disableReplyButton(true)
     });
 
     /** Filebox -- vaadin-grid */
@@ -992,8 +994,8 @@ export class SnapmailController extends ScopedElementsMixin(LitElement) {
         //.then(callResult => handle_acknowledgeMail(callResult));
         // Allow delete button
         if (controller._currentFolder.codePointAt(0) !== systemFolders.TRASH.codePointAt(0)) {
-          controller.setState_DeleteButton(false)
-          controller.setState_ReplyButton(false)
+          controller.disableDeleteButton(false)
+          controller.disableReplyButton(false)
         }
       });
     });
@@ -1050,8 +1052,8 @@ export class SnapmailController extends ScopedElementsMixin(LitElement) {
     const contactSearch = this.contactSearchElem;
     contactGrid.items = this.filterContacts([], contactSearch.value);
     this.resetContactGrid();
-    this.setState_DeleteButton(true);
-    this.setState_ReplyButton(true);
+    this.disableDeleteButton(true);
+    this.disableReplyButton(true);
     console.log({contactGrid});
     //contactGrid.render();
     window.localStorage[this._dnaId] = JSON.stringify(Array.from(this._groupList.entries()));
@@ -1234,18 +1236,30 @@ export class SnapmailController extends ScopedElementsMixin(LitElement) {
     };
     /** ON SELECT */
     contactGrid.addEventListener('active-item-changed', function(event:any) {
+      console.log("contactGrid.active-item-changed:", event)
+      //const eventContext: any /* FIXME */ = contactGrid.getEventContext(event)!;
       const item = event.detail.value;
-      if (item && contactGrid.selectedItems && !contactGrid.selectedItems!.includes(item)) {
-        contactGrid.selectedItems!.push(item);
+      //const item = eventContext.item;
+      if (item) {
+        if (contactGrid.selectedItems) {
+          if(!contactGrid.selectedItems!.includes(item)) {
+            contactGrid.selectedItems!.push(item);
+          }
+        } else {
+          contactGrid.selectedItems = [item]
+        }
       }
-      controller.setState_SendButton(!contactGrid.selectedItems || contactGrid.selectedItems!.length == 0);
+      console.log({activeSelected: contactGrid.selectedItems})
+      controller.disableSendButton(!contactGrid.selectedItems || contactGrid.selectedItems!.length == 0);
     });
     /** ON CLICK */
     contactGrid.addEventListener('click', function(e) {
       const eventContext: any /* FIXME */ = contactGrid.getEventContext(e)!;
+      console.log("contactGrid.click:", eventContext)
       //contactGrid.selectedItems = item ? [item] : [];
       toggleContact(contactGrid, eventContext.item);
-      controller.setState_SendButton(!contactGrid.selectedItems || contactGrid.selectedItems!.length == 0);
+      console.log({clickSelected: contactGrid.selectedItems})
+      controller.disableSendButton(!contactGrid.selectedItems || contactGrid.selectedItems!.length == 0);
       //contactGrid.render();
     });
     /** -- Contacts search bar */
@@ -1290,7 +1304,7 @@ export class SnapmailController extends ScopedElementsMixin(LitElement) {
   /** */
   async sendAction(): Promise<void> {
     /** Submit each attachment */
-    const upload:any /* FIXME*/ = this.shadowRoot!.querySelector('vaadin-upload');
+    const upload: any /* FIXME */ = this.uploadElem;
     const files = upload.files;
     console.log({files})
     this._fileList = [];
@@ -1350,10 +1364,9 @@ export class SnapmailController extends ScopedElementsMixin(LitElement) {
     }
     /* Create Mail */
     const outMailSubjectArea = this.shadowRoot!.querySelector('#outMailSubjectArea') as TextField;
-    const outMailContentArea = this.shadowRoot!.querySelector('#outMailContentArea') as TextArea;
     const mail: SendMailInput = {
       subject: outMailSubjectArea.value,
-      payload: outMailContentArea.value,
+      payload: this.outMailContentElem.value,
       reply_of: this._replyOf,
       to: toList, cc: ccList, bcc: bccList,
       manifest_address_list: this._fileList
@@ -1370,9 +1383,9 @@ export class SnapmailController extends ScopedElementsMixin(LitElement) {
       this._mailMap.set(replyOfStr, mailItem);
     }
     this._replyOf = null;
-    this.setState_SendButton(true);
+    this.disableSendButton(true);
     outMailSubjectArea.value = '';
-    outMailContentArea.value = '';
+    this.outMailContentElem.value = '';
     contactGrid.selectedItems = [];
     contactGrid.activeItem = null;
     this.updateRecipients(false);
@@ -1383,26 +1396,20 @@ export class SnapmailController extends ScopedElementsMixin(LitElement) {
 
 
   /** */
-  initActionBar() {
+  initActionMenu() {
     const controller = this;
-    /** -- actionMenu -- vaadin-menu-bar */
     const actionMenu = this.actionMenuElem;
-    actionMenu.items = [
-      { text: 'Clear' },
-      //{ text: '+File', disabled: true },
-      { text: 'Snap', disabled: true },
-      { text: 'Send', disabled: true }
-    ];
     /** ON SELECT */
     actionMenu.addEventListener('item-selected', function(e:any) {
       console.log('actionMenu: ' + JSON.stringify(e.detail.value.text))
-      const outMailSubjectArea = this.shadowRoot!.querySelector('#outMailSubjectArea') as TextField;
-      const outMailContentArea = this.shadowRoot!.querySelector('#outMailContentArea') as TextArea;
-      const upload = this.shadowRoot!.querySelector('vaadin-upload') as Upload;
+      const upload = controller.uploadElem;
       /** Clear clicked */
       if (e.detail.value.text === 'Clear') {
-        outMailSubjectArea.value = '';
-        outMailContentArea.value = '';
+        console.log({SendActionItem: controller.actionMenuElem.items[2]})
+        controller.actionMenuElem.items[2].disabled = !controller.actionMenuElem.items[2].disabled;
+        controller.actionMenuElem.items[2].text = JSON.stringify(controller.actionMenuElem.items[2].disabled)
+        controller.outMailSubjectElem.value = '';
+        controller.outMailContentElem.value = '';
         /** clear each attachment */
         upload.files = [];
         controller.updateRecipients(true);
@@ -1417,7 +1424,7 @@ export class SnapmailController extends ScopedElementsMixin(LitElement) {
         actionMenu.style.display = "none";
         //upload.style.display = "none";
         upload.maxFiles = 0;
-        controller.sendAction().then(function() {
+        controller.sendAction().then(() => {
           sendProgressBar.style.display = "none";
           sendingTitle.style.display = "none";
           actionMenu.style.display = "block";
@@ -1445,7 +1452,7 @@ export class SnapmailController extends ScopedElementsMixin(LitElement) {
   initUpload(): void {
     const controller = this;
     customElements.whenDefined('vaadin-upload').then(function() {
-      const upload = controller.shadowRoot!.querySelector('vaadin-upload') as Upload;
+      const upload = controller.uploadElem;
 
       // upload.onclick = function changeContent() {
       //   allowActionMenu(false)
@@ -1896,7 +1903,7 @@ export class SnapmailController extends ScopedElementsMixin(LitElement) {
     this.initInMail();
     this.initContactsArea();
     this.hideHandleInput(true)
-    this.initActionBar();
+    this.initActionMenu();
     this.initUpload();
     //getMyAgentId(logResult)
     this.initNotification();
@@ -2024,7 +2031,7 @@ export class SnapmailController extends ScopedElementsMixin(LitElement) {
                                 </vaadin-text-field>
                             </vaadin-horizontal-layout>
                             <!-- CONTACTS GRID -->
-                            <vaadin-grid theme="no-row-borders" id="contactGrid" style="height: 100%; min-width: 50px;">
+                            <vaadin-grid theme="no-row-borders" id="contactGrid" class="wtf" style="height: 100%; min-width: 50px;">
                                 <vaadin-grid-column path="status" width="30px" flex-grow="0" header=" "></vaadin-grid-column>
                                 <vaadin-grid-column auto-width path="username" header=" "></vaadin-grid-column>
                                 <vaadin-grid-column auto-width path="recepientType" header=" "></vaadin-grid-column>
@@ -2041,7 +2048,7 @@ export class SnapmailController extends ScopedElementsMixin(LitElement) {
                     <!-- Upload | Handle MENU -->
                     <vaadin-horizontal-layout theme="spacing-xs" style="background-color: #f7f7f1; width: 100%;">
 
-                        <vaadin-upload nodrop max-file-size="8000000" style="width:280px; margin-top:0;">
+                        <vaadin-upload id="myUpload" nodrop max-file-size="8000000" style="width:280px; margin-top:0;">
                             <span slot="drop-label">Maximum file size: 8 MB</span>
                         </vaadin-upload>
                         <div style="margin-left: auto;display: flex;">
@@ -2065,9 +2072,13 @@ export class SnapmailController extends ScopedElementsMixin(LitElement) {
                     </vaadin-horizontal-layout>
 
 
-                    <!-- SEND MENU -->
+                    <!-- ACTION MENU BAR -->
                     <div style="width:100%; display:flex;justify-content: flex-end">
-                        <vaadin-menu-bar theme="primary" id="ActionBar" style="height:40px; margin-top:5px; margin-bottom:10px;"></vaadin-menu-bar>
+                        <vaadin-menu-bar theme="primary" id="ActionBar"
+                                         .items="${this._actionMenuItems}"
+                                         style="height:40px; margin-top:5px; margin-bottom:10px;">
+                            
+                        </vaadin-menu-bar>
                     </div>
                     <!-- Progress Bar -->
                     <h3 style="margin:10px 0 5px 0;display:none;" id="sendingTitle">Sending</h3>
@@ -2113,20 +2124,52 @@ export class SnapmailController extends ScopedElementsMixin(LitElement) {
           background: rgb(255, 240, 0);
         }
 
-        /*
+        :host [part~="row"] {
+          background-color: greenyellow;
+        }
+        
+        [part~="row"] {
+          background-color: red;
+        }
+        
         [part~="header-cell"] {
             background: rgb(255, 0, 200);
         }
+        
+
+        /* FAILS
+        :host vaadin-grid thead {
+          display: none;
+        }
+        
+        :host vaadin-grid #header {
+          display: none;
+        }
+
+        vaadin-grid #header {
+          display: none;
+        }
+
+        vaadin-grid thead {
+          display: none;
+        }
+
+        thead {
+          display: none; 
+        }
+        #header {
+          display: none;
+        }
+        
+        #contactGrid #header {
+          display: none;
+        }
         */
-
-        :host(#contactGrid) #header {
+        
+        :host #groupGrid #header {
           display: none;
         }
-
-        :host(#groupGrid) #header {
-          display: none;
-        }
-
+        
         /*
         :host th {
             height: 15px;
@@ -2135,7 +2178,7 @@ export class SnapmailController extends ScopedElementsMixin(LitElement) {
         }
         */
 
-        :host(#attachmentGrid) #header {
+        :host #attachmentGrid #header {
           /*padding: 0px 0px 0px 0px;*/
           /*margin: 0px 0px 0px 0px;*/
           /*background: rgb(0, 100, 200);*/
