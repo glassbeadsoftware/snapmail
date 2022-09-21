@@ -63,9 +63,11 @@ export function toggleContact(contactGrid: Grid, contactItem?: ContactGridItem) 
     case 'bcc': {
       nextType = '';
       console.log({activeItem:contactGrid.activeItem})
-      const index = contactGrid.selectedItems!.indexOf(contactItem)
-      if (index > -1) {
-        contactGrid.selectedItems!.splice(index, 1);
+      if (contactGrid.selectedItems) {
+        const index = contactGrid.selectedItems.indexOf(contactItem)
+        if (index > -1) {
+          contactGrid.selectedItems.splice(index, 1);
+        }
       }
       break;
     }
@@ -82,7 +84,11 @@ export function selectUsername(contactGrid: Grid, candidate: string, count: numb
       for (let i = 0; i < count; i++) {
         toggleContact(contactGrid, contactItem);
       }
-      contactGrid.selectedItems.push(contactItem);
+      if (!contactGrid.selectedItems) {
+        contactGrid.selectedItems = [contactItem];
+      } else {
+        contactGrid.selectedItems.push(contactItem);
+      }
       contactGrid.activeItem = contactItem;
       break;
     }

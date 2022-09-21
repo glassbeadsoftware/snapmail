@@ -49,6 +49,7 @@
     "deploy-win"          : "set APP_DEV=false && electron-builder build --win --publish always",
     "deploy-mac"          : "electron-builder build --mac --publish always",
     "clean"               : "bash scripts/npm/clean.sh",
+    "clean:npm"           : "bash scripts/npm/clean-npm.sh",
     "clean:hc"            : "rm -rf .hc*"
 
   }

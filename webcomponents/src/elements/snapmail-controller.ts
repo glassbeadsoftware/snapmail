@@ -3,7 +3,6 @@ import {customElement, property} from "lit/decorators.js";
 //import { unsafeCSS } from 'lit-element';
 //import { CSSModule } from '../css-utils';
 
-//import { contextProvided } from '@lit-labs/context';
 import {
   ContactGridItem,
   FileManifest,
@@ -42,14 +41,20 @@ import {TextArea} from "@vaadin/text-area";
 import {ComboBox} from "@vaadin/combo-box";
 import {HorizontalLayout} from "@vaadin/horizontal-layout";
 import {Dialog} from "@vaadin/dialog";
+import {Upload} from "@vaadin/upload";
+import {Notification} from "@vaadin/notification";
+import {PolymerElement} from "@polymer/polymer";
+import {GridSelectionColumn} from "@vaadin/grid/vaadin-grid-selection-column";
+import {VerticalLayout} from "@vaadin/vertical-layout";
 
-/** Uncaught DOMException: CustomElementRegistry.define: 'dom-module' has already been defined as a custom element */
-// import '@vaadin/vaadin-icons';
-// import '@vaadin/vaadin-icons/vaadin-icons';
-// import '@vaadin/vaadin-lumo-styles';
-// import '@vaadin/vaadin-lumo-styles/icons';
-// //import '@vaadin/vaadin-ordered-layout';
-// import '@vaadin-component-factory/vcf-tooltip';
+//import '@vaadin-component-factory/vcf-tooltip';
+
+/** Uncaught DOMException: CustomElementRegistry.define: 'vaadin-lumo-styles' has already been defined as a custom element */
+import '@vaadin/vaadin-icon';
+//import '@vaadin/vaadin-icon/vaadin-icons';
+//import '@vaadin/vaadin-lumo-styles';
+//import '@vaadin/vaadin-lumo-styles/icons';
+
 
 import {ActionHash, CellId, EntryHash} from "@holochain/client";
 import {HolochainClient} from "@holochain-open-dev/cell-client";
@@ -67,11 +72,8 @@ import {
 import {toggleContact, selectUsername, filterMails, updateTray, handle_findManifest,
   handle_getChunk, ids_to_items
   } from "../snapmail"
-import {Upload} from "@vaadin/upload";
-import {Notification} from "@vaadin/notification";
-import {PolymerElement} from "@polymer/polymer";
-import {GridSelectionColumn} from "@vaadin/grid/vaadin-grid-selection-column";
-import {VerticalLayout} from "@vaadin/vertical-layout";
+
+
 import {AgentPubKey} from "@holochain/client/lib/types";
 import {DnaBridge} from "../dna_bridge";
 
@@ -108,13 +110,18 @@ export class SnapmailController extends LitElement {
   @property()
   hcClient: HolochainClient | null = null;
 
-  private _dna: DnaBridge | null = null;
+  /** -- */
 
+  private _dna: DnaBridge | null = null;
+  private _dnaId: string = '';
+  private _myAgentHash: AgentPubKey | null = null;
   private _myHandle = '<unknown>';
   private _myAgentId: string | null = null;
+
   private _currentMailItem: any /* : gridItem*/ = {};
-  private _replyOf: ActionHash | null = null;
   private _currentFolder = '';
+  private _currentGroup = '';
+  private _replyOf: ActionHash | null = null;
 
   private _contactItems: any[] /* gridItem*/ = [];
   private _mailItems: any[] /* gridItem*/ = [];
@@ -125,11 +132,8 @@ export class SnapmailController extends LitElement {
   private _chunkList: EntryHash[] = [];
   private _fileList: ActionHash[] = [];
 
-  private _dnaId: string = '';
-  private _myAgentHash: AgentPubKey | null = null;
-  private _currentGroup = '';
-  private _canPing = true;
 
+  private _canPing = true;
 
   /* Map of (agentId -> username)
    * agentId is base64 string of a hash */
@@ -140,6 +144,7 @@ export class SnapmailController extends LitElement {
   _responseMap = new Map();
   /* Map of (mailId -> mailItem) */
   _mailMap = new Map();
+
 
   /** --  -- */
 
@@ -195,9 +200,7 @@ export class SnapmailController extends LitElement {
 
   /** --  -- */
 
-
   /** Setup recurrent pull from DHT every 10 seconds */
-
   onEvery10sec() {
     console.log("**** onEvery10sec CALLED ****");
     if (process.env.NODE_ENV === 'prod') {
@@ -224,8 +227,10 @@ export class SnapmailController extends LitElement {
   }
 
 
-
   /** -- -- */
+
+
+  /** */
   loadGroupList(dnaId: string) {
     try {
       this._groupList = new Map(JSON.parse(window.localStorage[dnaId]));
@@ -317,6 +322,7 @@ export class SnapmailController extends LitElement {
         }
       });
     });
+
     // console.log({NETWORK_ID: DNA.NETWORK_ID})
     // const span = this.shadowRoot!.querySelector('#networkIdDisplay') as HTMLElement;
     // console.assert(span);
@@ -341,7 +347,11 @@ export class SnapmailController extends LitElement {
         for (let i = 0; i < count; i++) {
           toggleContact(contactGrid, contactItem);
         }
-        contactGrid.selectedItems!.push(contactItem);
+        if (!contactGrid.selectedItems) {
+          contactGrid.selectedItems = [contactItem];
+        } else {
+          contactGrid.selectedItems!.push(contactItem);
+        }
         contactGrid.activeItem = contactItem;
         break;
       }
@@ -424,14 +434,16 @@ export class SnapmailController extends LitElement {
   updateRecipients(canReset: boolean) {
     console.log('updateRecipients() - START ; canReset = ' + canReset)
     const contactGrid = this.contactGridElem;
-    /* Get currently selected items' hash */
+    /* Get currently selected items' hash (if any) */
     const prevSelected = [];
     const typeMap = new Map();
-    for (const item of contactGrid.selectedItems!) {
-      const contactItem: ContactGridItem = item as ContactGridItem;
-      const agentId = htos(contactItem.agentId);
-      prevSelected.push(agentId);
-      typeMap.set(agentId, contactItem.recipientType);
+    if (contactGrid.selectedItems) {
+      for (const item of contactGrid.selectedItems) {
+        const contactItem: ContactGridItem = item as ContactGridItem;
+        const agentId = htos(contactItem.agentId);
+        prevSelected.push(agentId);
+        typeMap.set(agentId, contactItem.recipientType);
+      }
     }
     console.log({typeMap});
     const selected = [];
@@ -529,9 +541,11 @@ export class SnapmailController extends LitElement {
 
     /** Get currently selected hashs */
     const prevSelected = [];
-    for (const item of mailGrid.selectedItems!) {
-      const mailItem: MailGridItem = item as MailGridItem;
-      prevSelected.push(htos(mailItem.id));
+    if (mailGrid.selectedItems) {
+      for (const item of mailGrid.selectedItems) {
+        const mailItem: MailGridItem = item as MailGridItem;
+        prevSelected.push(htos(mailItem.id));
+      }
     }
 
     const allCount = mailList.length;
@@ -1178,7 +1192,7 @@ export class SnapmailController extends LitElement {
   /** */
   initContactsArea() {
     const controller = this;
-    /** */
+    /** Add Refresh button in DEBUG */
     if (process.env.NODE_ENV !== 'prod') {
       const contactsMenu = this.contactsMenuElem;
       contactsMenu.items = [{ text: 'Refresh' }];
@@ -1191,20 +1205,15 @@ export class SnapmailController extends LitElement {
         }
       });
     }
-
-    /** Groups Combo box  */
+    /** -- Groups Combo box  */
     const groupCombo = this.shadowRoot!.querySelector('#groupCombo') as ComboBox;
     //groupCombo.items = SYSTEM_GROUP_LIST;
     //groupCombo.value = SYSTEM_GROUP_LIST[0];
     this.regenerateGroupComboBox(SYSTEM_GROUP_LIST[0]);
     this._currentGroup = groupCombo.value;
-
-    /** On value change */
     groupCombo.addEventListener('change', function(event:any) {
       controller.setCurrentGroup(event.target.value);
     });
-
-
     /** -- contactGrid */
     const contactGrid = this.contactGridElem;
     contactGrid.items = [];
@@ -1222,24 +1231,26 @@ export class SnapmailController extends LitElement {
     /** ON SELECT */
     contactGrid.addEventListener('active-item-changed', function(event:any) {
       const item = event.detail.value;
-      if (item && !contactGrid.selectedItems!.includes(item)) {
+      if (item && contactGrid.selectedItems && !contactGrid.selectedItems!.includes(item)) {
         contactGrid.selectedItems!.push(item);
       }
-      controller.setState_SendButton(contactGrid.selectedItems!.length == 0);
+      controller.setState_SendButton(!contactGrid.selectedItems || contactGrid.selectedItems!.length == 0);
     });
     /** ON CLICK */
     contactGrid.addEventListener('click', function(e) {
       const eventContext: any /* FIXME */ = contactGrid.getEventContext(e)!;
       //contactGrid.selectedItems = item ? [item] : [];
       toggleContact(contactGrid, eventContext.item);
-      controller.setState_SendButton(contactGrid.selectedItems!.length == 0);
+      controller.setState_SendButton(!contactGrid.selectedItems || contactGrid.selectedItems!.length == 0);
       //contactGrid.render();
     });
-    /** -- Contacts search bar -- */
+    /** -- Contacts search bar */
     const contactSearch = this.contactSearchElem;
     contactSearch.addEventListener('value-changed', function(e: any/*: TextFieldValueChangedEvent*/) {
-      const selectedItems = contactGrid.selectedItems! as ContactGridItem[];
-      contactGrid.items = controller.filterContacts(selectedItems, e.detail.value);
+      const items = contactGrid.selectedItems
+        ? contactGrid.selectedItems as ContactGridItem[]
+        : contactGrid.items as ContactGridItem[];
+      contactGrid.items = controller.filterContacts(items, e.detail.value);
       //contactGrid.render();
     });
   }
@@ -1312,7 +1323,7 @@ export class SnapmailController extends LitElement {
 
     /* Get contact Lists */
     const contactGrid = this.contactGridElem;
-    const selection: ContactGridItem[] = contactGrid.selectedItems! as ContactGridItem[];
+    const selection: ContactGridItem[] = contactGrid.selectedItems? contactGrid.selectedItems as ContactGridItem[] : [];
     console.log('selection: ' + JSON.stringify(selection));
     if (!selection || selection.length == 0) {
       console.log('Send Mail Failed: No recipient selected')
@@ -1886,7 +1897,7 @@ export class SnapmailController extends LitElement {
     //getMyAgentId(logResult)
     this.initNotification();
     this.initGroupsDialog();
-    ///** init DNA at the end because the callbacks will populate the UI */
+    /** init DNA at the end because the callbacks will populate the UI */
     this.initDna();
     /* init Send progress bar */
     this.sendProgressBarElem.style.display = "none";
@@ -2039,7 +2050,7 @@ export class SnapmailController extends LitElement {
                                 <iron-icon icon="lumo:checkmark" slot="prefix"></iron-icon>
                             </vaadin-button>
                             <vaadin-button theme="icon" id="cancelHandleButton" @click=${() => {this.setState_ChangeHandleBar(true);}}>
-                                <iron-icon icon="lumo:cross" slot="prefix"></iron-icon>
+                                <vaadin-icon icon="lumo:cross" slot="prefix"></iron-icon>
                             </vaadin-button>
                         </div>
                         <vaadin-menu-bar open-on-hover id="ContactsMenu" style="margin-top:2px;"></vaadin-menu-bar>
@@ -2165,4 +2176,5 @@ export class SnapmailController extends LitElement {
         }      
       `];
   }
+
 }

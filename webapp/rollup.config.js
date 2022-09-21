@@ -3,7 +3,7 @@ import typescript from "@rollup/plugin-typescript";
 import commonjs from "@rollup/plugin-commonjs";
 import replace from "@rollup/plugin-replace";
 import builtins from "rollup-plugin-node-builtins";
-import globals from "rollup-plugin-node-globals";
+//import globals from "rollup-plugin-node-globals";
 
 import babel from "@rollup/plugin-babel";
 import html from "@web/rollup-plugin-html";
