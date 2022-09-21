@@ -55,8 +55,8 @@ import {Icon} from "@vaadin/vaadin-icon";
 
 /** Uncaught DOMException: CustomElementRegistry.define: 'vaadin-lumo-styles' has already been defined as a custom element */
 import '@vaadin/vaadin-icon';
+import '@vaadin/vaadin-lumo-styles';
 //import '@vaadin/vaadin-icon/vaadin-icons';
-//import '@vaadin/vaadin-lumo-styles';
 //import '@vaadin/vaadin-lumo-styles/icons';
 
 
@@ -1953,6 +1953,7 @@ export class SnapmailController extends ScopedElementsMixin(LitElement) {
 
             <!-- FILEBOX MENU -->
             <vaadin-horizontal-layout theme="spacing-xs" id="fileboxLayout" style="width:100%;">
+                <!-- FIXEME: use vaadin-select instead -->
                 <vaadin-combo-box id="fileboxFolder" style="user-select: none;
             -khtml-user-select: none;
             -webkit-user-select: none;"></vaadin-combo-box>
