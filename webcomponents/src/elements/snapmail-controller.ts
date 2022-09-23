@@ -75,6 +75,66 @@ import {DnaBridge} from "../dna_bridge";
 
 
 /** ----- */
+/** Styles for vaadin-grid */
+let tmpl = document.createElement('template');
+tmpl.innerHTML = `
+<style>
+            /* Background needs a stronger selector to not be overridden */
+            [part~="cell"].male {
+                background: rgb(255, 240, 0);
+            }
+
+            :host(#contactGrid) #header {
+                display: none;
+            }
+
+            
+            [part~="cell"] ::slotted(vaadin-grid-cell-content) {
+            padding-left: 5px;
+            }
+        
+            .newmail {
+                font-weight: bold;
+            }
+
+            .deleted {
+                color:grey;
+                text-decoration: line-through;
+            }
+
+            .arrived {
+                color:black;
+            }
+            .checked {
+                font-weight: normal;
+            }
+
+            .myCc {
+                color: #0f4de8;
+            }
+
+            .myBcc {
+                color: #a56bf8;
+            }
+
+            .partially {
+                color: darkorange;
+            }
+            .pending {
+                color:darkred;
+            }
+            .received {
+                color: green;
+            }
+            .statusColumn {
+                font-size: x-small;
+                text-align: left;
+                padding-left: 3px;
+            }
+        </style>
+`;
+
+/** ----- */
 
 
 export const delay = (ms:number) => new Promise(r => setTimeout(r, ms))
@@ -727,6 +787,7 @@ export class SnapmailController extends ScopedElementsMixin(LitElement) {
   }
 
   disableDeleteButton(isDisabled: boolean): void {
+    console.log("disableDeleteButton() called", isDisabled)
     /** deepCopy MenuBarItems so it can trigger a new render */
     const items = JSON.parse(JSON.stringify(this.fileboxMenuElem.items)) as MenuBarItem[];
     this.fileboxMenuElem.items[2].disabled = isDisabled;
@@ -1850,11 +1911,10 @@ export class SnapmailController extends ScopedElementsMixin(LitElement) {
     // /*let _1Sec =*/ setInterval(this.onEverySec, 1 * 1000);
 
     //this.contactGridElem.setAttribute("theme", "my-theme")
-    /** Manual styling of inner components */
-    const header = this.contactGridElem.shadowRoot!.getElementById("header") as HTMLElement;
-    header.style.display = 'none';
-    //const header2 = this.groupGridElem.shadowRoot!.getElementById("header") as HTMLElement;
-    //header2.style.display = 'none';
+    /** Styling of vaadin components */
+    this.mailGridElem.shadowRoot!.appendChild(tmpl.content.cloneNode(true));
+    this.contactGridElem.shadowRoot!.appendChild(tmpl.content.cloneNode(true));
+    this.groupGridElem.shadowRoot!.appendChild(tmpl.content.cloneNode(true));
   }
 
 
@@ -2044,77 +2104,4 @@ export class SnapmailController extends ScopedElementsMixin(LitElement) {
       'vaadin-grid-sort-column':GridSortColumn,
     };
   }
-
-
-  /** */
-  static get styles() {
-    return [
-      //CSSModule('lumo-typography'),
-      //unsafeCSS(styles),
-      css`
-        /* Background needs a stronger selector to not be overridden */
-        [part~="cell"].male {
-          background: rgb(255, 240, 0);
-        }
-        
-        [part~="header-cell"] {
-            background: rgb(255, 0, 200);
-        }
-
-        /* FAILED
-        [part~="cell"] ::slotted(vaadin-grid-cell-content) {
-          padding-left:5px;
-        }
-        vaadin-grid [part~="cell"] ::slotted(vaadin-grid-cell-content) {
-          padding-left:5px;
-        }
-        #contactGrid [part~="cell"] ::slotted(vaadin-grid-cell-content) {
-          padding-left:5px;
-        }        
-        */
-        vaadin-grid#contactGrid [part~="cell"] ::slotted(vaadin-grid-cell-content) {
-          padding-left:5px;
-        }
-        
-        .newmail {
-          font-weight: bold;
-        }
-
-        .deleted {
-          color:grey;
-          text-decoration: line-through;
-        }
-
-        .arrived {
-          color:black;
-        }
-        .checked {
-          font-weight: normal;
-        }
-
-        .myCc {
-          color: #0f4de8;
-        }
-
-        .myBcc {
-          color: #a56bf8;
-        }
-
-        .partially {
-          color: darkorange;
-        }
-        .pending {
-          color: darkred;
-        }
-        .received {
-          color: green;
-        }
-        .statusColumn {
-          font-size: x-small;
-          text-align: left;
-          padding-left: 3px;
-        }      
-      `];
-  }
-
 }
