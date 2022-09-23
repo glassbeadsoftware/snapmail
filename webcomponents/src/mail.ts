@@ -36,7 +36,7 @@ export function isMailDeleted(mailItem: MailItem): boolean {
     // return state.Out!.hasOwnProperty('Deleted');
     return state.Out! == OutMailState.Deleted;
   }
-  console.error('Invalid mailItem object')
+  console.error('Invalid mailItem object', mailItem)
   return false;
 }
 
@@ -51,7 +51,7 @@ export function is_OutMail(mailItem: MailItem): boolean {
   if (state.hasOwnProperty('Out')) {
     return true;
   }
-  console.error('Invalid mailItem object')
+  console.error('Invalid mailItem object', mailItem)
   return false;
 }
 
@@ -102,7 +102,7 @@ export function determineMailCssClass(mailItem: MailItem): string {
       case InMailState.Deleted: return 'deleted'
     }
   }
-  console.error('Invalid mailItem object');
+  console.error('Invalid mailItem object', mailItem);
   return '';
 }
 

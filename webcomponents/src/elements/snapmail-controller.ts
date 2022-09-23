@@ -1,20 +1,8 @@
 import {css, html, LitElement} from "lit";
-import {customElement, property} from "lit/decorators.js";
-//import { unsafeCSS } from 'lit-element';
+import {property, state} from "lit/decorators.js";
+//import { unsafeCSS } from 'lit';
 //import { CSSModule } from '../css-utils';
-
-import {
-  ContactGridItem,
-  FileManifest,
-  HandleItem,
-  Mail,
-  MailGridItem,
-  MailItem,
-  SendMailInput,
-  UsernameMap
-} from "../types";
 import {ScopedElementsMixin} from "@open-wc/scoped-elements";
-
 
 import '@vaadin/progress-bar';
 import '@vaadin/button';
@@ -38,7 +26,7 @@ import {ProgressBar} from "@vaadin/progress-bar";
 import {Button} from "@vaadin/button";
 import {TextField} from "@vaadin/text-field";
 import {Grid, GridColumn} from "@vaadin/grid";
-import {MenuBar} from "@vaadin/menu-bar";
+import {MenuBar, MenuBarItem} from "@vaadin/menu-bar";
 import {TextArea} from "@vaadin/text-area";
 import {ComboBox} from "@vaadin/combo-box";
 import {HorizontalLayout} from "@vaadin/horizontal-layout";
@@ -58,11 +46,15 @@ import '@vaadin/vaadin-icon';
 import '@vaadin/vaadin-lumo-styles';
 //import '@vaadin/vaadin-icon/vaadin-icons';
 //import '@vaadin/vaadin-lumo-styles/icons';
+//import { ThemableMixin } from '@vaadin/vaadin-themable-mixin/vaadin-themable-mixin.js';
 
 
 import {ActionHash, CellId, EntryHash} from "@holochain/client";
 import {HolochainClient} from "@holochain-open-dev/cell-client";
 
+import {
+  ContactGridItem, FileManifest, HandleItem, Mail, MailGridItem, MailItem, SendMailInput, UsernameMap
+} from "../types";
 import {arrayBufferToBase64, base64ToArrayBuffer, splitFile,  htos, stoh} from "../utils";
 import {
   customDateString,
@@ -80,8 +72,6 @@ import {toggleContact, selectUsername, filterMails, updateTray, handle_findManif
 
 import {AgentPubKey} from "@holochain/client/lib/types";
 import {DnaBridge} from "../dna_bridge";
-
-
 
 
 /** ----- */
@@ -108,6 +98,10 @@ export class SnapmailController extends ScopedElementsMixin(LitElement) {
   constructor() {
     super();
   }
+
+  // static get is() {
+  //   return 'snapmail-controller';
+  // }
 
   @property()
   cellId: CellId | null = null;
@@ -151,16 +145,6 @@ export class SnapmailController extends ScopedElementsMixin(LitElement) {
   _mailMap = new Map();
 
 
-
-  private _actionMenuItems = [
-    { text: 'Clear' },
-    //{ text: '+File', disabled: true },
-    { text: 'Snap', disabled: true },
-    { text: 'Send', disabled: true }
-  ];
-
-
-
   /** --  -- */
 
   get handleButtonElem() : Button {
@@ -174,6 +158,10 @@ export class SnapmailController extends ScopedElementsMixin(LitElement) {
 
   get sendProgressBarElem() : ProgressBar {
     return this.shadowRoot!.getElementById("sendProgressBar") as ProgressBar;
+  }
+
+  get groupGridElem() : Grid {
+    return this.shadowRoot!.getElementById("groupGrid") as Grid;
   }
 
   get contactGridElem() : Grid {
@@ -349,15 +337,15 @@ export class SnapmailController extends ScopedElementsMixin(LitElement) {
     });
 
     // console.log({NETWORK_ID: DNA.NETWORK_ID})
-    // const span = this.shadowRoot!.querySelector('#networkIdDisplay') as HTMLElement;
+    // const span = this.shadowRoot!.getElementById('networkIdDisplay') as HTMLElement;
     // console.assert(span);
     // span.textContent = DNA.NETWORK_ID;
     //
-    // const title = this.shadowRoot!.querySelector('#snapTitle') as HTMLElement;
+    // const title = this.shadowRoot!.getElementById('snapTitle') as HTMLElement;
     // console.assert(title);
     // title.textContent = "SnapMail v" + version;
 
-    // const rootTitle = this.shadowRoot!.querySelector('#rootTitle') as HTMLTitleElement;
+    // const rootTitle = this.shadowRoot!.getElementById('rootTitle') as HTMLTitleElement;
     // console.assert(rootTitle);
     // const maybeUid = DNA.NETWORK_ID != ""? "  - " + DNA.NETWORK_ID : "";
     // rootTitle.textContent = "SnapMail v" + version + maybeUid;
@@ -408,7 +396,7 @@ export class SnapmailController extends ScopedElementsMixin(LitElement) {
         console.error('Unknown folder')
     }
 
-    const span = this.shadowRoot!.querySelector('#messageCount') as HTMLElement;
+    const span = this.shadowRoot!.getElementById('messageCount') as HTMLElement;
     console.assert(span);
     span.textContent = '' + folderItems.length;
 
@@ -495,7 +483,7 @@ export class SnapmailController extends ScopedElementsMixin(LitElement) {
     contactGrid.selectedItems = selected;
     contactGrid.activeItem = null;
     //contactGrid.render();
-    console.log({contactGrid});
+    //console.log({contactGrid});
     console.log('updateRecipients() - END')
   }
 
@@ -524,7 +512,7 @@ export class SnapmailController extends ScopedElementsMixin(LitElement) {
     /* Reset contactGrid */
     this.updateRecipients(false)
     const contactsMenu = this.contactsMenuElem;
-    if (contactsMenu.items.length > 0) {
+    if (contactsMenu.items && contactsMenu.items.length > 0) {
       contactsMenu.items[0].disabled = false;
       //contactsMenu.render();
     }
@@ -733,24 +721,25 @@ export class SnapmailController extends ScopedElementsMixin(LitElement) {
 
   /** */
   disableSendButton(isDisabled: boolean): void {
-    //actionMenu.items[1].disabled = isDisabled;
-    this.actionMenuElem.items[2].disabled = isDisabled;
-    //this.actionMenuElem.render()
-    //this.requestUpdate();
-    this.render()
+    /** deepCopy MenuBarItems so it can trigger a new render */
+    const items = JSON.parse(JSON.stringify(this.actionMenuElem.items)) as MenuBarItem[];
+    items[2].disabled = isDisabled;
+    this.actionMenuElem.items = items;
   }
 
   disableDeleteButton(isDisabled: boolean): void {
-    //console.log('menu.items =', menu.items)
+    /** deepCopy MenuBarItems so it can trigger a new render */
+    const items = JSON.parse(JSON.stringify(this.fileboxMenuElem.items)) as MenuBarItem[];
     this.fileboxMenuElem.items[2].disabled = isDisabled;
     this.fileboxMenuElem.items[3].disabled = isDisabled;
-    //menu.render();
+    this.fileboxMenuElem.items = items;
   }
 
   disableReplyButton(isDisabled: boolean): void {
-    //console.log('menu.items =', menu.items)
+    /** deepCopy MenuBarItems so it can trigger a new render */
+    const items = JSON.parse(JSON.stringify(this.fileboxMenuElem.items)) as MenuBarItem[];
     this.fileboxMenuElem.items[1].disabled = isDisabled;
-    //menu.render();
+    this.fileboxMenuElem.items = items;
   }
 
 
@@ -800,7 +789,7 @@ export class SnapmailController extends ScopedElementsMixin(LitElement) {
         controller.disableReplyButton(true)
       }
       /* -- Handle 'Reply' -- */
-      const outMailSubjectArea = this.shadowRoot!.querySelector('#outMailSubjectArea') as TextField;
+      const outMailSubjectArea = this.shadowRoot!.getElementById('outMailSubjectArea') as TextField;
       const contactGrid = controller.contactGridElem;
 
       if (e.detail.value.text === 'Reply to sender') {
@@ -880,7 +869,7 @@ export class SnapmailController extends ScopedElementsMixin(LitElement) {
 
   /** */
   async fillAttachmentGrid(mail: Mail): Promise<number> {
-    const attachmentGrid = this.shadowRoot!.querySelector('#attachmentGrid') as Grid;
+    const attachmentGrid = this.shadowRoot!.getElementById('attachmentGrid') as Grid;
     const items = [];
     const emoji = String.fromCodePoint(0x1F6D1);
     this._hasAttachment = 0;
@@ -914,7 +903,7 @@ export class SnapmailController extends ScopedElementsMixin(LitElement) {
 
   /** FIXME */
   handle_missingAttachments(missingCount: number): void {
-    //const attachmentGrid = document.querySelector('#attachmentGrid') as Grid;
+    //const attachmentGrid = document.getElementById('attachmentGrid') as Grid;
     //attachmentGrid!.render();
   }
 
@@ -924,7 +913,7 @@ export class SnapmailController extends ScopedElementsMixin(LitElement) {
   /** */
   initFileBox() {
     const controller = this;
-    const fileboxLayout = this.shadowRoot!.querySelector('#fileboxLayout') as HorizontalLayout;
+    const fileboxLayout = this.shadowRoot!.getElementById('fileboxLayout') as HorizontalLayout;
     if (process.env.NODE_ENV !== 'prod') {
       fileboxLayout.style.backgroundColor = "rgba(241,154,154,0.82)";
     }
@@ -999,6 +988,7 @@ export class SnapmailController extends ScopedElementsMixin(LitElement) {
         }
       });
     });
+
     controller.inMailAreaElem.style.backgroundColor = "#dfe7efd1";
 
     const mailSearch = this.mailSearchElem;
@@ -1041,7 +1031,7 @@ export class SnapmailController extends ScopedElementsMixin(LitElement) {
   setCurrentGroup(groupName: string): void {
     console.log('Current Group changed: ' + groupName);
     if(groupName === 'new...') {
-      const newDialog = this.shadowRoot!.querySelector('#newGroupDlg') as Dialog;
+      const newDialog = this.shadowRoot!.getElementById('newGroupDlg') as Dialog;
       newDialog.opened = true;
       return;
     }
@@ -1071,7 +1061,7 @@ export class SnapmailController extends ScopedElementsMixin(LitElement) {
   initAttachmentGrid() {
     const controller = this;
     /** attachmentGrid -- vaadin-grid */
-    const attachmentGrid = this.shadowRoot!.querySelector('#attachmentGrid') as Grid;
+    const attachmentGrid = this.shadowRoot!.getElementById('attachmentGrid') as Grid;
     attachmentGrid.items = [];
 
     attachmentGrid.cellClassNameGenerator = function(column, rowData:any/*FIXME*/) {
@@ -1175,7 +1165,7 @@ export class SnapmailController extends ScopedElementsMixin(LitElement) {
     if (this._groupList === undefined || this._groupList === null) {
       return;
     }
-    const groupCombo = this.shadowRoot!.querySelector('#groupCombo') as ComboBox;
+    const groupCombo = this.shadowRoot!.getElementById('groupCombo') as ComboBox;
     const keys = Array.from(this._groupList.keys());
     keys.push('new...');
     groupCombo.items = keys;
@@ -1205,6 +1195,7 @@ export class SnapmailController extends ScopedElementsMixin(LitElement) {
       contactsMenu.addEventListener('item-selected', function(e:any) {
         console.log(JSON.stringify(e.detail.value));
         if(e.detail.value.text === 'Refresh') {
+          console.log("contactsMenu Refresh clicked")
           contactsMenu.items[0].disabled = true;
           //contactsMenu.render();
           controller.getAllHandles();
@@ -1212,7 +1203,7 @@ export class SnapmailController extends ScopedElementsMixin(LitElement) {
       });
     }
     /** -- Groups Combo box  */
-    const groupCombo = this.shadowRoot!.querySelector('#groupCombo') as ComboBox;
+    const groupCombo = this.shadowRoot!.getElementById('groupCombo') as ComboBox;
     //groupCombo.items = SYSTEM_GROUP_LIST;
     //groupCombo.value = SYSTEM_GROUP_LIST[0];
     this.regenerateGroupComboBox(SYSTEM_GROUP_LIST[0]);
@@ -1244,13 +1235,21 @@ export class SnapmailController extends ScopedElementsMixin(LitElement) {
         if (contactGrid.selectedItems) {
           if(!contactGrid.selectedItems!.includes(item)) {
             contactGrid.selectedItems!.push(item);
+            console.log("contactGrid.selectedItems set - many");
           }
         } else {
           contactGrid.selectedItems = [item]
+          console.log("contactGrid.selectedItems set - one");
         }
       }
+
       console.log({activeSelected: contactGrid.selectedItems})
       controller.disableSendButton(!contactGrid.selectedItems || contactGrid.selectedItems!.length == 0);
+      //controller.updateRecipients(false)
+      contactGrid.items = controller.filterContacts([], '');
+      //contactGrid.items = contactGrid.items
+      //contactGrid.selectedItems = contactGrid.selectedItems
+      //contactGrid.activeItem = contactGrid.activeItem
     });
     /** ON CLICK */
     contactGrid.addEventListener('click', function(e) {
@@ -1363,7 +1362,7 @@ export class SnapmailController extends ScopedElementsMixin(LitElement) {
       }
     }
     /* Create Mail */
-    const outMailSubjectArea = this.shadowRoot!.querySelector('#outMailSubjectArea') as TextField;
+    const outMailSubjectArea = this.shadowRoot!.getElementById('outMailSubjectArea') as TextField;
     const mail: SendMailInput = {
       subject: outMailSubjectArea.value,
       payload: this.outMailContentElem.value,
@@ -1399,15 +1398,19 @@ export class SnapmailController extends ScopedElementsMixin(LitElement) {
   initActionMenu() {
     const controller = this;
     const actionMenu = this.actionMenuElem;
+    actionMenu.items = [
+      { text: 'Clear' },
+      //{ text: '+File', disabled: true },
+      { text: 'Snap', disabled: true },
+      { text: 'Send', disabled: true }
+    ];
+
     /** ON SELECT */
     actionMenu.addEventListener('item-selected', function(e:any) {
       console.log('actionMenu: ' + JSON.stringify(e.detail.value.text))
       const upload = controller.uploadElem;
       /** Clear clicked */
       if (e.detail.value.text === 'Clear') {
-        console.log({SendActionItem: controller.actionMenuElem.items[2]})
-        controller.actionMenuElem.items[2].disabled = !controller.actionMenuElem.items[2].disabled;
-        controller.actionMenuElem.items[2].text = JSON.stringify(controller.actionMenuElem.items[2].disabled)
         controller.outMailSubjectElem.value = '';
         controller.outMailContentElem.value = '';
         /** clear each attachment */
@@ -1418,7 +1421,7 @@ export class SnapmailController extends ScopedElementsMixin(LitElement) {
       /** Send clicked */
       if (e.detail.value.text === 'Send') {
         const sendProgressBar = controller.sendProgressBarElem;
-        const sendingTitle = this.shadowRoot!.querySelector('#sendingTitle') as HTMLElement;
+        const sendingTitle = controller.shadowRoot!.getElementById('sendingTitle') as HTMLElement;
         sendProgressBar.style.display = "block";
         sendingTitle.style.display = "block";
         actionMenu.style.display = "none";
@@ -1533,7 +1536,7 @@ export class SnapmailController extends ScopedElementsMixin(LitElement) {
   /** */
   initNotification() {
     /** -- Mail  */
-    let notification = this.shadowRoot!.querySelector('#notifyMail') as Notification;
+    let notification = this.shadowRoot!.getElementById('notifyMail') as Notification;
     notification.renderer = function(root) {
       /** Check if there is a content generated with the previous renderer call not to recreate it. */
       if (root.firstElementChild) {
@@ -1546,7 +1549,7 @@ export class SnapmailController extends ScopedElementsMixin(LitElement) {
       root.appendChild(container);
     };
     /** -- Ack */
-    notification = this.shadowRoot!.querySelector('#notifyAck') as Notification;
+    notification = this.shadowRoot!.getElementById('notifyAck') as Notification;
     notification.renderer = function(root) {
       /** Check if there is a content generated with the previous renderer call not to recreate it. */
       if (root.firstElementChild) {
@@ -1561,7 +1564,7 @@ export class SnapmailController extends ScopedElementsMixin(LitElement) {
       root.appendChild(container);
     };
     /** -- File  */
-    notification = this.shadowRoot!.querySelector('#notifyFile') as Notification;
+    notification = this.shadowRoot!.getElementById('notifyFile') as Notification;
     notification.renderer = function(root) {
       /** Check if there is a content generated with the previous renderer call not to recreate it. */
       if (root.firstElementChild) {
@@ -1598,7 +1601,7 @@ export class SnapmailController extends ScopedElementsMixin(LitElement) {
     console.log("initGroupsDialog() called");
     const controller = this;
     /** -- New Group Dialog */
-    const newDialog = this.shadowRoot!.querySelector('#newGroupDlg') as Dialog;
+    const newDialog = this.shadowRoot!.getElementById('newGroupDlg') as Dialog;
     newDialog.renderer = function(root, dialog) {
       /** Check if there is a DOM generated with the previous renderer call to update its content instead of recreation */
       if(root.firstElementChild) {
@@ -1636,7 +1639,7 @@ export class SnapmailController extends ScopedElementsMixin(LitElement) {
       const cancelButton = window.document.createElement('vaadin-button') as Button;
       cancelButton.textContent = 'Cancel';
       cancelButton.addEventListener('click', function() {
-        const groupCombo = this.shadowRoot!.querySelector('#groupCombo') as ComboBox;
+        const groupCombo = this.shadowRoot!.getElementById('groupCombo') as ComboBox;
         vaadin.value = '';
         groupCombo.value = controller._currentGroup;
         dialog!.opened = false;
@@ -1651,7 +1654,7 @@ export class SnapmailController extends ScopedElementsMixin(LitElement) {
     };
 
     /** -- Edit Group Dialog */
-    const editDialog = this.shadowRoot!.querySelector('#editGroupDlg') as Dialog;
+    const editDialog = this.shadowRoot!.getElementById('editGroupDlg') as Dialog;
     editDialog.renderer = function(root, dialog) {
       console.log("Edit Groups dialog called: " + controller._currentGroup);
       /** Check if there is a DOM generated with the previous renderer call to update its content instead of recreation */
@@ -1738,7 +1741,7 @@ export class SnapmailController extends ScopedElementsMixin(LitElement) {
     };
 
     /** -- Edit Group Button */
-    const button = this.shadowRoot!.querySelector('#groupsBtn') as Button;
+    const button = this.shadowRoot!.getElementById('groupsBtn') as Button;
     button.addEventListener('click', () => {
       /** open if not 'All' group selected */
       if (controller._currentGroup !== SYSTEM_GROUP_LIST[0]) {
@@ -1757,18 +1760,20 @@ export class SnapmailController extends ScopedElementsMixin(LitElement) {
   }
 
 
-  // -- Signal Structure -- //
-  // AppSignal {
-  //   data: {
-  //       cellId: [Uint8Array(39), Uint8Array(39)],
-  //       payload: any,
-  //     }
-  //     type: "Signal"
-  // }
-  //
+  /** -- Signal Structure --
+   *  AppSignal {
+   *   data: {
+   *       cellId: [Uint8Array(39), Uint8Array(39)],
+   *       payload: any,
+   *     }
+   *     type: "Signal"
+   * }
+   */
   handleSignal(signalwrapper:any/*FIXME*/) {
     console.log('Received signal:')
     console.log({signalwrapper})
+    const controller = document.querySelector("snapmail-app");
+    console.log({controller})
     if (signalwrapper.type !== undefined && signalwrapper.type !== "Signal") {
       return;
     }
@@ -1781,7 +1786,7 @@ export class SnapmailController extends ScopedElementsMixin(LitElement) {
       const item = signalwrapper.data.payload.ReceivedMail;
       console.log("received_mail:");
       console.log({item});
-      const notification = this.shadowRoot!.querySelector('#notifyMail') as Notification;
+      const notification = this.shadowRoot!.getElementById('notifyMail') as Notification;
       notification.open();
 
       const mail = signalwrapper.data.payload.ReceivedMail;
@@ -1818,7 +1823,7 @@ export class SnapmailController extends ScopedElementsMixin(LitElement) {
       console.log({item});
       const pingedAgentB64 = htos(item.from);
       this.storePingResult({}, pingedAgentB64);
-      const notification = this.shadowRoot!.querySelector('#notifyAck') as Notification;
+      const notification = this.shadowRoot!.getElementById('notifyAck') as Notification;
       notification.open();
       this.getAllMails();
       return;
@@ -1827,7 +1832,7 @@ export class SnapmailController extends ScopedElementsMixin(LitElement) {
       const item = signalwrapper.data.payload.ReceivedFile;
       console.log("received_file:");
       console.log({item});
-      const notification = this.shadowRoot!.querySelector('#notifyFile') as Notification;
+      const notification = this.shadowRoot!.getElementById('notifyFile') as Notification;
       notification.open();
       return
     }
@@ -1871,7 +1876,7 @@ export class SnapmailController extends ScopedElementsMixin(LitElement) {
       //   titleLayout.style.display = "none";
       //   if (process.env.NODE_ENV !== 'prod') {
       //     /** -- Update Title with DNA ID */
-      //     const rootTitle = document.querySelector('#rootTitle') as HTMLTitleElement;
+      //     const rootTitle = document.getElementById('rootTitle') as HTMLTitleElement;
       //     console.assert(rootTitle);
       //     //rootTitle.textContent = "SnapMail v" + version + "  - " + DNA.NETWORK_ID;
       //     rootTitle.textContent = rootTitle.textContent + " (" + dnaId + ")";
@@ -1883,9 +1888,9 @@ export class SnapmailController extends ScopedElementsMixin(LitElement) {
       const titleAbbr = this.shadowRoot!.getElementById('titleAbbr') as HTMLElement;
       titleAbbr.title = dnaId;
       /** -- Loading Done -- */
-      const loadingBar = this.shadowRoot!.querySelector('#loadingBar') as ProgressBar;
+      const loadingBar = this.shadowRoot!.getElementById('loadingBar') as ProgressBar;
       loadingBar.style.display = "none";
-      const mainPage = this.shadowRoot!.querySelector('#mainPage') as VerticalLayout;
+      const mainPage = this.shadowRoot!.getElementById('mainPage') as VerticalLayout;
       mainPage.style.display = "flex";
     } catch(error:any) {
       console.error('initDna() FAILED');
@@ -1922,6 +1927,13 @@ export class SnapmailController extends ScopedElementsMixin(LitElement) {
     this.initUi()
     /*let _10sec =*/ setInterval(this.onEvery10sec, 10 * 1000);
     // /*let _1Sec =*/ setInterval(this.onEverySec, 1 * 1000);
+
+    //this.contactGridElem.setAttribute("theme", "my-theme")
+    /** Manual styling of inner components */
+    const header = this.contactGridElem.shadowRoot!.getElementById("header") as HTMLElement;
+    header.style.display = 'none';
+    //const header2 = this.groupGridElem.shadowRoot!.getElementById("header") as HTMLElement;
+    //header2.style.display = 'none';
   }
 
 
@@ -1946,7 +1958,7 @@ export class SnapmailController extends ScopedElementsMixin(LitElement) {
         <vaadin-dialog no-close-on-esc no-close-on-outside-click id="editGroupDlg"></vaadin-dialog>
 
         <!-- MAIN VERTICAL LAYOUT -->
-        <vaadin-vertical-layout theme="spacing-s" style="display:none; height:100%;" id="mainPage">
+        <vaadin-vertical-layout theme="spacing-s" style="display:none; height:100%;gap: 0;" id="mainPage">
 
             <!-- TITLE BAR -->
             <vaadin-horizontal-layout id="titleLayout" theme="spacing-xs" style="background-color:beige; width:100%;">
@@ -1954,7 +1966,7 @@ export class SnapmailController extends ScopedElementsMixin(LitElement) {
                     <img src="favicon.ico" width="32" height="32" style="padding-left: 5px;padding-top: 5px;"/>
                 </abbr>
                 <span id="snapTitle" style="text-align: center; font-size: larger; padding: 10px 0px 10px 5px;">SnapMail</span>
-                <span id="networkIdDisplay" style="text-align: center; font-size: small; padding: 15px 2px 0px 5px;">NETWORK-ID</span>
+                <span id="networkIdDisplay" style="text-align: center; font-size: small; padding: 15px 2px 0px 5px;">UNKNOWN NETWORK-ID</span>
                 <!--        <span style="text-align: center; font-size: larger; padding: 10px 10px 10px 5px;"> - </span>-->
             </vaadin-horizontal-layout>
 
@@ -2031,7 +2043,7 @@ export class SnapmailController extends ScopedElementsMixin(LitElement) {
                                 </vaadin-text-field>
                             </vaadin-horizontal-layout>
                             <!-- CONTACTS GRID -->
-                            <vaadin-grid theme="no-row-borders" id="contactGrid" class="wtf" style="height: 100%; min-width: 50px;">
+                            <vaadin-grid theme="no-row-borders" id="contactGrid" style="height: 100%; min-width: 50px;">
                                 <vaadin-grid-column path="status" width="30px" flex-grow="0" header=" "></vaadin-grid-column>
                                 <vaadin-grid-column auto-width path="username" header=" "></vaadin-grid-column>
                                 <vaadin-grid-column auto-width path="recepientType" header=" "></vaadin-grid-column>
@@ -2075,9 +2087,7 @@ export class SnapmailController extends ScopedElementsMixin(LitElement) {
                     <!-- ACTION MENU BAR -->
                     <div style="width:100%; display:flex;justify-content: flex-end">
                         <vaadin-menu-bar theme="primary" id="ActionBar"
-                                         .items="${this._actionMenuItems}"
                                          style="height:40px; margin-top:5px; margin-bottom:10px;">
-                            
                         </vaadin-menu-bar>
                     </div>
                     <!-- Progress Bar -->
@@ -2118,73 +2128,33 @@ export class SnapmailController extends ScopedElementsMixin(LitElement) {
   /** */
   static get styles() {
     return [
+      //CSSModule('lumo-typography'),
+      //unsafeCSS(styles),
       css`
         /* Background needs a stronger selector to not be overridden */
         [part~="cell"].male {
           background: rgb(255, 240, 0);
         }
-
-        :host [part~="row"] {
-          background-color: greenyellow;
-        }
-        
-        [part~="row"] {
-          background-color: red;
-        }
         
         [part~="header-cell"] {
             background: rgb(255, 0, 200);
         }
-        
 
-        /* FAILS
-        :host vaadin-grid thead {
-          display: none;
+        /* FAILED
+        [part~="cell"] ::slotted(vaadin-grid-cell-content) {
+          padding-left:5px;
         }
-        
-        :host vaadin-grid #header {
-          display: none;
+        vaadin-grid [part~="cell"] ::slotted(vaadin-grid-cell-content) {
+          padding-left:5px;
         }
-
-        vaadin-grid #header {
-          display: none;
-        }
-
-        vaadin-grid thead {
-          display: none;
-        }
-
-        thead {
-          display: none; 
-        }
-        #header {
-          display: none;
-        }
-        
-        #contactGrid #header {
-          display: none;
-        }
+        #contactGrid [part~="cell"] ::slotted(vaadin-grid-cell-content) {
+          padding-left:5px;
+        }        
         */
-        
-        :host #groupGrid #header {
-          display: none;
+        vaadin-grid#contactGrid [part~="cell"] ::slotted(vaadin-grid-cell-content) {
+          padding-left:5px;
         }
         
-        /*
-        :host th {
-            height: 15px;
-            margin-top: 0 !important;
-            padding-top: 0 !important;
-        }
-        */
-
-        :host #attachmentGrid #header {
-          /*padding: 0px 0px 0px 0px;*/
-          /*margin: 0px 0px 0px 0px;*/
-          /*background: rgb(0, 100, 200);*/
-          /*height: 15px;*/
-        }
-
         .newmail {
           font-weight: bold;
         }

@@ -128,7 +128,7 @@ export function updateTray(newCount: number): void {
 
 // /** */
 // function handle_findAgent(callResult) {
-//   let button = document.querySelector('#handleDisplay');
+//   let button = document.getElementById('handleDisplay');
 //   if (callResult.Err !== undefined) {
 //     const err = callResult.Err;
 //     console.error('findAgent dna call failed');
