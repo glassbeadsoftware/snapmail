@@ -4,7 +4,7 @@ import {ActionHash, AdminWebsocket, AgentPubKey, AppWebsocket, CellId, EntryHash
 //import { AdminWebsocket, AppWebsocket } from '../../holochain-conductor-api/lib';
 
 import { htos } from './utils';
-import {SendMailInput} from "./types";
+import {MailItem, SendMailInput} from "./types";
 //import {CapSecret} from "@holochain/client/lib/hdk/capabilities";
 
 const DEFAULT_TIMEOUT = 9999
@@ -240,7 +240,7 @@ export class DnaBridge {
     return await this.callDna('delete_mail', mailAddress)
   }
 
-  async getAllMails(): Promise<any> {
+  async getAllMails(): Promise<MailItem[]> {
     return await this.callDna('get_all_mails', null)
   }
 

@@ -50,6 +50,7 @@ import '@vaadin/vaadin-lumo-styles';
 
 
 import {ActionHash, CellId, EntryHash} from "@holochain/client";
+import {AgentPubKey} from "@holochain/client/lib/types";
 import {HolochainClient} from "@holochain-open-dev/cell-client";
 
 import {
@@ -65,14 +66,12 @@ import {
   isMailDeleted,
   systemFolders
 } from "../mail";
-import {toggleContact, selectUsername, filterMails, updateTray, handle_findManifest,
-  handle_getChunk, ids_to_items
-  } from "../snapmail"
+import {
+  toggleContact, selectUsername, filterMails, updateTray, handle_findManifest,
+  handle_getChunk, ids_to_items, handleSignal
+} from "../snapmail"
 
-
-import {AgentPubKey} from "@holochain/client/lib/types";
 import {DnaBridge} from "../dna_bridge";
-import {AppSignal} from "@holochain/client/lib/api/app/types";
 
 
 /** ----- */
@@ -94,7 +93,6 @@ const SYSTEM_GROUP_LIST = ['All', 'new...'];
 
 
 /** @element snapmail-controller */
-//@customElement('snapmail-controller')
 export class SnapmailController extends ScopedElementsMixin(LitElement) {
   constructor() {
     super();
@@ -143,7 +141,7 @@ export class SnapmailController extends ScopedElementsMixin(LitElement) {
   /* Map of (agentId -> bool) */
   _responseMap = new Map();
   /* Map of (mailId -> mailItem) */
-  _mailMap = new Map();
+  _mailMap: Map<string, MailItem> = new Map();
 
 
   /** --  -- */
@@ -767,13 +765,13 @@ export class SnapmailController extends ScopedElementsMixin(LitElement) {
       if (e.detail.value.text === 'Print') {
         console.log({_currentMailItem: controller._currentMailItem})
         const mailItem = controller._mailMap.get(htos(controller._currentMailItem.id));
-        const mailText = into_mailText(controller._usernameMap, mailItem)
+        const mailText = into_mailText(controller._usernameMap, mailItem!)
         /** Save to disk */
         const blob = new Blob([mailText], { type: 'text/plain'});
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = mailItem.mail.subject + ".txt";
+        a.download = mailItem!.mail.subject + ".txt";
         a.addEventListener('click', () => {}, false);
         a.click();
       }
@@ -815,20 +813,22 @@ export class SnapmailController extends ScopedElementsMixin(LitElement) {
         if (mailItem) {
           outMailSubjectArea.value = 'Re: ' + controller._currentMailItem.subject;
           controller.resetContactGrid();
-          // TO
-          for(const agentId of mailItem.mail.to) {
+          /* TO */
+          for (const agentId of mailItem.mail.to) {
             const to_username = controller._usernameMap.get(htos(agentId));
             selectUsername(contactGrid, to_username!, 1);
           }
-          // CC
-          for(const agentId of mailItem.mail.cc) {
+          /* CC */
+          for (const agentId of mailItem.mail.cc) {
             const cc_username = controller._usernameMap.get(htos(agentId));
             selectUsername(contactGrid, cc_username!, 2);
           }
-          // BCC
-          for(const agentId of mailItem.bcc) {
-            const bcc_username = controller._usernameMap.get(htos(agentId));
-            selectUsername(contactGrid, bcc_username!, 3);
+          /* BCC */
+          if (mailItem.bcc) {
+            for (const agentId of mailItem.bcc) {
+              const bcc_username = controller._usernameMap.get(htos(agentId));
+              selectUsername(contactGrid, bcc_username!, 3);
+            }
           }
           // Done
           //contactGrid.render();
@@ -839,9 +839,9 @@ export class SnapmailController extends ScopedElementsMixin(LitElement) {
         controller.resetContactGrid();
         const mailItem = controller._mailMap.get(htos(controller._currentMailItem.id));
         let fwd = '\n\n';
-        fwd += '> ' + 'Mail from: ' + controller._usernameMap.get(htos(mailItem.author)) + ' at ' + customDateString(mailItem.date) + '\n';
-        const arrayOfLines = mailItem.mail.payload.match(/[^\r\n]+/g);
-        for (const line of arrayOfLines) {
+        fwd += '> ' + 'Mail from: ' + controller._usernameMap.get(htos(mailItem!.author)) + ' at ' + customDateString(mailItem!.date) + '\n';
+        const arrayOfLines = mailItem!.mail.payload.match(/[^\r\n]+/g);
+        for (const line of arrayOfLines!) {
           fwd += '> ' + line + '\n';
         }
         controller.outMailContentElem.value = fwd;
@@ -943,9 +943,8 @@ export class SnapmailController extends ScopedElementsMixin(LitElement) {
     /** Display bold if mail not acknowledged */
     mailGrid.cellClassNameGenerator = function(column, rowData:any) {
       let classes = '';
-      const mailItem = controller._mailMap.get(htos(rowData.item.id));
-      console.assert(mailItem);
-      classes += determineMailCssClass(mailItem);
+      const mailItem: MailItem = controller._mailMap.get(htos(rowData.item.id))!;
+      classes += determineMailCssClass(mailItem!);
       // let is_old = hasMailBeenOpened(mailItem);
       // //console.log('answer: ' + is_old);
       // if (!is_old) {
@@ -965,10 +964,8 @@ export class SnapmailController extends ScopedElementsMixin(LitElement) {
         return;
       }
       controller._currentMailItem = item;
-      //console.log('mail grid item: ' + JSON.stringify(item));
-      const mailItem = controller._mailMap.get(htos(item.id));
-      console.log('mail item:')
-      console.log({mailItem});
+      const mailItem = controller._mailMap.get(htos(item.id))!;
+      //console.log('mail item:', mailItem)
       controller.inMailAreaElem.value = into_mailText(controller._usernameMap, mailItem);
 
       controller.fillAttachmentGrid(mailItem.mail).then( function(missingCount: number) {
@@ -1235,7 +1232,7 @@ export class SnapmailController extends ScopedElementsMixin(LitElement) {
       if (item) {
         if (contactGrid.selectedItems) {
           if(!contactGrid.selectedItems!.includes(item)) {
-            const selected = contactGrid.selectedItems!
+            const selected = JSON.parse(JSON.stringify(contactGrid.selectedItems!));
             selected.push(item);
             contactGrid.selectedItems = selected;
             console.log("contactGrid.selectedItems set - many");
@@ -1380,7 +1377,7 @@ export class SnapmailController extends ScopedElementsMixin(LitElement) {
     /* Update UI */
     if (this._replyOf) {
       const replyOfStr =  htos(this._replyOf)
-      const mailItem = this._mailMap.get(replyOfStr);
+      const mailItem = this._mailMap.get(replyOfStr)!;
       mailItem.reply = outmail_hh;
       this._mailMap.set(replyOfStr, mailItem);
     }
@@ -1763,91 +1760,12 @@ export class SnapmailController extends ScopedElementsMixin(LitElement) {
   }
 
 
-  /** -- Signal Structure --
-   *  AppSignal {
-   *   data: {
-   *       cellId: [Uint8Array(39), Uint8Array(39)],
-   *       payload: any,
-   *     }
-   *     type: "Signal"
-   * }
-   */
-  handleSignal(signalwrapper: AppSignal) {
-    console.log('Received signal:')
-    console.log({signalwrapper})
-    const controller = document.querySelector("snapmail-app");
-    console.log({controller})
-    if (signalwrapper.type !== undefined && signalwrapper.type !== "Signal") {
-      return;
-    }
-    // FIXME
-    // if (signalwrapper.signal.signal_type !== "User") {
-    //   return;
-    // }
-
-    if (signalwrapper.data.payload.hasOwnProperty('ReceivedMail')) {
-      const item = signalwrapper.data.payload.ReceivedMail;
-      console.log("received_mail:");
-      console.log({item});
-      const notification = this.shadowRoot!.getElementById('notifyMail') as Notification;
-      notification.open();
-
-      const mail = signalwrapper.data.payload.ReceivedMail;
-      const pingedAgentB64 = htos(mail.author);
-      this.storePingResult({}, pingedAgentB64);
-
-      // if (DNA.IS_ELECTRON && window.require) {
-      //   //console.log("handleSignal for ELECTRON");
-      //
-      //   console.log(mail);
-      //   const author_name = this._usernameMap.get(htos(mail.author)) || 'unknown user';
-      //
-      //   /** ELECTRON NOTIFICATION */
-      //   const NOTIFICATION_TITLE = 'New mail received from ' + author_name;
-      //   const NOTIFICATION_BODY = signalwrapper.data.payload.ReceivedMail.mail.subject;
-      //   //const CLICK_MESSAGE = 'Notification clicked';
-      //
-      //   // - Do Notification directly from web UI
-      //   //new Notification(NOTIFICATION_TITLE, { body: NOTIFICATION_BODY })
-      //   //  .onclick = () => console.log(CLICK_MESSAGE)
-      //
-      //   /* Notify Electron main */
-      //   const ipc = window.require('electron').ipcRenderer;
-      //   const reply = ipc.sendSync('newMailSync', NOTIFICATION_TITLE, NOTIFICATION_BODY);
-      //   console.log(reply);
-      // }
-
-      this.getAllMails();
-      return;
-    }
-    if (signalwrapper.data.payload.hasOwnProperty('ReceivedAck')) {
-      const item = signalwrapper.data.payload.ReceivedAck;
-      console.log("received_ack:");
-      console.log({item});
-      const pingedAgentB64 = htos(item.from);
-      this.storePingResult({}, pingedAgentB64);
-      const notification = this.shadowRoot!.getElementById('notifyAck') as Notification;
-      notification.open();
-      this.getAllMails();
-      return;
-    }
-    if (signalwrapper.data.payload.hasOwnProperty('ReceivedFile')) {
-      const item = signalwrapper.data.payload.ReceivedFile;
-      console.log("received_file:");
-      console.log({item});
-      const notification = this.shadowRoot!.getElementById('notifyFile') as Notification;
-      notification.open();
-      return
-    }
-  }
-
-
   /** */
   async initDna() {
     console.log('initDna()');
     try {
       //const cellId = await DNA.rsmConnectApp(this.handleSignal)
-      this.hcClient!.addSignalHandler(this.handleSignal)
+      this.hcClient!.addSignalHandler(handleSignal)
       this._dna = new DnaBridge(this.hcClient!, this.cellId!)
 
       const dnaId = htos(this.cellId![0]);

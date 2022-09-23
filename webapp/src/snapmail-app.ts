@@ -59,6 +59,10 @@ export class SnapmailApp extends ScopedElementsMixin(LitElement) {
     this.loaded = true;
   }
 
+  // /** Don't shadowRoot */
+  // protected createRenderRoot(): Element | ShadowRoot {
+  //   return this;
+  // }
 
   /** */
   render() {

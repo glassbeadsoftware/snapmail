@@ -7,11 +7,81 @@ import {
   ContactGridItem,
   FileManifest,
 } from "./types";
+import {AppSignal} from "@holochain/client/lib/api/app/types";
+import {Notification} from "@vaadin/notification";
+import {SnapmailController} from "./elements/snapmail-controller";
 
 
 /** Remove console.log() in PROD */
 if (process.env.NODE_ENV === 'prod') {
   console.log = () => {};
+}
+
+
+
+/** */
+export function handleSignal(signalwrapper: AppSignal) {
+  console.log('Received signal:', signalwrapper)
+  /** Check valid signal type */
+  if (signalwrapper.type !== undefined && signalwrapper.type !== "Signal") {
+    return;
+  }
+  /** get controller: FIXME for some reason, this is null if handleSignal is a method of SnapmailController */
+  const app = document.querySelector("snapmail-app") as HTMLElement;
+  const controller = app.shadowRoot!.querySelector("snapmail-controller") as SnapmailController;
+  console.log({controller})
+  /** Handle signal */
+  if (Object.prototype.hasOwnProperty.call(signalwrapper.data.payload,'ReceivedMail')) {
+    const item = signalwrapper.data.payload.ReceivedMail;
+    console.log("received_mail:", item);
+    const notification = controller.shadowRoot!.getElementById('notifyMail') as Notification;
+    notification.open();
+
+    const mail = signalwrapper.data.payload.ReceivedMail;
+    const pingedAgentB64 = htos(mail.author);
+    controller.storePingResult({}, pingedAgentB64);
+
+    // if (DNA.IS_ELECTRON && window.require) {
+    //   //console.log("handleSignal for ELECTRON");
+    //
+    //   console.log(mail);
+    //   const author_name = this._usernameMap.get(htos(mail.author)) || 'unknown user';
+    //
+    //   /** ELECTRON NOTIFICATION */
+    //   const NOTIFICATION_TITLE = 'New mail received from ' + author_name;
+    //   const NOTIFICATION_BODY = signalwrapper.data.payload.ReceivedMail.mail.subject;
+    //   //const CLICK_MESSAGE = 'Notification clicked';
+    //
+    //   // - Do Notification directly from web UI
+    //   //new Notification(NOTIFICATION_TITLE, { body: NOTIFICATION_BODY })
+    //   //  .onclick = () => console.log(CLICK_MESSAGE)
+    //
+    //   /* Notify Electron main */
+    //   const ipc = window.require('electron').ipcRenderer;
+    //   const reply = ipc.sendSync('newMailSync', NOTIFICATION_TITLE, NOTIFICATION_BODY);
+    //   console.log(reply);
+    // }
+
+    controller.getAllMails();
+    return;
+  }
+  if (Object.prototype.hasOwnProperty.call(signalwrapper.data.payload,'ReceivedAck')) {
+    const item = signalwrapper.data.payload.ReceivedAck;
+    console.log("received_ack:", item);
+    const pingedAgentB64 = htos(item.from);
+    controller.storePingResult({}, pingedAgentB64);
+    const notification = controller.shadowRoot!.getElementById('notifyAck') as Notification;
+    notification.open();
+    controller.getAllMails();
+    return;
+  }
+  if (Object.prototype.hasOwnProperty.call(signalwrapper.data.payload,'ReceivedFile')) {
+    const item = signalwrapper.data.payload.ReceivedFile;
+    console.log("received_file:", item);
+    const notification = controller.shadowRoot!.getElementById('notifyFile') as Notification;
+    notification.open();
+    return
+  }
 }
 
 
@@ -79,7 +149,7 @@ export function toggleContact(contactGrid: Grid, contactItem?: ContactGridItem) 
 
 /** */
 export function selectUsername(contactGrid: Grid, candidate: string, count: number) {
-  for(let contactItem of contactGrid.items!) {
+  for(const contactItem of contactGrid.items!) {
     if(contactItem.username === candidate) {
       for (let i = 0; i < count; i++) {
         toggleContact(contactGrid, contactItem);

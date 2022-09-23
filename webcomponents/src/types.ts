@@ -10,28 +10,28 @@ export interface HandleItem {
 }
 
 
-export enum InMailState {
-  Unacknowledged,
-  AckUnsent,
-  AckPending,
-  AckDelivered,
-  Deleted,
+export interface InMailState {
+  Unacknowledged?: null,
+  AckUnsent?: null,
+  AckPending?: null,
+  AckDelivered?: null,
+  Deleted?: null,
 }
 
 
-export enum DeliveryState {
-  Unsent,
-  Pending,
-  Delivered,
+export interface DeliveryState {
+  Unsent?: null,
+  Pending?: null,
+  Delivered?: null,
 }
 
 
-export enum OutMailState {
-  Unsent,
-  AllSent,
-  AllReceived,
-  AllAcknowledged,
-  Deleted,
+export interface OutMailState {
+  Unsent?: null,
+  AllSent?: null,
+  AllReceived?: null,
+  AllAcknowledged?: null,
+  Deleted?: null,
 }
 
 
@@ -60,8 +60,8 @@ export interface Mail {
   date_sent: number,
   subject: string,
   payload: string,
-  to?: AgentPubKey[],
-  cc?: AgentPubKey[],
+  to: AgentPubKey[],
+  cc: AgentPubKey[],
   attachments: AttachmentInfo[],
 }
 
