@@ -25,7 +25,7 @@ import {PolymerElement} from "@polymer/polymer";
 import {ProgressBar} from "@vaadin/progress-bar";
 import {Button} from "@vaadin/button";
 import {TextField} from "@vaadin/text-field";
-import {Grid, GridColumn} from "@vaadin/grid";
+import {Grid, GridColumn, GridEventContext} from "@vaadin/grid";
 import {MenuBar, MenuBarItem} from "@vaadin/menu-bar";
 import {TextArea} from "@vaadin/text-area";
 import {ComboBox} from "@vaadin/combo-box";
@@ -67,7 +67,7 @@ import {
   systemFolders
 } from "../mail";
 import {
-  toggleContact, selectUsername, filterMails, updateTray, handle_findManifest,
+  filterMails, updateTray, handle_findManifest,
   handle_getChunk, ids_to_items, handleSignal
 } from "../snapmail"
 
@@ -171,17 +171,18 @@ export class SnapmailController extends ScopedElementsMixin(LitElement) {
   /** -- */
 
   private _dna: DnaBridge | null = null;
-  private _dnaId: string = '';
-  private _myAgentHash: AgentPubKey | null = null;
+  private _dnaIdB64: string = '';
+  private _myAgentId: AgentPubKey | null = null;
   private _myHandle = '<unknown>';
-  private _myAgentId: string | null = null;
+  private _myAgentIdB64: string | null = null;
 
   private _currentMailItem: any /* : gridItem*/ = {};
   private _currentFolder = '';
   private _currentGroup = '';
   private _replyOf: ActionHash | null = null;
 
-  private _contactItems: any[] /* gridItem*/ = [];
+  private _allContactItems: ContactGridItem[] = [];
+  private _selectedContactIdB64s: string[] = [];
   private _mailItems: any[] /* gridItem*/ = [];
 
   private _groupList: Map<string, string[]> = new Map();
@@ -193,13 +194,13 @@ export class SnapmailController extends ScopedElementsMixin(LitElement) {
 
   private _canPing = true;
 
-  /* Map of (agentId -> username)
+  /* Map of (agentIdB64 -> username)
    * agentId is base64 string of a hash */
   _usernameMap: UsernameMap = new Map();
-  /* Map of (agentId -> timestamp of last ping) */
+  /* Map of (agentIdB64 -> timestamp of last ping) */
   _pingMap = new Map();
-  /* Map of (agentId -> bool) */
-  _responseMap = new Map();
+  /* Map of (agentIdB64 -> bool) */
+  _responseMap: Map<string, boolean> = new Map();
   /* Map of (mailId -> mailItem) */
   _mailMap: Map<string, MailItem> = new Map();
 
@@ -353,7 +354,7 @@ export class SnapmailController extends ScopedElementsMixin(LitElement) {
     // - Update my Handle in the contacts grid
     for (const item of this.contactGridElem.items!) {
       const contactItem: ContactGridItem = item as ContactGridItem;
-      if (htos(contactItem.agentId) === this._myAgentId) {
+      if (contactItem.agentIdB64 === this._myAgentIdB64) {
         contactItem.username = newHandle;
       }
     }
@@ -482,44 +483,47 @@ export class SnapmailController extends ScopedElementsMixin(LitElement) {
   }
 
 
-  /** */
-  updateRecipients(canReset: boolean) {
-    console.log('updateRecipients() - START ; canReset = ' + canReset)
-    const contactGrid = this.contactGridElem;
-    /* Get currently selected items' hash (if any) */
-    const prevSelected = [];
-    const typeMap = new Map();
-    if (contactGrid.selectedItems) {
-      for (const item of contactGrid.selectedItems) {
-        const contactItem: ContactGridItem = item as ContactGridItem;
-        const agentId = htos(contactItem.agentId);
-        prevSelected.push(agentId);
-        typeMap.set(agentId, contactItem.recipientType);
+  /** Regenerate _allContactItems from _usernameMap, _pingMap and _selectedContactIds */
+  updateContacts(canResetSelection: boolean): void {
+    console.log('updateContacts() - START', this._allContactItems)
+    console.log({_selectedContactIdB64s: this._selectedContactIdB64s})
+    /* Stash currently selected items' hash (if any) */
+    const prevSelected: string[] = [];
+    const recipientTypeMap: Map<string, string> = new Map();
+    if (!canResetSelection) {
+      for (const contactId of this._selectedContactIdB64s) {
+        const contactItem: ContactGridItem = this._allContactItems.find((item) => item.agentIdB64 === contactId)!;
+        console.assert(contactItem);
+        prevSelected.push(contactItem.agentIdB64);
+        recipientTypeMap.set(contactItem.agentIdB64, contactItem.recipientType);
       }
     }
-    console.log({typeMap});
-    const selected = [];
-    const items = [];
+    console.log({recipientTypeMap});
+
     //pingNextAgent();
-    /* Add each handle to the contactGrid */
-    for (const [agentId, username] of this._usernameMap.entries()) {
+    /* Convert each handle into a contactGridItem */
+    const selected = [];
+    const allItems = [];
+    for (const [agentIdB64, username] of this._usernameMap.entries()) {
       // console.log('' + agentId + '=> ' + username)
-      const agentHash = stoh(agentId)
       let status = whiteDot
-      if (this._pingMap.get(agentId)) {
-        status = this._responseMap.get(agentId)? greenDot : redDot
+      if (this._pingMap.get(agentIdB64)) {
+        status = this._responseMap.get(agentIdB64)? greenDot : redDot
       }
       //const status = blueDot
-      const item = {
-        "username": username, "agentId": agentHash, "recipientType": '', status,
+      const item: ContactGridItem = {
+        username,
+        agentIdB64,
+        recipientType: '',
+        status,
       };
-      // - Retrieve selected
-      if (!canReset && prevSelected.includes(agentId)) {
+      /** Retrieve stashed selectedItems */
+      if (!canResetSelection && prevSelected.includes(agentIdB64)) {
         console.log("keep selected: " + item.username);
-        item.recipientType = typeMap.get(agentId);
+        item.recipientType = recipientTypeMap.get(agentIdB64)!;
         selected.push(item);
       }
-      items.push(item);
+      allItems.push(item);
     }
 
     // // Test Content
@@ -531,23 +535,33 @@ export class SnapmailController extends ScopedElementsMixin(LitElement) {
     //   { "username": "Eve", "agentId": 555, "recipientType": '', "status": blueDot },
     // ];
 
-    /* Reset search filter */
-    const contactSearch = this.contactSearchElem;
-    if (canReset) {
-      contactSearch.value = '';
-    }
-
-    this._contactItems = items;
-    contactGrid.items = this.filterContacts([], contactSearch.value);
-    contactGrid.selectedItems = selected;
-    contactGrid.activeItem = null;
-    //contactGrid.render();
-    //console.log({contactGrid});
-    console.log('updateRecipients() - END')
+    this._allContactItems = allItems;
+    console.log('updateContacts() - END')
   }
 
 
-  /** Refresh g_usernameMap and contactGrid */
+  /** Populate contactGrid according to _allContactItems, _selectedContactIds and maybe search value */
+  updateContactGrid(canReset: boolean): void {
+    /** generated selectedItems */
+    let selected = []
+    for (const idB64 of this._selectedContactIdB64s) {
+      const item = this._allContactItems.find((item) => item.agentIdB64 === idB64)!;
+      selected.push(item)
+    }
+    this.contactGridElem.selectedItems = selected;
+
+    /* Reset search filter */
+    if (canReset) {
+      this.contactSearchElem.value = '';
+    }
+    /** generated items */
+    this.contactGridElem.items = this.filterContacts(selected, this.contactSearchElem.value);
+    //this.contactGridElem.activeItem = null;
+    //console.log({contactGrid});
+  }
+
+
+  /** Refresh _usernameMap and contactGrid */
   handle_getAllHandles(callResult: any): void {
     if (callResult === undefined || callResult.Err !== undefined) {
       console.error('getAllHandles zome call failed');
@@ -558,23 +572,23 @@ export class SnapmailController extends ScopedElementsMixin(LitElement) {
       this._usernameMap.clear();
       for(const handleItem of handleList) {
         /* TODO: exclude self from list when in prod? */
-        const agentId = htos(handleItem.agentId);
-        console.log('' + handleItem.name + ': ' + agentId);
-        this._usernameMap.set(agentId, handleItem.name);
-        if(this._pingMap.get(agentId) === undefined) {
+        const agentIdB64 = htos(handleItem.agentId);
+        console.log('' + handleItem.name + ': ' + agentIdB64);
+        this._usernameMap.set(agentIdB64, handleItem.name);
+        if(this._pingMap.get(agentIdB64) === undefined) {
           //console.log("ADDING TO g_pingMap: " + agentId);
-          this._pingMap.set(agentId, 0);
-          this._responseMap.set(agentId, false);
+          this._pingMap.set(agentIdB64, 0);
+          this._responseMap.set(agentIdB64, false);
         }
       }
     }
     /* Reset contactGrid */
-    this.updateRecipients(false)
-    const contactsMenu = this.contactsMenuElem;
-    if (contactsMenu.items && contactsMenu.items.length > 0) {
-      contactsMenu.items[0].disabled = false;
-      //contactsMenu.render();
-    }
+    this.updateContacts(false);
+    this.updateContactGrid(false);
+    // if (this.contactsMenuElem.items && this.contactsMenuElem.items.length > 0) {
+    //   this.contactsMenuElem.items[0].disabled = false;
+    //   //contactsMenu.render();
+    // }
     /* Update mailGrid */
     this.update_mailGrid(this.folderElem.value);
   }
@@ -756,7 +770,7 @@ export class SnapmailController extends ScopedElementsMixin(LitElement) {
     const pingedAgentB64 = nextMap.keys().next().value
     const pingedAgent = stoh(pingedAgentB64);
     console.log("pinging: ", pingedAgentB64);
-    if (pingedAgentB64 === this._myAgentId) {
+    if (pingedAgentB64 === this._myAgentIdB64) {
       console.log("pinging self");
       this.storePingResult({}, pingedAgentB64);
       this._canPing = true;
@@ -780,7 +794,10 @@ export class SnapmailController extends ScopedElementsMixin(LitElement) {
 
   /** */
   disableSendButton(isDisabled: boolean): void {
-    /** deepCopy MenuBarItems so it can trigger a new render */
+    if (this.actionMenuElem.items[2].disabled == isDisabled) {
+      return;
+    }
+    /** Deep-copy MenuBarItems so it can trigger a new render */
     const items = JSON.parse(JSON.stringify(this.actionMenuElem.items)) as MenuBarItem[];
     items[2].disabled = isDisabled;
     this.actionMenuElem.items = items;
@@ -788,6 +805,9 @@ export class SnapmailController extends ScopedElementsMixin(LitElement) {
 
   disableDeleteButton(isDisabled: boolean): void {
     console.log("disableDeleteButton() called", isDisabled)
+    if (this.fileboxMenuElem.items[2].disabled == isDisabled) {
+      return;
+    }
     /** deepCopy MenuBarItems so it can trigger a new render */
     const items = JSON.parse(JSON.stringify(this.fileboxMenuElem.items)) as MenuBarItem[];
     this.fileboxMenuElem.items[2].disabled = isDisabled;
@@ -796,6 +816,9 @@ export class SnapmailController extends ScopedElementsMixin(LitElement) {
   }
 
   disableReplyButton(isDisabled: boolean): void {
+    if (this.fileboxMenuElem.items[1].disabled == isDisabled) {
+      return;
+    }
     /** deepCopy MenuBarItems so it can trigger a new render */
     const items = JSON.parse(JSON.stringify(this.fileboxMenuElem.items)) as MenuBarItem[];
     this.fileboxMenuElem.items[1].disabled = isDisabled;
@@ -849,7 +872,7 @@ export class SnapmailController extends ScopedElementsMixin(LitElement) {
         controller.disableReplyButton(true)
       }
       /* -- Handle 'Reply' -- */
-      const outMailSubjectArea = this.shadowRoot!.getElementById('outMailSubjectArea') as TextField;
+      const outMailSubjectArea = controller.outMailSubjectElem;
       const contactGrid = controller.contactGridElem;
 
       if (e.detail.value.text === 'Reply to sender') {
@@ -860,10 +883,9 @@ export class SnapmailController extends ScopedElementsMixin(LitElement) {
         for (const item of contactGrid.items!) {
           const contactItem: ContactGridItem = item as ContactGridItem;
           if (contactItem.username === controller._currentMailItem.username) {
-            contactGrid.selectedItems = [contactItem];
+            controller.toggleContact(contactItem);
+            controller.updateContactGrid(false);
             contactGrid.activeItem = contactItem;
-            toggleContact(contactGrid, contactItem);
-            //contactGrid.render();
             break;
           }
         }
@@ -877,18 +899,18 @@ export class SnapmailController extends ScopedElementsMixin(LitElement) {
           /* TO */
           for (const agentId of mailItem.mail.to) {
             const to_username = controller._usernameMap.get(htos(agentId));
-            selectUsername(contactGrid, to_username!, 1);
+            controller.selectUsername(contactGrid, to_username!, 1);
           }
           /* CC */
           for (const agentId of mailItem.mail.cc) {
             const cc_username = controller._usernameMap.get(htos(agentId));
-            selectUsername(contactGrid, cc_username!, 2);
+            controller.selectUsername(contactGrid, cc_username!, 2);
           }
           /* BCC */
           if (mailItem.bcc) {
             for (const agentId of mailItem.bcc) {
               const bcc_username = controller._usernameMap.get(htos(agentId));
-              selectUsername(contactGrid, bcc_username!, 3);
+              controller.selectUsername(contactGrid, bcc_username!, 3);
             }
           }
           // Done
@@ -1105,7 +1127,7 @@ export class SnapmailController extends ScopedElementsMixin(LitElement) {
     this.disableReplyButton(true);
     console.log({contactGrid});
     //contactGrid.render();
-    window.localStorage[this._dnaId] = JSON.stringify(Array.from(this._groupList.entries()));
+    window.localStorage[this._dnaIdB64] = JSON.stringify(Array.from(this._groupList.entries()));
   }
 
 
@@ -1198,7 +1220,7 @@ export class SnapmailController extends ScopedElementsMixin(LitElement) {
     if (this._currentGroup !== SYSTEM_GROUP_LIST[0]) {
       const ids = this._groupList.get(this._currentGroup);
       //console.log({ids});
-      this._contactItems = ids_to_items(ids!, this._contactItems);
+      this._allContactItems = ids_to_items(ids!, this._allContactItems);
       //console.log({items});
     }
     /** Set filter */
@@ -1207,7 +1229,7 @@ export class SnapmailController extends ScopedElementsMixin(LitElement) {
       return value.toLowerCase().indexOf(searchTerm.toLowerCase()) >= 0;
     };
     /** Apply filter */
-    const filteredItems = this._contactItems.filter((item) => {
+    const filteredItems = this._allContactItems.filter((item) => {
       //console.log({item});
       return (
         !searchTerm
@@ -1271,9 +1293,9 @@ export class SnapmailController extends ScopedElementsMixin(LitElement) {
       controller.setCurrentGroup(event.target.value);
     });
     /** -- contactGrid */
-    const contactGrid = this.contactGridElem;
-    contactGrid.items = [];
-    contactGrid.cellClassNameGenerator = function(column, rowData:any) {
+    //const contactGrid = this.contactGridElem;
+    this.contactGridElem.items = [];
+    this.contactGridElem.cellClassNameGenerator = function(column, rowData:any) {
       //console.log(rowData)
       let classes = rowData.item.status;
       if (column.path === 'status') {
@@ -1284,53 +1306,89 @@ export class SnapmailController extends ScopedElementsMixin(LitElement) {
       if (rowData.item.recipientType === 'bcc') { classes += ' myBcc' }
       return classes;
     };
-    /** ON SELECT */
-    contactGrid.addEventListener('active-item-changed', function(event:any) {
-      console.log("contactGrid.active-item-changed:", event)
-      //const eventContext: any /* FIXME */ = contactGrid.getEventContext(event)!;
-      const item = event.detail.value;
-      //const item = eventContext.item;
-      if (item) {
-        if (contactGrid.selectedItems) {
-          if(!contactGrid.selectedItems!.includes(item)) {
-            const selected = JSON.parse(JSON.stringify(contactGrid.selectedItems!));
-            selected.push(item);
-            contactGrid.selectedItems = selected;
-            console.log("contactGrid.selectedItems set - many");
-          }
-        } else {
-          contactGrid.selectedItems = [item]
-          console.log("contactGrid.selectedItems set - one");
-        }
-      }
-
-      console.log({activeSelected: contactGrid.selectedItems})
-      controller.disableSendButton(!contactGrid.selectedItems || contactGrid.selectedItems!.length == 0);
-      //controller.updateRecipients(false)
-      contactGrid.items = controller.filterContacts([], '');
-      //contactGrid.items = contactGrid.items
-      //contactGrid.selectedItems = contactGrid.selectedItems
-      //contactGrid.activeItem = contactGrid.activeItem
-    });
+    // /** ON SELECT */
+    // contactGrid.addEventListener('active-item-changed', function(event:any) {
+    //   console.log("contactGrid.active-item-changed:", event)
+    //   const item = event.detail.value;
+    //   if (!item) {
+    //     return;
+    //   }
+    //   console.log({activeChanged_before_SelectedItems: contactGrid.selectedItems})
+    //   if(!contactGrid.selectedItems.includes(item)) {
+    //     const selected = JSON.parse(JSON.stringify(contactGrid.selectedItems)); // deep-copy
+    //     selected.push(item);
+    //     contactGrid.selectedItems = selected;
+    //   }
+    //   console.log({activeChanged_after_SelectedItems: contactGrid.selectedItems})
+    //   controller.disableSendButton(contactGrid.selectedItems!.length == 0);
+    //   //controller.updateRecipients(false)
+    // });
     /** ON CLICK */
-    contactGrid.addEventListener('click', function(e) {
-      const eventContext: any /* FIXME */ = contactGrid.getEventContext(e)!;
+    this.contactGridElem.addEventListener('click', function(e) {
+      const eventContext: GridEventContext<ContactGridItem> = controller.contactGridElem.getEventContext(e)!;
       console.log("contactGrid.click:", eventContext)
-      //contactGrid.selectedItems = item ? [item] : [];
-      toggleContact(contactGrid, eventContext.item);
-      console.log({clickSelected: contactGrid.selectedItems})
-      controller.disableSendButton(!contactGrid.selectedItems || contactGrid.selectedItems!.length == 0);
-      //contactGrid.render();
+      /* Bail if clicked on empty space */
+      if (!eventContext.item) {
+        return;
+      }
+      const index = controller._allContactItems.indexOf(eventContext.item)
+      console.assert(index > -1)
+      console.log({click_before_SelectedItems: controller.contactGridElem.selectedItems})
+      controller.toggleContact(controller._allContactItems[index]);
+      controller.updateContactGrid(false);
+      console.log({click_after_SelectedItems: controller.contactGridElem.selectedItems})
+      //console.log({click_activeItem: controller.contactGridElem.activeItem})
+      controller.disableSendButton(controller._selectedContactIdB64s.length == 0);
     });
+
     /** -- Contacts search bar */
-    const contactSearch = this.contactSearchElem;
-    contactSearch.addEventListener('value-changed', function(e: any/*: TextFieldValueChangedEvent*/) {
-      const items = contactGrid.selectedItems
-        ? contactGrid.selectedItems as ContactGridItem[]
-        : contactGrid.items as ContactGridItem[];
-      contactGrid.items = controller.filterContacts(items, e.detail.value);
-      //contactGrid.render();
+    this.contactSearchElem.addEventListener('value-changed', function(e: any/*: TextFieldValueChangedEvent*/) {
+      const searchValue = e.detail.value;
+      controller.contactGridElem.items = controller.filterContacts(controller.contactGridElem.selectedItems, searchValue);
     });
+  }
+
+
+  /** update state */
+  toggleContact(contactItem: ContactGridItem) {
+    let nextType = '';
+    switch(contactItem.recipientType) {
+      case '': {
+        nextType = 'to';
+        this._selectedContactIdB64s.push(contactItem.agentIdB64)
+      } break;
+      case 'to': nextType = 'cc'; break;
+      case 'cc': nextType = 'bcc'; break;
+      case 'bcc': {
+        nextType = '';
+        /** Remove item from selected list */
+          //if (selectedItems.length > 0) {
+        const index = this._selectedContactIdB64s.indexOf(contactItem.agentIdB64)
+        if (index > -1) {
+          this._selectedContactIdB64s.splice(index, 1);
+        }
+        //}
+        break;
+      }
+      default: console.error('unknown recipientType');
+    }
+    contactItem.recipientType = nextType;
+    //return JSON.parse(JSON.stringify(selectedItems)) // deep-copy
+  }
+
+  /** */
+  selectUsername(contactGrid: Grid, candidate: string, count: number) {
+    for(const contactItem of contactGrid.items!) {
+      if(contactItem.username !== candidate) {
+        continue;
+      }
+      contactGrid.selectedItems.push(contactItem);
+      for (let i = 0; i < count; i++) {
+        this.toggleContact(contactItem);
+      }
+      contactGrid.activeItem = contactItem;
+      break;
+    }
   }
 
 
@@ -1361,7 +1419,7 @@ export class SnapmailController extends ScopedElementsMixin(LitElement) {
   }
 
 
-  /** */
+  /** Perform send mail action */
   async sendAction(): Promise<void> {
     /** Submit each attachment */
     const upload: any /* FIXME */ = this.uploadElem;
@@ -1400,9 +1458,9 @@ export class SnapmailController extends ScopedElementsMixin(LitElement) {
     // }
 
     /* Get contact Lists */
-    const contactGrid = this.contactGridElem;
-    const selection: ContactGridItem[] = contactGrid.selectedItems? contactGrid.selectedItems as ContactGridItem[] : [];
-    console.log('selection: ' + JSON.stringify(selection));
+    //const selection: ContactGridItem[] = this.contactGridElem.selectedItems? this.contactGridElem.selectedItems as ContactGridItem[] : [];
+    const selection = this.contactGridElem.selectedItems;
+    console.log('selection: ', selection);
     if (!selection || selection.length == 0) {
       console.log('Send Mail Failed: No recipient selected')
       return;
@@ -1416,39 +1474,38 @@ export class SnapmailController extends ScopedElementsMixin(LitElement) {
       console.log('recipientType: ' + contactItem.recipientType);
       switch (contactItem.recipientType) {
         case '': break;
-        case 'to': toList.push(contactItem.agentId); break;
-        case 'cc': ccList.push(contactItem.agentId); break;
-        case 'bcc': bccList.push(contactItem.agentId); break;
+        case 'to': toList.push(stoh(contactItem.agentIdB64)); break;
+        case 'cc': ccList.push(stoh(contactItem.agentIdB64)); break;
+        case 'bcc': bccList.push(stoh(contactItem.agentIdB64)); break;
         default: console.error('unknown recipientType');
       }
     }
     /* Create Mail */
-    const outMailSubjectArea = this.shadowRoot!.getElementById('outMailSubjectArea') as TextField;
     const mail: SendMailInput = {
-      subject: outMailSubjectArea.value,
+      subject: this.outMailSubjectElem.value,
       payload: this.outMailContentElem.value,
       reply_of: this._replyOf,
       to: toList, cc: ccList, bcc: bccList,
       manifest_address_list: this._fileList
     };
-    console.log('sending mail: ')
-    console.log({mail});
+    console.log('sending mail:', mail)
     /* Send Mail */
     const outmail_hh = await this._dna!.sendMail(mail);
     /* Update UI */
     if (this._replyOf) {
-      const replyOfStr =  htos(this._replyOf)
+      const replyOfStr = htos(this._replyOf)
       const mailItem = this._mailMap.get(replyOfStr)!;
       mailItem.reply = outmail_hh;
       this._mailMap.set(replyOfStr, mailItem);
     }
     this._replyOf = null;
     this.disableSendButton(true);
-    outMailSubjectArea.value = '';
+    this.outMailSubjectElem.value = '';
     this.outMailContentElem.value = '';
-    contactGrid.selectedItems = [];
-    contactGrid.activeItem = null;
-    this.updateRecipients(false);
+    this._selectedContactIdB64s = [];
+    this.updateContacts(false);
+    this.updateContactGrid(false);
+    this.contactGridElem.activeItem = null;
     console.log('sendMail -> getAllMails');
     await this.getAllMails();
     upload.files = [];
@@ -1476,19 +1533,25 @@ export class SnapmailController extends ScopedElementsMixin(LitElement) {
         controller.outMailContentElem.value = '';
         /** clear each attachment */
         upload.files = [];
-        controller.updateRecipients(true);
+        controller._selectedContactIdB64s = [];
+        controller.updateContacts(true);
+        controller.updateContactGrid(true);
+        controller.disableSendButton(true);
         return;
       }
       /** Send clicked */
       if (e.detail.value.text === 'Send') {
+        /** Hide actionMenu and display progress bar */
         const sendProgressBar = controller.sendProgressBarElem;
         const sendingTitle = controller.shadowRoot!.getElementById('sendingTitle') as HTMLElement;
         sendProgressBar.style.display = "block";
         sendingTitle.style.display = "block";
         actionMenu.style.display = "none";
         //upload.style.display = "none";
+        /** Perform send */
         upload.maxFiles = 0;
         controller.sendAction().then(() => {
+          /** Show actionMenu and hid progress bar */
           sendProgressBar.style.display = "none";
           sendingTitle.style.display = "none";
           actionMenu.style.display = "block";
@@ -1723,7 +1786,7 @@ export class SnapmailController extends ScopedElementsMixin(LitElement) {
         const title = root.children[0];
         title.textContent = 'Edit Group: ' + controller._currentGroup;
         const grid = root.children[1] as Grid;
-        grid.items = controller._contactItems;
+        grid.items = controller._allContactItems;
         const groupIds = controller._groupList.get(controller._currentGroup);
         if (groupIds) {
           grid.selectedItems = ids_to_items(groupIds, grid.items);
@@ -1749,7 +1812,7 @@ export class SnapmailController extends ScopedElementsMixin(LitElement) {
       grid.id = "groupGrid";
       //grid.heightByRows = true;
       grid.setAttribute('style', 'width: 360px;');
-      grid.items = controller._contactItems;
+      grid.items = controller._allContactItems;
       const groupIds = controller._groupList.get(controller._currentGroup);
       const items = ids_to_items(groupIds!, grid.items)
       //grid.selectedItems = items; // does not work here
@@ -1763,7 +1826,7 @@ export class SnapmailController extends ScopedElementsMixin(LitElement) {
         const ids = [];
         for (const item of grid.selectedItems!) {
           const contactItem: ContactGridItem = item as ContactGridItem;
-          ids.push(htos(contactItem.agentId));
+          ids.push(contactItem.agentIdB64);
         }
         controller._groupList.set(controller._currentGroup, ids);
         grid.selectedItems = [];
@@ -1830,11 +1893,11 @@ export class SnapmailController extends ScopedElementsMixin(LitElement) {
       this._dna = new DnaBridge(this.hcClient!, this.cellId!)
 
       const dnaId = htos(this.cellId![0]);
-      this._dnaId = dnaId;
-      this._myAgentHash = this.cellId![1];
-      this._myAgentId = htos(this._myAgentHash);
+      this._dnaIdB64 = dnaId;
+      this._myAgentId = this.cellId![1];
+      this._myAgentIdB64 = htos(this._myAgentId);
 
-      this.storePingResult({}, this._myAgentId);
+      this.storePingResult({}, this._myAgentIdB64);
 
       /** Load Groups from localStorage */
       this.loadGroupList(dnaId);
@@ -1866,7 +1929,7 @@ export class SnapmailController extends ScopedElementsMixin(LitElement) {
       // }
       /** -- Update Abbr -- */
       const handleAbbr = this.shadowRoot!.getElementById('handleAbbr') as HTMLElement;
-      handleAbbr.title = "agentId: " + this._myAgentId;
+      handleAbbr.title = "agentId: " + this._myAgentIdB64;
       const titleAbbr = this.shadowRoot!.getElementById('titleAbbr') as HTMLElement;
       titleAbbr.title = dnaId;
       /** -- Loading Done -- */
@@ -1914,7 +1977,7 @@ export class SnapmailController extends ScopedElementsMixin(LitElement) {
     /** Styling of vaadin components */
     this.mailGridElem.shadowRoot!.appendChild(tmpl.content.cloneNode(true));
     this.contactGridElem.shadowRoot!.appendChild(tmpl.content.cloneNode(true));
-    this.groupGridElem.shadowRoot!.appendChild(tmpl.content.cloneNode(true));
+    //this.groupGridElem.shadowRoot!.appendChild(tmpl.content.cloneNode(true));
   }
 
 
@@ -1944,7 +2007,7 @@ export class SnapmailController extends ScopedElementsMixin(LitElement) {
             <!-- TITLE BAR -->
             <vaadin-horizontal-layout id="titleLayout" theme="spacing-xs" style="background-color:beige; width:100%;">
                 <abbr title="dna" id="titleAbbr">
-                    <img src="favicon.ico" width="32" height="32" style="padding-left: 5px;padding-top: 5px;"/>
+                    <img src="dist/favicon.ico" width="32" height="32" style="padding-left: 5px;padding-top: 5px;"/>
                 </abbr>
                 <span id="snapTitle" style="text-align: center; font-size: larger; padding: 10px 0px 10px 5px;">SnapMail</span>
                 <span id="networkIdDisplay" style="text-align: center; font-size: small; padding: 15px 2px 0px 5px;">UNKNOWN NETWORK-ID</span>
@@ -2027,7 +2090,7 @@ export class SnapmailController extends ScopedElementsMixin(LitElement) {
                             <vaadin-grid theme="no-row-borders" id="contactGrid" style="height: 100%; min-width: 50px;">
                                 <vaadin-grid-column path="status" width="30px" flex-grow="0" header=" "></vaadin-grid-column>
                                 <vaadin-grid-column auto-width path="username" header=" "></vaadin-grid-column>
-                                <vaadin-grid-column auto-width path="recepientType" header=" "></vaadin-grid-column>
+                                <vaadin-grid-column auto-width path="recipientType" header=" "></vaadin-grid-column>
                                 <vaadin-grid-column path="agentId" hidden></vaadin-grid-column>
                             </vaadin-grid>
                         </vaadin-vertical-layout>

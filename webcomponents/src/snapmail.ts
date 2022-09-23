@@ -4,7 +4,6 @@ import type {Grid} from '@vaadin/grid';
 import {htos} from './utils'
 
 import {
-  ContactGridItem,
   FileManifest,
 } from "./types";
 import {AppSignal} from "@holochain/client/lib/api/app/types";
@@ -118,54 +117,6 @@ export function filterMails(mailItems: any[] /*GridItems*/, searchValue: string)
   });
   return filteredItems;
 }
-
-
-/** */
-export function toggleContact(contactGrid: Grid, contactItem?: ContactGridItem) {
-  if (!contactItem) {
-    return;
-  }
-  let nextType = '';
-  switch(contactItem.recipientType) {
-    case '': nextType = 'to'; break;
-    case 'to': nextType = 'cc'; break;
-    case 'cc': nextType = 'bcc'; break;
-    case 'bcc': {
-      nextType = '';
-      console.log({activeItem:contactGrid.activeItem})
-      if (contactGrid.selectedItems) {
-        const index = contactGrid.selectedItems.indexOf(contactItem)
-        if (index > -1) {
-          contactGrid.selectedItems.splice(index, 1);
-        }
-      }
-      break;
-    }
-    default: console.error('unknown recipientType');
-  }
-  contactItem.recipientType = nextType;
-}
-
-
-/** */
-export function selectUsername(contactGrid: Grid, candidate: string, count: number) {
-  for(const contactItem of contactGrid.items!) {
-    if(contactItem.username === candidate) {
-      for (let i = 0; i < count; i++) {
-        toggleContact(contactGrid, contactItem);
-      }
-      if (!contactGrid.selectedItems) {
-        contactGrid.selectedItems = [contactItem];
-      } else {
-        contactGrid.selectedItems.push(contactItem);
-      }
-      contactGrid.activeItem = contactItem;
-      break;
-    }
-  }
-}
-
-
 
 
 //---------------------------------------------------------------------------------------------------------------------

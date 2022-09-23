@@ -132,7 +132,7 @@ function getUsername(usernameMap: UsernameMap, agentHash: Uint8Array): string {
 }
 
 
-/** Determine which Username to display (recepient or author) */
+/** Determine which Username to display (recipient or author) */
 function determineFromLine(usernameMap: UsernameMap, mailItem: MailItem): string {
   /* Outmail special case */
   if (mailItem.state.Out) {

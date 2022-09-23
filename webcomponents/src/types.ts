@@ -107,7 +107,7 @@ export interface ContactGridItem {
   status: string,
   username: string,
   recipientType: string,
-  agentId: Uint8Array,
+  agentIdB64: string,
 }
 
 
