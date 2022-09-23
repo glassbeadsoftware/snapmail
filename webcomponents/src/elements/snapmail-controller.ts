@@ -414,9 +414,8 @@ export class SnapmailController extends ScopedElementsMixin(LitElement) {
 
   /** */
   update_mailGrid(folder: string): void {
-    const mailGrid = this.mailGridElem
     const folderItems = [];
-    const activeItem: MailGridItem = mailGrid.activeItem as MailGridItem;
+    const activeItem: MailGridItem = this.mailGridElem.activeItem as MailGridItem;
     const codePoint = folder.codePointAt(0);
     console.log('update_mailGrid: ' + folder + ' (' + codePoint + ')');
 
@@ -464,16 +463,16 @@ export class SnapmailController extends ScopedElementsMixin(LitElement) {
     // console.log('folderItems: ' + JSON.stringify(folderItems))
     //grid.items = folderItems;
     this._mailItems = folderItems;
-    mailGrid.items = filterMails(this._mailItems, this.mailSearchElem.value);
+    this.mailGridElem.items = filterMails(this._mailItems, this.mailSearchElem.value);
     // - Re-activate activeItem
     if (activeItem !== undefined && activeItem !== null) {
-      for(const item of Object.values(mailGrid.items)) {
+      for(const item of Object.values(this.mailGridElem.items)) {
         const mailGridItem: MailGridItem = item as MailGridItem;
         //console.log('Item id = ' + item.id);
         if(activeItem.id === mailGridItem.id) {
           //console.log('activeItem match found');
-          mailGrid.activeItem = item;
-          mailGrid.selectedItems = [item];
+          this.mailGridElem.activeItem = item;
+          this.mailGridElem.selectedItems = [item];
           break;
         }
       }
@@ -602,13 +601,12 @@ export class SnapmailController extends ScopedElementsMixin(LitElement) {
       //console.error(err);
       return;
     }
-    const mailGrid = this.mailGridElem;
     const mailList: MailItem[] = callResult;
 
     /** Get currently selected hashs */
     const prevSelected = [];
-    if (mailGrid.selectedItems) {
-      for (const item of mailGrid.selectedItems) {
+    if (this.mailGridElem.selectedItems) {
+      for (const item of this.mailGridElem.selectedItems) {
         const mailItem: MailGridItem = item as MailGridItem;
         prevSelected.push(htos(mailItem.id));
       }
@@ -686,9 +684,9 @@ export class SnapmailController extends ScopedElementsMixin(LitElement) {
     const mailSearch = this.mailSearchElem;
     console.log('mailCount = ' + items.length + ' (' + selected.length + ')');
     this._mailItems = items;
-    mailGrid.items = filterMails(this._mailItems, mailSearch.value);
-    mailGrid.selectedItems = selected;
-    mailGrid.activeItem = selected[0];
+    this.mailGridElem.items = filterMails(this._mailItems, mailSearch.value);
+    this.mailGridElem.selectedItems = selected;
+    this.mailGridElem.activeItem = selected[0];
   }
 
 
@@ -698,20 +696,18 @@ export class SnapmailController extends ScopedElementsMixin(LitElement) {
       /** Update mailGrid */
       this.update_mailGrid(this.folderElem.value);
       /** Update active Item */
-      const mailGrid = this.mailGridElem;
-      const activeItem: MailGridItem = mailGrid.activeItem as MailGridItem;
       console.log('handle_getAllMails ; activeItem = ');
-      console.log({activeItem})
-      if(activeItem) {
+      console.log({activeItem: this.mailGridElem.activeItem})
+      if(this.mailGridElem.activeItem) {
         let newActiveItem = null;
-        for(const item of mailGrid.items!) {
+        for(const item of this.mailGridElem.items!) {
           const mailItem: MailGridItem = item as MailGridItem;
-          if(mailItem.id === activeItem.id) {
+          if(mailItem.id === this.mailGridElem.activeItem.id) {
             newActiveItem = mailItem;
             break;
           }
         }
-        mailGrid.selectItem(newActiveItem);
+        this.mailGridElem.selectItem(newActiveItem);
       }
     } catch(e) {
       console.error("handle_post_getAllMails() failed:", e)
@@ -805,13 +801,13 @@ export class SnapmailController extends ScopedElementsMixin(LitElement) {
 
   disableDeleteButton(isDisabled: boolean): void {
     console.log("disableDeleteButton() called", isDisabled)
-    if (this.fileboxMenuElem.items[2].disabled == isDisabled) {
+    if (this.fileboxMenuElem.items[2].disabled === isDisabled) {
       return;
     }
     /** deepCopy MenuBarItems so it can trigger a new render */
     const items = JSON.parse(JSON.stringify(this.fileboxMenuElem.items)) as MenuBarItem[];
-    this.fileboxMenuElem.items[2].disabled = isDisabled;
-    this.fileboxMenuElem.items[3].disabled = isDisabled;
+    items[2].disabled = isDisabled;
+    items[3].disabled = isDisabled;
     this.fileboxMenuElem.items = items;
   }
 
@@ -821,14 +817,13 @@ export class SnapmailController extends ScopedElementsMixin(LitElement) {
     }
     /** deepCopy MenuBarItems so it can trigger a new render */
     const items = JSON.parse(JSON.stringify(this.fileboxMenuElem.items)) as MenuBarItem[];
-    this.fileboxMenuElem.items[1].disabled = isDisabled;
+    items[1].disabled = isDisabled;
     this.fileboxMenuElem.items = items;
   }
 
 
   /** */
   initFileboxMenu() {
-    const menu = this.fileboxMenuElem;
     const items =
       [ { text: 'Move', disabled: true }
         , { text: 'Reply', disabled: true, children: [{ text: 'Reply to sender' }, { text: 'Reply to all' }, { text: 'Forward' }] }
@@ -839,11 +834,11 @@ export class SnapmailController extends ScopedElementsMixin(LitElement) {
     if (process.env.NODE_ENV !== 'prod') {
       items.push({ text: 'Refresh', disabled: false });
     }
-    menu.items = items;
+    this.fileboxMenuElem.items = items;
 
     /* On button click */
     const controller = this;
-    menu.addEventListener('item-selected', function(e: any) {
+    this.fileboxMenuElem.addEventListener('item-selected', function(e: any) {
       console.log("Menu item-selected: " + JSON.stringify(e.detail.value));
       /* -- Handle 'Print' -- */
       if (e.detail.value.text === 'Print') {
@@ -864,9 +859,8 @@ export class SnapmailController extends ScopedElementsMixin(LitElement) {
         controller._replyOf = null;
         controller._dna!.deleteMail(controller._currentMailItem.id)
           .then((/*maybeAh: ActionHash | null*/) => controller.getAllMails()) // On delete, refresh filebox
-        const mailGrid = controller.mailGridElem;
-        mailGrid.selectedItems = [];
-        mailGrid.activeItem = null;
+        controller.mailGridElem.selectedItems = [];
+        controller.mailGridElem.activeItem = null;
         controller.inMailAreaElem.value = ""
         controller.disableDeleteButton(true)
         controller.disableReplyButton(true)
@@ -1009,9 +1003,8 @@ export class SnapmailController extends ScopedElementsMixin(LitElement) {
     this._currentFolder = folderCombo.value;
     /** On value change */
     folderCombo.addEventListener('change', function(event:any) {
-      const mailGrid = controller.mailGridElem;
-      mailGrid.selectedItems = [];
-      mailGrid.activeItem = null;
+      controller.mailGridElem.selectedItems = [];
+      controller.mailGridElem.activeItem = null;
       controller._replyOf = null;
       controller.update_mailGrid(event.target.value)
       controller._currentFolder = event.target.value;
@@ -1020,11 +1013,10 @@ export class SnapmailController extends ScopedElementsMixin(LitElement) {
     });
 
     /** Filebox -- vaadin-grid */
-    const mailGrid = this.mailGridElem;
-    mailGrid.items = [];
-    mailGrid.multiSort = true;
+    this.mailGridElem.items = [];
+    this.mailGridElem.multiSort = true;
     /** Display bold if mail not acknowledged */
-    mailGrid.cellClassNameGenerator = function(column, rowData:any) {
+    this.mailGridElem.cellClassNameGenerator = function(column, rowData:any) {
       let classes = '';
       const mailItem: MailItem = controller._mailMap.get(htos(rowData.item.id))!;
       classes += determineMailCssClass(mailItem!);
@@ -1037,17 +1029,18 @@ export class SnapmailController extends ScopedElementsMixin(LitElement) {
     };
 
     /** On item select: Display in inMailArea */
-    mailGrid.addEventListener('active-item-changed', function(event:any) {
+    this.mailGridElem.addEventListener('active-item-changed', function(event:any) {
       console.log('mailgrid Event: active-item-changed');
       controller._replyOf = null;
       const item = event.detail.value;
-      mailGrid.selectedItems = item ? [item] : [];
-      if (item === null || item === undefined) {
+      controller.mailGridElem.selectedItems = item ? [item] : [];
+      if (!item) {
         //getAllMails(handleMails, handle_getAllMails)
         return;
       }
       controller._currentMailItem = item;
       const mailItem = controller._mailMap.get(htos(item.id))!;
+      console.assert(mailItem)
       //console.log('mail item:', mailItem)
       controller.inMailAreaElem.value = into_mailText(controller._usernameMap, mailItem);
 
@@ -1070,11 +1063,9 @@ export class SnapmailController extends ScopedElementsMixin(LitElement) {
       });
     });
 
-    controller.inMailAreaElem.style.backgroundColor = "#dfe7efd1";
-
-    const mailSearch = this.mailSearchElem;
-    mailSearch.addEventListener('value-changed', function(e:any /*TextFieldValueChangedEvent*/) {
-      mailGrid.items = filterMails(mailGrid.items!, e.detail.value);
+    this.inMailAreaElem.style.backgroundColor = "#dfe7efd1";
+    this.mailSearchElem.addEventListener('value-changed', function(e:any /*TextFieldValueChangedEvent*/) {
+      controller.mailGridElem.items = filterMails(controller.mailGridElem.items!, e.detail.value);
       //mailGrid.render();
     });
   }
