@@ -72,6 +72,7 @@ import {toggleContact, selectUsername, filterMails, updateTray, handle_findManif
 
 import {AgentPubKey} from "@holochain/client/lib/types";
 import {DnaBridge} from "../dna_bridge";
+import {AppSignal} from "@holochain/client/lib/api/app/types";
 
 
 /** ----- */
@@ -1234,7 +1235,9 @@ export class SnapmailController extends ScopedElementsMixin(LitElement) {
       if (item) {
         if (contactGrid.selectedItems) {
           if(!contactGrid.selectedItems!.includes(item)) {
-            contactGrid.selectedItems!.push(item);
+            const selected = contactGrid.selectedItems!
+            selected.push(item);
+            contactGrid.selectedItems = selected;
             console.log("contactGrid.selectedItems set - many");
           }
         } else {
@@ -1769,7 +1772,7 @@ export class SnapmailController extends ScopedElementsMixin(LitElement) {
    *     type: "Signal"
    * }
    */
-  handleSignal(signalwrapper:any/*FIXME*/) {
+  handleSignal(signalwrapper: AppSignal) {
     console.log('Received signal:')
     console.log({signalwrapper})
     const controller = document.querySelector("snapmail-app");

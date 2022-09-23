@@ -5,32 +5,23 @@
   "module": "./dist/index.js",
   "typings": "./dist/index.d.ts",
   "scripts": {
+    "analyze": "cem analyze --litelement",
     "lint": "eslint --ext .ts .",
     "tsc": "tsc",
-    "build": "rm -rf dist && rollup -c",
-    "build:watch": "run-singleton \"rollup -c -w\"",
-    "analyze": "lit-analyzer src --failFast"
+    "build": "tsc",
+    "build:old": "tsc && npm run analyze -- --exclude dist",
+    "build:watch": "tsc --watch --preserveWatchOutput"
   },
   "type": "module",
   "devDependencies": {
-    "@rollup/plugin-commonjs": "^18.0.0",
-    "@rollup/plugin-json": "^4.1.0",
-    "@rollup/plugin-node-resolve": "^13.0.4",
-    "@rollup/plugin-sucrase": "^4.0.1",
-    "@rollup/plugin-typescript": "^8.2.5",
-    "@rollup/plugin-replace": "^2.3.3",
+    "@custom-elements-manifest/analyzer": "^0.4.17",
     "@types/sjcl": "^1.0.30",
     "@typescript-eslint/eslint-plugin": "^5.36.2",
     "@typescript-eslint/parser": "^5.36.2",
     "@web/dev-server": "0.0.13",
     "eslint": "^7.25.0",
-    "cross-env": "^7.0.3",
     "eslint-plugin-import": "^2.22.1",
-    "npm-run-all": "^4.1.5",
-    "concurrently": "^5.1.0",
-    "rollup-plugin-postcss": "^4.0.1",
-    "rollup-plugin-postcss-lit": "^1.1.1",
-    "rollup-plugin-node-builtins": "^2.1.2"
+    "npm-run-all": "^4.1.5"
   },
   "dependencies": {
     "@holochain/client": "0.8.0",
@@ -38,8 +29,6 @@
     "@open-wc/scoped-elements": "^2.1.1",
     "@polymer/polymer": "^3.0.0",
     "lit": "2.3.1",
-    "@rollup/plugin-commonjs": "^15.1.0",
-    "@rollup/plugin-node-resolve": "^9.0.0",
     "@vaadin/progress-bar": "23.2.0",
     "@vaadin/grid": "23.2.0",
     "@vaadin/split-layout": "23.2.0",
@@ -63,10 +52,10 @@
     "moment-timezone": "^0.5.27",
     "path-browserify": "^1.0.1",
     "prop-types": "^15.7.2",
-    "rollup": "^2.32.0",
     "set-blocking": "^2.0.0",
     "sjcl": "^1.0.8",
     "stream": "^0.0.2",
     "zlib": "^1.0.5"
-  }
+  },
+  "customElements": "custom-elements.json"
 }

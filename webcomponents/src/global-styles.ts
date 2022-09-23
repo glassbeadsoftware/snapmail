@@ -2,10 +2,11 @@
 //import '@vaadin/vaadin-lumo-styles/all-imports';
 
 
-function safeDecorator(fn) {
+function safeDecorator(fn:any) {
   // eslint-disable-next-line func-names
-  return function(...args) {
+  return function(...args:any) {
     try {
+      // @ts-ignore
       return fn.apply(this, args);
     } catch (error) {
       if (
@@ -13,7 +14,7 @@ function safeDecorator(fn) {
         //error.message.includes('has already been used with this registry')
         error.message.includes('has already been defined as a custom element')
       ) {
-        console.warn("DDD double define waived")
+        console.warn("Double customElements.define waived")
         return false;
       }
       throw error;

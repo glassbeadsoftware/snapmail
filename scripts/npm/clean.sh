@@ -11,10 +11,13 @@ rm .hc_live*
 rm -rf webcomponents/dist
 rm -rf webcomponents/node_modules
 rm webcomponents/package-lock.json
+rm webcomponents/tsconfig.tsbuildinfo
 # WEB-APP
 rm -rf webapp/dist
 rm -rf webapp/out-tsc
 rm -rf webapp/node_modules
+rm webapp/package-lock.json
+rm webapp/tsconfig.tsbuildinfo
 rm webapp/package-lock.json
 rm webapp/ui.zip
 # ELECTRON

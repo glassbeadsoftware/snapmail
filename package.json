@@ -7,9 +7,7 @@
   },
   "workspaces": [
     "webcomponents",
-    "webapp",
-    "we-applet",
-    "electron"
+    "webapp"
   ],
   "scripts": {
     "version"             : "hc --version && holochain --version && lair-keystore --version",
@@ -51,6 +49,17 @@
     "clean"               : "bash scripts/npm/clean.sh",
     "clean:npm"           : "bash scripts/npm/clean-npm.sh",
     "clean:hc"            : "rm -rf .hc*"
-
+  },
+  "devDependencies": {
+    "@holochain-playground/cli": "^0.0.11",
+    "bestzip": "^2.2.0",
+    "concurrently": "^6.2.1",
+    "concurrently-repeat": "^0.0.1",
+    "cross-env": "^7.0.3",
+    "new-port-cli": "^1.0.0",
+    "run-singleton-cli": "^0.0.5"
+  },
+  "engines": {
+    "npm": ">=7.0.0"
   }
 }

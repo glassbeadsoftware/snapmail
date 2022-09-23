@@ -14,9 +14,10 @@
     "importHelpers": true,
     "sourceMap": true,
     "inlineSources": true,
+    "rootDir": "src",
     "outDir": "dist",
-    "declarationDir": "dist",
-    "rootDir": "./src",
-    "declaration": true
-  }
+    "declaration": true,
+    "incremental": true
+  },
+  "include": ["src/**/*.ts"]
 }
