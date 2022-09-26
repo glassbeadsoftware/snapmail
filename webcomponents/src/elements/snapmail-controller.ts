@@ -75,63 +75,64 @@ import {DnaBridge} from "../dna_bridge";
 
 
 /** ----- */
+
 /** Styles for vaadin-grid */
 let tmpl = document.createElement('template');
 tmpl.innerHTML = `
 <style>
-            /* Background needs a stronger selector to not be overridden */
-            [part~="cell"].male {
-                background: rgb(255, 240, 0);
-            }
+  /* Background needs a stronger selector to not be overridden */
+  [part~="cell"].male {
+      background: rgb(255, 240, 0);
+  }
 
-            :host(#contactGrid) #header {
-                display: none;
-            }
+  :host(#contactGrid) #header {
+      display: none;
+  }
 
-            
-            [part~="cell"] ::slotted(vaadin-grid-cell-content) {
-            padding-left: 5px;
-            }
-        
-            .newmail {
-                font-weight: bold;
-            }
+  
+  [part~="cell"] ::slotted(vaadin-grid-cell-content) {
+  padding-left: 5px;
+  }
 
-            .deleted {
-                color:grey;
-                text-decoration: line-through;
-            }
+  .newmail {
+      font-weight: bold;
+  }
 
-            .arrived {
-                color:black;
-            }
-            .checked {
-                font-weight: normal;
-            }
+  .deleted {
+      color:grey;
+      text-decoration: line-through;
+  }
 
-            .myCc {
-                color: #0f4de8;
-            }
+  .arrived {
+      color:black;
+  }
+  .checked {
+      font-weight: normal;
+  }
 
-            .myBcc {
-                color: #a56bf8;
-            }
+  .myCc {
+      color: #0f4de8;
+  }
 
-            .partially {
-                color: darkorange;
-            }
-            .pending {
-                color:darkred;
-            }
-            .received {
-                color: green;
-            }
-            .statusColumn {
-                font-size: x-small;
-                text-align: left;
-                padding-left: 3px;
-            }
-        </style>
+  .myBcc {
+      color: #a56bf8;
+  }
+
+  .partially {
+      color: darkorange;
+  }
+  .pending {
+      color:darkred;
+  }
+  .received {
+      color: green;
+  }
+  .statusColumn {
+      font-size: x-small;
+      text-align: left;
+      padding-left: 3px;
+  }
+</style>
 `;
 
 /** ----- */
@@ -271,6 +272,11 @@ export class SnapmailController extends ScopedElementsMixin(LitElement) {
   get uploadElem() : Upload {
     return this.shadowRoot!.getElementById("myUpload") as Upload;
   }
+
+  get attachmentGridElem() : Grid {
+    return this.shadowRoot!.getElementById("attachmentGrid") as Grid;
+  }
+
 
   /** --  -- */
 
@@ -947,7 +953,6 @@ export class SnapmailController extends ScopedElementsMixin(LitElement) {
 
   /** */
   async fillAttachmentGrid(mail: Mail): Promise<number> {
-    const attachmentGrid = this.shadowRoot!.getElementById('attachmentGrid') as Grid;
     const items = [];
     const emoji = String.fromCodePoint(0x1F6D1);
     this._hasAttachment = 0;
@@ -970,10 +975,9 @@ export class SnapmailController extends ScopedElementsMixin(LitElement) {
       items.push(item)
     }
     //console.log({items})
-    attachmentGrid.items = items;
-    attachmentGrid.selectedItems = [];
-    attachmentGrid.activeItem = null;
-    //attachmentGrid.render();
+    this.attachmentGridElem.items = items;
+    this.attachmentGridElem.selectedItems = [];
+    this.attachmentGridElem.activeItem = null;
     //console.log({missingCount})
     return missingCount;
   }
@@ -1133,10 +1137,9 @@ export class SnapmailController extends ScopedElementsMixin(LitElement) {
   initAttachmentGrid() {
     const controller = this;
     /** attachmentGrid -- vaadin-grid */
-    const attachmentGrid = this.shadowRoot!.getElementById('attachmentGrid') as Grid;
-    attachmentGrid.items = [];
+    this.attachmentGridElem.items = [];
 
-    attachmentGrid.cellClassNameGenerator = function(column, rowData:any/*FIXME*/) {
+    this.attachmentGridElem.cellClassNameGenerator = function(column, rowData:any/*FIXME*/) {
       //console.log({rowData})
       let classes = '';
       if (!rowData.item.hasFile) {
@@ -1148,22 +1151,22 @@ export class SnapmailController extends ScopedElementsMixin(LitElement) {
     };
 
     /** On select, download attachment */
-    attachmentGrid.addEventListener('active-item-changed', function(event:any) {
+    this.attachmentGridElem.addEventListener('active-item-changed', function(event:any) {
       const item = event.detail.value;
       console.log({item})
-      attachmentGrid.activeItem = null;
-      attachmentGrid.selectedItems = [];
+      controller.attachmentGridElem.activeItem = null;
+      controller.attachmentGridElem.selectedItems = [];
 
       if (!item || !item.hasFile) {
         return;
       }
 
-      if (!attachmentGrid.selectedItems.includes(item)) {
+      if (!controller.attachmentGridElem.selectedItems.includes(item)) {
         //attachmentGrid.selectedItems = [];
         item.status = String.fromCodePoint(0x23F3);
-        attachmentGrid.selectedItems.push(item);
+        controller.attachmentGridElem.selectedItems.push(item);
         item.disabled = true;
-        //attachmentGrid.render();
+        //controller.attachmentGridElem.render();
       }
 
       /** Get File on source chain */
@@ -1173,7 +1176,7 @@ export class SnapmailController extends ScopedElementsMixin(LitElement) {
         }
         //console.log({ manifest })
         item.status = String.fromCodePoint(0x2714);
-        //attachmentGrid.deselectItem(item);
+        //controller.attachmentGridElem.deselectItem(item);
 
         // DEBUG - check if content is valid base64
         // if (!base64regex.test(manifest.content)) {
@@ -1195,8 +1198,8 @@ export class SnapmailController extends ScopedElementsMixin(LitElement) {
         a.download = item.filename || 'download';
         a.addEventListener('click', () => {}, false);
         a.click();
-        attachmentGrid.activeItem = null;
-        attachmentGrid.selectedItems = [];
+        controller.attachmentGridElem.activeItem = null;
+        controller.attachmentGridElem.selectedItems = [];
         //attachmentGrid.render();
       });
     });
@@ -1413,9 +1416,7 @@ export class SnapmailController extends ScopedElementsMixin(LitElement) {
   /** Perform send mail action */
   async sendAction(): Promise<void> {
     /** Submit each attachment */
-    const upload: any /* FIXME */ = this.uploadElem;
-    const files = upload.files;
-    console.log({files})
+    const files = this.uploadElem.files;
     this._fileList = [];
     for (const file of files) {
       // // Causes stack error on big files
@@ -1423,13 +1424,17 @@ export class SnapmailController extends ScopedElementsMixin(LitElement) {
       //   const invalid_hash = sha256(file.content);
       //   console.error("File '" + file.name + "' is invalid base64. hash is: " + invalid_hash);
       // }
-      const parts = file.content.split(',');
-      console.log("parts.length: " + parts.length)
-      console.log({parts})
-      const filetype = parts.length > 1? parts[0] : file.type;
-      const splitObj = splitFile(parts[parts.length - 1]);
-      this._chunkList = [];
+      console.log('sendAction: ', file)
+      const content = await file.arrayBuffer();
+      const contentB64 = arrayBufferToBase64(content);
+
+      const filetype = ""
+      const splitObj = await splitFile(contentB64);
+      console.log({splitObj})
+
+
       /** Submit each chunk */
+      this._chunkList = [];
       for (let i = 0; i < splitObj.numChunks; ++i) {
         //console.log('chunk' + i + ': ' + fileChunks.chunks[i])
         const callResult = await this._dna!.writeChunk(splitObj.dataHash, i, splitObj.chunks[i]);
@@ -1499,7 +1504,7 @@ export class SnapmailController extends ScopedElementsMixin(LitElement) {
     this.contactGridElem.activeItem = null;
     console.log('sendMail -> getAllMails');
     await this.getAllMails();
-    upload.files = [];
+    this.uploadElem.files = [];
   }
 
 
@@ -1570,68 +1575,41 @@ export class SnapmailController extends ScopedElementsMixin(LitElement) {
   initUpload(): void {
     const controller = this;
     customElements.whenDefined('vaadin-upload').then(function() {
-      const upload = controller.uploadElem;
 
-      // upload.onclick = function changeContent() {
-      //   allowActionMenu(false)
-      // }
-
-      upload.addEventListener('file-reject', function(event:any) {
+      controller.uploadElem.addEventListener('file-reject', function(event:any) {
         window.alert(event.detail.file.name + ' error: ' + event.detail.error);
       });
 
-      // // DEBUG
-      // upload.addEventListener('files-changed', function(event) {
-      //   //console.log('files-changed event: ', JSON.stringify(event.detail));
-      //   console.log('files-changed event: ');
-      //   //const detail = event.detail;
-      //   //console.log({detail});
-      // });
-      // upload.addEventListener('upload-success', function(event) {
-      //   console.log('upload-success event');
-      //   //console.log(event);
-      // })
-      // upload.addEventListener('upload-abort', function(event) {
-      //   window.alert('upload aborted');
-      // });
-
       /** -- On upload file selected -- */
-      upload.addEventListener('upload-before', function(event:any) {
-        console.log('upload-before event: ', JSON.stringify(event.detail.file));
-
-        controller.allowActionMenu(false)
+      controller.uploadElem.addEventListener('upload-before', function(event:any) {
+        console.log('upload-before event: ', event);
 
         const file = event.detail.file;
         //const xhr = event.detail.xhr;
-        console.log('upload-before event: ');
+        //console.log({file});
 
         event.preventDefault(); // Prevent the upload request
 
+        /** Read file just so we can change vaadin's upload-file css */
         const reader = new FileReader();
-        reader.onload = function(e: any) {
-          console.log('FileReader onload event: ');
-          const content = arrayBufferToBase64(e.target.result); // reader.result
-
-          // Disabled regex test because it causes error on big files: "RangeError: Maximum call stack size exceeded"
-          // if (!base64regex.test(content)) {
-          //   const invalid_hash = sha256(content);
-          //   console.error("File '" + file.name + "' is invalid base64. hash is: " + invalid_hash);
-          // }
-
-          console.log({e});
-          console.log('file: ' + file.name + ' ; size: ' + Math.ceil(content.length / 1024) + ' KiB ; type: ' + file.type);
-
-          // FIXME
-          //upload.set(['files', upload.files.indexOf(file), 'progress'], 100)
-          //upload.set(['files', upload.files.indexOf(file), 'complete'], true)
-          //upload.set(['files', upload.files.indexOf(file), 'content'], content)
-
-          controller.allowActionMenu(true)
-        };
-        reader.readAsArrayBuffer(event.detail.file);
+        reader.addEventListener('loadend', function(event:any) {
+          console.log('FileReader loadend event: ', event);
+          /** Hide all unnecessary UI */
+          const uploadFiles = controller.uploadElem.shadowRoot!.querySelectorAll("vaadin-upload-file");
+          console.log({uploadFiles});
+          uploadFiles.forEach((uploadFile) => {
+            const progressBar = uploadFile.shadowRoot!.querySelector("vaadin-progress-bar");
+            progressBar!.style.display = 'none';
+            const status = uploadFile.shadowRoot!.querySelector('[part="status"]') as HTMLElement;
+            status!.style.display = 'none';
+            const start = uploadFile.shadowRoot!.querySelector('[part="start-button"]') as HTMLElement;
+            start!.style.display = 'none';
+          });
+        });
+        reader.readAsArrayBuffer(file);
       });
 
-      //  upload.addEventListener('upload-request', function(event) {
+      //  controller.uploadElem.addEventListener('upload-request', function(event) {
       //    console.log('upload-request event: ', JSON.stringify(event.detail));
       // //   const files = upload.files;
       // //   console.log('upload-request event: ');
@@ -1645,6 +1623,7 @@ export class SnapmailController extends ScopedElementsMixin(LitElement) {
       // });
 
     });
+
   }
 
 
@@ -1961,14 +1940,15 @@ export class SnapmailController extends ScopedElementsMixin(LitElement) {
     console.log("snapmail-controller first update done!")
     this.loadGroupList('');
     this.initUi()
+
     /*let _10sec =*/ setInterval(this.onEvery10sec, 10 * 1000);
     // /*let _1Sec =*/ setInterval(this.onEverySec, 1 * 1000);
 
-    //this.contactGridElem.setAttribute("theme", "my-theme")
+
     /** Styling of vaadin components */
     this.mailGridElem.shadowRoot!.appendChild(tmpl.content.cloneNode(true));
     this.contactGridElem.shadowRoot!.appendChild(tmpl.content.cloneNode(true));
-    //this.groupGridElem.shadowRoot!.appendChild(tmpl.content.cloneNode(true));
+    //this.groupGridElem.shadowRoot!.appendChild(tmpl.content.cloneNode(true)); // FIXME doesnt exist yet
   }
 
 
@@ -2036,7 +2016,7 @@ export class SnapmailController extends ScopedElementsMixin(LitElement) {
                     </vaadin-grid>
 
                     <!-- IN-MAIL AREA -->
-                    <vaadin-horizontal-layout theme="spacing-xs" style="min-height:50px; height:30%; width:100%; margin-top: 4px;">
+                    <vaadin-horizontal-layout theme="spacing-xs" style="min-height:80px; height:30%; width:100%; margin-top: 4px; flex: 1 1 100px">
                         <vaadin-text-area style="width: 70%;padding:0;" id="inMailArea" placeholder="<no selection>" readonly>
                             <!-- <span id="mailDisplay"></span>-->
                         </vaadin-text-area>
@@ -2134,6 +2114,14 @@ export class SnapmailController extends ScopedElementsMixin(LitElement) {
 
         </vaadin-vertical-layout>
       `;
+  }
+
+
+  /** */
+  static get styles() {
+    return [
+    css`
+    `];
   }
 
 

@@ -2,9 +2,8 @@
 const CHUNK_MAX_SIZE = 200 * 1024;
 
 import * as base64 from "byte-base64";
-import * as sjcl from "sjcl";
 
-export const base64regex = /^([0-9a-zA-Z+/]{4})*(([0-9a-zA-Z+/]{2}==)|([0-9a-zA-Z+/]{3}=))?$/;
+//export const base64regex = /^([0-9a-zA-Z+/]{4})*(([0-9a-zA-Z+/]{2}==)|([0-9a-zA-Z+/]{3}=))?$/;
 
 
 /** Convert hash (Uint8Array) to/from base64 string */
@@ -22,15 +21,15 @@ export function stoh(str: string): Uint8Array {
 }
 
 
-/** */
-export function cellIdToStr(cell: any): string {
-  let res = '('
-  res += htos(cell.cellId[0])
-  res += ', '
-  res += htos(cell.cellId[1])
-  res += ')'
-  return res
-}
+// /** */
+// export function cellIdToStr(cell: any): string {
+//   let res = '('
+//   res += htos(cell.cellId[0])
+//   res += ', '
+//   res += htos(cell.cellId[1])
+//   res += ')'
+//   return res
+// }
 
 
 /** Sleep via timeout promise */
@@ -64,19 +63,18 @@ export function base64ToArrayBuffer(base64: string): ArrayBufferLike {
 
 
 /** */
-export function sha256(message: string) {
-  //console.log('message: ' + message)
-  const myBitArray = sjcl.hash.sha256.hash(message)
-  //console.log('myBitArray: ' + JSON.stringify(myBitArray))
-  const hashHex = sjcl.codec.hex.fromBits(myBitArray)
-  //console.log('hashHex: ' + hashHex)
+async function sha256(message: string) {
+  const utf8 = new TextEncoder().encode(message);
+  const hashBuffer = await crypto.subtle.digest('SHA-256', utf8);
+  const hashArray = Array.from(new Uint8Array(hashBuffer));
+  const hashHex = hashArray
+    .map((bytes) => bytes.toString(16).padStart(2, '0'))
+    .join('');
   return hashHex;
 }
 
 
-/**
- * @returns {any[]}
- */
+/** */
 function chunkSubstr(str: string, size: number): Array<string> {
   const numChunks = Math.ceil(str.length / size);
   const chunks = new Array(numChunks);
@@ -87,11 +85,9 @@ function chunkSubstr(str: string, size: number): Array<string> {
 }
 
 
-/**
- * @returns {}
- */
-export function splitFile(full_data_string: string): {numChunks: number, dataHash: any, chunks: any[]} {
-  const hash = sha256(full_data_string);
+/** */
+export async function splitFile(full_data_string: string) {
+  const hash = await sha256(full_data_string);
   console.log('file hash: ' + hash)
   const chunks = chunkSubstr(full_data_string, CHUNK_MAX_SIZE);
   return {
