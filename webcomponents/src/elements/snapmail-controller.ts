@@ -177,7 +177,7 @@ export class SnapmailController extends ScopedElementsMixin(LitElement) {
   private _myHandle = '<unknown>';
   private _myAgentIdB64: string | null = null;
 
-  private _currentMailItem: any /* : gridItem*/ = {};
+  private _currentMailItem?: MailGridItem;
   private _currentFolder = '';
   private _currentGroup = '';
   private _replyOf: ActionHash | null = null;
@@ -545,7 +545,10 @@ export class SnapmailController extends ScopedElementsMixin(LitElement) {
   }
 
 
-  /** Populate contactGrid according to _allContactItems, _selectedContactIds and maybe search value */
+  /**
+   * Populate contactGrid according to _allContactItems, _selectedContactIds and maybe search value
+   * Set Send button state according to selection
+   */
   updateContactGrid(canReset: boolean): void {
     /** generated selectedItems */
     let selected = []
@@ -563,6 +566,7 @@ export class SnapmailController extends ScopedElementsMixin(LitElement) {
     this.contactGridElem.items = this.filterContacts(selected, this.contactSearchElem.value);
     //this.contactGridElem.activeItem = null;
     //console.log({contactGrid});
+    this.disableSendButton(this._selectedContactIdB64s.length == 0);
   }
 
 
@@ -849,7 +853,7 @@ export class SnapmailController extends ScopedElementsMixin(LitElement) {
       /* -- Handle 'Print' -- */
       if (e.detail.value.text === 'Print') {
         console.log({_currentMailItem: controller._currentMailItem})
-        const mailItem = controller._mailMap.get(htos(controller._currentMailItem.id));
+        const mailItem = controller._mailMap.get(htos(controller._currentMailItem!.id));
         const mailText = into_mailText(controller._usernameMap, mailItem!)
         /** Save to disk */
         const blob = new Blob([mailText], { type: 'text/plain'});
@@ -863,7 +867,7 @@ export class SnapmailController extends ScopedElementsMixin(LitElement) {
       /* -- Handle 'Trash' -- */
       if (e.detail.value.text === 'Trash') {
         controller._replyOf = null;
-        controller._dna!.deleteMail(controller._currentMailItem.id)
+        controller._dna!.deleteMail(controller._currentMailItem!.id)
           .then((/*maybeAh: ActionHash | null*/) => controller.getAllMails()) // On delete, refresh filebox
         controller.mailGridElem.selectedItems = [];
         controller.mailGridElem.activeItem = null;
@@ -876,13 +880,13 @@ export class SnapmailController extends ScopedElementsMixin(LitElement) {
       const contactGrid = controller.contactGridElem;
 
       if (e.detail.value.text === 'Reply to sender') {
-        outMailSubjectArea.value = 'Re: ' + controller._currentMailItem.subject;
-        controller._replyOf = controller._currentMailItem.id;
-        console.log("g_replyOf set ", controller._replyOf)
+        outMailSubjectArea.value = 'Re: ' + controller._currentMailItem!.subject;
+        controller._replyOf = controller._currentMailItem!.id;
+        console.log("g_replyOf set ", htos(controller._replyOf));
         controller.resetContactGrid();
         for (const item of contactGrid.items!) {
           const contactItem: ContactGridItem = item as ContactGridItem;
-          if (contactItem.username === controller._currentMailItem.username) {
+          if (contactItem.username === controller._currentMailItem!.username) {
             controller.toggleContact(contactItem);
             controller.updateContactGrid(false);
             contactGrid.activeItem = contactItem;
@@ -891,10 +895,10 @@ export class SnapmailController extends ScopedElementsMixin(LitElement) {
         }
       }
       if (e.detail.value.text === 'Reply to all') {
-        const mailItem = controller._mailMap.get(htos(controller._currentMailItem.id));
-        controller._replyOf = controller._currentMailItem.id;
+        const mailItem = controller._mailMap.get(htos(controller._currentMailItem!.id));
+        controller._replyOf = controller._currentMailItem!.id;
         if (mailItem) {
-          outMailSubjectArea.value = 'Re: ' + controller._currentMailItem.subject;
+          outMailSubjectArea.value = 'Re: ' + controller._currentMailItem!.subject;
           controller.resetContactGrid();
           /* TO */
           for (const agentId of mailItem.mail.to) {
@@ -918,9 +922,9 @@ export class SnapmailController extends ScopedElementsMixin(LitElement) {
         }
       }
       if (e.detail.value.text === 'Forward') {
-        outMailSubjectArea.value = 'Fwd: ' + controller._currentMailItem.subject;
+        outMailSubjectArea.value = 'Fwd: ' + controller._currentMailItem!.subject;
         controller.resetContactGrid();
-        const mailItem = controller._mailMap.get(htos(controller._currentMailItem.id));
+        const mailItem = controller._mailMap.get(htos(controller._currentMailItem!.id));
         let fwd = '\n\n';
         fwd += '> ' + 'Mail from: ' + controller._usernameMap.get(htos(mailItem!.author)) + ' at ' + customDateString(mailItem!.date) + '\n';
         const arrayOfLines = mailItem!.mail.payload.match(/[^\r\n]+/g);
@@ -1332,7 +1336,6 @@ export class SnapmailController extends ScopedElementsMixin(LitElement) {
       controller.updateContactGrid(false);
       console.log({click_after_SelectedItems: controller.contactGridElem.selectedItems})
       //console.log({click_activeItem: controller.contactGridElem.activeItem})
-      controller.disableSendButton(controller._selectedContactIdB64s.length == 0);
     });
 
     /** -- Contacts search bar */
@@ -1495,7 +1498,6 @@ export class SnapmailController extends ScopedElementsMixin(LitElement) {
       this._mailMap.set(replyOfStr, mailItem);
     }
     this._replyOf = null;
-    this.disableSendButton(true);
     this.outMailSubjectElem.value = '';
     this.outMailContentElem.value = '';
     this._selectedContactIdB64s = [];
@@ -1532,7 +1534,6 @@ export class SnapmailController extends ScopedElementsMixin(LitElement) {
         controller._selectedContactIdB64s = [];
         controller.updateContacts(true);
         controller.updateContactGrid(true);
-        controller.disableSendButton(true);
         return;
       }
       /** Send clicked */
