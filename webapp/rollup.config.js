@@ -16,6 +16,7 @@ import path from "path";
 const DEV_MODE = process.env.DEV_MODE || "prod";
 const HC_PORT = process.env.HC_PORT || 8888;
 const DIST_FOLDER = "dist"
+console.log("DEV_MODE =", DEV_MODE)
 
 export default {
   input: "index.html",

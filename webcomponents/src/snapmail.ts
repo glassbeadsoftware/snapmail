@@ -1,6 +1,3 @@
-import type {Grid} from '@vaadin/grid';
-
-//import * as DNA from './dna_bridge'
 import {htos} from './utils'
 
 import {
@@ -17,6 +14,17 @@ if (process.env.DEV_MODE === 'prod') {
   console.log = () => {};
 }
 
+/**
+ * get controller hack
+ * FIXME for some reason, 'this' is null if methods of SnapmailController are used as arguments
+ * ex: handleSignal, onEvery10sec
+ */
+export function getController(): SnapmailController {
+  const app = document.querySelector("snapmail-app") as HTMLElement;
+  const controller = app.shadowRoot!.querySelector("snapmail-controller") as SnapmailController;
+  console.log({controller})
+  return controller;
+}
 
 
 /** */
@@ -26,10 +34,7 @@ export function handleSignal(signalwrapper: AppSignal) {
   if (signalwrapper.type !== undefined && signalwrapper.type !== "Signal") {
     return;
   }
-  /** get controller: FIXME for some reason, this is null if handleSignal is a method of SnapmailController */
-  const app = document.querySelector("snapmail-app") as HTMLElement;
-  const controller = app.shadowRoot!.querySelector("snapmail-controller") as SnapmailController;
-  console.log({controller})
+  const controller = getController();
   /** Handle signal */
   if (Object.prototype.hasOwnProperty.call(signalwrapper.data.payload,'ReceivedMail')) {
     const item = signalwrapper.data.payload.ReceivedMail;

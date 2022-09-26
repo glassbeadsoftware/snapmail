@@ -69,7 +69,7 @@ import {
 } from "../mail";
 import {
   filterMails, updateTray, handle_findManifest,
-  handle_getChunk, ids_to_items, handleSignal
+  handle_getChunk, ids_to_items, handleSignal, getController
 } from "../snapmail"
 
 import {DnaBridge} from "../dna_bridge";
@@ -143,9 +143,6 @@ tmpl.innerHTML = `
 
 
 export const delay = (ms:number) => new Promise(r => setTimeout(r, ms))
-
-//import {version} from '../../package.json';
-const version = "42.0.0" /* FIXME */
 
 const redDot   = String.fromCodePoint(0x1F534);
 const greenDot = String.fromCodePoint(0x1F7E2);
@@ -289,28 +286,32 @@ export class SnapmailController extends ScopedElementsMixin(LitElement) {
   /** --  -- */
 
   /** Setup recurrent pull from DHT every 10 seconds */
-  onEvery10sec() {
+  onEvery10sec(this: SnapmailController) {
     console.log("**** onEvery10sec CALLED ****");
-    if (process.env.DEV_MODE === 'prod') {
-      try {
-        this.getAllFromDht();
-      } catch(e) {
-        console.error("onEvery10sec.getAllFromDht() failed: ", e)
-      }
+    if (process.env.DEV_MODE !== 'prod') {
+      return;
+    }
+    const controller = getController();
+    try {
+      controller.getAllFromDht();
+    } catch(e) {
+      console.error("onEvery10sec.getAllFromDht() failed: ", e)
     }
   }
 
-  /** Setup recurrent pull from DHT every 10 seconds */
+  /** Stuff to do every 1 second */
   onEverySec() {
-    if (process.env.DEV_MODE === 'prod') {
-      console.log("**** onEverySec CALLED ****");
-      try {
-        if (this._canPing) {
-          this.pingNextAgent();
-        }
-      } catch(e) {
-        console.error("onEverySec.pingNextAgent() failed: ", e)
+    // console.log("**** onEverySec CALLED ****");
+    if (process.env.DEV_MODE !== 'prod') {
+      return;
+    }
+    const controller = getController();
+    try {
+      if (controller._canPing) {
+        controller.pingNextAgent();
       }
+    } catch(e) {
+      console.error("onEverySec.pingNextAgent() failed: ", e)
     }
   }
 
@@ -324,8 +325,8 @@ export class SnapmailController extends ScopedElementsMixin(LitElement) {
       this._groupMap = new Map(JSON.parse(window.localStorage[dnaId]));
     } catch(err) {
       if (!dnaId || dnaId === '') {
-        console.error("localStorage parse failed. No contact groups will be loaded. DnaId =", dnaId);
-        console.error({err});
+        console.warn("localStorage parse failed. No contact groups will be loaded. DnaId =", dnaId);
+        console.warn({err});
       }
       this._groupMap = new Map();
       this._groupMap.set('All', []);
@@ -1968,8 +1969,7 @@ export class SnapmailController extends ScopedElementsMixin(LitElement) {
     this.initUi()
 
     /*let _10sec =*/ setInterval(this.onEvery10sec, 10 * 1000);
-    // /*let _1Sec =*/ setInterval(this.onEverySec, 1 * 1000);
-
+    /*let _1Sec =*/ setInterval(this.onEverySec, 1 * 1000);
 
     /** Styling of vaadin components */
     this.mailGridElem.shadowRoot!.appendChild(tmpl.content.cloneNode(true));
@@ -2006,7 +2006,7 @@ export class SnapmailController extends ScopedElementsMixin(LitElement) {
                     <img src="dist/favicon.ico" width="32" height="32" style="padding-left: 5px;padding-top: 5px;"/>
                 </abbr>
                 <span id="snapTitle" style="text-align: center; font-size: larger; padding: 10px 0px 10px 5px;">SnapMail</span>
-                <span id="networkIdDisplay" style="text-align: center; font-size: small; padding: 15px 2px 0px 5px;">UNKNOWN NETWORK-ID</span>
+                <span id="networkIdDisplay" style="text-align: center; font-size: small; padding: 15px 2px 0px 5px;"></span>
                 <!--        <span style="text-align: center; font-size: larger; padding: 10px 10px 10px 5px;"> - </span>-->
             </vaadin-horizontal-layout>
 

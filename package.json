@@ -24,7 +24,7 @@
     "devtest:we"          : "npm run clean:hc & npm run build:webcomponents && npm run build:webapp && npm run devtest -w we-applet",
 
     "start"               : "npm run build:happ && npm run start:agent",
-    "start:agent"         : "cross-env HC_PORT=$(port) ADMIN_PORT=$(port) concurrently \"npm run build:webcomponents\" \"npm run start:happ-proxied\" \"sleep 10 && npm run start -w snapmail\"",
+    "start:agent"         : "cross-env DEV_MODE='prod' HC_PORT=$(port) ADMIN_PORT=$(port) concurrently \"npm run build:webcomponents\" \"npm run start:happ-proxied\" \"sleep 10 && npm run start -w snapmail\"",
     "start:happ"          : "RUST_LOG=warn echo \"pass\" | hc s --piped -f=$ADMIN_PORT generate submodules/snapmail.happ --run=$HC_PORT -a snapmail network mdns",
     "start:happ-proxied"  : "RUST_LOG=warn echo \"pass\" | hc s --piped -f=$ADMIN_PORT generate submodules/snapmail.happ --run=$HC_PORT -a snapmail network --bootstrap https://bootstrap-staging.holo.host/ quic -p=kitsune-proxy://SYVd4CF3BdJ4DS7KwLLgeU3_DbHoZ34Y-qroZ79DOs8/kitsune-quic/h/165.22.32.11/p/5779/--",
 

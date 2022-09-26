@@ -25,7 +25,7 @@ if (IS_ELECTRON) {
 //const HC_PORT = process.env.HC_PORT
 //const HC_PORT = 8889
 console.log("HC_PORT = " + HC_PORT + " || " + process.env.HC_PORT);
-
+console.log("DEV_MODE", process.env.DEV_MODE)
 
 /** */
 export class SnapmailApp extends ScopedElementsMixin(LitElement) {
