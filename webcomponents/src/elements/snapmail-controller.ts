@@ -12,9 +12,10 @@ import '@vaadin/menu-bar';
 import '@vaadin/text-field';
 import '@vaadin/text-area';
 import '@vaadin/grid';
+import '@vaadin/grid/vaadin-grid-column';
 //import '@vaadin/grid/vaadin-grid-sort-column.js';
 import '@vaadin/grid/vaadin-grid-sort-column';
-import '@vaadin/grid/vaadin-grid-column';
+import '@vaadin/grid/vaadin-grid-selection-column';
 import '@vaadin/notification';
 import '@vaadin/dialog';
 import '@vaadin/split-layout';
@@ -89,6 +90,9 @@ tmpl.innerHTML = `
       display: none;
   }
 
+  :host(#groupGrid) #header {
+      display: none;
+  }
   
   [part~="cell"] ::slotted(vaadin-grid-cell-content) {
   padding-left: 5px;
@@ -186,8 +190,6 @@ export class SnapmailController extends ScopedElementsMixin(LitElement) {
   private _selectedContactIdB64s: string[] = [];
   private _mailItems: any[] /* gridItem*/ = [];
 
-  private _groupList: Map<string, string[]> = new Map();
-
   private _hasAttachment = 0;
   private _chunkList: EntryHash[] = [];
   private _fileList: ActionHash[] = [];
@@ -204,7 +206,8 @@ export class SnapmailController extends ScopedElementsMixin(LitElement) {
   _responseMap: Map<string, boolean> = new Map();
   /* Map of (mailId -> mailItem) */
   _mailMap: Map<string, MailItem> = new Map();
-
+  /** groupname -> agentIdB64[]  */
+  private _groupMap: Map<string, string[]> = new Map();
 
   /** --  -- */
 
@@ -278,6 +281,11 @@ export class SnapmailController extends ScopedElementsMixin(LitElement) {
   }
 
 
+  get groupComboElem() : ComboBox {
+    return this.shadowRoot!.getElementById("groupCombo") as ComboBox;
+  }
+
+
   /** --  -- */
 
   /** Setup recurrent pull from DHT every 10 seconds */
@@ -313,16 +321,16 @@ export class SnapmailController extends ScopedElementsMixin(LitElement) {
   /** */
   loadGroupList(dnaId: string) {
     try {
-      this._groupList = new Map(JSON.parse(window.localStorage[dnaId]));
+      this._groupMap = new Map(JSON.parse(window.localStorage[dnaId]));
     } catch(err) {
       if (!dnaId || dnaId === '') {
         console.error("localStorage parse failed. No contact groups will be loaded. DnaId =", dnaId);
         console.error({err});
       }
-      this._groupList = new Map();
-      this._groupList.set('All', []);
+      this._groupMap = new Map();
+      this._groupMap.set('All', []);
     }
-    console.log({ groupList: this._groupList });
+    console.log({ groupList: this._groupMap });
   }
 
 
@@ -335,8 +343,8 @@ export class SnapmailController extends ScopedElementsMixin(LitElement) {
       }
     }
     this.contactGridElem.selectedItems = [];
+    //this._selectedContactIdB64s = [];
     this.contactGridElem.activeItem = null;
-    //this.contactGridElem.render();
   }
 
 
@@ -1118,15 +1126,16 @@ export class SnapmailController extends ScopedElementsMixin(LitElement) {
     //const groupIds = g_groupList.get(groupName);
     //console.log('groupIds:' + JSON.stringify(groupIds));
     this._currentGroup = groupName;
-    const contactGrid = this.contactGridElem;
-    const contactSearch = this.contactSearchElem;
-    contactGrid.items = this.filterContacts([], contactSearch.value);
+    this.contactGridElem.items = this.filterContacts([], this.contactSearchElem.value);
     this.resetContactGrid();
     this.disableDeleteButton(true);
     this.disableReplyButton(true);
-    console.log({contactGrid});
+    console.log({contactGrid: this.contactGridElem});
+    this.updateContactGrid(false);
     //contactGrid.render();
-    window.localStorage[this._dnaIdB64] = JSON.stringify(Array.from(this._groupList.entries()));
+    const entries = Array.from(this._groupMap.entries());
+    console.log({entries})
+    window.localStorage[this._dnaIdB64] = JSON.stringify(entries);
   }
 
 
@@ -1215,10 +1224,11 @@ export class SnapmailController extends ScopedElementsMixin(LitElement) {
     console.log("filterContacts() called");
     /** Get contacts from current group only */
     //console.log({items});
+    let groupItems = this._allContactItems;
     if (this._currentGroup !== SYSTEM_GROUP_LIST[0]) {
-      const ids = this._groupList.get(this._currentGroup);
+      const ids = this._groupMap.get(this._currentGroup);
       //console.log({ids});
-      this._allContactItems = ids_to_items(ids!, this._allContactItems);
+      groupItems = ids_to_items(ids!, this._allContactItems);
       //console.log({items});
     }
     /** Set filter */
@@ -1227,7 +1237,7 @@ export class SnapmailController extends ScopedElementsMixin(LitElement) {
       return value.toLowerCase().indexOf(searchTerm.toLowerCase()) >= 0;
     };
     /** Apply filter */
-    const filteredItems = this._allContactItems.filter((item) => {
+    const filteredItems = groupItems.filter((item) => {
       //console.log({item});
       return (
         !searchTerm
@@ -1241,20 +1251,20 @@ export class SnapmailController extends ScopedElementsMixin(LitElement) {
 
   /** */
   regenerateGroupComboBox(current: string): void {
-    if (this._groupList === undefined || this._groupList === null) {
+    if (this._groupMap === undefined || this._groupMap === null) {
       return;
     }
-    const groupCombo = this.shadowRoot!.getElementById('groupCombo') as ComboBox;
-    const keys = Array.from(this._groupList.keys());
+    const keys = Array.from(this._groupMap.keys());
+    console.log({groupKeys: keys})
     keys.push('new...');
-    groupCombo.items = keys;
-    groupCombo.value = current;
+    this.groupComboElem.items = keys;
+    this.groupComboElem.value = current;
   }
 
 
   /** */
   isValidGroupName(name: string) {
-    const keys = Array.from(this._groupList.keys());
+    const keys = Array.from(this._groupMap.keys());
     for (const takenName of keys) {
       if (name === takenName) {
         return false;
@@ -1282,12 +1292,11 @@ export class SnapmailController extends ScopedElementsMixin(LitElement) {
       });
     }
     /** -- Groups Combo box  */
-    const groupCombo = this.shadowRoot!.getElementById('groupCombo') as ComboBox;
     //groupCombo.items = SYSTEM_GROUP_LIST;
     //groupCombo.value = SYSTEM_GROUP_LIST[0];
     this.regenerateGroupComboBox(SYSTEM_GROUP_LIST[0]);
-    this._currentGroup = groupCombo.value;
-    groupCombo.addEventListener('change', function(event:any) {
+    this._currentGroup = this.groupComboElem.value;
+    this.groupComboElem.addEventListener('change', function(event:any) {
       controller.setCurrentGroup(event.target.value);
     });
     /** -- contactGrid */
@@ -1631,8 +1640,8 @@ export class SnapmailController extends ScopedElementsMixin(LitElement) {
   /** */
   initNotification() {
     /** -- Mail  */
-    let notification = this.shadowRoot!.getElementById('notifyMail') as Notification;
-    notification.renderer = function(root) {
+    let notificationMail = this.shadowRoot!.getElementById('notifyMail') as Notification;
+    notificationMail.renderer = function(root) {
       /** Check if there is a content generated with the previous renderer call not to recreate it. */
       if (root.firstElementChild) {
         return;
@@ -1644,7 +1653,7 @@ export class SnapmailController extends ScopedElementsMixin(LitElement) {
       root.appendChild(container);
     };
     /** -- Ack */
-    notification = this.shadowRoot!.getElementById('notifyAck') as Notification;
+    let notification = this.shadowRoot!.getElementById('notifyAck') as Notification;
     notification.renderer = function(root) {
       /** Check if there is a content generated with the previous renderer call not to recreate it. */
       if (root.firstElementChild) {
@@ -1681,8 +1690,14 @@ export class SnapmailController extends ScopedElementsMixin(LitElement) {
     if (!this.isValidGroupName(textField.value)) {
       textField.invalid = true;
       textField.errorMessage = 'Name already taken';
+      return;
     }
-    this._groupList.set(textField.value, []);
+    if (textField.value.length < 1) {
+      textField.invalid = true;
+      textField.errorMessage = 'Min 1 character';
+      return;
+    }
+    this._groupMap.set(textField.value, []);
     //console.log('g_groupList: ' + JSON.stringify(g_groupList.keys()));
     this.regenerateGroupComboBox(textField.value);
     this.setCurrentGroup(textField.value);
@@ -1710,13 +1725,16 @@ export class SnapmailController extends ScopedElementsMixin(LitElement) {
       const div = window.document.createElement('div') as HTMLDivElement;
       div.textContent = 'Create new group: ';
       const br = window.document.createElement('br');
-      // Text Field <vaadin-text-field placeholder="Placeholder"></vaadin-text-field>
+      /** Name text-field */
       const vaadin = window.document.createElement('vaadin-text-field') as TextField;
       vaadin.placeholder = "name";
       vaadin.autofocus = true;
-      vaadin.preventInvalidInput = true;
-      vaadin.pattern = "[a-zA-Z0-9_.]{0,20}";
+      vaadin.minlength = 1;
+      vaadin.maxlength = 16;
+      vaadin.helperText = "Max 16 characters";
+      vaadin.allowedCharPattern = "[a-zA-Z0-9_.]";
       vaadin.addEventListener("keyup", (event) => {
+        /** On return key */
         if (event.keyCode == 13) {
           controller.createNewGroup(dialog!, vaadin);
         }
@@ -1734,9 +1752,8 @@ export class SnapmailController extends ScopedElementsMixin(LitElement) {
       const cancelButton = window.document.createElement('vaadin-button') as Button;
       cancelButton.textContent = 'Cancel';
       cancelButton.addEventListener('click', function() {
-        const groupCombo = this.shadowRoot!.getElementById('groupCombo') as ComboBox;
         vaadin.value = '';
-        groupCombo.value = controller._currentGroup;
+        controller.groupComboElem.value = controller._currentGroup;
         dialog!.opened = false;
       });
       /** Add all elements */
@@ -1748,17 +1765,19 @@ export class SnapmailController extends ScopedElementsMixin(LitElement) {
       root.appendChild(cancelButton);
     };
 
+
     /** -- Edit Group Dialog */
+
     const editDialog = this.shadowRoot!.getElementById('editGroupDlg') as Dialog;
     editDialog.renderer = function(root, dialog) {
-      console.log("Edit Groups dialog called: " + controller._currentGroup);
+      console.log("Edit Groups dialog called: ", controller._currentGroup);
       /** Check if there is a DOM generated with the previous renderer call to update its content instead of recreation */
       if(root.firstElementChild) {
         const title = root.children[0];
         title.textContent = 'Edit Group: ' + controller._currentGroup;
         const grid = root.children[1] as Grid;
         grid.items = controller._allContactItems;
-        const groupIds = controller._groupList.get(controller._currentGroup);
+        const groupIds = controller._groupMap.get(controller._currentGroup);
         if (groupIds) {
           grid.selectedItems = ids_to_items(groupIds, grid.items);
         }
@@ -1769,12 +1788,14 @@ export class SnapmailController extends ScopedElementsMixin(LitElement) {
       div.textContent = 'Edit Group: ' + controller._currentGroup;
       div.setAttribute('style', 'margin-bottom: 10px; margin-top: 0px;');
       const br = window.document.createElement('br');
+
+
       /* Grid <vaadin-grid> */
       const selectColumn: GridSelectionColumn = window.document.createElement('vaadin-grid-selection-column');
       selectColumn.autoSelect = true;
       const column = window.document.createElement('vaadin-grid-column');
       column.path = 'username';
-      column.header = " ";
+      column.header = "Name";
       column.flexGrow = 0;
       column.width = "300px";
       const grid = window.document.createElement('vaadin-grid') as Grid;
@@ -1782,9 +1803,10 @@ export class SnapmailController extends ScopedElementsMixin(LitElement) {
       grid.appendChild(column);
       grid.id = "groupGrid";
       //grid.heightByRows = true;
-      grid.setAttribute('style', 'width: 360px;');
+      grid.setAttribute('style', 'width: 360px;display:block;');
       grid.items = controller._allContactItems;
-      const groupIds = controller._groupList.get(controller._currentGroup);
+      console.log({groupItems: grid.items})
+      const groupIds = controller._groupMap.get(controller._currentGroup);
       const items = ids_to_items(groupIds!, grid.items)
       //grid.selectedItems = items; // does not work here
       /** Confirm Button */
@@ -1792,6 +1814,9 @@ export class SnapmailController extends ScopedElementsMixin(LitElement) {
       okButton.setAttribute('theme', 'primary');
       okButton.textContent = 'OK';
       okButton.setAttribute('style', 'margin-right: 1em');
+
+
+
       /** OnClick OK save agentIds of selected items for the group */
       okButton.addEventListener('click', function() {
         const ids = [];
@@ -1799,7 +1824,7 @@ export class SnapmailController extends ScopedElementsMixin(LitElement) {
           const contactItem: ContactGridItem = item as ContactGridItem;
           ids.push(contactItem.agentIdB64);
         }
-        controller._groupList.set(controller._currentGroup, ids);
+        controller._groupMap.set(controller._currentGroup, ids);
         grid.selectedItems = [];
         controller.setCurrentGroup(controller._currentGroup);
         dialog!.opened = false;
@@ -1810,7 +1835,7 @@ export class SnapmailController extends ScopedElementsMixin(LitElement) {
       delButton.textContent = 'Delete';
       delButton.setAttribute('style', 'margin-right: 1em');
       delButton.addEventListener('click', function() {
-        controller._groupList.delete(controller._currentGroup);
+        controller._groupMap.delete(controller._currentGroup);
         controller.regenerateGroupComboBox(SYSTEM_GROUP_LIST[0]);
         controller.setCurrentGroup(SYSTEM_GROUP_LIST[0]);
         grid.selectedItems = [];
@@ -1949,7 +1974,6 @@ export class SnapmailController extends ScopedElementsMixin(LitElement) {
     /** Styling of vaadin components */
     this.mailGridElem.shadowRoot!.appendChild(tmpl.content.cloneNode(true));
     this.contactGridElem.shadowRoot!.appendChild(tmpl.content.cloneNode(true));
-    //this.groupGridElem.shadowRoot!.appendChild(tmpl.content.cloneNode(true)); // FIXME doesnt exist yet
   }
 
 

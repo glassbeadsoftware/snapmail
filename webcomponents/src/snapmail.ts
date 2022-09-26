@@ -4,6 +4,7 @@ import type {Grid} from '@vaadin/grid';
 import {htos} from './utils'
 
 import {
+  ContactGridItem,
   FileManifest,
 } from "./types";
 import {AppSignal} from "@holochain/client/lib/api/app/types";
@@ -85,12 +86,12 @@ export function handleSignal(signalwrapper: AppSignal) {
 
 
 /** Find and collect grid items that have the given agentIds */
-export function ids_to_items(ids: string[], items: any) {
+export function ids_to_items(ids: string[], items: ContactGridItem[]) {
   const filtered = [];
   for (const id of ids) {
     for (const item of items) {
-      const itemStr = htos(item.agentId);
-      if (itemStr === id) {
+      //const itemStr = htos(item.agentId);
+      if (item.agentIdB64 === id) {
         filtered.push(item);
         break;
       }
