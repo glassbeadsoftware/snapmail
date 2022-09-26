@@ -2041,7 +2041,7 @@ export class SnapmailController extends ScopedElementsMixin(LitElement) {
                     </vaadin-grid>
 
                     <!-- IN-MAIL AREA -->
-                    <vaadin-horizontal-layout theme="spacing-xs" style="min-height:80px; height:30%; width:100%; margin-top: 4px; flex: 1 1 100px">
+                    <vaadin-horizontal-layout theme="spacing-xs" style="min-height:120px; height:50%; width:100%; margin-top: 4px; flex: 1 1 100px">
                         <vaadin-text-area style="width: 70%;padding:0;" id="inMailArea" placeholder="<no selection>" readonly>
                             <!-- <span id="mailDisplay"></span>-->
                         </vaadin-text-area>
@@ -2083,7 +2083,7 @@ export class SnapmailController extends ScopedElementsMixin(LitElement) {
                                 </vaadin-text-field>
                             </vaadin-horizontal-layout>
                             <!-- CONTACTS GRID -->
-                            <vaadin-grid theme="no-row-borders" id="contactGrid" style="height: 100%; min-width: 50px;">
+                            <vaadin-grid theme="no-row-borders" id="contactGrid" style="height: 100%; min-width: 50px;min-height: 150px;">
                                 <vaadin-grid-column path="status" width="30px" flex-grow="0" header=" "></vaadin-grid-column>
                                 <vaadin-grid-column auto-width path="username" header=" "></vaadin-grid-column>
                                 <vaadin-grid-column auto-width path="recipientType" header=" "></vaadin-grid-column>

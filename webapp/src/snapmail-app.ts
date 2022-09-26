@@ -71,8 +71,7 @@ export class SnapmailApp extends ScopedElementsMixin(LitElement) {
       return html`<span>Loading...</span>`;
     }
     return html`
-       <snapmail-controller 
-               style="background-color: white;margin:0px 3px 0px 5px; height:100%;"
+       <snapmail-controller
                .cellId=${this._cellId}
                .hcClient=${this._hcClient}
        ></snapmail-controller>
