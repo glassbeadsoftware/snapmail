@@ -29,7 +29,7 @@ export default {
     }),
     replace({
       "preventAssignment": true,
-      "process.env.NODE_ENV": '"production"',
+      "process.env.DEV_MODE": `"${DEV_MODE}"`,
     }),
     // copy({
     //   targets: [{ src: "icon.png", dest: "dist" }],

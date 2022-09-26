@@ -216,7 +216,7 @@ export function into_mailText(usernameMap: UsernameMap, mailItem: MailItem): str
   }
 
   /** Debug info */
-  if (process.env.NODE_ENV === 'dev') {
+  if (process.env.DEV_MODE === 'dev') {
     intext += '\n\nDEBUG INFO';
     intext += '\nState: ' + JSON.stringify(mailItem.state);
     intext += '\nActionHash: ' + htos(mailItem.ah);

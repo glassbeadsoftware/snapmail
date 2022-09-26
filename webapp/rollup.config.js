@@ -13,6 +13,7 @@ import { generateSW } from "rollup-plugin-workbox";
 import copy from "rollup-plugin-copy";
 import path from "path";
 
+const DEV_MODE = process.env.DEV_MODE || "prod";
 const HC_PORT = process.env.HC_PORT || 8888;
 const DIST_FOLDER = "dist"
 
@@ -43,10 +44,9 @@ export default {
     }),
     replace({
       "preventAssignment": true,
-      "process.env.NODE_ENV": '"production"',
+      "process.env.DEV_MODE": `"${DEV_MODE}"`,
       "process.env.ENV": `"${process.env.ENV}"`,
       "process.env.HC_PORT": `"${HC_PORT}"`,
-      "process.env.APP_DEV": `"${process.env.APP_DEV}"`,
     }),
     copy({
       targets: [{ src: "../assets/favicon.ico", dest: "dist" }],

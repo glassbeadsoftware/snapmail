@@ -13,7 +13,7 @@ import {SnapmailController} from "./elements/snapmail-controller";
 
 
 /** Remove console.log() in PROD */
-if (process.env.NODE_ENV === 'prod') {
+if (process.env.DEV_MODE === 'prod') {
   console.log = () => {};
 }
 

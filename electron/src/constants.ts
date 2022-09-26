@@ -5,7 +5,7 @@ import {getLairVersion, getRunnerVersion, PathOptions} from "@lightningrodlabs/e
 console.log({__dirname})
 
 /** DEBUGGING */
-export const IS_DEBUG = process.env.APP_DEV ? (process.env.APP_DEV.trim() === 'true') : false;
+export const IS_DEBUG = process.env.DEV_MODE ? (process.env.DEV_MODE.trim() === 'dev') : false;
 export const DEVELOPMENT_UI_URL = path.join(__dirname, '../electron-ui')
 
 

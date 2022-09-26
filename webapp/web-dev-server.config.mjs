@@ -31,8 +31,7 @@ export default /** @type {import('@web/dev-server').DevServerConfig} */ ({
 
   plugins: [
     replace({
-      'process.env.NODE_ENV': `"production"`,
-      'process.env.APP_DEV': JSON.stringify(process.env.APP_DEV),
+      'process.env.DEV_MODE': JSON.stringify(process.env.DEV_MODE),
       'process.env.ENV': JSON.stringify(process.env.ENV),
       'process.env.HC_PORT': JSON.stringify(process.env.HC_PORT || 8888),
       '  COMB =': 'window.COMB =',

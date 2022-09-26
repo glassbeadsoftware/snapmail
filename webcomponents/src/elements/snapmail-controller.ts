@@ -291,7 +291,7 @@ export class SnapmailController extends ScopedElementsMixin(LitElement) {
   /** Setup recurrent pull from DHT every 10 seconds */
   onEvery10sec() {
     console.log("**** onEvery10sec CALLED ****");
-    if (process.env.NODE_ENV === 'prod') {
+    if (process.env.DEV_MODE === 'prod') {
       try {
         this.getAllFromDht();
       } catch(e) {
@@ -302,7 +302,7 @@ export class SnapmailController extends ScopedElementsMixin(LitElement) {
 
   /** Setup recurrent pull from DHT every 10 seconds */
   onEverySec() {
-    if (process.env.NODE_ENV === 'prod') {
+    if (process.env.DEV_MODE === 'prod') {
       console.log("**** onEverySec CALLED ****");
       try {
         if (this._canPing) {
@@ -849,7 +849,7 @@ export class SnapmailController extends ScopedElementsMixin(LitElement) {
         , { text: 'Print', disabled: true }
         //, { text: 'Find', disabled: true }
       ];
-    if (process.env.NODE_ENV !== 'prod') {
+    if (process.env.DEV_MODE !== 'prod') {
       items.push({ text: 'Refresh', disabled: false });
     }
     this.fileboxMenuElem.items = items;
@@ -1008,7 +1008,7 @@ export class SnapmailController extends ScopedElementsMixin(LitElement) {
   initFileBox() {
     const controller = this;
     const fileboxLayout = this.shadowRoot!.getElementById('fileboxLayout') as HorizontalLayout;
-    if (process.env.NODE_ENV !== 'prod') {
+    if (process.env.DEV_MODE !== 'prod') {
       fileboxLayout.style.backgroundColor = "rgba(241,154,154,0.82)";
     }
     /** Combobox -- vaadin-combo-box */
@@ -1278,7 +1278,7 @@ export class SnapmailController extends ScopedElementsMixin(LitElement) {
   initContactsArea() {
     const controller = this;
     /** Add Refresh button in DEBUG */
-    if (process.env.NODE_ENV !== 'prod') {
+    if (process.env.DEV_MODE !== 'prod') {
       const contactsMenu = this.contactsMenuElem;
       contactsMenu.items = [{ text: 'Refresh' }];
       contactsMenu.addEventListener('item-selected', function(e:any) {
@@ -1910,12 +1910,12 @@ export class SnapmailController extends ScopedElementsMixin(LitElement) {
 
       /** -- Change title color in debug -- */
       const titleLayout = this.shadowRoot!.getElementById('titleLayout') as HorizontalLayout;
-      if (process.env.NODE_ENV !== 'prod') {
+      if (process.env.DEV_MODE !== 'prod') {
         titleLayout.style.backgroundColor = "#ec8383d1";
       }
       // if (DNA.IS_ELECTRON) {
       //   titleLayout.style.display = "none";
-      //   if (process.env.NODE_ENV !== 'prod') {
+      //   if (process.env.DEV_MODE !== 'prod') {
       //     /** -- Update Title with DNA ID */
       //     const rootTitle = document.getElementById('rootTitle') as HTMLTitleElement;
       //     console.assert(rootTitle);
