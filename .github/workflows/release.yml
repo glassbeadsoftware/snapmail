@@ -76,11 +76,11 @@ jobs:
         shell: bash
         run: |
           npm run build:webapp-prod
-      # build electron-src
-      - name: build electron-src
+      # build electron
+      - name: build electron
         shell: bash
         run: |
-          npm run tsc
+          npm run build -w Snapmail
       # install hc tool (linux)
       - name: Install hc tool and wasm target
         if: ${{ runner.os == 'Linux' }}

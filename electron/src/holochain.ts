@@ -15,6 +15,7 @@ export enum StateSignalText {
   InstallingApp = 'Installing DNA bundle to Holochain...',
   EnablingApp = 'Enabling DNA...',
   AddingAppInterface = 'Attaching API network port...',
+  UnknownState = 'Application is in an unknown state...',
 }
 
 
@@ -36,6 +37,8 @@ export function stateSignalToText(state: StateSignal): StateSignalText {
     case StateSignal.AddingAppInterface:
       return StateSignalText.AddingAppInterface
   }
+  log('error', 'Unknown state: ' + JSON.stringify(state))
+  return StateSignalText.UnknownState
 }
 
 
@@ -61,7 +64,7 @@ export function createHolochainOptions(uid: string, storagePath: string, network
 
 
 /** */
-export function loadDnaVersion(sessionDataPath): string | undefined  {
+export function loadDnaVersion(sessionDataPath: string): string | undefined  {
   let dnaVersion = undefined;
   //const configFilePath = path.join(sessionDataPath, '../');
   const configFilePath = path.join(sessionDataPath, DNA_VERSION_FILENAME);

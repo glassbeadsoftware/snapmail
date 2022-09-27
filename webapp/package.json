@@ -8,7 +8,7 @@
     "build": "rm -rf dist && tsc && rollup -c",
     "build:watch": "run-singleton \"tsc -w --incremental --preserveWatchOutput\"",
     "start": "concurrently --names tsc,dev-server \"npm run build:watch\" \"web-dev-server --config ./web-dev-server.config.mjs\"",
-    "package": "npm run build && rm -rf ui.zip && cd dist && cp * ../../electron/web && bestzip ../ui.zip *"
+    "package": "rm -rf ui.zip && npm run build && cd dist && cp * ../../electron/web && bestzip ../ui.zip *"
 
   },
   "devDependencies": {

@@ -57,10 +57,10 @@ export function initApp(
   /** -- Setup storage folder -- **/
   const sessionDataPath = path.join(userDataPath, sessionId);
   log('info', {sessionDataPath});
-  setupSessionStorage(sessionDataPath, runningDnaHash, dnaVersionFilename)
+  setupSessionStorage(sessionDataPath, runningDnaHash!, dnaVersionFilename)
 
   /** -- UID List -- **/
-  let uidList = []
+  let uidList: string[] = []
   try {
     const uidListPath = path.join(sessionDataPath, uidListFilename);
     log('debug', 'Reading file ' + uidListPath);
@@ -152,6 +152,7 @@ export function addUidToDisk(newUid: string, sessionDataPath: string, uidListFil
  * @returns dnaHash
  */
 function loadRunningZomeHash(runningZomeHashFilePath: string) {
+  log('info', 'loadRunningZomeHash: ' + runningZomeHashFilePath)
   if(fs.existsSync(runningZomeHashFilePath)) {
     return fs.readFileSync(runningZomeHashFilePath, 'utf-8');
   }
@@ -168,7 +169,7 @@ function loadRunningZomeHash(runningZomeHashFilePath: string) {
 /**
  * Return true if user wants to erase stored data
  */
-function promptVersionMismatch(message) {
+function promptVersionMismatch(message: string) {
   const result = dialog.showMessageBoxSync({
     title: `${app.getName()} - v${app.getVersion()}`,
     message: `Version mismatch`,

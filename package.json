@@ -7,7 +7,8 @@
   },
   "workspaces": [
     "webcomponents",
-    "webapp"
+    "webapp",
+    "electron"
   ],
   "scripts": {
     "version"             : "hc --version && holochain --version && lair-keystore --version",
@@ -21,6 +22,7 @@
     "package"             : "npm run build -w @snapmail/elements && npm run package -w snapmail",
 
     "devtest"             : "npm run clean:hc & npm run build:webcomponents && npm run build:webapp && npm run start:agent",
+    "devtest:electron"    : "npm run clean:hc & npm run build:webcomponents && npm run package -w snapmail && npm run electron -w Snapmail",
     "devtest:we"          : "npm run clean:hc & npm run build:webcomponents && npm run build:webapp && npm run devtest -w we-applet",
 
     "start"               : "npm run build:happ && npm run start:agent",
@@ -30,21 +32,21 @@
     "network"             : "npm run build:happ && concurrently-repeat \"npm run start:agent\"",
     "old:start"           : "npm run build-prod && tsc && electron .",
     "old:start-no"        : "./node_modules/.bin/electron electron --no-sandbox --enable-logging",
-    "electron"            : "tsc && electron .",
+    "electron"            : "tsc && cross-env DEV_MODE='dev' electron .",
     "electron-dev"        : "tsc && set DEV_MODE='dev' && electron . dev --no-sandbox",
     "alex"                : "tsc && ./node_modules/.bin/electron . alex --no-sandbox",
     "billy"               : "tsc && ./node_modules/.bin/electron . billy --no-sandbox",
     "camille"             : "tsc && ./node_modules/.bin/electron . camille --no-sandbox",
     "dist"                : "electron-builder",
     "dist:webhapp"        : "rm -f ui.zip && cd electron-ui && bestzip ../webapp/webhapp.workdir/ui.zip * && cd .. && hc web-app pack webapp/webhapp.workdir",
-    "dist:publish"        : "set DEV_MODE='dev' && electron-builder build --publish onTag",
-    "dist:build"          : "set DEV_MODE='dev' && electron-builder build",
+    "dist:publish"        : "cross-env DEV_MODE='prod' && electron-builder build --publish onTag",
+    "dist:build"          : "cross-env DEV_MODE='dev' && electron-builder build",
     "dist:linux"          : "electron-builder --linux tar.gz",
     "dist:linux-app"      : "electron-builder --linux AppImage",
     "dist:mac"            : "electron-builder --mac",
-    "dist:win"            : "set DEV_MODE='dev' && electron-builder --win",
+    "dist:win"            : "cross-env DEV_MODE='dev' && electron-builder --win",
     "dist:arm64"          : "electron-builder --arm64 --linux tar.gz",
-    "deploy-win"          : "set DEV_MODE='dev' && electron-builder build --win --publish always",
+    "deploy-win"          : "cross-env DEV_MODE='dev' && electron-builder build --win --publish always",
     "deploy-mac"          : "electron-builder build --mac --publish always",
     "clean"               : "bash scripts/npm/clean.sh",
     "clean:npm"           : "bash scripts/npm/clean-npm.sh",

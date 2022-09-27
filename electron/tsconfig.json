@@ -2,12 +2,22 @@
   "compilerOptions": {
     "module": "commonjs",
     "outDir": "out-tsc",
-    "esModuleInterop": true
+    "esModuleInterop": true,
+    "target": "es2018",
+    "moduleResolution": "node",
+    "noEmitOnError": true,
+    "lib": ["es2017", "dom"],
+    "strict": true,
+    "allowSyntheticDefaultImports": true,
+    "experimentalDecorators": true,
+    "resolveJsonModule": true,
+    "skipLibCheck": false,
+    "importHelpers": true,
+    "sourceMap": true,
+    "inlineSources": true,
+    "rootDir": "src",
+    "declaration": true,
+    "incremental": true
   },
-  "include": [
-    "electron-src/**/*"
-  ]
-//  , "references": [
-//    { "path": "../../electron-holochain/" }
-//  ]
+  "include": ["src/**/*.ts"]
 }

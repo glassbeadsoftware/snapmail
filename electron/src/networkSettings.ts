@@ -14,7 +14,7 @@ export interface NetworkSettings {
 
 
 /** */
-export function loadNetworkConfig(sessionDataPath): NetworkSettings | undefined  {
+export function loadNetworkConfig(sessionDataPath: string): NetworkSettings | undefined  {
   let settings = undefined;
   const configFilePath = path.join(sessionDataPath, NETWORK_SETTINGS_FILENAME);
   try {

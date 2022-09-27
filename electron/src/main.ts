@@ -49,7 +49,7 @@ import {
 import { log, electronLogger } from './logger';
 import { pingBootstrap } from "./spawn";
 
-import  { loadUserSettings } from './userSettings'
+import {loadUserSettings, SettingsStore} from './userSettings'
 import {addUidToDisk, initApp} from "./init";
 import {createHolochainOptions, loadDnaVersion, stateSignalToText} from "./holochain";
 import {NetworkSettings} from "./networkSettings";
@@ -92,9 +92,9 @@ if (process.platform === "win32") {
  * Keep a global reference of the ELECTRON window object, if you don't,
  * the window will be closed automatically when the JavaScript object is garbage collected.
  */
-let g_mainWindow = undefined;
-let g_tray = null;
-let g_updater = undefined;
+let g_mainWindow: BrowserWindow | null = null;
+let g_tray: Tray | null = null;
+let g_updater: MenuItem | null = null;
 // let g_holochain_proc = undefined;
 // let g_keystore_proc = undefined;
 // let g_adminWs: AdminWebsocket = undefined;
@@ -104,23 +104,23 @@ let g_uid = '';
 
 
 /** */
-let g_sessionDataPath = undefined;
+let g_sessionDataPath: string;
 //let g_runner_version = 'holochain runner version (unknown)'
 //let g_lair_version = 'lair version (unknown)'
 let g_statusEmitter = undefined;
-let g_shutdown = undefined;
+let g_shutdown:any = undefined; // FIXME
 
-let g_startingHandle = undefined;
+let g_startingHandle: string;
 
 
 /** values retrieved from holochain */
 let g_appPort = '';
-let g_dnaHash = undefined;
-let g_dnaVersion = undefined;
+let g_dnaIdB64: string;
+let g_dnaVersion: string | undefined;
 
 /** Settings */
-let g_userSettings = undefined;
-let g_uidList = [];
+let g_userSettings: SettingsStore;
+let g_uidList: string[] = [];
 let g_networkSettings: NetworkSettings = {
   canProxy: true,
   canMdns: false,
@@ -149,11 +149,11 @@ autoUpdater.autoDownload = false;
 //autoUpdater.logger = require("electron-log")
 //autoUpdater.logger.transports.file.level = "info"
 
-autoUpdater.on('error', (error) => {
+autoUpdater.on('error', (error:any) => {
   dialog.showErrorBox('Error: ', error == null ? "unknown" : (error.stack || error).toString());
 })
 
-autoUpdater.on('update-available', (info) => {
+autoUpdater.on('update-available', (info:any) => {
   dialog.showMessageBox({
     type: 'info',
     title: 'Found Update',
@@ -161,10 +161,10 @@ autoUpdater.on('update-available', (info) => {
     buttons: ['Yes', 'No']
   }).then((buttonIndex) => {
     if (buttonIndex.response === 0) {
-      autoUpdater.downloadUpdate().then((paths) => {log('debug', 'download array: ' + JSON.stringify(paths))});
+      autoUpdater.downloadUpdate().then((paths:any) => {log('debug', 'download array: ' + JSON.stringify(paths))});
     }
     else {
-      g_updater.enabled = true;
+      g_updater!.enabled = true;
       g_updater = null;
     }
   });
@@ -184,7 +184,7 @@ autoUpdater.on('update-not-available', () => {
     title: 'No Update found',
     message: 'Current version is up-to-date.'
   });
-  g_updater.enabled = true;
+  g_updater!.enabled = true;
   g_updater = null;
 })
 
@@ -233,7 +233,7 @@ const ipc = require('electron').ipcMain;
 
 ipc.on('startingInfo', async (event, startingHandle, dnaHash) => {
   g_startingHandle = startingHandle;
-  g_dnaHash = Buffer.from(dnaHash).toString('base64')
+  g_dnaIdB64 = Buffer.from(dnaHash).toString('base64')
   log('info', "startingHandle = " + startingHandle);
   //log('info', "dnaHash = " + g_dnaHash);
   let firstUsername = "<noname>";
@@ -274,7 +274,7 @@ ipc.on('newCountAsync', (event, newCount) => {
 
 ipc.on('exitNetworkStatus', (event) => {
   const indexUrl = INDEX_URL + g_appPort + '&UID=' + g_uid;
-  g_mainWindow.loadURL(indexUrl)
+  g_mainWindow?.loadURL(indexUrl)
 })
 
 
@@ -430,7 +430,7 @@ const createMainWindow = async (appPort: string): Promise<BrowserWindow> => {
     },
     icon: process.platform === 'linux'? LINUX_ICON_FILE : ICON_FILEPATH,
   }
-  let mainWindow = new BrowserWindow(options)
+  let mainWindow: BrowserWindow | null = new BrowserWindow(options)
 
   /** Things to setup at start */
   const { x, y } = g_userSettings.get('windowPosition');
@@ -438,7 +438,7 @@ const createMainWindow = async (appPort: string): Promise<BrowserWindow> => {
 
   globalShortcut.register('f5', function() {
     //console.log('f5 is pressed')
-    mainWindow.reload()
+    mainWindow?.reload()
   })
 
   if (IS_DEBUG) {
@@ -453,7 +453,7 @@ const createMainWindow = async (appPort: string): Promise<BrowserWindow> => {
     await mainWindow.loadURL("file://" + mainUrl)
   } catch(err) {
     log('error', 'loadURL() failed:');
-    log('error',{err});
+    log('error', err);
   }
 
   /** Open <a href='' target='_blank'> with default system browser */
@@ -464,21 +464,21 @@ const createMainWindow = async (appPort: string): Promise<BrowserWindow> => {
   })
   /** once its ready to show, show */
   mainWindow.once('ready-to-show', () => {
-    mainWindow.show()
+    mainWindow?.show()
   })
 
   mainWindow.on('resize', () => {
     // The event doesn't pass us the window size,
     // so we call the `getBounds` method which returns an object with
     // the height, width, and x and y coordinates.
-    const { width, height } = mainWindow.getBounds();
+    const { width, height } = mainWindow!.getBounds();
     // Now that we have them, save them using the `set` method.
     g_userSettings.set('windowBounds', { width, height });
   });
 
   /** Save position on close */
   mainWindow.on('close', async (event) => {
-    const positions = mainWindow.getPosition();
+    const positions = mainWindow!.getPosition();
     g_userSettings.set('windowPosition', { x: Math.floor(positions[0]), y: Math.floor(positions[1]) });
     if (g_canQuit) {
       log('info', 'WINDOW EVENT "close" -> canQuit')
@@ -486,7 +486,7 @@ const createMainWindow = async (appPort: string): Promise<BrowserWindow> => {
       mainWindow = null;
     } else {
       event.preventDefault();
-      mainWindow.hide();
+      mainWindow!.hide();
     }
   })
 
@@ -863,11 +863,11 @@ const createMainWindow = async (appPort: string): Promise<BrowserWindow> => {
 async function startMainWindow(splashWindow: BrowserWindow) {
   /** Init conductor */
   const opts = createHolochainOptions(g_uid, g_sessionDataPath, g_networkSettings)
-  log('info', {opts})
+  log('info', JSON.stringify(opts))
   const {statusEmitter, shutdown } = await initAgent(app, opts, BINARY_PATHS)
   g_statusEmitter = statusEmitter;
   g_shutdown = shutdown;
-  statusEmitter.on(STATUS_EVENT, async (state: StateSignal) => {
+  statusEmitter.on(STATUS_EVENT, async (state: string | StateSignal | Error) => {
     //log('debug', "STATUS EVENT: " + stateSignalToText(state) + " (" + state + ")")
     switch (state) {
       case StateSignal.IsReady:
@@ -880,15 +880,15 @@ async function startMainWindow(splashWindow: BrowserWindow) {
         break
       default:
         if (splashWindow) {
-          splashWindow.webContents.send('status', stateSignalToText(state))
+          splashWindow.webContents.send('status', stateSignalToText(state as StateSignal))
         }
     }
   })
-  statusEmitter.on(APP_PORT_EVENT, (appPort: string) => {
+  statusEmitter.on(APP_PORT_EVENT, (appPort: string | StateSignal | Error) => {
     //log('debug', "APP_PORT_EVENT: " + appPort)
-    g_appPort = appPort
+    g_appPort = appPort as string;
   })
-  statusEmitter.on(ERROR_EVENT, (error: Error) => {
+  statusEmitter.on(ERROR_EVENT, (error: string | StateSignal | Error) => {
     const error_msg = error;
     log('error', error_msg)
     if (g_mainWindow == null && splashWindow) {
@@ -1222,7 +1222,7 @@ async function promptBootstrapUrl(canExitOnCancel: boolean): Promise<boolean> {
     icon: CURRENT_DIR + `/electron-ui/favicon.png`,
     value: g_networkSettings.bootstrapUrl,
     inputAttrs: {
-      required: true,
+      required: 'true',
       type: 'url'
     },
     type: 'input'
@@ -1254,7 +1254,7 @@ async function promptFirstHandle(): Promise<string> {
     icon: CURRENT_DIR + `/electron-ui/favicon.png`,
     value: "<noname>",
     inputAttrs: {
-      required: true,
+      required: 'true',
       minlength: "3",
       pattern: "[a-zA-Z0-9\-_.]+",
       type: 'string'
@@ -1265,7 +1265,7 @@ async function promptFirstHandle(): Promise<string> {
     log('debug','user cancelled. Exiting');
     app.quit();
   }
-  return r;
+  return r!;
 }
 
 
@@ -1281,10 +1281,10 @@ async function promptUid(canExitOnCancel: boolean, parentBrowserWindow: BrowserW
     label: 'Network Access Key:',
     icon: CURRENT_DIR + `/electron-ui/favicon.png`,
     value: g_uid,
-    parentBrowserWindow,
+    //parentBrowserWindow,
     inputAttrs: {
       minlength: "2",
-      required: true,
+      required: 'true',
       pattern: "[a-zA-Z0-9\-_.]+",
       type: 'string'
     },
@@ -1327,7 +1327,7 @@ async function promptUid(canExitOnCancel: boolean, parentBrowserWindow: BrowserW
  * @returns false if user cancelled
  */
 async function promptUidSelect(canExitOnCancel: boolean): Promise<boolean> {
-  const selectOptions = {};
+  const selectOptions: any = {};
   const uidSet = new Set(g_uidList)
   const uniq = Array.from(uidSet.values());
   for (const uid of uniq) {
@@ -1361,7 +1361,7 @@ async function promptUidSelect(canExitOnCancel: boolean): Promise<boolean> {
  * @returns false if user cancelled
  */
 async function promptCanProxy(): Promise<boolean> {
-  const {response} = await dialog.showMessageBox(g_mainWindow, {
+  const {response} = await dialog.showMessageBox(g_mainWindow!, {
     title: `Proxy`,
     message: "Do you want to use a proxy?",
     defaultId: 0,
@@ -1388,7 +1388,7 @@ async function promptProxyUrl(canExitOnCancel: boolean): Promise<boolean> {
     icon: CURRENT_DIR + `/electron-ui/favicon.png`,
     value: g_networkSettings.proxyUrl,
     inputAttrs: {
-      required: true,
+      required: 'true',
       type: 'url'
     },
     type: 'input'
@@ -1411,14 +1411,14 @@ async function promptProxyUrl(canExitOnCancel: boolean): Promise<boolean> {
  *
  */
 async function showAbout() {
-  log("info", `[${RUNNER_VERSION}] DNA hash of "${g_uid}": ${g_dnaHash}\n`)
-  await dialog.showMessageBoxSync(g_mainWindow, {
+  log("info", `[${RUNNER_VERSION}] DNA hash of "${g_uid}": ${g_dnaIdB64}\n`)
+  await dialog.showMessageBoxSync(g_mainWindow!, {
     //width: 900,
     title: `About ${app.getName()}`,
     message: `${app.getName()} - v${app.getVersion()}`,
     detail: `A minimalist email app on Holochain from Glass Bead Software\n\n`
       + `DNA Version:\n${g_dnaVersion}\n`
-      + `DNA hash of "${g_uid}":\n${g_dnaHash}\n\n`
+      + `DNA hash of "${g_uid}":\n${g_dnaIdB64}\n\n`
       + '' + RUNNER_VERSION + ''
       + '' + LAIR_VERSION + `\n`,
     buttons: ['OK'],
@@ -1436,7 +1436,7 @@ async function showAbout() {
 async function confirmExit(): Promise<boolean> {
   const dontConfirmOnExit = g_userSettings.get("dontConfirmOnExit");
   //let r = await prompt({
-  const {response, checkboxChecked} = await dialog.showMessageBox(g_mainWindow, {
+  const {response, checkboxChecked} = await dialog.showMessageBox(g_mainWindow!, {
     //width: 800,
     title: `Confirm Exit`,
     message: "Incoming messages will not arrive until you relaunch SnapMail.\n" +
@@ -1456,7 +1456,7 @@ async function confirmExit(): Promise<boolean> {
 
   switch (response) {
     case 0: {
-      g_mainWindow.hide();
+      g_mainWindow!.hide();
       break;
     }
     case 2: {
@@ -1517,7 +1517,7 @@ const networkMenuTemplate: Array<MenuItemConstructorOptions> = [
     id: 'join-network',
     label: 'Join new Network',
     click: async function (menuItem, browserWindow, _event) {
-      const changed = await promptUid(false, g_mainWindow);
+      const changed = await promptUid(false, g_mainWindow!);
       if (changed) {
         await restart();
       }
@@ -1619,16 +1619,16 @@ const debugMenuTemplate: Array<MenuItemConstructorOptions> = [
     id: 'debug-network',
     label: 'Debug network',
     click: async function () {
-      const currentURL = g_mainWindow.webContents.getURL();
+      const currentURL = g_mainWindow!.webContents.getURL();
       const currentFilename = currentURL.substring(currentURL.lastIndexOf('/')+1);
       const networkFilename = NETWORK_URL.substring(NETWORK_URL.lastIndexOf('/')+1);
       //console.log({currentFilename})
       if (networkFilename != currentFilename) {
-        await g_mainWindow.loadURL(NETWORK_URL);
+        await g_mainWindow!.loadURL(NETWORK_URL);
         //const succeeded = pingBootstrap(g_bootstrapUrl);
       } else {
         const indexUrl = INDEX_URL + g_appPort + '&UID=' + g_uid;
-        await g_mainWindow.loadURL(indexUrl);
+        await g_mainWindow!.loadURL(indexUrl);
       }
     }
   },
@@ -1642,7 +1642,7 @@ const debugMenuTemplate: Array<MenuItemConstructorOptions> = [
     label: 'Reload window',
     accelerator: 'F5',
     click: async function () {
-      g_mainWindow.reload();
+      g_mainWindow!.reload();
     }
   },
 
@@ -1654,7 +1654,7 @@ const mainMenuTemplate: Array<MenuItemConstructorOptions> = [
   {
     label: 'File', submenu: [{
         label:`Check for Update`,
-      click: function (menuItem: MenuItem, _browserWindow: (BrowserWindow) | (undefined), _event: KeyboardEvent) {
+      click: function (menuItem: MenuItem, browserWindow: Electron.BrowserWindow | undefined, event: Electron.KeyboardEvent) {
           //log('info', menuItem)
           checkForUpdates(menuItem);
         }
@@ -1713,7 +1713,10 @@ const mainMenuTemplate: Array<MenuItemConstructorOptions> = [
  *
  */
 const trayMenuTemplate: Array<MenuItemConstructorOptions> = [
-  { label: 'Tray / Untray', click: function (menuItem, _browserWindow, _event) { g_mainWindow.isVisible()? g_mainWindow.hide() : g_mainWindow.show();  }  },
+  { label: 'Tray / Untray', click: function (menuItem, _browserWindow, _event) {
+      g_mainWindow!.isVisible()? g_mainWindow!.hide() : g_mainWindow!.show();
+    }
+  },
   //{ label: 'Settings', submenu: networkMenuTemplate },
   {
     label: 'Switch network',

@@ -1,7 +1,7 @@
 export const electronLogger = require('electron-log');
 const {IS_DEBUG} = require('./constants');
 
-export function log(level, message) {
+export function log(level:any, message:any) {
   electronLogger[level](message);
 }
 //module.exports.log = log;
