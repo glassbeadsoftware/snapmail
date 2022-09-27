@@ -152,7 +152,7 @@ export function addUidToDisk(newUid: string, sessionDataPath: string, uidListFil
  * @returns dnaHash
  */
 function loadRunningZomeHash(runningZomeHashFilePath: string) {
-  log('info', 'loadRunningZomeHash: ' + runningZomeHashFilePath)
+  log('debug', 'loadRunningZomeHash: ' + runningZomeHashFilePath)
   if(fs.existsSync(runningZomeHashFilePath)) {
     return fs.readFileSync(runningZomeHashFilePath, 'utf-8');
   }
