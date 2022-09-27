@@ -92,17 +92,17 @@ export function handleSignal(signalwrapper: AppSignal) {
 
 /** Find and collect grid items that have the given agentIds */
 export function ids_to_items(ids: string[], items: ContactGridItem[]) {
-  const filtered = [];
+  const subGroup = [];
   for (const id of ids) {
     for (const item of items) {
       //const itemStr = htos(item.agentId);
       if (item.agentIdB64 === id) {
-        filtered.push(item);
+        subGroup.push(item);
         break;
       }
     }
   }
-  return filtered;
+  return subGroup;
 }
 
 
