@@ -381,10 +381,16 @@ const createSplashWindow = (): BrowserWindow => {
       nodeIntegration: true,
       devTools: true,
       webgl: false,
+      sandbox: false,
       enableWebSQL: false,
     },
     icon: process.platform === 'linux'? LINUX_ICON_FILE : ICON_FILEPATH,
   })
+    /** once its ready to show, show */
+    splashWindow.once('ready-to-show', () => {
+      log("debug", 'ready-to-show');
+      splashWindow.show()
+    })
   // /** Things to setup at start */
   // let { x, y } = g_userSettings.get('windowPosition');
   // splashWindow.setPosition(x, y);
@@ -397,10 +403,7 @@ const createSplashWindow = (): BrowserWindow => {
     //splashWindow.webContents.openDevTools();
     splashWindow.loadURL(`${DEVELOPMENT_UI_URL}/splashscreen.html`)
   }
-  /** once its ready to show, show */
-  splashWindow.once('ready-to-show', () => {
-    splashWindow.show()
-  })
+
   /** Done */
   return splashWindow
 }
@@ -423,6 +426,7 @@ const createMainWindow = async (appPort: string): Promise<BrowserWindow> => {
     // use these settings so that the ui can check paths
     webPreferences: {
       contextIsolation: false,
+      sandbox: false,
       nodeIntegration: true,
       devTools: true,
       webgl: false,
