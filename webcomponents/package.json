@@ -46,7 +46,7 @@
     "browserify-zlib": "^0.2.0",
     "byte-base64": "^1.1.0",
     "cqfill": "^0.6.1",
-    "electron": "17.1.1",
+    "electron": "19.0.0",
     "moment": "^2.24.0",
     "moment-timezone": "^0.5.27",
     "path-browserify": "^1.0.1",

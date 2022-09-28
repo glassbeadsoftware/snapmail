@@ -47,14 +47,7 @@ export function stateSignalToText(state: StateSignal): StateSignalText {
 export function createHolochainOptions(uid: string, storagePath: string, networkSettings: NetworkSettings): ElectronHolochainOptions {
   const keystorePath = path.join(storagePath, 'keystore-' + app.getVersion())
   const datastorePath =  path.join(storagePath, 'databases-' + app.getVersion())
-
-  console.log('info', {__dirname});
-  //const startPath = path.join(__dirname, '..')
-  //const keystorePath = path.join(path.join(startPath, uid), 'keystore-' + app.getVersion())
-  //const datastorePath =  path.join(path.join(startPath, uid), 'databases-' + app.getVersion())
-
-  const backslash = "\u005C"
-
+  //console.log('info', {__dirname});
   const options: ElectronHolochainOptions = {
     happPath: DNA_PATH,
     datastorePath,
@@ -62,12 +55,6 @@ export function createHolochainOptions(uid: string, storagePath: string, network
     //happPath: "C:\\github\\snapmail\\electron\\bin\\snapmail.happ\\",
     //happPath: "snapmail.happ",
     //happPath: DNA_PATH.replace(/\\/g, "/").replace(/:/g, ""),
-    //datastorePath: "c/Users/damien/AppData/Roaming/Snapmail/users/default/toto/databases-0.1.9/",
-    //keystorePath: "c/Users/damien/AppData/Roaming/Snapmail/users/default/toto/keystore-0.1.9/",
-    //datastorePath: datastorePath.replace(/\\/g, "\\"),
-    //keystorePath: keystorePath.replace(/\\/g, "\\"),
-    //datastorePath: datastorePath.replace(/\\/g, "/"),//.replace(/:/g, ""),
-    //keystorePath: keystorePath.replace(/\\/g, "/"),//.replace(/:/g, ""),
     appId: SNAPMAIL_APP_ID + '-' + uid,
     //appId: MAIN_APP_ID,
     appWsPort: 0,

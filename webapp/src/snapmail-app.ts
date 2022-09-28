@@ -16,7 +16,7 @@ export const IS_ELECTRON = (window.location.port === ""); // No HREF PORT when r
 if (IS_ELECTRON) {
   APP_ID = 'main-app'
   let searchParams = new URLSearchParams(window.location.search);
-  HC_PORT = searchParams.get("PORT");
+  HC_PORT = searchParams.get("APP");
   NETWORK_ID = searchParams.get("UID");
   console.log(NETWORK_ID)
 }

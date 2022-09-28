@@ -55,6 +55,7 @@ import {createHolochainOptions, loadDnaVersion, stateSignalToText} from "./holoc
 import {NetworkSettings} from "./networkSettings";
 import {loadNetworkConfig, saveNetworkConfig} from "./networkSettings";
 import MenuItem = Electron.MenuItem;
+import {StatusUpdates} from "@lightningrodlabs/electron-holochain/src/holochain";
 
 
 /**********************************************************************************************************************/
@@ -107,14 +108,14 @@ let g_uid = '';
 let g_sessionDataPath: string;
 //let g_runner_version = 'holochain runner version (unknown)'
 //let g_lair_version = 'lair version (unknown)'
-let g_statusEmitter = undefined;
-let g_shutdown:any = undefined; // FIXME
+let g_statusEmitter: StatusUpdates;
+let g_shutdown:any; // FIXME
 
 let g_startingHandle: string;
 
 
 /** values retrieved from holochain */
-let g_appPort = '';
+let g_appPort = '0';
 let g_dnaIdB64: string;
 let g_dnaVersion: string | undefined;
 
@@ -863,12 +864,22 @@ const createMainWindow = async (appPort: string): Promise<BrowserWindow> => {
 async function startMainWindow(splashWindow: BrowserWindow) {
   /** Init conductor */
   const opts = createHolochainOptions(g_uid, g_sessionDataPath, g_networkSettings)
-  log('info', JSON.stringify(opts))
-  const {statusEmitter, shutdown } = await initAgent(app, opts, BINARY_PATHS)
-  g_statusEmitter = statusEmitter;
-  g_shutdown = shutdown;
-  statusEmitter.on(STATUS_EVENT, async (state: string | StateSignal | Error) => {
-    //log('debug', "STATUS EVENT: " + stateSignalToText(state) + " (" + state + ")")
+  log('info', opts)
+
+  try {
+    const {statusEmitter, shutdown} = await initAgent(app, opts, BINARY_PATHS)
+    g_statusEmitter = statusEmitter;
+    g_shutdown = shutdown;
+  } catch (e) {
+    log('error', e)
+    if (g_mainWindow == null && splashWindow) {
+      splashWindow.webContents.send('status', e)
+    }
+    return;
+  }
+  g_statusEmitter.on(STATUS_EVENT, async (event: string | StateSignal | Error) => {
+    const state = event as StateSignal;
+    log('info', "STATUS EVENT: " + stateSignalToText(state) + " (" + state + ")")
     switch (state) {
       case StateSignal.IsReady:
         log('debug', "STATUS EVENT: IS READY")
@@ -884,18 +895,18 @@ async function startMainWindow(splashWindow: BrowserWindow) {
         }
     }
   })
-  statusEmitter.on(APP_PORT_EVENT, (appPort: string | StateSignal | Error) => {
-    //log('debug', "APP_PORT_EVENT: " + appPort)
+  g_statusEmitter.on(APP_PORT_EVENT, (appPort: string | StateSignal | Error) => {
+    log('info', "APP_PORT_EVENT: " + appPort)
     g_appPort = appPort as string;
   })
-  statusEmitter.on(ERROR_EVENT, (error: string | StateSignal | Error) => {
+  g_statusEmitter.on(ERROR_EVENT, (error: string | StateSignal | Error) => {
     const error_msg = error;
     log('error', error_msg)
     if (g_mainWindow == null && splashWindow) {
       splashWindow.webContents.send('status', error_msg)
     }
   })
-  statusEmitter.on(HOLOCHAIN_RUNNER_QUIT, () => {
+  g_statusEmitter.on(HOLOCHAIN_RUNNER_QUIT, () => {
     const msg = "HOLOCHAIN_RUNNER_QUIT event received"
     log('warn', msg)
     if (g_mainWindow) {
@@ -907,7 +918,7 @@ async function startMainWindow(splashWindow: BrowserWindow) {
     }
     //app.quit()
   })
-  statusEmitter.on(LAIR_KEYSTORE_QUIT, (e) => {
+  g_statusEmitter.on(LAIR_KEYSTORE_QUIT, (e) => {
     const msg = "LAIR_KEYSTORE_QUIT event received"
     log('warn', msg)
     if (g_mainWindow) {
