@@ -6,6 +6,7 @@
     "url": "https://github.com/glassbeadsoftware/snapmail.git"
   },
   "workspaces": [
+    "we-applet",
     "webcomponents",
     "webapp",
     "electron"
@@ -23,7 +24,7 @@
     "prepare-test"        : "npm run clean:hc & npm run build:webcomponents && npm run build:webapp",
     "devtest"             : "npm run prepare-test && npm run start:agent",
     "devtest:electron"    : "npm run prepare-test && DEV_MODE='dev' npm run electron -w Snapmail",
-    "devtest:we"          : "npm run prepare-test && && npm run devtest -w we-applet",
+    "devtest:we"          : "npm run prepare-test && npm run devtest -w we-applet",
 
     "start"               : "npm run build:happ && npm run start:agent",
     "start:agent"         : "DEV_MODE='dev' HC_PORT=$(port) ADMIN_PORT=$(port) concurrently \"npm run build:webcomponents\" \"npm run start:happ-proxied\" \"sleep 10 && npm run start -w snapmail\"",

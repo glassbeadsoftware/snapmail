@@ -9,6 +9,9 @@ import { importMetaAssets } from "@web/rollup-plugin-import-meta-assets";
 import { terser } from "rollup-plugin-terser";
 import copy from "rollup-plugin-copy";
 
+const DEV_MODE = process.env.DEV_MODE || "prod";
+const HC_PORT = process.env.HC_PORT || 8888;
+
 export default {
   input: "out-tsc/index.js",
   output: {
@@ -30,6 +33,7 @@ export default {
     replace({
       "preventAssignment": true,
       "process.env.DEV_MODE": `"${DEV_MODE}"`,
+      "process.env.HC_PORT": `"${HC_PORT}"`,
     }),
     // copy({
     //   targets: [{ src: "icon.png", dest: "dist" }],

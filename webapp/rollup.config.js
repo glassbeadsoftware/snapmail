@@ -16,7 +16,7 @@ import path from "path";
 const DEV_MODE = process.env.DEV_MODE || "prod";
 const HC_PORT = process.env.HC_PORT || 8888;
 const DIST_FOLDER = "dist"
-console.log(process.env.DEV_MODE)
+console.log({processEnv_DEV_MODE: process.env.DEV_MODE})
 console.log("Rollup: DEV_MODE =", DEV_MODE)
 
 export default {

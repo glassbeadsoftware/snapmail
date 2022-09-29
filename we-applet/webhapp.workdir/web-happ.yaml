@@ -1,0 +1,7 @@
+---
+manifest_version: "1"
+name: snapmail-applet
+ui:
+  bundled: "../ui-applet.zip"
+happ_manifest:
+  bundled: "../../submodules/snapmail.happ"

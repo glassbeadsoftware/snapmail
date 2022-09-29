@@ -1,26 +1,15 @@
-
-import {ActionHash, AdminWebsocket, AgentPubKey, AppWebsocket, CellId, EntryHash, InstalledAppInfo} from '@holochain/client';
+import {ActionHash, AgentPubKey, CellId, EntryHash } from '@holochain/client';
 //import {AppSignal} from '@holochain/client';
 //import {CapSecret} from "@holochain/client/lib/hdk/capabilities";
-//import { AdminWebsocket, AppWebsocket } from '../../holochain-conductor-api/lib';
 import {AgnosticClient} from '@holochain-open-dev/cell-client';
 //import { EntryHashB64, ActionHashB64, AgentPubKeyB64 } from '@holochain-open-dev/core-types';
 import { htos } from './utils';
 import {MailItem, SendMailInput} from "./types";
-import {NETWORK_ID} from "./snapmail";
 
 
 const DEFAULT_TIMEOUT = 9999
-let g_adminWs: AdminWebsocket
 
-
-
-
-/** */
-export class DnaBridge {
-  constructor(public client: AgnosticClient, public mainCellId: CellId) {
-  }
-
+// let g_adminWs: AdminWebsocket
 
 // /** Default signal callback */
 // const receiveSignal = (signal: AppSignal) => {
@@ -30,8 +19,6 @@ export class DnaBridge {
 //   //resolve()
 // }
 
-
-// -- micro API -- //
 
 //
 // export async function rsmConnectAdmin() {
@@ -44,52 +31,6 @@ export class DnaBridge {
 //   // })
 // }
 
-
-  // /**  */
-  // async rsmConnectApp(signalCallback: any): Promise<CellId> {
-  //   const env = window.location;
-  //   const installed_app_id = NETWORK_ID !== '' ? APP_ID + '-' + NETWORK_ID : APP_ID;
-  //   console.log('*** installed_app_id = ' + installed_app_id)
-  //   console.log(env);
-  //   console.log('*** Connecting to Snapmail app at ' + APP_URL + ' ...')
-  //   g_appWs = await AppWebsocket.connect(APP_URL, DEFAULT_TIMEOUT, signalCallback);
-  //   console.log('*** Connected to Snapmail app: ' + JSON.stringify(g_appWs));
-  //   const appInfo = await g_appWs.appInfo({installed_app_id}, 1000);
-  //   console.log({appInfo})
-  //   if (appInfo === null) {
-  //     alert("happ not installed in conductor: " + installed_app_id)
-  //   }
-  //   g_cellId = appInfo.cell_data[0].cell_id;
-  //   // for (const cell of appInfo.cell_data) {
-  //   //   console.log({cell})
-  //   //   if (cell.cell_nick === NETWORK_ID) {
-  //   //     g_cellId = cell.cell_id;
-  //   //   }
-  //   // }
-  //   if (g_cellId === undefined) {
-  //     console.error('Failed to find cell with NETWORK_ID = ' + NETWORK_ID);
-  //     throw 'Failed to find cell with NETWORK_ID';
-  //   }
-  //   console.log({g_cellId})
-  //
-  //   /** Get handle from electron */
-  //   if (IS_ELECTRON && window.require) {
-  //     console.log("Calling getMyHandle() for ELECTRON");
-  //     const startingHandle = await getMyHandle();
-  //     console.log("getMyHandle() returned: " + startingHandle);
-  //     const ipc = window.require('electron').ipcRenderer;
-  //     const reply = ipc.sendSync('startingInfo', startingHandle, g_cellId[0]);
-  //     console.log({reply});
-  //     if (reply != "<noname>") {
-  //       const callResult = await setHandle(reply);
-  //       console.log({callResult});
-  //     }
-  //   }
-  //
-  //   /** Done */
-  //   await dumpState(g_cellId)
-  //   return g_cellId;
-  // }
 
 
 // /** */
@@ -107,17 +48,25 @@ export class DnaBridge {
 // }
 
 
-  /** */
-  async dumpState(cellId: CellId) {
-    if (g_adminWs === undefined) {
-      console.log('dumpState() aborted: g_adminWs undefined')
-      //resolve()
-      return
-    }
-    const stateDump = await g_adminWs.dumpState({cell_id: cellId})
-    console.log('stateDump of cell:')
-    console.log({stateDump})
+// /** */
+// async dumpState(cellId: CellId) {
+//   if (g_adminWs === undefined) {
+//     console.log('dumpState() aborted: g_adminWs undefined')
+//     //resolve()
+//     return
+//   }
+//   const stateDump = await g_adminWs.dumpState({cell_id: cellId})
+//   console.log('stateDump of cell:')
+//   console.log({stateDump})
+// }
+
+
+
+/** */
+export class DnaBridge {
+  constructor(public client: AgnosticClient, public mainCellId: CellId) {
   }
+
 
 
   /** */
