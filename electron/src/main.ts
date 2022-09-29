@@ -233,9 +233,10 @@ const ipc = require('electron').ipcMain;
 
 
 ipc.on('startingInfo', async (event, startingHandle, dnaHash) => {
+  //log('info', "startingInfo.startingHandle = " + startingHandle);
+  //log('info', "startingInfo.dnaHash = " + dnaHash);
   g_startingHandle = startingHandle;
   g_dnaIdB64 = Buffer.from(dnaHash).toString('base64')
-  log('info', "startingHandle = " + startingHandle);
   //log('info', "dnaHash = " + g_dnaHash);
   let firstUsername = "<noname>";
   if (g_startingHandle === "<noname>") {
@@ -253,7 +254,8 @@ ipc.on('startingInfo', async (event, startingHandle, dnaHash) => {
  */
 ipc.on('newMailSync', (event, title, body) => {
   const canNotify = g_userSettings.get('canNotify');
-  //log('debug', "canNotify = " + canNotify);
+  log('debug', "newMailSync.title = " + title);
+  log('debug', "canNotify = " + canNotify);
   if(canNotify) {
     new Notification({ title, body }).show();
   }
@@ -279,9 +281,7 @@ ipc.on('exitNetworkStatus', (event) => {
 })
 
 
-/**
- * Receive and reply to asynchronous message
- */
+/** Receive and reply to asynchronous message */
 ipc.on('bootstrapStatus', (event) => {
   const succeeded = pingBootstrap(g_networkSettings.bootstrapUrl);
   event.sender.send('bootstrapStatusReply', g_networkSettings.bootstrapUrl, succeeded);
@@ -426,7 +426,8 @@ const createMainWindow = async (appPort: string): Promise<BrowserWindow> => {
     backgroundColor: BACKGROUND_COLOR,
     // use these settings so that the ui can check paths
     webPreferences: {
-      contextIsolation: false,
+      preload: path.join(__dirname, 'preload.js'),
+      contextIsolation: true,
       sandbox: false,
       nodeIntegration: true,
       devTools: true,
@@ -435,6 +436,7 @@ const createMainWindow = async (appPort: string): Promise<BrowserWindow> => {
     },
     icon: process.platform === 'linux'? LINUX_ICON_FILE : ICON_FILEPATH,
   }
+  console.log({__dirname})
   let mainWindow: BrowserWindow | null = new BrowserWindow(options)
 
   /** Things to setup at start */

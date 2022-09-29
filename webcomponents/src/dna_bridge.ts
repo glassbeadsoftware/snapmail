@@ -1,47 +1,23 @@
 
 import {ActionHash, AdminWebsocket, AgentPubKey, AppWebsocket, CellId, EntryHash, InstalledAppInfo} from '@holochain/client';
 //import {AppSignal} from '@holochain/client';
+//import {CapSecret} from "@holochain/client/lib/hdk/capabilities";
 //import { AdminWebsocket, AppWebsocket } from '../../holochain-conductor-api/lib';
-
+import {AgnosticClient} from '@holochain-open-dev/cell-client';
+//import {serializeHash} from "@holochain-open-dev/utils";
+//import { EntryHashB64, ActionHashB64, AgentPubKeyB64 } from '@holochain-open-dev/core-types';
 import { htos } from './utils';
 import {MailItem, SendMailInput} from "./types";
-//import {CapSecret} from "@holochain/client/lib/hdk/capabilities";
+import {NETWORK_ID} from "./snapmail";
+
 
 const DEFAULT_TIMEOUT = 9999
-
-const HREF_PORT = window.location.port
-let ADMIN_PORT = 1234
-let APP_ID = 'snapmail-app'
-let APP_PORT: string | null = '' + parseInt(HREF_PORT) + 800
-export let NETWORK_ID: string | null = ''
-
-export const IS_ELECTRON = (HREF_PORT === ""); // No HREF PORT when run by Electron
-
-// Use different values when in electron
-if (IS_ELECTRON) {
-  APP_ID = 'snapmail-app'
-  ADMIN_PORT = 1235
-  const searchParams = new URLSearchParams(window.location.search);
-  APP_PORT = searchParams.get("APP");
-  NETWORK_ID = searchParams.get("UID");
-  console.log({APP_ID})
-}
-console.log({IS_ELECTRON})
-console.log("DnaBridge:", NETWORK_ID)
-
-//const ADMIN_URL = `ws://localhost:${ADMIN_PORT}`
-//const APP_URL =`ws://localhost:${APP_PORT}`
-
 let g_adminWs: AdminWebsocket
-//let g_cellId: CellId
-//let g_appWs: AppWebsocket
 
 
-import {AgnosticClient} from '@holochain-open-dev/cell-client';
-//import { EntryHashB64, ActionHashB64, AgentPubKeyB64 } from '@holochain-open-dev/core-types';
-//import {serializeHash} from "@holochain-open-dev/utils";
 
 
+/** */
 export class DnaBridge {
   constructor(public client: AgnosticClient, public mainCellId: CellId) {
   }

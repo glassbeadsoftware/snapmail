@@ -69,7 +69,7 @@ import {
 } from "../mail";
 import {
   filterMails, updateTray, handle_findManifest,
-  handle_getChunk, ids_to_items, handleSignal, getController
+  handle_getChunk, ids_to_items, handleSignal, getController, ELECTRON_API, DEV_MODE
 } from "../snapmail"
 
 import {DnaBridge} from "../dna_bridge";
@@ -288,7 +288,7 @@ export class SnapmailController extends ScopedElementsMixin(LitElement) {
   /** Setup recurrent pull from DHT every 10 seconds */
   onEvery10sec(this: SnapmailController) {
     console.log("**** onEvery10sec CALLED ****");
-    if (process.env.DEV_MODE !== 'prod') {
+    if (DEV_MODE !== 'prod') {
       return;
     }
     const controller = getController();
@@ -302,7 +302,7 @@ export class SnapmailController extends ScopedElementsMixin(LitElement) {
   /** Stuff to do every 1 second */
   onEverySec() {
     // console.log("**** onEverySec CALLED ****");
-    if (process.env.DEV_MODE !== 'prod') {
+    if (DEV_MODE !== 'prod') {
       return;
     }
     const controller = getController();
@@ -345,21 +345,21 @@ export class SnapmailController extends ScopedElementsMixin(LitElement) {
 
 
   /** */
-  async setHandle(e?:any) {
-    const newHandle = this.handleInputElem.value;
+  async setUsername(maybeHandle?:string) {
+    const newHandle = maybeHandle? maybeHandle : this.handleInputElem.value;
     console.log('new handle = ' + newHandle);
     /*const callResult =*/ await this._dna!.setHandle(newHandle)
     this.showHandle(newHandle);
     this.handleInputElem.value = '';
     this.hideHandleInput(true);
-    // - Update my Handle in the contacts grid
+    /** - Update my Handle in the contacts grid */
     for (const item of this.contactGridElem.items!) {
       const contactItem: ContactGridItem = item as ContactGridItem;
       if (contactItem.agentIdB64 === this._myAgentIdB64) {
         contactItem.username = newHandle;
       }
     }
-    //contactGrid.render();
+    this.updateContactGrid(false);
   }
 
 
@@ -392,7 +392,7 @@ export class SnapmailController extends ScopedElementsMixin(LitElement) {
     customElements.whenDefined('vaadin-button').then(() => {
       this.handleInputElem.addEventListener("keyup", (event) => {
         if (event.keyCode == 13) {
-          controller.setHandle();
+          controller.setUsername();
         }
       });
     });
@@ -833,7 +833,7 @@ export class SnapmailController extends ScopedElementsMixin(LitElement) {
         , { text: 'Print', disabled: true }
         //, { text: 'Find', disabled: true }
       ];
-    if (process.env.DEV_MODE !== 'prod') {
+    if (DEV_MODE !== 'prod') {
       items.push({ text: 'Refresh', disabled: false });
     }
     this.fileboxMenuElem.items = items;
@@ -986,7 +986,7 @@ export class SnapmailController extends ScopedElementsMixin(LitElement) {
   initFileBox() {
     const controller = this;
     const fileboxLayout = this.shadowRoot!.getElementById('fileboxLayout') as HorizontalLayout;
-    if (process.env.DEV_MODE !== 'prod') {
+    if (DEV_MODE !== 'prod') {
       fileboxLayout.style.backgroundColor = "rgba(241,154,154,0.82)";
     }
     /** Combobox -- vaadin-combo-box */
@@ -1254,7 +1254,7 @@ export class SnapmailController extends ScopedElementsMixin(LitElement) {
   initContactsArea() {
     const controller = this;
     /** Add Refresh button in DEBUG */
-    if (process.env.DEV_MODE !== 'prod') {
+    if (DEV_MODE !== 'prod') {
       const contactsMenu = this.contactsMenuElem;
       contactsMenu.items = [{ text: 'Refresh' }];
       contactsMenu.addEventListener('item-selected', function(e:any) {
@@ -1881,19 +1881,20 @@ export class SnapmailController extends ScopedElementsMixin(LitElement) {
 
       /** -- Change title color in debug -- */
       const titleLayout = this.shadowRoot!.getElementById('titleLayout') as HorizontalLayout;
-      if (process.env.DEV_MODE !== 'prod') {
+      if (DEV_MODE === 'dev') {
         titleLayout.style.backgroundColor = "#ec8383d1";
       }
-      // if (DNA.IS_ELECTRON) {
-      //   titleLayout.style.display = "none";
-      //   if (process.env.DEV_MODE !== 'prod') {
-      //     /** -- Update Title with DNA ID */
-      //     const rootTitle = document.getElementById('rootTitle') as HTMLTitleElement;
-      //     console.assert(rootTitle);
-      //     //rootTitle.textContent = "SnapMail v" + version + "  - " + DNA.NETWORK_ID;
-      //     rootTitle.textContent = rootTitle.textContent + " (" + dnaId + ")";
-      //   }
-      // }
+      //const IS_ELECTRON = (window.location.port === ""); // No HREF PORT when run by Electron
+      if (ELECTRON_API) {
+        titleLayout.style.display = "none";
+        // if (DEV_MODE === 'dev') {
+        //   /** -- Update Title with DNA ID */
+        //   const rootTitle = document.getElementById('rootTitle') as HTMLTitleElement;
+        //   console.assert(rootTitle);
+        //   //rootTitle.textContent = "SnapMail v" + version + "  - " + DNA.NETWORK_ID;
+        //   rootTitle.textContent = rootTitle.textContent + " (" + dnaId + ")";
+        // }
+      }
       /** -- Update Abbr -- */
       const handleAbbr = this.shadowRoot!.getElementById('handleAbbr') as HTMLElement;
       handleAbbr.title = "agentId: " + this._myAgentIdB64;
@@ -1932,11 +1933,30 @@ export class SnapmailController extends ScopedElementsMixin(LitElement) {
   }
 
 
+  async initElectron() {
+    if (!ELECTRON_API) {
+      return;
+    }
+    console.log("Calling getMyHandle() for ELECTRON");
+    const startingHandle = await this._dna!.getMyHandle();
+    console.log("getMyHandle() returned: " + startingHandle);
+    const dnaHash = this.cellId![0];
+    console.log("startingInfo sending dnaHash =", dnaHash);
+    const reply = ELECTRON_API.startingInfo(startingHandle, dnaHash)
+    console.log("startingInfo reply =", {reply});
+    if (reply != "<noname>") {
+      const callResult = await this.setUsername(reply);
+      console.log({callResult});
+    }
+  }
+
+
   /** After first render only */
   async firstUpdated() {
     console.log("snapmail-controller first update done!")
     this.loadGroupList('');
     this.initUi()
+    this.initElectron();
 
     /*let _10sec =*/ setInterval(this.onEvery10sec, 10 * 1000);
     /*let _1Sec =*/ setInterval(this.onEverySec, 1 * 1000);
@@ -2069,10 +2089,10 @@ export class SnapmailController extends ScopedElementsMixin(LitElement) {
 
                     <!-- Upload | Handle MENU -->
                     <vaadin-horizontal-layout theme="spacing-xs" style="background-color: #f7f7f1; width: 100%;">
-
                         <vaadin-upload id="myUpload" nodrop max-file-size="8000000" style="width:280px; margin-top:0;">
                             <span slot="drop-label">Maximum file size: 8 MB</span>
                         </vaadin-upload>
+                        <!-- Handle MENU -->
                         <div style="margin-left: auto;display: flex;">
                             <h4 style="margin: 14px 10px 0px 0px;">Username:</h4>
                             <abbr title="handle" id="handleAbbr" style="margin-left:0px;">
@@ -2083,7 +2103,7 @@ export class SnapmailController extends ScopedElementsMixin(LitElement) {
                             </abbr>
                             <!-- <vcf-tooltip id="handleDisplayTT" for="handleDisplay" position="bottom">fucking tooltip</vcf-tooltip> -->
                             <vaadin-text-field clear-button-visible id="myNewHandleInput" placeholder="username"></vaadin-text-field>
-                            <vaadin-button theme="icon" id="setMyHandleButton" title="unknown" @click=${this.setHandle}>
+                            <vaadin-button theme="icon" id="setMyHandleButton" title="unknown" @click=${(e:any) => this.setUsername(e.detail.value)}>
                                 <vaadin-icon icon="lumo:checkmark" slot="prefix"></vaadin-icon>
                             </vaadin-button>
                             <vaadin-button theme="icon" id="cancelHandleButton" @click=${() => {this.hideHandleInput(true);}}>

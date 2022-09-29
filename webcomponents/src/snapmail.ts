@@ -8,11 +8,39 @@ import {AppSignal} from "@holochain/client/lib/api/app/types";
 import {Notification} from "@vaadin/notification";
 import {SnapmailController} from "./elements/snapmail-controller";
 
+/** -- APP SETUP -- **/
+/* @ts-ignore */
+export const ELECTRON_API = window.electronAPI
+export let APP_ID = 'snapmail'
+export let HC_PORT: any;
+export let DEV_MODE: any;
+export let NETWORK_ID: any = null
+
+if (ELECTRON_API) {
+  console.log(ELECTRON_API)
+  console.log(ELECTRON_API.versions)
+  APP_ID = 'snapmail-app'
+  DEV_MODE = ELECTRON_API.DEV_MODE;
+  let searchParams = new URLSearchParams(window.location.search);
+  HC_PORT = searchParams.get("APP");
+  NETWORK_ID = searchParams.get("UID");
+
+} else {
+  //HC_PORT = 8889
+  HC_PORT = process.env.HC_PORT;
+  DEV_MODE = process.env.DEV_MODE;
+}
+console.log("  DEV_MODE =", DEV_MODE)
+console.log("   HC_PORT =", HC_PORT);
+console.log("NETWORK_ID =", NETWORK_ID);
 
 /** Remove console.log() in PROD */
-if (process.env.DEV_MODE === 'prod') {
+if (DEV_MODE === 'prod') {
   console.log = () => {};
 }
+
+
+/** -- FUNCTIONS -- **/
 
 /**
  * get controller hack
@@ -46,26 +74,24 @@ export function handleSignal(signalwrapper: AppSignal) {
     const pingedAgentB64 = htos(mail.author);
     controller.storePingResult({}, pingedAgentB64);
 
-    // if (DNA.IS_ELECTRON && window.require) {
-    //   //console.log("handleSignal for ELECTRON");
-    //
-    //   console.log(mail);
-    //   const author_name = this._usernameMap.get(htos(mail.author)) || 'unknown user';
-    //
-    //   /** ELECTRON NOTIFICATION */
-    //   const NOTIFICATION_TITLE = 'New mail received from ' + author_name;
-    //   const NOTIFICATION_BODY = signalwrapper.data.payload.ReceivedMail.mail.subject;
-    //   //const CLICK_MESSAGE = 'Notification clicked';
-    //
-    //   // - Do Notification directly from web UI
-    //   //new Notification(NOTIFICATION_TITLE, { body: NOTIFICATION_BODY })
-    //   //  .onclick = () => console.log(CLICK_MESSAGE)
-    //
-    //   /* Notify Electron main */
-    //   const ipc = window.require('electron').ipcRenderer;
-    //   const reply = ipc.sendSync('newMailSync', NOTIFICATION_TITLE, NOTIFICATION_BODY);
-    //   console.log(reply);
-    // }
+    if (ELECTRON_API) {
+      //console.log("handleSignal for ELECTRON");
+      console.log({mail});
+      const author_name = controller._usernameMap.get(htos(mail.author)) || 'unknown user';
+
+      /** ELECTRON NOTIFICATION */
+      const NOTIFICATION_TITLE = 'New mail received from ' + author_name;
+      const NOTIFICATION_BODY = signalwrapper.data.payload.ReceivedMail.mail.subject;
+      //const CLICK_MESSAGE = 'Notification clicked';
+
+      // - Do Notification directly from web UI
+      //new Notification(NOTIFICATION_TITLE, { body: NOTIFICATION_BODY })
+      //  .onclick = () => console.log(CLICK_MESSAGE)
+
+      /* Notify Electron main */
+      const reply = ELECTRON_API.newMailSync(NOTIFICATION_TITLE, NOTIFICATION_BODY)
+      console.log({reply});
+    }
 
     controller.getAllMails();
     return;
@@ -144,12 +170,12 @@ export function filterMails(mailItems: any[] /*GridItems*/, searchValue: string)
 
 /** */
 export function updateTray(newCount: number): void {
-  // if (DNA.IS_ELECTRON && window.require) {
-  //   //console.log("handleSignal for ELECTRON");
-  //   const ipc = window.require('electron').ipcRenderer;
-  //   const reply = ipc.send('newCountAsync', newCount);
-  //   console.log(reply);
-  // }
+  if (!ELECTRON_API) {
+    return;
+  }
+  const reply = ELECTRON_API.newCountAsync(newCount);
+  console.log({reply});
+
 }
 
 

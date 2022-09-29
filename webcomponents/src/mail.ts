@@ -6,6 +6,7 @@ import {AgentPubKey} from "@holochain/client";
 
 import {htos} from './utils'
 import {InMailState, MailItem, OutMailState, UsernameMap} from "./types";
+import {DEV_MODE} from "./snapmail";
 
 const checkMarkEmoji = String.fromCodePoint(0x2714); //FE0F
 const suspensionPoints = String.fromCodePoint(0x2026);
@@ -216,7 +217,7 @@ export function into_mailText(usernameMap: UsernameMap, mailItem: MailItem): str
   }
 
   /** Debug info */
-  if (process.env.DEV_MODE === 'dev') {
+  if (DEV_MODE === 'dev') {
     intext += '\n\nDEBUG INFO';
     intext += '\nState: ' + JSON.stringify(mailItem.state);
     intext += '\nActionHash: ' + htos(mailItem.ah);

@@ -5,10 +5,10 @@
     "lint": "eslint --ext .ts .",
     "tsc": "tsc",
     "todo:prebuild": "node -p \"'export const LIB_VERSION = ' + JSON.stringify(require('./package.json').version) + ';'\" > src/version.ts",
-    "build": "rm -rf dist && tsc && rollup -c",
+    "build": "rm -rf dist && tsc && rollup -c && cd dist && cp * ../../electron/web",
     "build:watch": "run-singleton \"tsc -w --incremental --preserveWatchOutput\"",
     "start": "concurrently --names tsc,dev-server \"npm run build:watch\" \"web-dev-server --config ./web-dev-server.config.mjs\"",
-    "package": "rm -rf ui.zip && npm run build && cd dist && cp * ../../electron/web && bestzip ../ui.zip *"
+    "package": "rm -rf ui.zip && cd dist && bestzip ../ui.zip *"
 
   },
   "devDependencies": {
