@@ -33,15 +33,15 @@ jobs:
       - uses: actions/download-artifact@master
         with:
           name: snapmail-artifact
-          path: bin
+          path: submodules
       - uses: actions/download-artifact@master
         with:
           name: zome-artifact
-          path: bin
+          path: electron/bin
       - uses: actions/download-artifact@master
         with:
           name: snapmail-happ-artifact
-          path: bin
+          path: submodules
       # Download rsm repo
       - name: Download rsm repo
         shell: bash # important because this runs shell scripts

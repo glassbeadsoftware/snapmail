@@ -34,14 +34,14 @@ jobs:
       - uses: actions/upload-artifact@master
         with:
           name: snapmail-artifact
-          path: bin/snapmail.dna
+          path: submodules/snapmail.dna
       # "upload" happ as build artifact
       - uses: actions/upload-artifact@master
         with:
           name: snapmail-happ-artifact
-          path: bin/snapmail.happ
+          path: submodules/snapmail.happ
       # "upload" zome_hash as build artifact
       - uses: actions/upload-artifact@master
         with:
           name: zome-artifact
-          path: bin/zome_hash.txt
+          path: electron/bin/zome_hash.txt
