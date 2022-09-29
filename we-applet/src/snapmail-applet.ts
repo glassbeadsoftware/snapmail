@@ -1,13 +1,11 @@
 import { LitElement, html } from "lit";
 import { state, property } from "lit/decorators.js";
-//import {ContextProvider} from "@lit-labs/context";
-import { ScopedElementsMixin } from "@open-wc/scoped-elements";
-//import {CellId} from "@holochain/client";
-import {HolochainClient} from "@holochain-open-dev/cell-client";
+import {ScopedElementsMixin} from "@open-wc/scoped-elements";
 import {AppWebsocket, CellId} from "@holochain/client";
+import {HolochainClient} from "@holochain-open-dev/cell-client";
 import {InstalledAppletInfo} from "@lightningrodlabs/we-applet";
 
-import {SnapmailController, HC_PORT, NETWORK_ID, APP_ID} from "@snapmail/elements";
+import {SnapmailController} from "@snapmail/elements";
 
 
 /** */
@@ -16,11 +14,11 @@ export class SnapmailApplet extends ScopedElementsMixin(LitElement) {
   @property()
   appWebsocket!: AppWebsocket;
 
-  // @property()
-  // profilesStore!: ProfilesStore;
-
   @property()
   appletAppInfo!: InstalledAppletInfo[];
+
+  // @property()
+  // profilesStore!: ProfilesStore;
 
   @state() loaded = false;
 
@@ -51,6 +49,7 @@ export class SnapmailApplet extends ScopedElementsMixin(LitElement) {
     }
     return html`
        <snapmail-controller
+               noTitle
                .cellId=${this._cellId}
                .hcClient=${this._hcClient}
        ></snapmail-controller>

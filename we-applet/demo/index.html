@@ -6,12 +6,11 @@
     <title>Snapmail Applet Demo</title>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
   </head>
-  <body>
+  <body style="margin:0px;">
     <div id="container"></div>
 
     <script type="module">
       import Applet from "../out-tsc";
-      import { HolochainClient } from "@holochain-open-dev/cell-client";
       import { ProfilesStore, ProfilesService } from "@holochain-open-dev/profiles";
       import { ProfilesZomeMock } from "@holochain-open-dev/profiles/mocks";
       import { AppWebsocket, AdminWebsocket } from "@holochain/client";

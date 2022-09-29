@@ -50,7 +50,7 @@ import '@vaadin/vaadin-lumo-styles';
 //import { ThemableMixin } from '@vaadin/vaadin-themable-mixin/vaadin-themable-mixin.js';
 
 
-import {ActionHash, CellId, EntryHash} from "@holochain/client";
+import {ActionHash, AppWebsocket, CellId, EntryHash} from "@holochain/client";
 import {AgentPubKey} from "@holochain/client/lib/types";
 import {HolochainClient} from "@holochain-open-dev/cell-client";
 
@@ -163,6 +163,9 @@ export class SnapmailController extends ScopedElementsMixin(LitElement) {
   // static get is() {
   //   return 'snapmail-controller';
   // }
+
+  @property({ type: Boolean })
+  noTitle: boolean = false;
 
   @property()
   cellId: CellId | null = null;
@@ -1885,7 +1888,7 @@ export class SnapmailController extends ScopedElementsMixin(LitElement) {
         titleLayout.style.backgroundColor = "#ec8383d1";
       }
       //const IS_ELECTRON = (window.location.port === ""); // No HREF PORT when run by Electron
-      if (ELECTRON_API) {
+      if (ELECTRON_API || this.noTitle) {
         titleLayout.style.display = "none";
         // if (DEV_MODE === 'dev') {
         //   /** -- Update Title with DNA ID */
