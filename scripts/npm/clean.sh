@@ -23,7 +23,7 @@ rm webapp/ui.zip
 # ELECTRON
 rm -rf electron/out-tsc
 rm -rf electron/node_modules
-rm -rf electron/bin
+rm electron/bin/*
 rm electron/package-lock.json
 rm electron/web/*.js
 rm electron/tsconfig.tsbuildinfo
