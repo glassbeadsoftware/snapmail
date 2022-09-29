@@ -55,12 +55,11 @@ jobs:
       - name: Install nodejs dependencies
         run: |
           npm install
-          npm run install:ui
       # build webapp
       - name: build webapp
         shell: bash
         run: |
-          npm run build:webapp-prod
+          npm run package
       # build electron
       - name: build electron
         shell: bash
@@ -77,7 +76,17 @@ jobs:
         if: ${{ runner.os == 'Linux' }}
         shell: bash
         run: |
-          npm run dist:webhapp
+          npm run dist:webhapp -w snapmail
+      # Build we-applet
+      - name: build we-applet
+        shell: bash
+        run: |
+          npm run build -w we-applet
+      # Package we-applet
+      - name: Package we-applet
+        shell: bash
+        run: |
+          npm run package -w we-applet
       # Setup sign & notarize
       - name: Setup sign and notarize (macos only)
         if: ${{ runner.os == 'macOs' }}
@@ -113,6 +122,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           gh release upload "workflow-test" "webapp/webhapp.workdir/snapmail.webhapp" --clobber
+          gh release upload "workflow-test" "we-applet/webhapp.workdir/snapmail-applet.webhapp" --clobber          
           gh release upload "workflow-test" "out-builder/Snapmail-$SNAPMAIL_VERSION.AppImage" --clobber
       - name: upload binary (macos only)
         if: ${{ runner.os == 'macOs' }}

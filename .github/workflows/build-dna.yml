@@ -25,7 +25,7 @@ jobs:
       # Build dna
       - name: Build DNA
         run: |
-          npm run dist:dna
+          npm run build:happ
       # Hash Zome
       - name: Hash Zome
         run: |
