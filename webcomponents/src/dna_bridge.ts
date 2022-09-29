@@ -4,7 +4,6 @@ import {ActionHash, AdminWebsocket, AgentPubKey, AppWebsocket, CellId, EntryHash
 //import {CapSecret} from "@holochain/client/lib/hdk/capabilities";
 //import { AdminWebsocket, AppWebsocket } from '../../holochain-conductor-api/lib';
 import {AgnosticClient} from '@holochain-open-dev/cell-client';
-//import {serializeHash} from "@holochain-open-dev/utils";
 //import { EntryHashB64, ActionHashB64, AgentPubKeyB64 } from '@holochain-open-dev/core-types';
 import { htos } from './utils';
 import {MailItem, SendMailInput} from "./types";
