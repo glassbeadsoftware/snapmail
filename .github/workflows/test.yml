@@ -115,7 +115,7 @@ jobs:
           DEBUG: electron-osx-sign*,electron-notarize*
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          npm run dist:build
+          npm run dist:build -w Snapmail
       # list out folder
       - name: list out-builder folder
         run: ls
@@ -132,16 +132,16 @@ jobs:
         run: |
           gh release upload "workflow-test" "webapp/webhapp.workdir/snapmail.webhapp" --clobber
           gh release upload "workflow-test" "we-applet/webhapp.workdir/snapmail-applet.webhapp" --clobber          
-          gh release upload "workflow-test" "out-builder/Snapmail-$SNAPMAIL_VERSION.AppImage" --clobber
+          gh release upload "workflow-test" "electron/out-builder/Snapmail-$SNAPMAIL_VERSION.AppImage" --clobber
       - name: upload binary (macos only)
         if: ${{ runner.os == 'macOs' }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          gh release upload "workflow-test" "out-builder/Snapmail-$SNAPMAIL_VERSION.dmg" --clobber
+          gh release upload "workflow-test" "electron/out-builder/Snapmail-$SNAPMAIL_VERSION.dmg" --clobber
       - name: upload binary (Windows only)
         if: ${{ runner.os == 'Windows' }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          gh release upload "workflow-test" "out-builder/Snapmail Setup $env:SNAPMAIL_VERSION.exe" --clobber
+          gh release upload "workflow-test" "electron/out-builder/Snapmail Setup $env:SNAPMAIL_VERSION.exe" --clobber
