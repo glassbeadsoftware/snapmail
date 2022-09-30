@@ -30,6 +30,11 @@ jobs:
       - name: Hash Zome
         run: |
           npm run hash-zome
+      # list uploads
+      - name: list uploads
+        continue-on-error: true
+        run: ls -R
+        working-directory: submodules
       # "upload" dna as build artifact
       - uses: actions/upload-artifact@master
         with:
