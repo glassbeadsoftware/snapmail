@@ -47,14 +47,11 @@ jobs:
         shell: bash # important because this runs shell scripts
         run: |
           npm run setup
+      # list downloads
       - name: list downloads
         continue-on-error: true
         run: ls -R
         working-directory: submodules
-      # Install nodejs dependencies
-      - name: Install nodejs dependencies
-        run: |
-          npm install
       # build webcomponents
       - name: build webcomponents
         shell: bash
