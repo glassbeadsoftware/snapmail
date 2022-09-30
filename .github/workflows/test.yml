@@ -50,16 +50,26 @@ jobs:
       - name: list downloads
         continue-on-error: true
         run: ls -R
-        working-directory: bin
+        working-directory: submodules
       # Install nodejs dependencies
       - name: Install nodejs dependencies
         run: |
           npm install
+      # build webcomponents
+      - name: build webcomponents
+        shell: bash
+        run: |
+          npm run build:webcomponents
       # build webapp
       - name: build webapp
         shell: bash
         run: |
-          npm run package
+          npm run build:webapp
+      # Package webapp
+      - name: Package webapp
+        shell: bash
+        run: |
+          npm run package -w snapmail
       # build electron
       - name: build electron
         shell: bash
