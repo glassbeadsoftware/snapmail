@@ -50,7 +50,7 @@ jobs:
       # list downloads
       - name: list downloads
         continue-on-error: true
-        run: ls -R
+        run: ls
         working-directory: submodules
       # build webcomponents
       - name: build webcomponents
