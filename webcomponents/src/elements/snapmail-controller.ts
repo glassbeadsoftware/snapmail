@@ -68,8 +68,18 @@ import {
   systemFolders
 } from "../mail";
 import {
-  filterMails, updateTray, handle_findManifest,
-  handle_getChunk, ids_to_items, handleSignal, getController, ELECTRON_API, DEV_MODE
+  filterMails,
+  updateTray,
+  handle_findManifest,
+  handle_getChunk,
+  ids_to_items,
+  handleSignal,
+  getController,
+  ELECTRON_API,
+  DEV_MODE,
+  setController,
+  onEvery10sec,
+  onEverySec
 } from "../snapmail"
 
 import {DnaBridge} from "../dna_bridge";
@@ -195,7 +205,7 @@ export class SnapmailController extends ScopedElementsMixin(LitElement) {
   private _fileList: ActionHash[] = [];
 
 
-  private _canPing = true;
+  _canPing = true;
 
   /* Map of (agentIdB64 -> username)
    * agentId is base64 string of a hash */
@@ -285,42 +295,7 @@ export class SnapmailController extends ScopedElementsMixin(LitElement) {
     return this.shadowRoot!.getElementById("groupCombo") as ComboBox;
   }
 
-
-  /** --  -- */
-
-  /** Setup recurrent pull from DHT every 10 seconds */
-  onEvery10sec(this: SnapmailController) {
-    console.log("**** onEvery10sec CALLED ****");
-    if (DEV_MODE !== 'prod') {
-      return;
-    }
-    const controller = getController();
-    try {
-      controller.getAllFromDht();
-    } catch(e) {
-      console.error("onEvery10sec.getAllFromDht() failed: ", e)
-    }
-  }
-
-  /** Stuff to do every 1 second */
-  onEverySec() {
-    // console.log("**** onEverySec CALLED ****");
-    if (DEV_MODE !== 'prod') {
-      return;
-    }
-    const controller = getController();
-    try {
-      if (controller._canPing) {
-        controller.pingNextAgent();
-      }
-    } catch(e) {
-      console.error("onEverySec.pingNextAgent() failed: ", e)
-    }
-  }
-
-
   /** -- -- */
-
 
   /** */
   loadGroupList(dnaId: string) {
@@ -1957,12 +1932,13 @@ export class SnapmailController extends ScopedElementsMixin(LitElement) {
   /** After first render only */
   async firstUpdated() {
     console.log("snapmail-controller first update done!")
+    setController(this)
     this.loadGroupList('');
     this.initUi()
     this.initElectron();
 
-    /*let _10sec =*/ setInterval(this.onEvery10sec, 10 * 1000);
-    /*let _1Sec =*/ setInterval(this.onEverySec, 1 * 1000);
+    /*let _10sec =*/ setInterval(onEvery10sec, 10 * 1000);
+    /*let _1Sec =*/ setInterval(onEverySec, 1 * 1000);
 
     /** Styling of vaadin components */
     this.mailGridElem.shadowRoot!.appendChild(tmpl.content.cloneNode(true));

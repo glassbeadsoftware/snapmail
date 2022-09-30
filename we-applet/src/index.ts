@@ -35,7 +35,7 @@ const snapmailApplet: WeApplet = {
     return {
       full(element: HTMLElement, registry: CustomElementRegistry) {
         registry.define("snapmail-applet", SnapmailApplet);
-        element.innerHTML = `<snapmail-applet></snapmail-applet>`;
+        element.innerHTML = `<snapmail-applet style="width:100%"></snapmail-applet>`;
         const appletElement = element.querySelector("snapmail-applet") as any;
 
         appletElement.appWebsocket =  appWebsocket;

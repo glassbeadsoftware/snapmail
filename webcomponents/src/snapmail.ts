@@ -40,18 +40,54 @@ if (DEV_MODE === 'prod') {
 }
 
 
-/** -- FUNCTIONS -- **/
+/** -- GLOBAL CONTROLLER -- **/
+/** Need a way to get the controller in callbacks */
 
-/**
- * get controller hack
- * FIXME for some reason, 'this' is null if methods of SnapmailController are used as arguments
- * ex: handleSignal, onEvery10sec
- */
+export let g_controller: SnapmailController | null = null;
+
+
+export function setController(controller: SnapmailController) {
+  g_controller = controller
+}
+
 export function getController(): SnapmailController {
-  const app = document.querySelector("snapmail-app") as HTMLElement;
-  const controller = app.shadowRoot!.querySelector("snapmail-controller") as SnapmailController;
-  console.log({controller})
-  return controller;
+  console.assert(g_controller)
+  return g_controller!;
+}
+
+
+/** -- CALLBACKS -- **/
+
+
+/** Setup recurrent pull from DHT every 10 seconds */
+export function onEvery10sec() {
+  console.log("**** onEvery10sec CALLED ****");
+  if (DEV_MODE !== 'prod') {
+    return;
+  }
+  const controller = getController();
+  try {
+    controller.getAllFromDht();
+  } catch(e) {
+    console.error("onEvery10sec.getAllFromDht() failed: ", e)
+  }
+}
+
+
+/** Stuff to do every 1 second */
+export function onEverySec() {
+  // console.log("**** onEverySec CALLED ****");
+  if (DEV_MODE !== 'prod') {
+    return;
+  }
+  const controller = getController();
+  try {
+    if (controller._canPing) {
+      controller.pingNextAgent();
+    }
+  } catch(e) {
+    console.error("onEverySec.pingNextAgent() failed: ", e)
+  }
 }
 
 
@@ -115,6 +151,8 @@ export function handleSignal(signalwrapper: AppSignal) {
   }
 }
 
+
+/** -- FUNCTIONS -- **/
 
 /** Find and collect grid items that have the given agentIds */
 export function ids_to_items(ids: string[], items: ContactGridItem[]) {

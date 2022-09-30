@@ -924,7 +924,7 @@ async function startMainWindow(splashWindow: BrowserWindow) {
     }
     //app.quit()
   })
-  g_statusEmitter.on(LAIR_KEYSTORE_QUIT, (e) => {
+  g_statusEmitter.on(LAIR_KEYSTORE_QUIT, (e:any) => {
     const msg = "LAIR_KEYSTORE_QUIT event received"
     log('warn', msg)
     if (g_mainWindow) {
