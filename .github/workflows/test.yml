@@ -118,12 +118,14 @@ jobs:
           npm run dist:build -w Snapmail
       # list out folder
       - name: list out-builder folder
+        continue-on-error: true
         run: ls
-        working-directory: out-builder
+        working-directory: electron/out-builder
       # list bin folder
       - name: list bin folder
+        continue-on-error: true
         run: ls
-        working-directory: bin
+        working-directory: electron/bin
       # upload binary for each platform
       - name: upload binary (ubuntu only)
         if: ${{ runner.os == 'Linux' }}
