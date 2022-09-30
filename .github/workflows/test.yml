@@ -84,13 +84,15 @@ jobs:
         shell: bash
         run: |
           npm run dist:webhapp -w snapmail
-      # Build we-applet
+      # Build we-applet (linux)
       - name: build we-applet
+        if: ${{ runner.os == 'Linux' }}
         shell: bash
         run: |
           npm run build -w we-applet
-      # Package we-applet
+      # Package we-applet (linux)
       - name: Package we-applet
+        if: ${{ runner.os == 'Linux' }}
         shell: bash
         run: |
           npm run package -w we-applet
