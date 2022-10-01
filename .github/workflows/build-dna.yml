@@ -33,7 +33,7 @@ jobs:
       # list uploads
       - name: list uploads
         continue-on-error: true
-        run: ls -R
+        run: ls
         working-directory: submodules
       # "upload" dna as build artifact
       - uses: actions/upload-artifact@master

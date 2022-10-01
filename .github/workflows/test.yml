@@ -29,6 +29,11 @@ jobs:
       ##  with:
       ##    fileName: 'win-certificate.pfx'
       ##    encodedString: ${{ secrets.CERTIFICATE_WINDOWS_PFX }}
+      # Download rsm repo
+      - name: Download rsm repo
+        shell: bash # important because this runs shell scripts
+        run: |
+          npm run setup
       # Download previously uploaded artifacts and display them in logs
       - uses: actions/download-artifact@master
         with:
@@ -42,15 +47,10 @@ jobs:
         with:
           name: snapmail-happ-artifact
           path: submodules
-      # Download rsm repo
-      - name: Download rsm repo
-        shell: bash # important because this runs shell scripts
-        run: |
-          npm run setup
       # list downloads
       - name: list downloads
         continue-on-error: true
-        run: ls -R
+        run: ls
         working-directory: submodules
       # build webcomponents
       - name: build webcomponents
