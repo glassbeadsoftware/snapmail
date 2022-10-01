@@ -147,5 +147,5 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          gh release delete-asset "workflow-test" "Snapmail Setup $env:SNAPMAIL_VERSION.exe" -y
+          gh release delete-asset "workflow-test" "Snapmail.Setup.$env:SNAPMAIL_VERSION.exe" -y
           gh release upload "workflow-test" "electron/out-builder/Snapmail Setup $env:SNAPMAIL_VERSION.exe" --clobber
