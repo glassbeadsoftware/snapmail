@@ -5,6 +5,16 @@
 */*.tsbuildinfo
 
 submodules/**
+electron/out-builder/**
+electron/out-tsc/**
+electron/web/*.js
+electron/web/index.html
+webcomponents/custom-elements.json
+*.zip
+*.webhapp
+*.happ
+*.map
+
 
 # build dependencies
 bin
