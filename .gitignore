@@ -15,6 +15,7 @@ webcomponents/custom-elements.json
 *.happ
 *.map
 
+.vscode/**
 
 # build dependencies
 bin
