@@ -24,7 +24,7 @@ jobs:
   call-build-dna:
     uses: ./.github/workflows/build-dna.yml
 
-  # Build the UI, app and then package it each target os
+  # upload the app package for each target os
   upload-assets:
     needs: call-build-dna
     strategy:
@@ -44,38 +44,44 @@ jobs:
       ##  with:
       ##    fileName: 'win-certificate.pfx'
       ##    encodedString: ${{ secrets.CERTIFICATE_WINDOWS_PFX }}
-      # Download previously uploaded artifacts and display them in logs
-      - uses: actions/download-artifact@master
-        with:
-          name: snapmail-artifact
-          path: bin
-      - uses: actions/download-artifact@master
-        with:
-          name: zome-artifact
-          path: bin
-      - uses: actions/download-artifact@master
-        with:
-          name: snapmail-happ-artifact
-          path: bin
       # Download rsm repo
       - name: Download rsm repo
         shell: bash # important because this runs shell scripts
         run: |
           npm run setup
+      # Download previously uploaded artifacts and display them in logs
+      - uses: actions/download-artifact@master
+        with:
+          name: snapmail-artifact
+          path: submodules
+      - uses: actions/download-artifact@master
+        with:
+          name: zome-artifact
+          path: electron/bin
+      - uses: actions/download-artifact@master
+        with:
+          name: snapmail-happ-artifact
+          path: submodules
+      # list downloads
       - name: list downloads
         continue-on-error: true
-        run: ls -R
-        working-directory: bin
-      # Install nodejs dependencies
-      - name: Install nodejs dependencies
+        run: ls
+        working-directory: submodules
+      # build webcomponents
+      - name: build webcomponents
+        shell: bash
         run: |
-          npm install
-          npm run install:ui
+          npm run build:webcomponents
       # build webapp
       - name: build webapp
         shell: bash
         run: |
-          npm run build:webapp-prod
+          npm run build:webapp
+      # Package webapp
+      - name: Package webapp
+        shell: bash
+        run: |
+          npm run package -w snapmail
       # build electron
       - name: build electron
         shell: bash
@@ -92,7 +98,19 @@ jobs:
         if: ${{ runner.os == 'Linux' }}
         shell: bash
         run: |
-          npm run dist:webhapp
+          npm run dist:webhapp -w snapmail
+      # Build we-applet (linux)
+      - name: build we-applet
+        if: ${{ runner.os == 'Linux' }}
+        shell: bash
+        run: |
+          npm run build -w we-applet
+      # Package we-applet (linux)
+      - name: Package we-applet
+        if: ${{ runner.os == 'Linux' }}
+        shell: bash
+        run: |
+          npm run package -w we-applet
       # Setup sign & notarize
       - name: Setup sign and notarize (macos only)
         if: ${{ runner.os == 'macOs' }}
@@ -112,35 +130,38 @@ jobs:
           DEBUG: electron-osx-sign*,electron-notarize*
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          npm run dist:build
-      # list out-builder folder
+          npm run dist:build -w Snapmail
+      # list out folder
       - name: list out-builder folder
+        continue-on-error: true
         run: ls
-        working-directory: out-builder
+        working-directory: electron/out-builder
       # list bin folder
       - name: list bin folder
+        continue-on-error: true
         run: ls
-        working-directory: bin
+        working-directory: electron/bin
       # upload binary for each platform
       - name: upload binary (ubuntu only)
         if: ${{ runner.os == 'Linux' }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          gh release upload "${GITHUB_REF#refs/tags/}" "webapp/webhapp.workdir/snapmail.webhapp" --clobber          
-          gh release upload "${GITHUB_REF#refs/tags/}" "out-builder/Snapmail-$SNAPMAIL_VERSION.AppImage" --clobber
-          gh release upload "${GITHUB_REF#refs/tags/}" "out-builder/latest-linux.yml" --clobber
+          gh release upload "${GITHUB_REF#refs/tags/}" "webapp/webhapp.workdir/snapmail.webhapp" --clobber
+          gh release upload "${GITHUB_REF#refs/tags/}" "we-applet/webhapp.workdir/snapmail-applet.webhapp" --clobber          
+          gh release upload "${GITHUB_REF#refs/tags/}" "electron/out-builder/Snapmail-$SNAPMAIL_VERSION.AppImage" --clobber
       - name: upload binary (macos only)
         if: ${{ runner.os == 'macOs' }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          gh release upload "${GITHUB_REF#refs/tags/}" "out-builder/Snapmail-$SNAPMAIL_VERSION.dmg" --clobber
-          gh release upload "${GITHUB_REF#refs/tags/}" "out-builder/latest-mac.yml" --clobber
+          gh release upload "${GITHUB_REF#refs/tags/}" "electron/out-builder/Snapmail-$SNAPMAIL_VERSION.dmg" --clobber
       - name: upload binary (Windows only)
         if: ${{ runner.os == 'Windows' }}
+        continue-on-error: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          gh release upload "$($env:GITHUB_REF -replace "refs/tags/")" "out-builder/Snapmail Setup $env:SNAPMAIL_VERSION.exe" --clobber
-          gh release upload "$($env:GITHUB_REF -replace "refs/tags/")" "out-builder/latest.yml" --clobber
+          gh release delete-asset "$($env:GITHUB_REF -replace "refs/tags/")" "Snapmail.Setup.$env:SNAPMAIL_VERSION.exe" -y
+          gh release upload "$($env:GITHUB_REF -replace "refs/tags/")" "electron/out-builder/Snapmail Setup $env:SNAPMAIL_VERSION.exe" --clobber
+          gh release upload "$($env:GITHUB_REF -replace "refs/tags/")" "electron/out-builder/latest.yml" --clobber
