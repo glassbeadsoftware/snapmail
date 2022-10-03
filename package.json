@@ -13,10 +13,11 @@
   ],
   "scripts": {
     "version"             : "hc --version && holochain --version && lair-keystore --version",
+    "postinstall"         : "npm run install:hash-zome",
     "ci:hc-install"       : "bash scripts/npm/install-hc-tools.sh",
     "install:hash-zome"   : "bash scripts/npm/install-hash-zome.sh",
     "setup"               : "bash scripts/npm/setup.sh",
-    "build:happ"          : "bash scripts/npm/dist-dna.sh",
+    "build:happ"          : "bash scripts/npm/dist-dna.sh && npm run hash-zome",
     "hash-zome"           : "bash scripts/npm/hash-zome.sh",
     "build:webcomponents" : "npm run build -w @snapmail/elements",
     "build:webapp"        : "npm run build -w snapmail",
