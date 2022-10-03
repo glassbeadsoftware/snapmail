@@ -58,7 +58,7 @@ export class SnapmailApplet extends ScopedElementsMixin(LitElement) {
                    ></snapmail-controller>
                 </div>
             </div>
-        </div                    
+        </div>                  
     `;
   }
 

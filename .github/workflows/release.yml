@@ -162,6 +162,5 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          gh release delete-asset "$($env:GITHUB_REF -replace "refs/tags/")" "Snapmail.Setup.$env:SNAPMAIL_VERSION.exe" -y
           gh release upload "$($env:GITHUB_REF -replace "refs/tags/")" "electron/out-builder/Snapmail Setup $env:SNAPMAIL_VERSION.exe" --clobber
           gh release upload "$($env:GITHUB_REF -replace "refs/tags/")" "electron/out-builder/latest.yml" --clobber
