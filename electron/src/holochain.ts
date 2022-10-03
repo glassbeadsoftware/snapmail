@@ -1,11 +1,18 @@
 import * as path from 'path'
 import { app } from 'electron'
 import { ElectronHolochainOptions, StateSignal } from "@lightningrodlabs/electron-holochain"
-import {DNA_PATH, DNA_VERSION_FILENAME, NETWORK_SETTINGS_FILENAME, SNAPMAIL_APP_ID} from './constants'
+import {DNA_PATH, DNA_VERSION_FILENAME, SNAPMAIL_APP_ID} from './constants'
 import {NetworkSettings} from "./networkSettings";
 import fs from "fs";
 import {log} from "./logger";
-import {winPath} from "./config";
+import {bytesToBase64} from "byte-base64";
+
+
+/** Convert holo hash to readable string */
+export function htos(u8array: number[] | Uint8Array): string {
+  return bytesToBase64(u8array)
+}
+
 
 /** Messages displayed on the splashscreen */
 export enum StateSignalText {

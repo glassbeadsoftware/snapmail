@@ -1,12 +1,5 @@
 const { contextBridge, ipcRenderer } = require('electron')
 
-// contextBridge.exposeInMainWorld('versions', {
-//   node: () => process.versions.node,
-//   chrome: () => process.versions.chrome,
-//   electron: () => process.versions.electron,
-// })
-
-console.log("HI MOM");
 console.log("preload DEV_MODE =" + JSON.stringify(process.env.DEV_MODE));
 
 const electronAPI = {

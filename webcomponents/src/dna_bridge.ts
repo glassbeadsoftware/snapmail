@@ -103,7 +103,7 @@ export class DnaBridge {
   //   } catch (err) {
   //     console.error("*** callDna() => " + functionName + '() failed:')
   //     console.error({err})
-  //     // FIXME: Put back when Holochain connection problems are resolved
+  //     // TODO: Put back when Holochain connection problems are resolved
   //     // alert("Holochain failed.\n Connection to holochain might be lost. Reload App or refresh web page to attempt reconnection");
   //     return Promise.reject("callZome() failed. Possibility lost connection to holochain.")
   //   }

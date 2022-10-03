@@ -13,7 +13,6 @@ import IS_DEV from 'electron-is-dev';
 /** Holochain Modules */
 
 //import {AdminWebsocket} from "@holochain/client";
-//import {CellId} from "@holochain/client";
 
 import initAgent, {
   StateSignal,
@@ -21,7 +20,7 @@ import initAgent, {
   APP_PORT_EVENT,
   ERROR_EVENT,
   HOLOCHAIN_RUNNER_QUIT,
-  LAIR_KEYSTORE_QUIT,
+  /*LAIR_KEYSTORE_QUIT,*/
 } from "@lightningrodlabs/electron-holochain"
 
 /** My Modules */
@@ -44,7 +43,7 @@ import {
   RUNNING_ZOME_HASH_FILEPATH,
   MAIN_FILE,
   BINARY_PATHS,
-  RUNNER_VERSION, LAIR_VERSION, DEFAULT_BOOTSTRAP_URL, DEFAULT_PROXY_URL, FAVICON_PATH
+  RUNNER_VERSION, DEFAULT_BOOTSTRAP_URL, DEFAULT_PROXY_URL, FAVICON_PATH
 } from './constants';
 import { log, electronLogger } from './logger';
 import { pingBootstrap } from "./spawn";
@@ -109,7 +108,7 @@ let g_sessionDataPath: string;
 //let g_runner_version = 'holochain runner version (unknown)'
 //let g_lair_version = 'lair version (unknown)'
 let g_statusEmitter: StatusUpdates;
-let g_shutdown:any; // FIXME
+let g_shutdown:() => Promise<void>;
 
 let g_startingHandle: string;
 
@@ -924,18 +923,18 @@ async function startMainWindow(splashWindow: BrowserWindow) {
     }
     //app.quit()
   })
-  g_statusEmitter.on(LAIR_KEYSTORE_QUIT, (e:any) => {
-    const msg = "LAIR_KEYSTORE_QUIT event received"
-    log('warn', msg)
-    if (g_mainWindow) {
-      promptHolochainError(g_mainWindow, msg)
-    } else {
-      if (splashWindow) {
-        splashWindow.webContents.send('status', msg)
-      }
-    }
-    //app.quit()
-  })
+  // g_statusEmitter.on(LAIR_KEYSTORE_QUIT, (e:any) => {
+  //   const msg = "LAIR_KEYSTORE_QUIT event received"
+  //   log('warn', msg)
+  //   if (g_mainWindow) {
+  //     promptHolochainError(g_mainWindow, msg)
+  //   } else {
+  //     if (splashWindow) {
+  //       splashWindow.webContents.send('status', msg)
+  //     }
+  //   }
+  //  //app.quit()
+  //})
 }
 
 
@@ -1437,7 +1436,8 @@ async function showAbout() {
       + `DNA Version:\n${g_dnaVersion}\n`
       + `DNA hash of "${g_uid}":\n${g_dnaIdB64}\n\n`
       + '' + RUNNER_VERSION + ''
-      + '' + LAIR_VERSION + `\n`,
+      //+ '' + LAIR_VERSION
+      + `\n`,
     buttons: ['OK'],
     type: "info",
     //iconIndex: 0,

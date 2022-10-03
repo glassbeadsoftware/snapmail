@@ -1,6 +1,6 @@
 import * as path from 'path'
 import { app } from 'electron';
-import {getLairVersion, getRunnerVersion, PathOptions} from "@lightningrodlabs/electron-holochain"
+import {getRunnerVersion, PathOptions} from "@lightningrodlabs/electron-holochain"
 
 console.log({__dirname})
 
@@ -11,8 +11,6 @@ export const DEVELOPMENT_UI_URL = path.join(__dirname, '../web')
 /** MISC */
 export const SNAPMAIL_APP_ID = 'snapmail-app'; // MUST MATCH SNAPMAIL_UI config
 /** A special log from the conductor specifying that the interfaces are ready to receive incoming connections */
-//export const HC_MAGIC_READY_STRING = 'Conductor ready.';
-//export const LAIR_MAGIC_READY_STRING = '#lair-keystore-ready#';
 export const REPORT_BUG_URL = `https://github.com/glassbeadsoftware/snapmail/issues/new`;
 
 /** NETWORK */
@@ -50,8 +48,8 @@ export const USER_DATA_PATH = path.join(APP_DATA_PATH, 'users');
 const fileExt = process.platform === 'win32' ? '.exe' : '';
 export const BINARY_PATHS: PathOptions | undefined = app.isPackaged
   ? {
-    holochainRunnerBinaryPath: path.join(__dirname, `../../app/bin/holochain-runner${fileExt}`),
-    lairKeystoreBinaryPath: path.join(__dirname, `../../app/bin/lair-keystore${fileExt}`,),
+    holochainRunnerBinaryPath: path.join(__dirname, `../../app/bin/holochain-runner${fileExt}`)
+    //, lairKeystoreBinaryPath: path.join(__dirname, `../../app/bin/lair-keystore${fileExt}`,),
   }
   : undefined;
 
@@ -59,21 +57,10 @@ export const BINARY_PATHS: PathOptions | undefined = app.isPackaged
 
 /** Get Versions */
 export const RUNNER_VERSION = getRunnerVersion(BINARY_PATHS?.holochainRunnerBinaryPath)
-export const LAIR_VERSION = getLairVersion(BINARY_PATHS?.lairKeystoreBinaryPath)
-
-
+//export const LAIR_VERSION = getLairVersion(BINARY_PATHS?.lairKeystoreBinaryPath)
 
 export const DNA_VERSION_FILENAME = "dna_version.txt";
 export const RUNNING_ZOME_HASH_FILEPATH = 'bin/zome_hash.txt';
-
-// export const HOLOCHAIN_BIN_NAME = 'snapmail-holochain';
-// export const LAIR_KEYSTORE_BIN_NAME  = 'snapmail-lair-keystore';
-// export const BIN_PATH = process.platform === "win32"? '' : './bin/';
-// export const FILE_EXT = process.platform === "win32"? '.exe' : ''
-//
-// export const HOLOCHAIN_BIN = BIN_PATH + HOLOCHAIN_BIN_NAME + FILE_EXT
-// export const LAIR_KEYSTORE_BIN = BIN_PATH + LAIR_KEYSTORE_BIN_NAME + FILE_EXT
-
 
 /** WEB FILES PATH */
 export const BACKGROUND_COLOR = '#fbf9f7'

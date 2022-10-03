@@ -945,7 +945,6 @@ export class SnapmailController extends ScopedElementsMixin(LitElement) {
   /** FIXME */
   handle_missingAttachments(missingCount: number): void {
     //const attachmentGrid = document.getElementById('attachmentGrid') as Grid;
-    //attachmentGrid!.render();
   }
 
 
@@ -1093,7 +1092,7 @@ export class SnapmailController extends ScopedElementsMixin(LitElement) {
     /** attachmentGrid -- vaadin-grid */
     this.attachmentGridElem.items = [];
 
-    this.attachmentGridElem.cellClassNameGenerator = function(column, rowData:any/*FIXME*/) {
+    this.attachmentGridElem.cellClassNameGenerator = function(column, rowData:any) {
       //console.log({rowData})
       let classes = '';
       if (!rowData.item.hasFile) {

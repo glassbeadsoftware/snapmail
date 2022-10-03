@@ -40,11 +40,7 @@ export class SettingsStore {
 }
 
 
-/**
- *
- * @param filePath
- * @param defaults
- */
+/** */
 function parseSettingsFile(filePath: string, defaults: any) {
   // We'll try/catch it in case the file doesn't exist yet, which will be the case on the first application run.
   // `fs.readFileSync` will return a JSON string which we then parse into a Javascript object
@@ -56,19 +52,18 @@ function parseSettingsFile(filePath: string, defaults: any) {
   }
 }
 
-/**
- *
- */
+
+/** */
 export function loadUserSettings(initialWidth: number, initialHeight: number): SettingsStore {
   // Get Settings
   const { width, height } = screen.getPrimaryDisplay().workAreaSize;
-  let starting_width = Math.min(width, initialWidth);
-  let starting_height = Math.min(height, initialHeight);
+  const starting_width = Math.min(width, initialWidth);
+  const starting_height = Math.min(height, initialHeight);
 
-  let x = Math.floor((width - starting_width) / 2);
-  let y = Math.floor((height - starting_height) / 2);
+  const x = Math.floor((width - starting_width) / 2);
+  const y = Math.floor((height - starting_height) / 2);
 
-  let userSettings = new SettingsStore({
+  const userSettings = new SettingsStore({
     // We'll call our data file 'user-preferences'
     configName: 'user-preferences',
     storagePath: APP_DATA_PATH,
