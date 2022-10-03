@@ -26,10 +26,6 @@ jobs:
       - name: Build DNA
         run: |
           npm run build:happ
-      # Hash Zome
-      - name: Hash Zome
-        run: |
-          npm run hash-zome
       # list uploads
       - name: list uploads
         continue-on-error: true
