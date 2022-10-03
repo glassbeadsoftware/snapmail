@@ -16,5 +16,7 @@ module.exports = {
         "@typescript-eslint"
     ],
     "rules": {
+        "@typescript-eslint/no-this-alias": "off",
+        "@typescript-eslint/no-empty-function": "off",
     }
 };

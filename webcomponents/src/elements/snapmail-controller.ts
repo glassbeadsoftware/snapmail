@@ -1,9 +1,8 @@
+/** Lit imports */
 import {css, html, LitElement} from "lit";
 import {property, state} from "lit/decorators.js";
-//import { unsafeCSS } from 'lit';
-//import { CSSModule } from '../css-utils';
 import {ScopedElementsMixin} from "@open-wc/scoped-elements";
-
+/** Vaadin imports */
 import '@vaadin/progress-bar';
 import '@vaadin/button';
 import '@vaadin/upload';
@@ -21,7 +20,6 @@ import '@vaadin/dialog';
 import '@vaadin/split-layout';
 import '@vaadin/vertical-layout';
 import '@vaadin/horizontal-layout';
-
 import {PolymerElement} from "@polymer/polymer";
 import {ProgressBar} from "@vaadin/progress-bar";
 import {Button} from "@vaadin/button";
@@ -39,21 +37,15 @@ import {VerticalLayout} from "@vaadin/vertical-layout";
 import {GridSortColumn} from "@vaadin/grid/vaadin-grid-sort-column";
 import {SplitLayout} from "@vaadin/split-layout";
 import {Icon} from "@vaadin/vaadin-icon";
-
 //import '@vaadin-component-factory/vcf-tooltip';
-
-/** Uncaught DOMException: CustomElementRegistry.define: 'vaadin-lumo-styles' has already been defined as a custom element */
 import '@vaadin/vaadin-icon';
 import '@vaadin/vaadin-lumo-styles';
-//import '@vaadin/vaadin-icon/vaadin-icons';
-//import '@vaadin/vaadin-lumo-styles/icons';
 //import { ThemableMixin } from '@vaadin/vaadin-themable-mixin/vaadin-themable-mixin.js';
-
-
-import {ActionHash, AppWebsocket, CellId, EntryHash} from "@holochain/client";
+/** Holochain imports*/
+import {ActionHash, CellId, EntryHash} from "@holochain/client";
 import {AgentPubKey} from "@holochain/client/lib/types";
 import {HolochainClient} from "@holochain-open-dev/cell-client";
-
+/** my imports */
 import {
   ContactGridItem, FileManifest, HandleItem, Mail, MailGridItem, MailItem, SendMailInput, UsernameMap
 } from "../types";
@@ -74,7 +66,6 @@ import {
   handle_getChunk,
   ids_to_items,
   handleSignal,
-  getController,
   ELECTRON_API,
   DEV_MODE,
   setController,
@@ -88,7 +79,7 @@ import {DnaBridge} from "../dna_bridge";
 /** ----- */
 
 /** Styles for vaadin-grid */
-let tmpl = document.createElement('template');
+const tmpl = document.createElement('template');
 tmpl.innerHTML = `
 <style>
   /* Background needs a stronger selector to not be overridden */
@@ -174,7 +165,7 @@ export class SnapmailController extends ScopedElementsMixin(LitElement) {
   //   return 'snapmail-controller';
   // }
 
-  @property({ type: Boolean })
+  @property()
   noTitle: boolean = false;
 
   @property()
@@ -186,7 +177,7 @@ export class SnapmailController extends ScopedElementsMixin(LitElement) {
   /** -- */
 
   private _dna: DnaBridge | null = null;
-  private _dnaIdB64: string = '';
+  private _dnaIdB64 = '';
   private _myAgentId: AgentPubKey | null = null;
   private _myHandle = '<unknown>';
   private _myAgentIdB64: string | null = null;
@@ -198,7 +189,7 @@ export class SnapmailController extends ScopedElementsMixin(LitElement) {
 
   private _allContactItems: ContactGridItem[] = [];
   private _selectedContactIdB64s: string[] = [];
-  private _mailItems: any[] /* gridItem*/ = [];
+  private _mailItems: MailGridItem[] = [];
 
   private _hasAttachment = 0;
   private _chunkList: EntryHash[] = [];
@@ -523,7 +514,7 @@ export class SnapmailController extends ScopedElementsMixin(LitElement) {
       this.contactGridElem.deselectItem(item);
     }
     /** Form selectedItems */
-    let selected = []
+    const selected = []
     for (const idB64 of this._selectedContactIdB64s) {
       const item = this._allContactItems.find((item) => item.agentIdB64 === idB64)!;
       selected.push(item)
@@ -1589,7 +1580,7 @@ export class SnapmailController extends ScopedElementsMixin(LitElement) {
   /** */
   initNotification() {
     /** -- Mail  */
-    let notificationMail = this.shadowRoot!.getElementById('notifyMail') as Notification;
+    const notificationMail = this.shadowRoot!.getElementById('notifyMail') as Notification;
     notificationMail.renderer = function(root) {
       /** Check if there is a content generated with the previous renderer call not to recreate it. */
       if (root.firstElementChild) {
@@ -1981,7 +1972,7 @@ export class SnapmailController extends ScopedElementsMixin(LitElement) {
 
             <!-- FILEBOX MENU -->
             <vaadin-horizontal-layout theme="spacing-xs" id="fileboxLayout" style="width:100%;">
-                <!-- FIXEME: use vaadin-select instead -->
+                <!-- FIXME: use vaadin-select instead -->
                 <vaadin-combo-box id="fileboxFolder" style="user-select: none;
             -khtml-user-select: none;
             -webkit-user-select: none;"></vaadin-combo-box>
