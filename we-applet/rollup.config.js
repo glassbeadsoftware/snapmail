@@ -7,7 +7,7 @@ import replace from "@rollup/plugin-replace";
 import babel from "@rollup/plugin-babel";
 import { importMetaAssets } from "@web/rollup-plugin-import-meta-assets";
 import { terser } from "rollup-plugin-terser";
-import copy from "rollup-plugin-copy";
+//import copy from "rollup-plugin-copy";
 
 const DEV_MODE = process.env.DEV_MODE || "prod";
 const HC_PORT = process.env.HC_PORT || 8888;
