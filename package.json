@@ -27,12 +27,12 @@
     "devtest:electron"    : "npm run prepare-test && DEV_MODE='dev' npm run electron -w Snapmail",
     "devtest:we"          : "npm run prepare-test && npm run devtest -w we-applet",
 
-    "start"               : "npm run build:happ && npm run start:agent",
-    "start:agent"         : "DEV_MODE='dev' HC_PORT=$(port) ADMIN_PORT=$(port) concurrently \"npm run build:webcomponents\" \"npm run start:happ-proxied\" \"sleep 10 && npm run start -w snapmail\"",
     "start:happ"          : "RUST_LOG=warn echo \"pass\" | hc s --piped -f=$ADMIN_PORT generate submodules/snapmail.happ --run=$HC_PORT -a snapmail network mdns",
     "start:happ-proxied"  : "RUST_LOG=warn echo \"pass\" | hc s --piped -f=$ADMIN_PORT generate submodules/snapmail.happ --run=$HC_PORT -a snapmail network --bootstrap https://bootstrap-staging.holo.host/ quic -p=kitsune-proxy://SYVd4CF3BdJ4DS7KwLLgeU3_DbHoZ34Y-qroZ79DOs8/kitsune-quic/h/165.22.32.11/p/5779/--",
+    "start"               : "npm run build:happ && npm run start:agent",
+    "start:agent"         : "DEV_MODE='dev' HC_PORT=$(port) ADMIN_PORT=$(port) concurrently \"npm run build:webcomponents\" \"npm run start:happ-proxied\" \"sleep 10 && npm run start -w snapmail\"",
     "network"             : "npm run build:happ && concurrently-repeat \"npm run start:agent\"",
-    "dist:win"            : "npm run dist:win -w Snapmail",
+    "dist:win"            : "bash scripts/copy-binaries.sh && npm run dist:win -w Snapmail",
     "clean"               : "npm run clean:npm && bash scripts/npm/clean.sh",
     "clean:npm"           : "bash scripts/npm/clean-npm.sh",
     "clean:hc"            : "rm -rf .hc*"

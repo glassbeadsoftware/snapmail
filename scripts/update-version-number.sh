@@ -38,3 +38,9 @@ sed -i "s/$OLD_VER/$1/" ./.github/workflows/release.yml
 OLD_VER=`awk -F ": " '/SNAPMAIL_VERSION/ {print $2}' ./.github/workflows/test.yml`
 echo "./.github/workflows/test.yml '$OLD_VER' -> '$1'"
 sed -i "s/$OLD_VER/$1/" ./.github/workflows/test.yml
+
+
+# Change electron/web/splashscreen.html
+LINE=`echo version $1`
+echo $LINE
+sed -i "17s/.*/            ${LINE}/" electron/web/splashscreen.html

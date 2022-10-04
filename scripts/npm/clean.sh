@@ -1,7 +1,6 @@
 #!/bin/bash
 
 # TOP LEVEL
-#rm -rf bin/*
 #rm -rf submodules
 rm -rf out-builder
 rm .hc_live*
