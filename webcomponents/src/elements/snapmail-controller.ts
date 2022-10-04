@@ -802,7 +802,7 @@ export class SnapmailController extends ScopedElementsMixin(LitElement) {
         , { text: 'Print', disabled: true }
         //, { text: 'Find', disabled: true }
       ];
-    if (DEV_MODE !== 'prod') {
+    if (DEV_MODE === 'dev') {
       items.push({ text: 'Refresh', disabled: false });
     }
     this.fileboxMenuElem.items = items;
@@ -954,7 +954,7 @@ export class SnapmailController extends ScopedElementsMixin(LitElement) {
   initFileBox() {
     const controller = this;
     const fileboxLayout = this.shadowRoot!.getElementById('fileboxLayout') as HorizontalLayout;
-    if (DEV_MODE !== 'prod') {
+    if (DEV_MODE === 'dev') {
       fileboxLayout.style.backgroundColor = "rgba(241,154,154,0.82)";
     }
     /** Combobox -- vaadin-combo-box */
@@ -1222,7 +1222,7 @@ export class SnapmailController extends ScopedElementsMixin(LitElement) {
   initContactsArea() {
     const controller = this;
     /** Add Refresh button in DEBUG */
-    if (DEV_MODE !== 'prod') {
+    if (DEV_MODE === 'dev') {
       const contactsMenu = this.contactsMenuElem;
       contactsMenu.items = [{ text: 'Refresh' }];
       contactsMenu.addEventListener('item-selected', function(e:any) {

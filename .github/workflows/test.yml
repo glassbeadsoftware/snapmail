@@ -41,17 +41,26 @@ jobs:
           path: submodules
       - uses: actions/download-artifact@master
         with:
-          name: zome-artifact
-          path: electron/bin
+          name: snapmail-happ-artifact
+          path: submodules
       - uses: actions/download-artifact@master
         with:
           name: snapmail-happ-artifact
-          path: submodules
-      # list downloads
-      - name: list downloads
+          path: electron/bin
+      - uses: actions/download-artifact@master
+        with:
+          name: zome-artifact
+          path: electron/bin
+      # list submodules
+      - name: list submodules
         continue-on-error: true
         run: ls
         working-directory: submodules
+      # list electron/bin
+      - name: list electron/bin
+        continue-on-error: true
+        run: ls
+        working-directory: electron/bin
       # build webcomponents
       - name: build webcomponents
         shell: bash
@@ -62,16 +71,11 @@ jobs:
         shell: bash
         run: |
           npm run build:webapp
-      # Package webapp
-      - name: Package webapp
-        shell: bash
-        run: |
-          npm run package -w snapmail
       # build electron
       - name: build electron
         shell: bash
         run: |
-          npm run build -w Snapmail
+          npm run build -w electron
       # install hc tool (linux)
       - name: Install hc tool and wasm target
         if: ${{ runner.os == 'Linux' }}
@@ -83,7 +87,7 @@ jobs:
         if: ${{ runner.os == 'Linux' }}
         shell: bash
         run: |
-          npm run dist:webhapp -w snapmail
+          npm run dist:webhapp
       # Build we-applet (linux)
       - name: build we-applet
         if: ${{ runner.os == 'Linux' }}
@@ -115,7 +119,7 @@ jobs:
           DEBUG: electron-osx-sign*,electron-notarize*
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          npm run dist:build -w Snapmail
+          npm run dist:build -w electron
       # list out folder
       - name: list out-builder folder
         continue-on-error: true

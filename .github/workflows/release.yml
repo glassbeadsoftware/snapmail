@@ -56,12 +56,16 @@ jobs:
           path: submodules
       - uses: actions/download-artifact@master
         with:
-          name: zome-artifact
-          path: electron/bin
+          name: snapmail-happ-artifact
+          path: submodules
       - uses: actions/download-artifact@master
         with:
           name: snapmail-happ-artifact
-          path: submodules
+          path: electron/bin
+      - uses: actions/download-artifact@master
+        with:
+          name: zome-artifact
+          path: electron/bin
       # list downloads
       - name: list downloads
         continue-on-error: true

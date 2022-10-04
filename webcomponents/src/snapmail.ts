@@ -17,16 +17,14 @@ export let DEV_MODE: any;
 export let NETWORK_ID: any = null
 
 if (ELECTRON_API) {
-  console.log(ELECTRON_API)
+  //console.log(ELECTRON_API)
   console.log(ELECTRON_API.versions)
   APP_ID = 'snapmail-app'
   DEV_MODE = ELECTRON_API.DEV_MODE;
   let searchParams = new URLSearchParams(window.location.search);
   HC_PORT = searchParams.get("APP");
   NETWORK_ID = searchParams.get("UID");
-
 } else {
-  //HC_PORT = 8889
   HC_PORT = process.env.HC_PORT;
   DEV_MODE = process.env.DEV_MODE;
 }
@@ -35,7 +33,7 @@ console.log("   HC_PORT =", HC_PORT);
 console.log("NETWORK_ID =", NETWORK_ID);
 
 /** Remove console.log() in PROD */
-if (DEV_MODE === 'prod') {
+if (DEV_MODE !== 'dev') {
   console.log = () => {};
 }
 
@@ -62,7 +60,7 @@ export function getController(): SnapmailController {
 /** Setup recurrent pull from DHT every 10 seconds */
 export function onEvery10sec() {
   console.log("**** onEvery10sec CALLED ****");
-  if (DEV_MODE !== 'prod') {
+  if (DEV_MODE === 'dev') {
     return;
   }
   const controller = getController();
@@ -77,7 +75,7 @@ export function onEvery10sec() {
 /** Stuff to do every 1 second */
 export function onEverySec() {
   // console.log("**** onEverySec CALLED ****");
-  if (DEV_MODE !== 'prod') {
+  if (DEV_MODE === 'dev') {
     return;
   }
   const controller = getController();

@@ -48,7 +48,7 @@
       "package.json"
     ],
     "directories": {
-      "buildResources": "assets",
+      "buildResources": "../assets",
       "output": "out-builder"
     },
     "linux": {
