@@ -946,6 +946,13 @@ app.on('ready', async () => {
   log('debug', "ELECTRON READY - " + __dirname)
   /** Load user settings */
   g_userSettings = loadUserSettings(1920, 1080);
+  /** Check menu items */
+  const maybeMenu = Menu.getApplicationMenu()
+  const submenu = maybeMenu!.getMenuItemById('options').submenu;
+  const item = submenu.getMenuItemById('launch-at-startup');
+  item.checked = g_userSettings.get('canAutoLaunch')
+  const item2 = submenu.getMenuItemById('notify-msg');
+  item2.checked = g_userSettings.get('canNotify')
   /** Show splashscreen */
   const splashWindow = createSplashWindow()
   /** init app */
@@ -1669,7 +1676,8 @@ const debugMenuTemplate: Array<MenuItemConstructorOptions> = [
 /** */
 const mainMenuTemplate: Array<MenuItemConstructorOptions> = [
   {
-    label: 'File', submenu: [{
+    label: 'File',
+    submenu: [{
         label:`Check for Update`,
       click: function (menuItem: MenuItem, browserWindow: Electron.BrowserWindow | undefined, event: Electron.KeyboardEvent) {
           //log('info', menuItem)
@@ -1698,6 +1706,7 @@ const mainMenuTemplate: Array<MenuItemConstructorOptions> = [
   },
   {
     label: 'Options',
+    id: 'options',
     submenu: optionsMenuTemplate,
   },
   {
