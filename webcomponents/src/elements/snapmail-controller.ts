@@ -96,9 +96,11 @@ tmpl.innerHTML = `
   }
   
   [part~="cell"] ::slotted(vaadin-grid-cell-content) {
-  padding-left: 5px;
+    margin-left: 10px;
+    padding: 0px;
+    /* text-overflow: clip; */
   }
-
+    
   .newmail {
       font-weight: bold;
   }
@@ -1933,6 +1935,7 @@ export class SnapmailController extends ScopedElementsMixin(LitElement) {
     /** Styling of vaadin components */
     this.mailGridElem.shadowRoot!.appendChild(tmpl.content.cloneNode(true));
     this.contactGridElem.shadowRoot!.appendChild(tmpl.content.cloneNode(true));
+    this.attachmentGridElem.shadowRoot!.appendChild(tmpl.content.cloneNode(true));
   }
 
 
