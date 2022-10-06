@@ -52,7 +52,7 @@ jobs:
       # Download previously uploaded artifacts and display them in logs
       - uses: actions/download-artifact@master
         with:
-          name: snapmail-artifact
+          name: snapmail-dna-artifact
           path: submodules
       - uses: actions/download-artifact@master
         with:
@@ -64,7 +64,7 @@ jobs:
           path: electron/bin
       - uses: actions/download-artifact@master
         with:
-          name: zome-artifact
+          name: model-hash-artifact
           path: electron/bin
       # list submodules
       - name: list submodules

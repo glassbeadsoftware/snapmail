@@ -40,7 +40,7 @@ import {
   USER_DATA_PATH,
   APP_DATA_PATH,
   DNA_VERSION_FILENAME,
-  RUNNING_ZOME_HASH_FILEPATH,
+  MODEL_ZOME_HASH_FILEPATH,
   MAIN_FILE,
   BINARY_PATHS,
   RUNNER_VERSION, DEFAULT_BOOTSTRAP_URL, DEFAULT_PROXY_URL, FAVICON_PATH
@@ -95,18 +95,12 @@ if (process.platform === "win32") {
 let g_mainWindow: BrowserWindow | null = null;
 let g_tray: Tray | null = null;
 let g_updater: MenuItem | null = null;
-// let g_holochain_proc = undefined;
-// let g_keystore_proc = undefined;
-// let g_adminWs: AdminWebsocket = undefined;
-// let g_cellId: CellId = undefined;
 let g_canQuit = false;
 let g_uid = '';
 
 
 /** */
 let g_sessionDataPath: string;
-//let g_runner_version = 'holochain runner version (unknown)'
-//let g_lair_version = 'lair version (unknown)'
 let g_statusEmitter: StatusUpdates;
 let g_shutdown:() => Promise<void>;
 
@@ -115,8 +109,8 @@ let g_startingHandle: string;
 
 /** values retrieved from holochain */
 let g_appPort = '0';
-let g_dnaIdB64: string;
-let g_dnaVersion: string | undefined;
+let g_runningDnaIdB64: string;
+let g_modelZomeHash: string | undefined;
 
 /** Settings */
 let g_userSettings: SettingsStore;
@@ -235,7 +229,7 @@ ipc.on('startingInfo', async (event, startingHandle, dnaHash) => {
   //log('info', "startingInfo.startingHandle = " + startingHandle);
   //log('info', "startingInfo.dnaHash = " + dnaHash);
   g_startingHandle = startingHandle;
-  g_dnaIdB64 = Buffer.from(dnaHash).toString('base64')
+  g_runningDnaIdB64 = Buffer.from(dnaHash).toString('base64')
   //log('info', "dnaHash = " + g_dnaHash);
   let firstUsername = "<noname>";
   if (g_startingHandle === "<noname>") {
@@ -362,10 +356,7 @@ function updateNotificationSetting(canNotify: boolean): void {
 }
 
 
-
-/**
- *
- */
+/** */
 const createSplashWindow = (): BrowserWindow => {
   /** Create the browser window */
   const splashWindow = new BrowserWindow({
@@ -394,7 +385,6 @@ const createSplashWindow = (): BrowserWindow => {
   // /** Things to setup at start */
   // let { x, y } = g_userSettings.get('windowPosition');
   // splashWindow.setPosition(x, y);
-
   /** and load it */
   if (app.isPackaged) {
     splashWindow.loadFile(SPLASH_FILE)
@@ -403,16 +393,12 @@ const createSplashWindow = (): BrowserWindow => {
     //splashWindow.webContents.openDevTools();
     splashWindow.loadURL(`${DEVELOPMENT_UI_URL}/splashscreen.html`)
   }
-
   /** Done */
   return splashWindow
 }
 
 
-
-/**
- *
- */
+/** */
 const createMainWindow = async (appPort: string): Promise<BrowserWindow> => {
   /** Create the browser window */
   const { width, height } = g_userSettings.get('windowBounds');
@@ -438,12 +424,11 @@ const createMainWindow = async (appPort: string): Promise<BrowserWindow> => {
   console.log({__dirname})
   let mainWindow: BrowserWindow | null = new BrowserWindow(options)
 
-  /** Things to setup at start */
+  /** Things to setup at startup */
   const { x, y } = g_userSettings.get('windowPosition');
   mainWindow.setPosition(x, y);
 
   globalShortcut.register('f5', function() {
-    //console.log('f5 is pressed')
     mainWindow?.reload()
   })
 
@@ -862,15 +847,12 @@ const createMainWindow = async (appPort: string): Promise<BrowserWindow> => {
 // }
 
 
-
-/**
- *
- */
+/** */
 async function startMainWindow(splashWindow: BrowserWindow) {
-  /** Init conductor */
+  /** Create holochain settings */
   const opts = createHolochainOptions(g_uid, g_sessionDataPath, g_networkSettings)
-  log('info', opts)
-
+  //log('debug', opts)
+  /** Init conductor */
   try {
     const {statusEmitter, shutdown} = await initAgent(app, opts, BINARY_PATHS)
     g_statusEmitter = statusEmitter;
@@ -884,7 +866,7 @@ async function startMainWindow(splashWindow: BrowserWindow) {
   }
   g_statusEmitter.on(STATUS_EVENT, async (event: string | StateSignal | Error) => {
     const state = event as StateSignal;
-    log('info', "STATUS EVENT: " + stateSignalToText(state) + " (" + state + ")")
+    log('debug', "STATUS EVENT: " + stateSignalToText(state) + " (" + state + ")")
     switch (state) {
       case StateSignal.IsReady:
         log('debug', "STATUS EVENT: IS READY")
@@ -957,10 +939,10 @@ app.on('ready', async () => {
   const splashWindow = createSplashWindow()
   /** init app */
   {
-    const {sessionDataPath, uidList} = initApp(USER_DATA_PATH, APP_DATA_PATH, DNA_VERSION_FILENAME, RUNNING_ZOME_HASH_FILEPATH, UID_LIST_FILENAME);
+    const {sessionDataPath, uidList} = initApp(USER_DATA_PATH, APP_DATA_PATH, DNA_VERSION_FILENAME, UID_LIST_FILENAME);
     g_sessionDataPath = sessionDataPath
     g_uidList = uidList
-    g_dnaVersion = loadDnaVersion(sessionDataPath)
+    g_modelZomeHash = loadDnaVersion(sessionDataPath)
     /** Load network settings */
     const maybeNetworkSettings = loadNetworkConfig(g_sessionDataPath)
     if (maybeNetworkSettings) {
@@ -1434,14 +1416,14 @@ async function promptProxyUrl(canExitOnCancel: boolean): Promise<boolean> {
  *
  */
 async function showAbout() {
-  log("info", `[${RUNNER_VERSION}] DNA hash of "${g_uid}": ${g_dnaIdB64}\n`)
+  log("info", `[${RUNNER_VERSION}] DNA hash of "${g_uid}": ${g_runningDnaIdB64}\n`)
   await dialog.showMessageBoxSync(g_mainWindow!, {
     //width: 900,
     title: `About ${app.getName()}`,
     message: `${app.getName()} - v${app.getVersion()}`,
     detail: `A minimalist email app on Holochain from Glass Bead Software\n\n`
-      + `DNA Version:\n${g_dnaVersion}\n`
-      + `DNA hash of "${g_uid}":\n${g_dnaIdB64}\n\n`
+      + `Data model version:\n${g_modelZomeHash}\n`
+      + `DNA hash for "${g_uid}":\n${g_runningDnaIdB64}\n\n`
       + '' + RUNNER_VERSION + ''
       //+ '' + LAIR_VERSION
       + `\n`,

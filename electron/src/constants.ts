@@ -9,7 +9,7 @@ export const IS_DEBUG = process.env.DEV_MODE ? (process.env.DEV_MODE.trim() === 
 export const DEVELOPMENT_UI_URL = path.join(__dirname, '../web')
 
 /** MISC */
-export const SNAPMAIL_APP_ID = 'snapmail-app'; // MUST MATCH SNAPMAIL_UI config
+export const SNAPMAIL_APP_ID = 'snapmail-app'; // WARN Must match APP_ID in webcomponents code
 /** A special log from the conductor specifying that the interfaces are ready to receive incoming connections */
 export const REPORT_BUG_URL = `https://github.com/glassbeadsoftware/snapmail/issues/new`;
 
@@ -37,6 +37,13 @@ export const DNA_PATH = app.isPackaged
 // export const APP_DATA_PATH = IS_DEBUG
 //   ? path.join(__dirname, '../../.dev-app-data')
 //   : path.join(app.getPath('appData'), 'Snapmail')
+
+/*
+  app.getPath('appData') =
+  - %APPDATA% on Windows
+  - $XDG_CONFIG_HOME or ~/.config on Linux
+  - ~/Library/Application Support on macOS
+ */
 export const APP_DATA_PATH = path.join(app.getPath('appData'), 'Snapmail')
 export const USER_DATA_PATH = path.join(APP_DATA_PATH, 'users');
 
@@ -49,7 +56,6 @@ const fileExt = process.platform === 'win32' ? '.exe' : '';
 export const BINARY_PATHS: PathOptions | undefined = app.isPackaged
   ? {
     holochainRunnerBinaryPath: path.join(__dirname, `../../app/bin/holochain-runner${fileExt}`)
-    //, lairKeystoreBinaryPath: path.join(__dirname, `../../app/bin/lair-keystore${fileExt}`,),
   }
   : undefined;
 
@@ -57,10 +63,9 @@ export const BINARY_PATHS: PathOptions | undefined = app.isPackaged
 
 /** Get Versions */
 export const RUNNER_VERSION = getRunnerVersion(BINARY_PATHS?.holochainRunnerBinaryPath)
-//export const LAIR_VERSION = getLairVersion(BINARY_PATHS?.lairKeystoreBinaryPath)
 
 export const DNA_VERSION_FILENAME = "dna_version.txt";
-export const RUNNING_ZOME_HASH_FILEPATH = 'bin/zome_hash.txt';
+export const MODEL_ZOME_HASH_FILEPATH = 'bin/model_zome_hash.txt';
 
 /** WEB FILES PATH */
 export const BACKGROUND_COLOR = '#fbf9f7'

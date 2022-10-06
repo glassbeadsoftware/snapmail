@@ -80,6 +80,7 @@ export function loadDnaVersion(sessionDataPath: string): string | undefined  {
   let dnaVersion = undefined;
   //const configFilePath = path.join(sessionDataPath, '../');
   const configFilePath = path.join(sessionDataPath, DNA_VERSION_FILENAME);
+  //log('debug', "loadDnaVersion() configFilePath = " + configFilePath);
   try {
     dnaVersion = fs.readFileSync(configFilePath).toString();
   } catch(error) {

@@ -22,8 +22,8 @@ jobs:
         shell: bash
         run: |
           npm run setup
-      # Build dna
-      - name: Build DNA
+      # Build happ
+      - name: Build happ
         run: |
           npm run build:happ
       # list uploads
@@ -34,7 +34,7 @@ jobs:
       # "upload" dna as build artifact
       - uses: actions/upload-artifact@master
         with:
-          name: snapmail-artifact
+          name: snapmail-dna-artifact
           path: submodules/snapmail.dna
       # "upload" happ as build artifact
       - uses: actions/upload-artifact@master
@@ -44,5 +44,5 @@ jobs:
       # "upload" zome_hash as build artifact
       - uses: actions/upload-artifact@master
         with:
-          name: zome-artifact
-          path: electron/bin/zome_hash.txt
+          name: model-hash-artifact
+          path: electron/bin/model_zome_hash.txt
