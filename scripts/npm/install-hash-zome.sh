@@ -23,7 +23,10 @@ echo OSTYPE is: $OSTYPE
 echo platform : $platform
 
 value=`curl -s https://api.github.com/repos/ddd-mtl/hash_zome/releases/latest | grep "/hash_zome-x86_64-$platform.tar.gz" | cut -d '"' -f 4`
-echo $value
-wget --directory-prefix=submodules -q $value
+echo Donwloading \'$value\'
+wget --directory-prefix=submodules $value
 
 tar -xvzf submodules/hash_zome-x86_64-$platform.tar.gz -C ./submodules
+echo
+echo ls ./submodules:
+ls submodules
