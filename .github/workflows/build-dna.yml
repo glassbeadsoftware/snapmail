@@ -24,8 +24,14 @@ jobs:
           npm run setup
       # Build happ
       - name: Build happ
+        shell: bash
         run: |
-          npm run build:happ
+          ./scripts/npm/dist-dna.sh
+      # Hash zome
+      - name: Hash zome
+        shell: bash
+        run: |
+          npm run hash-zome
       # list uploads
       - name: list uploads
         continue-on-error: true
