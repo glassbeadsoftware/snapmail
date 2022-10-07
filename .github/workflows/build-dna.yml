@@ -13,15 +13,15 @@ jobs:
         shell: bash # important because this runs shell scripts
         run: |
           npm run ci:hc-install
-      # Install hash-zome binary
-      - name: Hash Zome Install
-        run: |
-          npm run install:hash-zome
       # Download rsm repo
       - name: Download rsm
         shell: bash
         run: |
           npm run setup
+      # Install hash-zome binary
+      - name: Hash Zome Install
+        run: |
+          npm run install:hash-zome
       # Build happ
       - name: Build happ
         shell: bash

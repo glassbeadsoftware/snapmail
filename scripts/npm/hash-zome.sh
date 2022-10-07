@@ -7,7 +7,11 @@ elif [[ "$OSTYPE" == "darwin"* ]]; then
         fileext=""
 fi
 
+echo
+echo ls ./submodules:
 ls ./submodules
+echo
+echo ls ./submodules/snapmail-rsm/target/wasm32-unknown-unknown/release:
 ls ./submodules/snapmail-rsm/target/wasm32-unknown-unknown/release
 
 # Compute hash of the zome
