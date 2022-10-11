@@ -167,7 +167,7 @@ export class SnapmailController extends ScopedElementsMixin(LitElement) {
   //   return 'snapmail-controller';
   // }
 
-  @property()
+  @property({ type: Boolean})
   noTitle: boolean = false;
 
   @property()

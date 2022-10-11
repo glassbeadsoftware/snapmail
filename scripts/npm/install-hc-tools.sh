@@ -9,7 +9,7 @@ cargo install holochain_cli --version 0.0.60
 
 
 ### install wasm32 compilation target
-rustup install 1.61.0
-rustup override set 1.61.0
+#rustup install 1.61.0
+#rustup override set 1.61.0
 
 rustup target install wasm32-unknown-unknown
