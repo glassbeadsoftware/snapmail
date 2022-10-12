@@ -6,12 +6,12 @@ env:
   SNAPMAIL_VERSION: 0.2.1
 
 jobs:
-  call-build-dna:
-    uses: ./.github/workflows/build-dna.yml
+  call-build-webhapps:
+    uses: ./.github/workflows/build-webhapps.yml
 
   # upload the app package for each target os
   upload-assets:
-    needs: call-build-dna
+    needs: call-build-webhapps
     strategy:
       matrix:
         os:

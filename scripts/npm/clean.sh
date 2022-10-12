@@ -2,7 +2,6 @@
 
 # TOP LEVEL
 #rm -rf submodules
-rm -rf out-builder
 rm .hc_live*
 # WEBCOMPONENTS
 rm -rf webcomponents/dist
@@ -13,6 +12,7 @@ rm -rf webapp/out-tsc
 rm webapp/tsconfig.tsbuildinfo
 rm webapp/ui.zip
 # ELECTRON
+rm -rf electron/out-builder
 rm -rf electron/out-tsc
 rm electron/bin/*
 rm electron/web/*.js

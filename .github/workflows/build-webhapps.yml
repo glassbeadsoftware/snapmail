@@ -1,10 +1,10 @@
-name: build-dna
+name: build-webhapps
 
 on:
   workflow_call:
 
 jobs:
-  build-dna:
+  build-webhapps:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2

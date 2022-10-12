@@ -13,7 +13,7 @@ jobs:
           # (required)
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-  build-dna:
+  build-webhapps:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
@@ -39,7 +39,7 @@ jobs:
 
   # upload the app package for each target os
   upload-assets:
-    needs: build-dna
+    needs: build-webhapps
     runs-on: ubuntu-18.04
     name: Build on ubuntu-18.04 arm64
     steps:
