@@ -23,22 +23,25 @@
     "build:webapp"        : "npm run build -w webapp",
     "build:we"            : "npm run build -w we-applet",
     "package"             : "npm run build:webcomponents && npm run build:webapp && npm run package -w webapp",
-    "prepare-test"        : "npm run clean:hc & npm run build:webcomponents && npm run build:webapp",
+    "prepare-test"        : "npm run clean:agents & npm run build:webcomponents && npm run build:webapp",
     "devtest"             : "npm run prepare-test && npm run start:agent",
     "devtest:electron"    : "npm run prepare-test && DEV_MODE='dev' npm run electron -w electron",
     "devtest:we"          : "npm run prepare-test && npm run devtest -w we-applet",
 
+
     "start:happ"          : "RUST_LOG=warn echo \"pass\" | hc s --piped -f=$ADMIN_PORT generate submodules/snapmail.happ --run=$HC_PORT -a snapmail network mdns",
     "start:happ-proxied"  : "RUST_LOG=warn echo \"pass\" | hc s --piped -f=$ADMIN_PORT generate submodules/snapmail.happ --run=$HC_PORT -a snapmail network --bootstrap https://bootstrap-staging.holo.host/ quic -p=kitsune-proxy://SYVd4CF3BdJ4DS7KwLLgeU3_DbHoZ34Y-qroZ79DOs8/kitsune-quic/h/165.22.32.11/p/5779/--",
     "start"               : "npm run build:happ && npm run start:agent",
-    "start:agent"         : "DEV_MODE='dev' HC_PORT=$(port) ADMIN_PORT=$(port) concurrently \"npm run start:happ-proxied\" \"sleep 10 && npm run start -w webapp\"",
+    "start:agent"         : "DEV_MODE='dev' HC_PORT=$(port) ADMIN_PORT=$(port) concurrently \"npm run start:happ-proxied\" \"sleep 8 && npm run start -w webapp\"",
+    "restart:agent"       : "DEV_MODE='dev' HC_PORT=$(port) ADMIN_PORT=$(port) concurrently \"npm run restart:happ\" \"sleep 8 && npm run start -w webapp\"",
+    "restart:happ"        : "RUST_LOG=warn echo \"pass\" | hc s --piped -f=$ADMIN_PORT run $SINDEX -p=$HC_PORT",
     "network"             : "npm run build:happ && concurrently-repeat \"npm run start:agent\"",
     "dist:webhapp"        : "npm run package -w webapp && npm run dist:webhapp -w webapp",
     "dist:we"             : "npm run package -w webapp && npm run package -w we-applet",
     "dist:win"            : "bash scripts/copy-binaries.sh && npm run dist:win -w electron",
     "clean"               : "npm run clean:npm && bash scripts/npm/clean.sh",
     "clean:npm"           : "bash scripts/npm/clean-npm.sh",
-    "clean:hc"            : "rm -rf .hc*"
+    "clean:agents"        : "rm -rf .hc*"
   },
   "devDependencies": {
     "@holochain-playground/cli": "^0.0.11",
