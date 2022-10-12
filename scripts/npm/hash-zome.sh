@@ -7,15 +7,16 @@ elif [[ "$OSTYPE" == "darwin"* ]]; then
         fileext=""
 fi
 
-echo
-echo ls ./submodules:
-ls ./submodules
-echo
-echo ls ./submodules/snapmail-rsm/target/wasm32-unknown-unknown/release:
-ls ./submodules/snapmail-rsm/target/wasm32-unknown-unknown/release
+binary=./hash_zome$fileext
+
+# Check if tool needs to be installed
+if [ ! -f $binary ] ; then
+  echo $binary not found. Installing...
+  ./scripts/download-hash-zome.sh
+fi
 
 # Compute hash of the zome
-value=`./submodules/hash_zome$fileext ./submodules/snapmail-rsm/target/wasm32-unknown-unknown/release/snapmail_model.wasm`
+value=`$binary ./submodules/snapmail-rsm/target/wasm32-unknown-unknown/release/snapmail_model.wasm`
 if [ "$value" == "" ]
 then
   echo hash_zome failed

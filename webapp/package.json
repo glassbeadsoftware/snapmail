@@ -7,7 +7,7 @@
     "todo:prebuild": "node -p \"'export const LIB_VERSION = ' + JSON.stringify(require('./package.json').version) + ';'\" > src/version.ts",
     "build": "rm -rf dist && tsc && rollup -c rollup.config.js && cd dist && cp * ../../electron/web",
     "build:watch": "run-singleton \"tsc -w --incremental --preserveWatchOutput\"",
-    "start": "concurrently --names tsc,dev-server \"npm run build:watch\" \"web-dev-server --config ./web-dev-server.config.mjs\"",
+    "start": "web-dev-server --config ./web-dev-server.config.mjs",
     "package": "rm -rf ui.zip && cd dist && bestzip ../ui.zip *",
     "dist:webhapp": " hc web-app pack ./webhapp.workdir"
   },

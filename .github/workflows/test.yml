@@ -47,7 +47,6 @@ jobs:
         shell: bash
         run: |
           npm install
-          ./scripts/copy-binaries.sh
       # build webcomponents
       - name: build webcomponents
         shell: bash
