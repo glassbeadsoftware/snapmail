@@ -29,38 +29,25 @@ jobs:
       ##  with:
       ##    fileName: 'win-certificate.pfx'
       ##    encodedString: ${{ secrets.CERTIFICATE_WINDOWS_PFX }}
-      # Download rsm repo
-      - name: Download rsm repo
-        shell: bash # important because this runs shell scripts
+      # Download previously uploaded artifacts
+      - uses: actions/download-artifact@master
+        with:
+          name: all-happ-artifact
+      # Display structure of downloaded files
+      - name: Display structure of downloaded files
+        run: ls
+        working-directory: ./
+      # Dispatch artifacts
+      - name: Dispatch artifacts
         run: |
-          npm run setup
-      # Download previously uploaded artifacts and display them in logs
-      - uses: actions/download-artifact@master
-        with:
-          name: snapmail-dna-artifact
-          path: submodules
-      - uses: actions/download-artifact@master
-        with:
-          name: snapmail-happ-artifact
-          path: submodules
-      - uses: actions/download-artifact@master
-        with:
-          name: snapmail-happ-artifact
-          path: electron/bin
-      - uses: actions/download-artifact@master
-        with:
-          name: model-hash-artifact
-          path: electron/bin
-      # list submodules
-      - name: list submodules
-        continue-on-error: true
-        run: ls
-        working-directory: submodules
-      # list electron/bin
-      - name: list electron/bin
-        continue-on-error: true
-        run: ls
-        working-directory: electron/bin
+          cp ./snapmail.happ ./electron/bin
+          cp ./model_zome_hash.txt ./electron/bin
+      # Install nodejs dependencies
+      - name: Install nodejs dependencies
+        shell: bash
+        run: |
+          npm run install
+          ./scripts/copy-binaries.sh
       # build webcomponents
       - name: build webcomponents
         shell: bash
@@ -76,30 +63,6 @@ jobs:
         shell: bash
         run: |
           npm run build -w electron
-      # install hc tool (linux)
-      - name: Install hc tool and wasm target
-        if: ${{ runner.os == 'Linux' }}
-        shell: bash # important because this runs shell scripts
-        run: |
-          npm run ci:hc-install
-      # build webhapp (linux)
-      - name: build webhapp
-        if: ${{ runner.os == 'Linux' }}
-        shell: bash
-        run: |
-          npm run dist:webhapp
-      # Build we-applet (linux)
-      - name: build we-applet
-        if: ${{ runner.os == 'Linux' }}
-        shell: bash
-        run: |
-          npm run build -w we-applet
-      # Package we-applet (linux)
-      - name: Package we-applet
-        if: ${{ runner.os == 'Linux' }}
-        shell: bash
-        run: |
-          npm run package -w we-applet
       # Setup sign & notarize
       - name: Setup sign and notarize (macos only)
         if: ${{ runner.os == 'macOs' }}
@@ -107,8 +70,8 @@ jobs:
         with:
           p12-file-base64: ${{ secrets.HBE_APPLE_CERTIFICATE_BASE64 }}
           p12-password: ${{ secrets.HBE_APPLE_CERTIFICATE_PASS }}
-      # Build installers and binaries
-      - name: dist snapmail
+      # Dist Electron
+      - name: Dist Electron
         shell: bash
         env:
           #WIN_CSC_LINK: ${{ steps.write_file.outputs.filePath }}
@@ -135,10 +98,14 @@ jobs:
         if: ${{ runner.os == 'Linux' }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          gh release upload "workflow-test" "webapp/webhapp.workdir/snapmail.webhapp" --clobber
-          gh release upload "workflow-test" "we-applet/webhapp.workdir/snapmail-applet.webhapp" --clobber          
+        run: |       
           gh release upload "workflow-test" "electron/out-builder/Snapmail-$SNAPMAIL_VERSION.AppImage" --clobber
+          gh release upload "workflow-test" "we-applet/webhapp.workdir/snapmail_we-applet.webhapp" --clobber             
+          gh release upload "workflow-test" "webapp/webhapp.workdir/snapmail.webhapp" --clobber
+          gh release upload "workflow-test" "./snapmail.happ" --clobber
+          gh release upload "workflow-test" "./snapmail.dna" --clobber
+          gh release upload "workflow-test" "./snapmail.wasm" --clobber
+          gh release upload "workflow-test" "./snapmail_model.wasm" --clobber
       - name: upload binary (macos only)
         if: ${{ runner.os == 'macOs' }}
         env:

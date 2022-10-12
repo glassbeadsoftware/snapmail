@@ -32,23 +32,50 @@ jobs:
         shell: bash
         run: |
           npm run hash-zome
-      # list uploads
-      - name: list uploads
+      # Setup npm
+      - name: Install nodejs dependencies
+        run: |
+          npm install
+      # Build webapp
+      - name: Build webapp
+        run: |
+          npm run prepare-test
+      # Package web-happ
+      - name: Package web-happ
+        run: |
+          npm run dist:webhapp
+      # build we-applet
+      - name: build we-applet
+        shell: bash
+        run: |
+          npm run build:we
+      # Package we-applet
+      - name: Package we-applet
+        shell: bash
+        run: |
+          npm run dist:we
+      # List submodules
+      - name: List submodules
         continue-on-error: true
         run: ls
         working-directory: submodules
-      # "upload" dna as build artifact
+      # Regroup artifacts
+      - name: Regroup artifacts
+        run: |
+          mkdir artifacts
+          cp electron/bin/model_zome_hash.txt ./artifacts          
+          cp submodules/snapmail-rsm/target/wasm32-unknown-unknown/release/snapmail_model.wasm ./artifacts
+          cp submodules/snapmail-rsm/target/wasm32-unknown-unknown/release/snapmail.wasm ./artifacts
+          cp submodules/snapmail.dna ./artifacts
+          cp submodules/snapmail.happ ./artifacts                   
+          cp webapp/webhapp.workdir/snapmail.webhapp ./artifacts
+          cp we-applet/webhapp.workdir/snapmail_we-applet.webhapp ./artifacts
+      # List uploaded files
+      - name: List uploaded files
+        run: ls -R
+        working-directory: ./artifacts
+      # "upload" artifacts
       - uses: actions/upload-artifact@master
         with:
-          name: snapmail-dna-artifact
-          path: submodules/snapmail.dna
-      # "upload" happ as build artifact
-      - uses: actions/upload-artifact@master
-        with:
-          name: snapmail-happ-artifact
-          path: submodules/snapmail.happ
-      # "upload" zome_hash as build artifact
-      - uses: actions/upload-artifact@master
-        with:
-          name: model-hash-artifact
-          path: electron/bin/model_zome_hash.txt
+          name: all-happ-artifact
+          path: artifacts/
