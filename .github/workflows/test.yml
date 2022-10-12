@@ -46,7 +46,7 @@ jobs:
       - name: Install nodejs dependencies
         shell: bash
         run: |
-          npm run install
+          npm install
           ./scripts/copy-binaries.sh
       # build webcomponents
       - name: build webcomponents
