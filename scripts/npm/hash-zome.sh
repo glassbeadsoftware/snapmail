@@ -7,12 +7,12 @@ elif [[ "$OSTYPE" == "darwin"* ]]; then
         fileext=""
 fi
 
-binary=./hash_zome$fileext
+binary=./submodules/hash_zome$fileext
 
 # Check if tool needs to be installed
 if [ ! -f $binary ] ; then
   echo $binary not found. Installing...
-  ./scripts/download-hash-zome.sh
+  ./scripts/npm/install-hash-zome.sh
 fi
 
 # Compute hash of the zome
