@@ -65,10 +65,7 @@ See [snapmail-rsm](https://github.com/glassbeadsoftware/snapmail-rsm) for holoch
 
 ### Toolchain
 
-webpack
-Typescript
-electron-holochain
-electron-builder
+cargo, npm, rollup, typescript, eslint
 
 ## Project structure
 
@@ -79,8 +76,10 @@ electron-builder
 | &nbsp;&nbsp;&nbsp;&nbsp;`src/`             | The electron app source code
 | &nbsp;&nbsp;&nbsp;&nbsp;`web/`             | Final artifacts for the electron app (includes output from `ui`)
 | &nbsp;&nbsp;&nbsp;&nbsp;`bin/`             | All the binaries we are dependent on and must ship with the app
+| `/scripts/`                                | Various shell scripts for building, testing, releasing
 | `/submodules/`                             | Temp folder for the code dependencies (snapmail-rsm)
-| `/webapp/`                                 | The Snapmail webapp source code
-| &nbsp;&nbsp;&nbsp;&nbsp;`webhapp.workdir/` | webhapp work directory
-| `/webcomponents/`                          | The web components source code
-| `/we-applet/`                              | The applet for We integration
+| `/we-applet/`                              | We-applet source code
+| &nbsp;&nbsp;&nbsp;&nbsp;`webhapp.workdir/` | "we-applet" webhapp work directory
+| `/webapp/`                                 | Webapp source code. Used by electron app
+| &nbsp;&nbsp;&nbsp;&nbsp;`webhapp.workdir/` | "Normal" webhapp work directory
+| `/webcomponents/`                          | Source code of the web components to be used by the webapps
