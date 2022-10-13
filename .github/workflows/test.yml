@@ -47,16 +47,11 @@ jobs:
         shell: bash
         run: |
           npm install
-      # build webcomponents
-      - name: build webcomponents
+      # build & package webapp
+      - name: build & package webapp
         shell: bash
         run: |
-          npm run build:webcomponents
-      # build webapp
-      - name: build webapp
-        shell: bash
-        run: |
-          npm run build:webapp
+          npm run package
       # build electron
       - name: build electron
         shell: bash

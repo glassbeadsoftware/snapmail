@@ -67,16 +67,11 @@ jobs:
         continue-on-error: true
         run: ls
         working-directory: electron/bin
-      # build webcomponents
-      - name: build webcomponents
+      # build & package webapp
+      - name: build & package webapp
         shell: bash
         run: |
-          npm run build:webcomponents
-      # build webapp
-      - name: build webapp
-        shell: bash
-        run: |
-          npm run build:webapp
+          npm run package
       # build electron
       - name: build electron
         shell: bash
