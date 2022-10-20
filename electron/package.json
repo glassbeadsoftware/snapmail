@@ -15,8 +15,8 @@
   },
   "scripts": {
     "postinstall": "electron-builder install-app-deps",
-    "build": "tsc",
     "lint": "eslint --ext .ts src",
+    "build": "tsc",
     "electron": "tsc && WASM_LOG=debug RUST_BACKTRACE=1 RUST_LOG=debug DEV_MODE='dev' ELECTRON_DEBUG_NOTIFICATIONS=true ELECTRON_DEFAULT_ERROR_MODE=true ELECTRON_ENABLE_LOGGING=true ELECTRON_ENABLE_STACK_DUMPING=true electron . default --disable-gpu --disable-software-rasterizer",
     "electron-dev": "tsc && WASM_LOG=debug RUST_BACKTRACE=1 RUST_LOG=debug DEV_MODE='dev' && electron . dev --no-sandbox",
     "alex": "tsc && ./node_modules/.bin/electron . alex --no-sandbox",

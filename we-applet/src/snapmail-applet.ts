@@ -48,17 +48,12 @@ export class SnapmailApplet extends ScopedElementsMixin(LitElement) {
       return html`<span>Loading...</span>`;
     }
     return html`
-        <div class="flex-scrollable-parent">
-            <div class="flex-scrollable-container">
-                <div class="flex-scrollable-y">        
-                   <snapmail-controller
-                           noTitle
-                           .cellId=${this._cellId}
-                           .hcClient=${this._hcClient}
-                   ></snapmail-controller>
-                </div>
-            </div>
-        </div>                  
+      <snapmail-controller
+             noTitle
+             .cellId=${this._cellId}
+             .hcClient=${this._hcClient}
+             style="flex:1; display:flex;height: 100%;"
+      ></snapmail-controller>
     `;
   }
 
@@ -73,27 +68,7 @@ export class SnapmailApplet extends ScopedElementsMixin(LitElement) {
 
   /** */
   static get styles() {
-    return css`
-      .flex-scrollable-parent {
-        position: relative;
-        display: flex;
-        flex: 1;
-      }
-      .flex-scrollable-container {
-        position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-      }
-      .flex-scrollable-x {
-        max-width: 100%;
-        overflow-x: auto;
-      }
-      .flex-scrollable-y {
-        max-height: 100%;
-        /*overflow-y: auto;*/
-      }`
+    return css``
   }
 
 }

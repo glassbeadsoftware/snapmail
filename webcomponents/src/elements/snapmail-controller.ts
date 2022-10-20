@@ -1960,7 +1960,7 @@ export class SnapmailController extends ScopedElementsMixin(LitElement) {
         <vaadin-dialog no-close-on-esc no-close-on-outside-click id="editGroupDlg"></vaadin-dialog>
 
         <!-- MAIN VERTICAL LAYOUT -->
-        <vaadin-vertical-layout theme="spacing-s" style="display:none; height:100%;gap: 0;" id="mainPage">
+        <vaadin-vertical-layout theme="spacing-s" style="flex:1; display:none; height:100%; gap:0;" id="mainPage">
 
             <!-- TITLE BAR -->
             <vaadin-horizontal-layout id="titleLayout" theme="spacing-xs" style="background-color:beige; width:100%;">
@@ -1991,7 +1991,7 @@ export class SnapmailController extends ScopedElementsMixin(LitElement) {
                 <!-- Split between filebox and Inmail -->
                 <vaadin-split-layout orientation="vertical" style="width:100%; height:50%; margin-top:0px;">
                     <!-- FILEBOX AREA -->
-                    <vaadin-grid id="mailGrid" theme="compact" style="min-height:50px; margin-top:0;">
+                    <vaadin-grid id="mailGrid" theme="compact" style="min-height:50px; margin-top:0;height: auto;">
                         <!--  <vaadin-grid-selection-column width="2em" auto-select></vaadin-grid-selection-column>-->
                         <vaadin-grid-column path="id" header="id" width="0em" hidden></vaadin-grid-column>
                         <!-- <vaadin-grid-column header="A" width="60px" flex-grow="0" text-align="end"></vaadin-grid-column>-->

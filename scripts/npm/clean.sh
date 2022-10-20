@@ -6,6 +6,14 @@ rm .hc_live*
 # WEBCOMPONENTS
 rm -rf webcomponents/dist
 rm webcomponents/tsconfig.tsbuildinfo
+# WE-APPLET
+rm -rf we-applet/.rollup.cache/
+rm -rf we-applet/out-tsc/
+rm we-applet/dist/*.js
+rm we-applet/dist/*.map
+rm we-applet/.hc*
+rm we-applet/tsconfig.tsbuildinfo
+rm we-applet/webhapp.workdir/snapmail_we-applet.webhapp
 # WEB-APP
 rm -rf webapp/dist
 rm -rf webapp/out-tsc
