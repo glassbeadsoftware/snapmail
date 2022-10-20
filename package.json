@@ -36,9 +36,10 @@
     "dist:webhapp"        : "npm run build:devtest && npm run package -w webapp",
     "dist:we"             : "npm run build:devtest && npm run build -w we-applet && npm run package -w we-applet",
     "dist:win"            : "bash scripts/copy-binaries.sh && npm run dist:win -w electron",
-    "clean"               : "npm run clean:npm && bash scripts/npm/clean.sh",
+    "clean"               : "bash scripts/npm/clean.sh",
     "clean:npm"           : "bash scripts/npm/clean-npm.sh",
-    "clean:agents"        : "rm -rf .hc*"
+    "clean:agents"        : "rm -rf .hc*",
+    "clean:all"           : "npm run clean:agents && npm run clean:npm && npm run clean"
   },
   "devDependencies": {
     "@holochain-playground/cli": "^0.0.11",
