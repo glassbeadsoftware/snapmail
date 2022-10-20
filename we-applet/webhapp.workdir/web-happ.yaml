@@ -1,7 +1,7 @@
 ---
 manifest_version: "1"
-name: snapmail_we-applet
+name: snapmail-we_applet
 ui:
-  bundled: "../ui-applet.zip"
+  bundled: "../snapmail-we_applet-ui.zip"
 happ_manifest:
   bundled: "../../submodules/snapmail.happ"

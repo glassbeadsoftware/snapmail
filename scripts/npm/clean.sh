@@ -13,12 +13,12 @@ rm we-applet/dist/*.js
 rm we-applet/dist/*.map
 rm we-applet/.hc*
 rm we-applet/tsconfig.tsbuildinfo
-rm we-applet/webhapp.workdir/snapmail_we-applet.webhapp
+rm we-applet/webhapp.workdir/snapmail-we_applet.webhapp
 # WEB-APP
 rm -rf webapp/dist
 rm -rf webapp/out-tsc
 rm webapp/tsconfig.tsbuildinfo
-rm webapp/ui.zip
+rm webapp/snapmail-web-ui.zip
 # ELECTRON
 rm -rf electron/out-builder
 rm -rf electron/out-tsc

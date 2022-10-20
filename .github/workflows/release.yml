@@ -67,11 +67,11 @@ jobs:
         continue-on-error: true
         run: ls
         working-directory: electron/bin
-      # build & package webapp
-      - name: build & package webapp
+      # build webapp
+      - name: build webapp
         shell: bash
         run: |
-          npm run package
+          npm run build:devtest
       # build electron
       - name: build electron
         shell: bash
@@ -109,8 +109,9 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           gh release upload "${GITHUB_REF#refs/tags/}" "electron/out-builder/Snapmail-$SNAPMAIL_VERSION.AppImage" --clobber
-          gh release upload "${GITHUB_REF#refs/tags/}" "webapp/ui.zip" --clobber
-          gh release upload "${GITHUB_REF#refs/tags/}" "snapmail_we-applet.webhapp" --clobber            
+          gh release upload "${GITHUB_REF#refs/tags/}" "snapmail-web-ui.zip" --clobber
+          gh release upload "${GITHUB_REF#refs/tags/}" "snapmail-we_applet-ui.zip" --clobber          
+          gh release upload "${GITHUB_REF#refs/tags/}" "snapmail-we_applet.webhapp" --clobber            
           gh release upload "${GITHUB_REF#refs/tags/}" "snapmail.webhapp" --clobber
           gh release upload "${GITHUB_REF#refs/tags/}" "snapmail.happ" --clobber
           gh release upload "${GITHUB_REF#refs/tags/}" "snapmail.dna" --clobber
