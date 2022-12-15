@@ -1,12 +1,10 @@
 import {htos} from './utils'
 
-import {
-  ContactGridItem,
-  FileManifest,
-} from "./types";
+import {FileManifest} from "./bindings/snapmail";
+import {ContactGridItem} from "./snapmail.perspective";
 import {AppSignal} from "@holochain/client/lib/api/app/types";
 import {Notification} from "@vaadin/notification";
-import {SnapmailController} from "./elements/snapmail-controller";
+import {SnapmailPage} from "./elements/snapmail-page";
 
 /** -- APP SETUP -- **/
 /* @ts-ignore */
@@ -41,14 +39,14 @@ if (DEV_MODE !== 'dev') {
 /** -- GLOBAL CONTROLLER -- **/
 /** Need a way to get the controller in callbacks */
 
-export let g_controller: SnapmailController | null = null;
+export let g_controller: SnapmailPage | null = null;
 
 
-export function setController(controller: SnapmailController) {
+export function setController(controller: SnapmailPage) {
   g_controller = controller
 }
 
-export function getController(): SnapmailController {
+export function getController(): SnapmailPage {
   console.assert(g_controller)
   return g_controller!;
 }

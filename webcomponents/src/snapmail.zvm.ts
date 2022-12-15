@@ -4,66 +4,15 @@ import {ActionHash, AgentPubKey, CellId, EntryHash } from '@holochain/client';
 import {AgnosticClient} from '@holochain-open-dev/cell-client';
 //import { EntryHashB64, ActionHashB64, AgentPubKeyB64 } from '@holochain-open-dev/core-types';
 import { htos } from './utils';
-import {MailItem, SendMailInput} from "./types";
+import {MailItem, SendMailInput} from "./bindings/snapmail";
 
 
 const DEFAULT_TIMEOUT = 9999
 
-// let g_adminWs: AdminWebsocket
-
-// /** Default signal callback */
-// const receiveSignal = (signal: AppSignal) => {
-//   // impl...
-//   console.log('Received signal:')
-//   console.log({signal})
-//   //resolve()
-// }
-
-
-//
-// export async function rsmConnectAdmin() {
-//   g_adminWs = await AdminWebsocket.connect(ADMIN_URL, DEFAULT_TIMEOUT)
-//   console.log('*** Connected to RSM Admin: ' + JSON.stringify(g_adminWs))
-//   // g_adminWs.generateAgentPubKey().then((newKey) => {
-//   //     g_newKey = newKey
-//   //     console.log({newKey})
-//   //     printAdmin()
-//   // })
-// }
-
-
-
-// /** */
-// const printAdmin = () => {
-//   console.log("printAdmin:")
-//   g_adminWs.listDnas().then((dnaList) => {
-//     console.log({dnaList})
-//   })
-//   g_adminWs.listCellIds().then((cellList) => {
-//     console.log({cellList})
-//   })
-//   g_adminWs.listActiveApps().then((appList) => {
-//     console.log({appList})
-//   })
-// }
-
-
-// /** */
-// async dumpState(cellId: CellId) {
-//   if (g_adminWs === undefined) {
-//     console.log('dumpState() aborted: g_adminWs undefined')
-//     //resolve()
-//     return
-//   }
-//   const stateDump = await g_adminWs.dumpState({cell_id: cellId})
-//   console.log('stateDump of cell:')
-//   console.log({stateDump})
-// }
-
 
 
 /** */
-export class DnaBridge {
+export class SnapmailZvm {
   constructor(public client: AgnosticClient, public mainCellId: CellId) {
   }
 

@@ -5,7 +5,7 @@ import { ScopedElementsMixin } from "@open-wc/scoped-elements";
 //import {CellId} from "@holochain/client";
 import {HolochainClient} from "@holochain-open-dev/cell-client";
 import {AppWebsocket, CellId} from "@holochain/client";
-import {SnapmailController, HC_PORT, ELECTRON_API, NETWORK_ID, APP_ID} from "@snapmail/elements";
+import {SnapmailPage, HC_PORT, ELECTRON_API, NETWORK_ID, APP_ID} from "@snapmail/elements";
 
 /** */
 export class SnapmailApp extends ScopedElementsMixin(LitElement) {
@@ -46,10 +46,10 @@ export class SnapmailApp extends ScopedElementsMixin(LitElement) {
       return html`<span>Loading...</span>`;
     }
     return html`
-       <snapmail-controller
+       <snapmail-page
                .cellId=${this._cellId}
                .hcClient=${this._hcClient}
-       ></snapmail-controller>
+       ></snapmail-page>
     `;
   }
 
@@ -57,7 +57,7 @@ export class SnapmailApp extends ScopedElementsMixin(LitElement) {
   /** */
   static get scopedElements() {
     return {
-      "snapmail-controller": SnapmailController,
+      "snapmail-page": SnapmailPage,
     };
   }
 }

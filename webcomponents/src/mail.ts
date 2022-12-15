@@ -5,7 +5,8 @@
 import {AgentPubKey} from "@holochain/client";
 
 import {htos} from './utils'
-import {InMailState, MailItem, OutMailState, UsernameMap} from "./types";
+//import {MailItem} from "./bindings/snapmail";
+import {MailItemMat, UsernameMap} from "./snapmail.perspective";
 import {DEV_MODE} from "./snapmail";
 
 const checkMarkEmoji = String.fromCodePoint(0x2714); //FE0F
@@ -25,7 +26,7 @@ export const systemFolders = {
 
 
 /** Return True if mail has been deleted */
-export function isMailDeleted(mailItem: MailItem): boolean {
+export function isMailDeleted(mailItem: MailItemMat): boolean {
   const state = mailItem.state;
   if (state.In) {
     return state.In.hasOwnProperty('Deleted')
@@ -39,7 +40,7 @@ export function isMailDeleted(mailItem: MailItem): boolean {
 
 
 /** Return True if mail is an OutMail */
-export function is_OutMail(mailItem: MailItem): boolean {
+export function is_OutMail(mailItem: MailItemMat): boolean {
   const state = mailItem.state;
   if (state.In) {
     return false;
@@ -71,7 +72,7 @@ export function is_OutMail(mailItem: MailItem): boolean {
 
 
 /** Return mailItem class */
-export function determineMailCssClass(mailItem: MailItem): string {
+export function determineMailCssClass(mailItem: MailItemMat): string {
   const state = mailItem.state;
   if (state.Out) {
     // if (state.Out.hasOwnProperty('Unsent')) return ''; // 'pending';
@@ -134,7 +135,7 @@ function getUsername(usernameMap: UsernameMap, agentHash: Uint8Array): string {
 
 
 /** Determine which Username to display (recipient or author) */
-function determineFromLine(usernameMap: UsernameMap, mailItem: MailItem): string {
+function determineFromLine(usernameMap: UsernameMap, mailItem: MailItemMat): string {
   /* Outmail special case */
   if (mailItem.state.Out) {
     if (mailItem.mail.to.length > 0) {
@@ -150,7 +151,7 @@ function determineFromLine(usernameMap: UsernameMap, mailItem: MailItem): string
 
 
 /** Return mailItem status icon */
-export function determineMailStatus(mailItem: MailItem): string {
+export function determineMailStatus(mailItem: MailItemMat): string {
   //console.log('determineMailClass()? ' + JSON.stringify(mailItem.state));
   const state = mailItem.state;
   if (state.Out) {
@@ -170,7 +171,7 @@ export function determineMailStatus(mailItem: MailItem): string {
 
 
 /** */
-export function into_gridItem(usernameMap: UsernameMap, mailItem: MailItem) {
+export function into_gridItem(usernameMap: UsernameMap, mailItem: MailItemMat) {
   /* username */
   // console.log('into_gridItem: ' + htos(mailItem.author) + ' username: ' + username);
   const username = determineFromLine(usernameMap, mailItem);
@@ -195,7 +196,7 @@ export function into_gridItem(usernameMap: UsernameMap, mailItem: MailItem) {
 
 
 /** */
-export function into_mailText(usernameMap: UsernameMap, mailItem: MailItem): string {
+export function into_mailText(usernameMap: UsernameMap, mailItem: MailItemMat): string {
   let intext = 'Subject: ' + mailItem.mail.subject + '\n\n'
     + mailItem.mail.payload + '\n\n'
     + 'Mail from: ' + usernameMap.get(htos(mailItem.author)) + ' at ' + customDateString(mailItem.date);

@@ -1,13 +1,8 @@
 
 import { ActionHash, AgentPubKey, EntryHash } from '@holochain/client';
+import {Mail} from "./bindings/snapmail";
 
 export type UsernameMap = Map<string, string>;
-
-export interface HandleItem {
-  name: string,
-  agentId: AgentPubKey,
-  handle_eh: EntryHash,
-}
 
 
 export interface InMailState {
@@ -41,11 +36,11 @@ export interface MailState {
   Out?: OutMailState,
 }
 
-export interface MailItem {
+export interface MailItemMat {
   ah: ActionHash,
   /** OutMail = reply_of ; InMail = reply */
-  reply?: ActionHash | null,
-  reply_of?: ActionHash | null,
+  reply?: ActionHash,
+  reply_of?: ActionHash,
   author: AgentPubKey,
   mail: Mail,
   state: MailState,
@@ -55,52 +50,6 @@ export interface MailItem {
   status?: string,
 }
 
-
-export interface Mail {
-  date_sent: number,
-  subject: string,
-  payload: string,
-  to: AgentPubKey[],
-  cc: AgentPubKey[],
-  attachments: AttachmentInfo[],
-}
-
-
-export interface AttachmentInfo {
-  manifest_eh: EntryHash,
-  data_hash: string,
-  filename: string,
-  filetype: string,
-  orig_filesize: number,
-}
-
-
-export interface SendMailInput {
-  subject: string,
-  payload: string,
-  reply_of: ActionHash | null,
-  to: Uint8Array[],
-  cc: Uint8Array[],
-  bcc: Uint8Array[],
-  manifest_address_list: ActionHash[],
-}
-
-
-export interface FileManifest {
-  data_hash: string,
-  filename: string,
-  filetype: string,
-  orig_filesize: number,
-  chunks: EntryHash[],
-  content?: string
-}
-
-
-export interface FileChunk {
-  data_hash: string,
-  chunk_index: number,
-  chunk: string,
-}
 
 
 export interface ContactGridItem {

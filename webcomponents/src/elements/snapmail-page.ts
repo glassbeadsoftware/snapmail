@@ -47,8 +47,11 @@ import {AgentPubKey} from "@holochain/client/lib/types";
 import {HolochainClient} from "@holochain-open-dev/cell-client";
 /** my imports */
 import {
-  ContactGridItem, FileManifest, HandleItem, Mail, MailGridItem, MailItem, SendMailInput, UsernameMap
-} from "../types";
+  ContactGridItem, MailGridItem, MailItemMat, UsernameMap
+} from "../snapmail.perspective";
+import {
+  FileManifest, HandleItem, Mail, SendMailInput
+} from "../bindings/snapmail";
 import {arrayBufferToBase64, base64ToArrayBuffer, splitFile,  htos, stoh} from "../utils";
 import {
   customDateString,
@@ -73,7 +76,7 @@ import {
   onEverySec
 } from "../snapmail"
 
-import {DnaBridge} from "../dna_bridge";
+import {SnapmailZvm} from "../snapmail.zvm";
 
 
 /** ----- */
@@ -157,18 +160,15 @@ const whiteDot  = String.fromCodePoint(0x26AA);
 const SYSTEM_GROUP_LIST = ['All', 'new...'];
 
 
-/** @element snapmail-controller */
-export class SnapmailController extends ScopedElementsMixin(LitElement) {
+/** @element snapmail-page */
+export class SnapmailPage extends ScopedElementsMixin(LitElement) {
   constructor() {
     super();
   }
 
-  // static get is() {
-  //   return 'snapmail-controller';
-  // }
 
-  @property({ type: Boolean})
-  noTitle: boolean = false;
+  @property()
+  noTitle = false;
 
   @property()
   cellId: CellId | null = null;
@@ -178,7 +178,7 @@ export class SnapmailController extends ScopedElementsMixin(LitElement) {
 
   /** -- */
 
-  private _dna: DnaBridge | null = null;
+  private _dna: SnapmailZvm | null = null;
   private _dnaIdB64 = '';
   private _myAgentId: AgentPubKey | null = null;
   private _myHandle = '<unknown>';
@@ -187,7 +187,7 @@ export class SnapmailController extends ScopedElementsMixin(LitElement) {
   private _currentMailItem?: MailGridItem;
   private _currentFolder = '';
   private _currentGroup = '';
-  private _replyOf: ActionHash | null = null;
+  private _replyOf?: ActionHash;
 
   private _allContactItems: ContactGridItem[] = [];
   private _selectedContactIdB64s: string[] = [];
@@ -208,7 +208,7 @@ export class SnapmailController extends ScopedElementsMixin(LitElement) {
   /* Map of (agentIdB64 -> bool) */
   _responseMap: Map<string, boolean> = new Map();
   /* Map of (mailId -> mailItem) */
-  _mailMap: Map<string, MailItem> = new Map();
+  _mailMap: Map<string, MailItemMat> = new Map();
   /** groupname -> agentIdB64[]  */
   private _groupMap: Map<string, string[]> = new Map();
 
@@ -574,7 +574,7 @@ export class SnapmailController extends ScopedElementsMixin(LitElement) {
       //console.error(err);
       return;
     }
-    const mailList: MailItem[] = callResult;
+    const mailList: MailItemMat[] = callResult;
 
     /** Get currently selected hashs */
     const prevSelected = [];
@@ -829,7 +829,7 @@ export class SnapmailController extends ScopedElementsMixin(LitElement) {
       }
       /* -- Handle 'Trash' -- */
       if (e.detail.value.text === 'Trash') {
-        controller._replyOf = null;
+        controller._replyOf = undefined;
         controller._dna!.deleteMail(controller._currentMailItem!.id)
           .then((/*maybeAh: ActionHash | null*/) => controller.getAllMails()) // On delete, refresh filebox
         controller.mailGridElem.selectedItems = [];
@@ -969,7 +969,7 @@ export class SnapmailController extends ScopedElementsMixin(LitElement) {
     folderCombo.addEventListener('change', function(event:any) {
       controller.mailGridElem.selectedItems = [];
       controller.mailGridElem.activeItem = null;
-      controller._replyOf = null;
+      controller._replyOf = undefined;
       controller.update_mailGrid(event.target.value)
       controller._currentFolder = event.target.value;
       controller.disableDeleteButton(true)
@@ -982,7 +982,7 @@ export class SnapmailController extends ScopedElementsMixin(LitElement) {
     /** Display bold if mail not acknowledged */
     this.mailGridElem.cellClassNameGenerator = function(column, rowData:any) {
       let classes = '';
-      const mailItem: MailItem = controller._mailMap.get(htos(rowData.item.id))!;
+      const mailItem: MailItemMat = controller._mailMap.get(htos(rowData.item.id))!;
       classes += determineMailCssClass(mailItem!);
       // let is_old = hasMailBeenOpened(mailItem);
       // //console.log('answer: ' + is_old);
@@ -995,7 +995,7 @@ export class SnapmailController extends ScopedElementsMixin(LitElement) {
     /** On item select: Display in inMailArea */
     this.mailGridElem.addEventListener('active-item-changed', function(event:any) {
       console.log('mailgrid Event: active-item-changed');
-      controller._replyOf = null;
+      controller._replyOf = undefined;
       const item = event.detail.value;
       controller.mailGridElem.selectedItems = item ? [item] : [];
       if (!item) {
@@ -1449,7 +1449,7 @@ export class SnapmailController extends ScopedElementsMixin(LitElement) {
       mailItem.reply = outmail_hh;
       this._mailMap.set(replyOfStr, mailItem);
     }
-    this._replyOf = null;
+    this._replyOf = undefined;
     this.outMailSubjectElem.value = '';
     this.outMailContentElem.value = '';
     this.updateContacts(true);
@@ -1827,7 +1827,7 @@ export class SnapmailController extends ScopedElementsMixin(LitElement) {
     try {
       //const cellId = await DNA.rsmConnectApp(this.handleSignal)
       this.hcClient!.addSignalHandler(handleSignal)
-      this._dna = new DnaBridge(this.hcClient!, this.cellId!)
+      this._dna = new SnapmailZvm(this.hcClient!, this.cellId!)
 
       const dnaId = htos(this.cellId![0]);
       this._dnaIdB64 = dnaId;
@@ -1936,12 +1936,6 @@ export class SnapmailController extends ScopedElementsMixin(LitElement) {
     this.mailGridElem.shadowRoot!.appendChild(tmpl.content.cloneNode(true));
     this.contactGridElem.shadowRoot!.appendChild(tmpl.content.cloneNode(true));
     this.attachmentGridElem.shadowRoot!.appendChild(tmpl.content.cloneNode(true));
-  }
-
-
-  /** After each render */
-  async updated(changedProperties: any) {
-    // n/a
   }
 
 
