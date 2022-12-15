@@ -2,6 +2,9 @@
 
 rustc --version
 
+# For ts-bindings
+cargo install zits
+
 ### install `hc` cli tool
 # use the version to match version holochain + hdk version used
 # KEEP THIS IN SYNC
