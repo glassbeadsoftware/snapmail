@@ -8,7 +8,8 @@ import './global-styles'
 
 export * from './elements/snapmail-page';
 export * from './snapmail';
-export * from './snapmail.zvm';
-export * from './snapmail.perspective';
+export * from './viewModel/snapmail.dvm';
+export * from './viewModel/snapmail.perspective';
+export * from './viewModel/happDef';
 export * from './mail';
 export * from './utils';

@@ -323,12 +323,15 @@ export type MailState =
 
 export interface MailItem {
   ah: ActionHash
-  reply?: ActionHash
   author: AgentPubKey
   mail: Mail
   state: MailState
   bcc: AgentPubKey[]
   date: number
+  /** UI Things */
+  reply?: ActionHash
+  reply_of?: ActionHash
+  status?: string
 }
 
 export type RecipientKind =

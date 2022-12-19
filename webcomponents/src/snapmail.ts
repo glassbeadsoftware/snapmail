@@ -1,7 +1,7 @@
 import {htos} from './utils'
 
 import {FileManifest} from "./bindings/snapmail";
-import {ContactGridItem} from "./snapmail.perspective";
+import {ContactGridItem} from "./viewModel/snapmail.perspective";
 import {AppSignal} from "@holochain/client/lib/api/app/types";
 import {Notification} from "@vaadin/notification";
 import {SnapmailPage} from "./elements/snapmail-page";
@@ -9,26 +9,27 @@ import {SnapmailPage} from "./elements/snapmail-page";
 /** -- APP SETUP -- **/
 /* @ts-ignore */
 export const ELECTRON_API = window.electronAPI
-export let APP_ID = 'snapmail'
-export let HC_PORT: any;
-export let DEV_MODE: any;
-export let NETWORK_ID: any = null
+// export let APP_ID = 'snapmail'
+// export let HC_PORT: any;
+ export let DEV_MODE: any;
+// export let NETWORK_ID: any = null
 
-if (ELECTRON_API) {
-  //console.log(ELECTRON_API)
-  console.log(ELECTRON_API.versions)
-  APP_ID = 'snapmail-app'
-  DEV_MODE = ELECTRON_API.DEV_MODE;
-  let searchParams = new URLSearchParams(window.location.search);
-  HC_PORT = searchParams.get("APP");
-  NETWORK_ID = searchParams.get("UID");
-} else {
-  HC_PORT = process.env.HC_PORT;
-  DEV_MODE = process.env.DEV_MODE;
+
+ if (ELECTRON_API) {
+//   //console.log(ELECTRON_API)
+//   console.log(ELECTRON_API.versions)
+//   APP_ID = 'snapmail-app'
+   DEV_MODE = ELECTRON_API.DEV_MODE;
+//   let searchParams = new URLSearchParams(window.location.search);
+//   HC_PORT = searchParams.get("APP");
+//   NETWORK_ID = searchParams.get("UID");
+ } else {
+//   HC_PORT = process.env.HC_PORT;
+   DEV_MODE = process.env.DEV_MODE;
 }
-console.log("  DEV_MODE =", DEV_MODE)
-console.log("   HC_PORT =", HC_PORT);
-console.log("NETWORK_ID =", NETWORK_ID);
+ console.log("  DEV_MODE =", DEV_MODE)
+// console.log("   HC_PORT =", HC_PORT);
+// console.log("NETWORK_ID =", NETWORK_ID);
 
 /** Remove console.log() in PROD */
 if (DEV_MODE !== 'dev') {
@@ -56,96 +57,36 @@ export function getController(): SnapmailPage {
 
 
 /** Setup recurrent pull from DHT every 10 seconds */
-export function onEvery10sec() {
-  console.log("**** onEvery10sec CALLED ****");
-  if (DEV_MODE === 'dev') {
-    return;
-  }
-  const controller = getController();
-  try {
-    controller.getAllFromDht();
-  } catch(e) {
-    console.error("onEvery10sec.getAllFromDht() failed: ", e)
-  }
-}
+// export function onEvery10sec() {
+//   console.log("**** onEvery10sec CALLED ****");
+//   if (DEV_MODE === 'dev') {
+//     return;
+//   }
+//   const controller = getController();
+//   try {
+//     controller.probeAll();
+//   } catch(e) {
+//     console.error("onEvery10sec.getAllFromDht() failed: ", e)
+//   }
+// }
+//
 
+// /** Stuff to do every 1 second */
+// export function onEverySec() {
+//   // console.log("**** onEverySec CALLED ****");
+//   if (DEV_MODE === 'dev') {
+//     return;
+//   }
+//   const controller = getController();
+//   try {
+//     if (controller._canPing) {
+//       controller.pingNextAgent();
+//     }
+//   } catch(e) {
+//     console.error("onEverySec.pingNextAgent() failed: ", e)
+//   }
+// }
 
-/** Stuff to do every 1 second */
-export function onEverySec() {
-  // console.log("**** onEverySec CALLED ****");
-  if (DEV_MODE === 'dev') {
-    return;
-  }
-  const controller = getController();
-  try {
-    if (controller._canPing) {
-      controller.pingNextAgent();
-    }
-  } catch(e) {
-    console.error("onEverySec.pingNextAgent() failed: ", e)
-  }
-}
-
-
-/** */
-export function handleSignal(signalwrapper: AppSignal) {
-  console.log('Received signal:', signalwrapper)
-  /** Check valid signal type */
-  if (signalwrapper.type !== undefined && signalwrapper.type !== "Signal") {
-    return;
-  }
-  const controller = getController();
-  /** Handle signal */
-  if (Object.prototype.hasOwnProperty.call(signalwrapper.data.payload,'ReceivedMail')) {
-    const item = signalwrapper.data.payload.ReceivedMail;
-    console.log("received_mail:", item);
-    const notification = controller.shadowRoot!.getElementById('notifyMail') as Notification;
-    notification.open();
-
-    const mail = signalwrapper.data.payload.ReceivedMail;
-    const pingedAgentB64 = htos(mail.author);
-    controller.storePingResult({}, pingedAgentB64);
-
-    if (ELECTRON_API) {
-      //console.log("handleSignal for ELECTRON");
-      console.log({mail});
-      const author_name = controller._usernameMap.get(htos(mail.author)) || 'unknown user';
-
-      /** ELECTRON NOTIFICATION */
-      const NOTIFICATION_TITLE = 'New mail received from ' + author_name;
-      const NOTIFICATION_BODY = signalwrapper.data.payload.ReceivedMail.mail.subject;
-      //const CLICK_MESSAGE = 'Notification clicked';
-
-      // - Do Notification directly from web UI
-      //new Notification(NOTIFICATION_TITLE, { body: NOTIFICATION_BODY })
-      //  .onclick = () => console.log(CLICK_MESSAGE)
-
-      /* Notify Electron main */
-      const reply = ELECTRON_API.newMailSync(NOTIFICATION_TITLE, NOTIFICATION_BODY)
-      console.log({reply});
-    }
-
-    controller.getAllMails();
-    return;
-  }
-  if (Object.prototype.hasOwnProperty.call(signalwrapper.data.payload,'ReceivedAck')) {
-    const item = signalwrapper.data.payload.ReceivedAck;
-    console.log("received_ack:", item);
-    const pingedAgentB64 = htos(item.from);
-    controller.storePingResult({}, pingedAgentB64);
-    const notification = controller.shadowRoot!.getElementById('notifyAck') as Notification;
-    notification.open();
-    controller.getAllMails();
-    return;
-  }
-  if (Object.prototype.hasOwnProperty.call(signalwrapper.data.payload,'ReceivedFile')) {
-    const item = signalwrapper.data.payload.ReceivedFile;
-    console.log("received_file:", item);
-    const notification = controller.shadowRoot!.getElementById('notifyFile') as Notification;
-    notification.open();
-    return
-  }
-}
 
 
 /** -- FUNCTIONS -- **/

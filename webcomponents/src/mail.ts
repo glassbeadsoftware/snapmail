@@ -6,8 +6,9 @@ import {AgentPubKey} from "@holochain/client";
 
 import {htos} from './utils'
 //import {MailItem} from "./bindings/snapmail";
-import {MailItemMat, UsernameMap} from "./snapmail.perspective";
+import {UsernameMap} from "./viewModel/snapmail.perspective";
 import {DEV_MODE} from "./snapmail";
+import {MailItem, MailStateVariantOut} from "./bindings/snapmail";
 
 const checkMarkEmoji = String.fromCodePoint(0x2714); //FE0F
 const suspensionPoints = String.fromCodePoint(0x2026);
@@ -26,30 +27,32 @@ export const systemFolders = {
 
 
 /** Return True if mail has been deleted */
-export function isMailDeleted(mailItem: MailItemMat): boolean {
-  const state = mailItem.state;
-  if (state.In) {
-    return state.In.hasOwnProperty('Deleted')
-  }
-  if (state.Out) {
-    return state.Out.hasOwnProperty('Deleted');
-  }
-  console.error('Invalid mailItem object', mailItem)
+export function isMailDeleted(mailItem: MailItem): boolean {
   return false;
+  // const state = mailItem.state;
+  // if (state.In) {
+  //   return state.In.hasOwnProperty('Deleted')
+  // }
+  // if (state.Out) {
+  //   return state.Out.hasOwnProperty('Deleted');
+  // }
+  // console.error('Invalid mailItem object', mailItem)
+  // return false;
 }
 
 
 /** Return True if mail is an OutMail */
-export function is_OutMail(mailItem: MailItemMat): boolean {
-  const state = mailItem.state;
-  if (state.In) {
-    return false;
-  }
-  if (state.Out) {
-    return true;
-  }
-  console.error('Invalid mailItem object', mailItem)
+export function is_OutMail(mailItem: MailItem): boolean {
   return false;
+  // const state = mailItem.state;
+  // if (state.In) {
+  //   return false;
+  // }
+  // if (state.Out) {
+  //   return true;
+  // }
+  // console.error('Invalid mailItem object', mailItem)
+  // return false;
 }
 
 
@@ -72,24 +75,26 @@ export function is_OutMail(mailItem: MailItemMat): boolean {
 
 
 /** Return mailItem class */
-export function determineMailCssClass(mailItem: MailItemMat): string {
-  const state = mailItem.state;
-  if (state.Out) {
-    // if (state.Out.hasOwnProperty('Unsent')) return ''; // 'pending';
-    // if (state.Out.hasOwnProperty('AllSent')) return ''; // 'partially';
-    // if (state.Out.hasOwnProperty('AllReceived')) return '';
-    // if (state.Out.hasOwnProperty('AllAcknowledged')) return ''; // 'received';
-    // if (state.Out.hasOwnProperty('Deleted')) return 'deleted';
-    return state.Out.Deleted? 'deleted' : '';
-  }
-  if (state.In) {
-    if (state.In.hasOwnProperty('Unacknowledged')) return 'newmail';
-    if (state.In.hasOwnProperty('AckUnsent')) return ''; //'pending';
-    if (state.In.hasOwnProperty('AckPending')) return ''; // 'partially';
-    if (state.In.hasOwnProperty('AckDelivered')) return ''; // 'received';
-    if (state.In.hasOwnProperty('Deleted')) return 'deleted';
-  }
-  console.error('Invalid mailItem object', mailItem);
+export function determineMailCssClass(mailItem: MailItem): string {
+  // const state = mailItem.state;
+  // if (state.hasOwnProperty('out')) {
+  //   const outMailState = (state as MailStateVariantOut).out;
+  //   // if (state.Out.hasOwnProperty('Unsent')) return ''; // 'pending';
+  //   // if (state.Out.hasOwnProperty('AllSent')) return ''; // 'partially';
+  //   // if (state.Out.hasOwnProperty('AllReceived')) return '';
+  //   // if (state.Out.hasOwnProperty('AllAcknowledged')) return ''; // 'received';
+  //   // if (state.Out.hasOwnProperty('Deleted')) return 'deleted';
+  //   return outMailState.Deleted? 'deleted' : '';
+  // }
+  //
+  // if (state.hasOwnProperty('in')) {
+  //   if (state.In.hasOwnProperty('Unacknowledged')) return 'newmail';
+  //   if (state.In.hasOwnProperty('AckUnsent')) return ''; //'pending';
+  //   if (state.In.hasOwnProperty('AckPending')) return ''; // 'partially';
+  //   if (state.In.hasOwnProperty('AckDelivered')) return ''; // 'received';
+  //   if (state.In.hasOwnProperty('Deleted')) return 'deleted';
+  // }
+  // console.error('Invalid mailItem object', mailItem);
   return '';
 }
 
@@ -135,43 +140,46 @@ function getUsername(usernameMap: UsernameMap, agentHash: Uint8Array): string {
 
 
 /** Determine which Username to display (recipient or author) */
-function determineFromLine(usernameMap: UsernameMap, mailItem: MailItemMat): string {
+function determineFromLine(usernameMap: UsernameMap, mailItem: MailItem): string {
   /* Outmail special case */
-  if (mailItem.state.Out) {
-    if (mailItem.mail.to.length > 0) {
-      return 'To: ' + vecToUsernames(usernameMap, mailItem.mail.to)
-    } else if (mailItem.mail.cc.length > 0) {
-      return 'To: ' + vecToUsernames(usernameMap, mailItem.mail.cc)
-    } else if (mailItem.bcc && mailItem.bcc!.length > 0) {
-      return 'To: ' + vecToUsernames(usernameMap, mailItem.bcc!)
-    }
-  }
+  // if (mailItem.state.Out) {
+  //   if (mailItem.mail.to.length > 0) {
+  //     return 'To: ' + vecToUsernames(usernameMap, mailItem.mail.to)
+  //   } else if (mailItem.mail.cc.length > 0) {
+  //     return 'To: ' + vecToUsernames(usernameMap, mailItem.mail.cc)
+  //   } else if (mailItem.bcc && mailItem.bcc!.length > 0) {
+  //     return 'To: ' + vecToUsernames(usernameMap, mailItem.bcc!)
+  //   }
+  // }
   return getUsername(usernameMap, mailItem.author);
 }
 
 
 /** Return mailItem status icon */
-export function determineMailStatus(mailItem: MailItemMat): string {
+export function determineMailStatus(mailItem: MailItem): string {
   //console.log('determineMailClass()? ' + JSON.stringify(mailItem.state));
-  const state = mailItem.state;
-  if (state.Out) {
-    if (state.Out.hasOwnProperty('Unsent')) return suspensionPoints;
-    if (state.Out.hasOwnProperty('AllSent')) return suspensionPoints;
-    if (state.Out.hasOwnProperty('AllReceived')) return checkMarkEmoji;
-    if (state.Out.hasOwnProperty('AllAcknowledged')) return checkMarkEmoji;
-    if (state.Out.hasOwnProperty('Deleted')) return '';
-  }
-  if (state.In) {
-    if (mailItem.reply) {
-      return returnArrowEmoji;
-    }
-  }
+  // const state = mailItem.state;
+  // console.log("determineMailStatus() state", mailItem.state);
+  // if (state.hasOwnProperty('out')) {
+  //   const outMailState = state as MailStateVariantOut;
+  //   if (outMailState.hasOwnProperty('Unsent')) return suspensionPoints;
+  //   if (outMailState.hasOwnProperty('AllSent')) return suspensionPoints;
+  //   if (outMailState.hasOwnProperty('AllReceived')) return checkMarkEmoji;
+  //   if (outMailState.hasOwnProperty('AllAcknowledged')) return checkMarkEmoji;
+  //   if (outMailState.hasOwnProperty('Deleted')) return '';
+  // } else {
+  //   if (state.hasOwnProperty('in')) {
+  //     if (mailItem.reply) {
+  //       return returnArrowEmoji;
+  //     }
+  //   }
+  // }
   return '';
 }
 
 
 /** */
-export function into_gridItem(usernameMap: UsernameMap, mailItem: MailItemMat) {
+export function into_gridItem(usernameMap: UsernameMap, mailItem: MailItem) {
   /* username */
   // console.log('into_gridItem: ' + htos(mailItem.author) + ' username: ' + username);
   const username = determineFromLine(usernameMap, mailItem);
@@ -196,7 +204,7 @@ export function into_gridItem(usernameMap: UsernameMap, mailItem: MailItemMat) {
 
 
 /** */
-export function into_mailText(usernameMap: UsernameMap, mailItem: MailItemMat): string {
+export function into_mailText(usernameMap: UsernameMap, mailItem: MailItem): string {
   let intext = 'Subject: ' + mailItem.mail.subject + '\n\n'
     + mailItem.mail.payload + '\n\n'
     + 'Mail from: ' + usernameMap.get(htos(mailItem.author)) + ' at ' + customDateString(mailItem.date);

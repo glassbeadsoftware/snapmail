@@ -42,15 +42,13 @@ import '@vaadin/vaadin-icon';
 import '@vaadin/vaadin-lumo-styles';
 //import { ThemableMixin } from '@vaadin/vaadin-themable-mixin/vaadin-themable-mixin.js';
 /** Holochain imports*/
-import {ActionHash, CellId, EntryHash} from "@holochain/client";
-import {AgentPubKey} from "@holochain/client/lib/types";
-import {HolochainClient} from "@holochain-open-dev/cell-client";
+import {ActionHash, EntryHash} from "@holochain/client";
 /** my imports */
 import {
-  ContactGridItem, MailGridItem, MailItemMat, UsernameMap
-} from "../snapmail.perspective";
+  ContactGridItem, MailGridItem, SnapmailPerspective,
+} from "../viewModel/snapmail.perspective";
 import {
-  FileManifest, HandleItem, Mail, SendMailInput
+  FileManifest, HandleItem, Mail, MailItem, SendMailInput
 } from "../bindings/snapmail";
 import {arrayBufferToBase64, base64ToArrayBuffer, splitFile,  htos, stoh} from "../utils";
 import {
@@ -68,15 +66,15 @@ import {
   handle_findManifest,
   handle_getChunk,
   ids_to_items,
-  handleSignal,
   ELECTRON_API,
   DEV_MODE,
-  setController,
-  onEvery10sec,
-  onEverySec
+  setController, getController,
+  //onEvery10sec,
+  //onEverySec
 } from "../snapmail"
 
-import {SnapmailZvm} from "../snapmail.zvm";
+import {SnapmailZvm} from "../viewModel/snapmail.zvm";
+import {ZomeElement} from "@ddd-qc/lit-happ";
 
 
 /** ----- */
@@ -148,7 +146,7 @@ tmpl.innerHTML = `
 /** ----- */
 
 
-export const delay = (ms:number) => new Promise(r => setTimeout(r, ms))
+//export const delay = (ms:number) => new Promise(r => setTimeout(r, ms))
 
 const redDot   = String.fromCodePoint(0x1F534);
 const greenDot = String.fromCodePoint(0x1F7E2);
@@ -161,28 +159,28 @@ const SYSTEM_GROUP_LIST = ['All', 'new...'];
 
 
 /** @element snapmail-page */
-export class SnapmailPage extends ScopedElementsMixin(LitElement) {
+export class SnapmailPage extends ZomeElement<SnapmailPerspective, SnapmailZvm> {
   constructor() {
-    super();
+    super(SnapmailZvm.DEFAULT_ZOME_NAME);
   }
 
 
   @property()
   noTitle = false;
 
-  @property()
-  cellId: CellId | null = null;
+  // @property()
+  // cellId: CellId | null = null;
 
-  @property()
-  hcClient: HolochainClient | null = null;
+  // @property()
+  // hcClient: HolochainClient | null = null;
 
   /** -- */
 
-  private _dna: SnapmailZvm | null = null;
-  private _dnaIdB64 = '';
-  private _myAgentId: AgentPubKey | null = null;
+  //private _zvm: SnapmailZvm | null = null;
+  //private _dnaIdB64 = '';
+  //private _myAgentId: AgentPubKey | null = null;
   private _myHandle = '<unknown>';
-  private _myAgentIdB64: string | null = null;
+  //private _myAgentIdB64: string | null = null;
 
   private _currentMailItem?: MailGridItem;
   private _currentFolder = '';
@@ -194,25 +192,18 @@ export class SnapmailPage extends ScopedElementsMixin(LitElement) {
   private _mailItems: MailGridItem[] = [];
 
   private _hasAttachment = 0;
-  private _chunkList: EntryHash[] = [];
-  private _fileList: ActionHash[] = [];
+
+  private _chunksToSend: EntryHash[] = [];
+  private _filesToSend: ActionHash[] = [];
 
 
-  _canPing = true;
 
-  /* Map of (agentIdB64 -> username)
-   * agentId is base64 string of a hash */
-  _usernameMap: UsernameMap = new Map();
-  /* Map of (agentIdB64 -> timestamp of last ping) */
-  _pingMap = new Map();
-  /* Map of (agentIdB64 -> bool) */
-  _responseMap: Map<string, boolean> = new Map();
-  /* Map of (mailId -> mailItem) */
-  _mailMap: Map<string, MailItemMat> = new Map();
+
   /** groupname -> agentIdB64[]  */
   private _groupMap: Map<string, string[]> = new Map();
 
-  /** --  -- */
+
+  /** -- sub Elements -- */
 
   get handleButtonElem() : Button {
     return this.shadowRoot!.getElementById("handleDisplay") as Button;
@@ -319,14 +310,14 @@ export class SnapmailPage extends ScopedElementsMixin(LitElement) {
   async setUsername(maybeHandle?:string) {
     const newHandle = maybeHandle? maybeHandle : this.handleInputElem.value;
     console.log('new handle = ' + newHandle);
-    /*const callResult =*/ await this._dna!.setHandle(newHandle)
+    /*const callResult =*/ await this._zvm.setHandle(newHandle)
     this.showHandle(newHandle);
     this.handleInputElem.value = '';
     this.hideHandleInput(true);
     /** - Update my Handle in the contacts grid */
     for (const item of this.contactGridElem.items!) {
       const contactItem: ContactGridItem = item as ContactGridItem;
-      if (contactItem.agentIdB64 === this._myAgentIdB64) {
+      if (contactItem.agentIdB64 === this.agentPubKey) {
         contactItem.username = newHandle;
       }
     }
@@ -393,32 +384,32 @@ export class SnapmailPage extends ScopedElementsMixin(LitElement) {
 
     switch(codePoint) {
       case systemFolders.ALL.codePointAt(0):
-        for (const mailItem of this._mailMap.values()) {
+        for (const mailItem of this.perspective.mailMap.values()) {
           //folderItems = Array.from(g_mail_map.values());
-          folderItems.push(into_gridItem(this._usernameMap, mailItem));
+          folderItems.push(into_gridItem(this.perspective.usernameMap, mailItem));
         }
         break;
       case systemFolders.INBOX.codePointAt(0):
       case systemFolders.SENT.codePointAt(0):
-        for (const mailItem of this._mailMap.values()) {
+        for (const mailItem of this.perspective.mailMap.values()) {
           //console.log('mailItem: ' + JSON.stringify(mailItem))
           const is_out = is_OutMail(mailItem);
           if (isMailDeleted(mailItem)) {
             continue;
           }
           if (is_out && codePoint == systemFolders.SENT.codePointAt(0)) {
-            folderItems.push(into_gridItem(this._usernameMap, mailItem));
+            folderItems.push(into_gridItem(this.perspective.usernameMap, mailItem));
             continue;
           }
           if (!is_out && codePoint == systemFolders.INBOX.codePointAt(0)) {
-            folderItems.push(into_gridItem(this._usernameMap, mailItem));
+            folderItems.push(into_gridItem(this.perspective.usernameMap, mailItem));
           }
         }
         break;
       case systemFolders.TRASH.codePointAt(0): {
-        for (const mailItem of this._mailMap.values()) {
+        for (const mailItem of this.perspective.mailMap.values()) {
           if(isMailDeleted(mailItem)) {
-            folderItems.push(into_gridItem(this._usernameMap, mailItem));
+            folderItems.push(into_gridItem(this.perspective.usernameMap, mailItem));
           }
         }
       }
@@ -476,11 +467,11 @@ export class SnapmailPage extends ScopedElementsMixin(LitElement) {
     /* Convert each handle into a contactGridItem */
     const selected = [];
     const allItems = [];
-    for (const [agentIdB64, username] of this._usernameMap.entries()) {
+    for (const [agentIdB64, username] of this.perspective.usernameMap.entries()) {
       // console.log('' + agentId + '=> ' + username)
       let status = whiteDot
-      if (this._pingMap.get(agentIdB64)) {
-        status = this._responseMap.get(agentIdB64)? greenDot : redDot
+      if (this.perspective.pingMap.get(agentIdB64)) {
+        status = this.perspective.responseMap.get(agentIdB64)? greenDot : redDot
       }
       //const status = blueDot
       const item: ContactGridItem = {
@@ -533,49 +524,9 @@ export class SnapmailPage extends ScopedElementsMixin(LitElement) {
   }
 
 
-  /** Refresh _usernameMap and contactGrid */
-  handle_getAllHandles(callResult: any): void {
-    if (callResult === undefined || callResult.Err !== undefined) {
-      console.error('getAllHandles zome call failed');
-    } else {
-      /* Update global state */
-      const handleList: HandleItem[] = callResult;
-      //console.log('handleList: ' + JSON.stringify(handleList))
-      this._usernameMap.clear();
-      for(const handleItem of handleList) {
-        /* TODO: exclude self from list when in prod? */
-        const agentIdB64 = htos(handleItem.agentId);
-        console.log('' + handleItem.name + ': ' + agentIdB64);
-        this._usernameMap.set(agentIdB64, handleItem.name);
-        if(this._pingMap.get(agentIdB64) === undefined) {
-          //console.log("ADDING TO g_pingMap: " + agentId);
-          this._pingMap.set(agentIdB64, 0);
-          this._responseMap.set(agentIdB64, false);
-        }
-      }
-    }
-    /* Reset contactGrid */
-    this.updateContacts(true);
-    this.updateContactGrid(false);
-    // if (this.contactsMenuElem.items && this.contactsMenuElem.items.length > 0) {
-    //   this.contactsMenuElem.items[0].disabled = false;
-    //   //contactsMenu.render();
-    // }
-    /* Update mailGrid */
-    this.update_mailGrid(this.folderElem.value);
-  }
-
 
   /** Refresh mailGrid */
-  handle_getAllMails(callResult: any) {
-    if (callResult === undefined || callResult.Err !== undefined) {
-      //const err = callResult.Err;
-      //console.error('getAllMails zome call failed');
-      //console.error(err);
-      return;
-    }
-    const mailList: MailItemMat[] = callResult;
-
+  handle_getAllMails() {
     /** Get currently selected hashs */
     const prevSelected = [];
     if (this.mailGridElem.selectedItems) {
@@ -585,7 +536,6 @@ export class SnapmailPage extends ScopedElementsMixin(LitElement) {
       }
     }
 
-    const allCount = mailList.length;
     let trashCount = 0;
     let inboxCount = 0;
     let sentCount = 0;
@@ -593,11 +543,12 @@ export class SnapmailPage extends ScopedElementsMixin(LitElement) {
 
     const selected = [];
     const items = [];
-    this._mailMap.clear();
+
     const selectedBox = this.folderElem.value.codePointAt(0);
-    for (const mailItem of mailList) {
-      console.log({mailItem})
-      this._mailMap.set(htos(mailItem.ah), mailItem);
+
+    const mailItems: MailItem[] = []; //this.perspective.mailMap;
+    for (const mailItem of mailItems) {
+      //console.log({mailItem})
       //
       const isDeleted = isMailDeleted(mailItem);
       const isOutMail = is_OutMail(mailItem);
@@ -627,14 +578,14 @@ export class SnapmailPage extends ScopedElementsMixin(LitElement) {
         continue;
       }
       // items.push(into_gridItem(g_usernameMap, mailItem));
-      const gridItem = into_gridItem(this._usernameMap, mailItem);
+      const gridItem = into_gridItem(this.perspective.usernameMap, mailItem);
       // console.log('gridItem.id = ' + gridItem.id);
       items.push(gridItem);
       if (prevSelected.includes(htos(gridItem.id))) {
         selected.push(gridItem);
       }
     }
-    console.log('Counters: ' + newCount + ' / ' + inboxCount + ' / ' + sentCount + ' / ' + trashCount + ' / '+ allCount);
+    console.log('Counters: ' + newCount + ' / ' + inboxCount + ' / ' + sentCount + ' / ' + trashCount + ' / '+ mailItems.length);
 
     updateTray(newCount);
 
@@ -687,78 +638,6 @@ export class SnapmailPage extends ScopedElementsMixin(LitElement) {
     }
   }
 
-
-  /** */
-  async getAllHandles() {
-    let callResult = undefined;
-    try {
-      callResult = await this._dna!.getAllHandles()
-    } catch(e) {
-      console.warn("getAllHandles() failed: ", e)
-    }
-    this.handle_getAllHandles(callResult)
-  }
-
-
-  /** */
-  async getAllFromDht() {
-    await this._dna!.checkAckInbox();
-    await this._dna!.checkMailInbox();
-    await this.getAllMails();
-  }
-
-
-  /** */
-  async getAllMails() {
-    await this.getAllHandles();
-    try {
-      const callResult = await this._dna!.getAllMails()
-      this.handle_getAllMails(callResult)
-    } catch(e) {
-      console.warn('getAllMails() failed: ', e);
-    }
-    this.handle_post_getAllMails()
-  }
-
-
-
-  /** Ping oldest pinged agent */
-  pingNextAgent(): void {
-    //console.log({this._pingMap});
-    //console.log({this._responseMap});
-    /* Skip if empty map */
-    if (this._pingMap.size === 0) {
-      return;
-    }
-    this._canPing = false;
-    /* Sort g_pingMap by value to get oldest pinged agent */
-    const nextMap = new Map([...this._pingMap.entries()]
-      .sort((a, b) => a[1] - b[1]));
-    console.log({nextMap})
-    /* Ping first agent in sorted list */
-    const pingedAgentB64 = nextMap.keys().next().value
-    const pingedAgent = stoh(pingedAgentB64);
-    console.log("pinging: ", pingedAgentB64);
-    if (pingedAgentB64 === this._myAgentIdB64) {
-      console.log("pinging self");
-      this.storePingResult({}, pingedAgentB64);
-      this._canPing = true;
-      return;
-    }
-    //const contactGrid = this.contactGridElem;
-    this._dna!.pingAgent(pingedAgent)
-      .then((result: boolean) => {
-        this.storePingResult(result, pingedAgentB64);
-        this._canPing = true;
-        //contactGrid.render();
-      })
-      .catch((error: any) => {
-        console.error('Ping failed for: ' + pingedAgentB64);
-        console.error({ error })
-        this.storePingResult(undefined, pingedAgentB64);
-        //contactGrid.render();
-      })
-  }
 
 
   /** */
@@ -816,8 +695,8 @@ export class SnapmailPage extends ScopedElementsMixin(LitElement) {
       /* -- Handle 'Print' -- */
       if (e.detail.value.text === 'Print') {
         console.log({_currentMailItem: controller._currentMailItem})
-        const mailItem = controller._mailMap.get(htos(controller._currentMailItem!.id));
-        const mailText = into_mailText(controller._usernameMap, mailItem!)
+        const mailItem = controller.perspective.mailMap.get(htos(controller._currentMailItem!.id));
+        const mailText = into_mailText(controller.perspective.usernameMap, mailItem!)
         /** Save to disk */
         const blob = new Blob([mailText], { type: 'text/plain'});
         const url = URL.createObjectURL(blob);
@@ -830,8 +709,8 @@ export class SnapmailPage extends ScopedElementsMixin(LitElement) {
       /* -- Handle 'Trash' -- */
       if (e.detail.value.text === 'Trash') {
         controller._replyOf = undefined;
-        controller._dna!.deleteMail(controller._currentMailItem!.id)
-          .then((/*maybeAh: ActionHash | null*/) => controller.getAllMails()) // On delete, refresh filebox
+        controller._zvm.deleteMail(controller._currentMailItem!.id)
+          .then((/*maybeAh: ActionHash | null*/) => controller._zvm.probeMails()) // On delete, refresh filebox
         controller.mailGridElem.selectedItems = [];
         controller.mailGridElem.activeItem = null;
         controller.inMailAreaElem.value = ""
@@ -853,25 +732,25 @@ export class SnapmailPage extends ScopedElementsMixin(LitElement) {
         controller.updateContactGrid(true);
       }
       if (e.detail.value.text === 'Reply to all') {
-        const mailItem = controller._mailMap.get(htos(controller._currentMailItem!.id));
+        const mailItem = controller.perspective.mailMap.get(htos(controller._currentMailItem!.id));
         controller._replyOf = controller._currentMailItem!.id;
         if (mailItem) {
           controller.outMailSubjectElem.value = 'Re: ' + controller._currentMailItem!.subject;
           controller.updateContacts(false);
           /* TO */
           for (const agentId of mailItem.mail.to) {
-            const to_username = controller._usernameMap.get(htos(agentId));
+            const to_username = controller.perspective.usernameMap.get(htos(agentId));
             controller.selectUsername(to_username!, 1);
           }
           /* CC */
           for (const agentId of mailItem.mail.cc) {
-            const cc_username = controller._usernameMap.get(htos(agentId));
+            const cc_username = controller.perspective.usernameMap.get(htos(agentId));
             controller.selectUsername(cc_username!, 2);
           }
           /* BCC */
           if (mailItem.bcc) {
             for (const agentId of mailItem.bcc) {
-              const bcc_username = controller._usernameMap.get(htos(agentId));
+              const bcc_username = controller.perspective.usernameMap.get(htos(agentId));
               controller.selectUsername(bcc_username!, 3);
             }
           }
@@ -881,9 +760,9 @@ export class SnapmailPage extends ScopedElementsMixin(LitElement) {
       }
       if (e.detail.value.text === 'Forward') {
         controller.outMailSubjectElem.value = 'Fwd: ' + controller._currentMailItem!.subject;
-        const mailItem = controller._mailMap.get(htos(controller._currentMailItem!.id));
+        const mailItem = controller.perspective.mailMap.get(htos(controller._currentMailItem!.id));
         let fwd = '\n\n';
-        fwd += '> ' + 'Mail from: ' + controller._usernameMap.get(htos(mailItem!.author)) + ' at ' + customDateString(mailItem!.date) + '\n';
+        fwd += '> ' + 'Mail from: ' + controller.perspective.usernameMap.get(htos(mailItem!.author)) + ' at ' + customDateString(mailItem!.date) + '\n';
         const arrayOfLines = mailItem!.mail.payload.match(/[^\r\n]+/g);
         for (const line of arrayOfLines!) {
           fwd += '> ' + line + '\n';
@@ -893,7 +772,7 @@ export class SnapmailPage extends ScopedElementsMixin(LitElement) {
       /** -- Handle 'Refresh' -- */
       if (e.detail.value.text === 'Refresh') {
         //console.log('Refresh called');
-        controller.getAllFromDht();
+        controller._zvm.probeAll();
       }
     });
   }
@@ -920,7 +799,7 @@ export class SnapmailPage extends ScopedElementsMixin(LitElement) {
     let missingCount = 0;
     for (const attachmentInfo of mail.attachments) {
       //console.log({attachmentInfo});
-      const callResult = await this._dna!.getManifest(attachmentInfo.manifest_eh);
+      const callResult = await this._zvm.getManifest(attachmentInfo.manifest_eh);
       this.handle_getManifest(callResult)
 
       const hasAttachment = this._hasAttachment > 0;
@@ -944,17 +823,9 @@ export class SnapmailPage extends ScopedElementsMixin(LitElement) {
   }
 
 
-  /** FIXME */
-  handle_missingAttachments(missingCount: number): void {
-    //const attachmentGrid = document.getElementById('attachmentGrid') as Grid;
-  }
-
-
-
 
   /** */
   initFileBox() {
-    const controller = this;
     const fileboxLayout = this.shadowRoot!.getElementById('fileboxLayout') as HorizontalLayout;
     if (DEV_MODE === 'dev') {
       fileboxLayout.style.backgroundColor = "rgba(241,154,154,0.82)";
@@ -966,23 +837,23 @@ export class SnapmailPage extends ScopedElementsMixin(LitElement) {
     folderCombo.value = systemFoldersVec[1];
     this._currentFolder = folderCombo.value;
     /** On value change */
-    folderCombo.addEventListener('change', function(event:any) {
-      controller.mailGridElem.selectedItems = [];
-      controller.mailGridElem.activeItem = null;
-      controller._replyOf = undefined;
-      controller.update_mailGrid(event.target.value)
-      controller._currentFolder = event.target.value;
-      controller.disableDeleteButton(true)
-      controller.disableReplyButton(true)
+    folderCombo.addEventListener('change', (event:any) => {
+      this.mailGridElem.selectedItems = [];
+      this.mailGridElem.activeItem = null;
+      this._replyOf = undefined;
+      this.update_mailGrid(event.target.value)
+      this._currentFolder = event.target.value;
+      this.disableDeleteButton(true)
+      this.disableReplyButton(true)
     });
 
     /** Filebox -- vaadin-grid */
     this.mailGridElem.items = [];
     this.mailGridElem.multiSort = true;
     /** Display bold if mail not acknowledged */
-    this.mailGridElem.cellClassNameGenerator = function(column, rowData:any) {
+    this.mailGridElem.cellClassNameGenerator = (column, rowData:any) => {
       let classes = '';
-      const mailItem: MailItemMat = controller._mailMap.get(htos(rowData.item.id))!;
+      const mailItem: MailItem = this.perspective.mailMap.get(htos(rowData.item.id))!;
       classes += determineMailCssClass(mailItem!);
       // let is_old = hasMailBeenOpened(mailItem);
       // //console.log('answer: ' + is_old);
@@ -993,51 +864,44 @@ export class SnapmailPage extends ScopedElementsMixin(LitElement) {
     };
 
     /** On item select: Display in inMailArea */
-    this.mailGridElem.addEventListener('active-item-changed', function(event:any) {
+    this.mailGridElem.addEventListener('active-item-changed', (event:any) => {
       console.log('mailgrid Event: active-item-changed');
-      controller._replyOf = undefined;
+      this._replyOf = undefined;
       const item = event.detail.value;
-      controller.mailGridElem.selectedItems = item ? [item] : [];
+      this.mailGridElem.selectedItems = item ? [item] : [];
       if (!item) {
         //getAllMails(handleMails, handle_getAllMails)
         return;
       }
-      controller._currentMailItem = item;
-      const mailItem = controller._mailMap.get(htos(item.id))!;
+      this._currentMailItem = item;
+      const mailItem = this.perspective.mailMap.get(htos(item.id))!;
       console.assert(mailItem)
       //console.log('mail item:', mailItem)
-      controller.inMailAreaElem.value = into_mailText(controller._usernameMap, mailItem);
+      this.inMailAreaElem.value = into_mailText(this.perspective.usernameMap, mailItem);
 
-      controller.fillAttachmentGrid(mailItem.mail).then( function(missingCount: number) {
-        if (missingCount > 0) {
-          controller._dna!.getMissingAttachments(mailItem.author, mailItem.ah)
-            .then((missingCount:number) => controller.handle_missingAttachments(missingCount))
-            .catch((err:any) => {
-              console.error('MissingAttachments zome call failed');
-              console.error(err);
-            })
-        }
-        controller._dna!.acknowledgeMail(item.id)
-        //.then(callResult => handle_acknowledgeMail(callResult));
-        // Allow delete button
-        if (controller._currentFolder.codePointAt(0) !== systemFolders.TRASH.codePointAt(0)) {
-          controller.disableDeleteButton(false)
-          controller.disableReplyButton(false)
+      this.fillAttachmentGrid(mailItem.mail).then((missingCount: number) => {
+        if (missingCount <= 0) return;
+        this._zvm.getMissingAttachments(mailItem.author, mailItem.ah);
+        this._zvm.acknowledgeMail(item.id);
+        /** Allow delete button */
+        if (this._currentFolder.codePointAt(0) !== systemFolders.TRASH.codePointAt(0)) {
+          this.disableDeleteButton(false)
+          this.disableReplyButton(false)
         }
       });
     });
 
     this.inMailAreaElem.style.backgroundColor = "#dfe7efd1";
-    this.mailSearchElem.addEventListener('value-changed', function(e:any /*TextFieldValueChangedEvent*/) {
-      controller.mailGridElem.items = filterMails(controller.mailGridElem.items!, e.detail.value);
+    this.mailSearchElem.addEventListener('value-changed', (e:any /*TextFieldValueChangedEvent*/) => {
+      this.mailGridElem.items = filterMails(this.mailGridElem.items!, e.detail.value);
       //mailGrid.render();
     });
   }
 
 
   /** Return manifest with added content field */
-  async getFile(fileId: ActionHash): Promise<FileManifest | null> {
-    const callResult = await this._dna!.findManifest(fileId);
+  async getFile(fileId: string): Promise<FileManifest | null> {
+    const callResult = await this._zvm.findManifest(fileId);
     const manifest = handle_findManifest(callResult)
     if (!manifest) {
       return null;
@@ -1046,7 +910,7 @@ export class SnapmailPage extends ScopedElementsMixin(LitElement) {
     let i = 0;
     for (const chunkAddress of manifest.chunks) {
       i++;
-      const callResult = await this._dna!.getChunk(chunkAddress)
+      const callResult = await this._zvm.getChunk(chunkAddress)
       const maybeChunk = handle_getChunk(callResult)
       if (!maybeChunk) {
         return null;
@@ -1077,7 +941,7 @@ export class SnapmailPage extends ScopedElementsMixin(LitElement) {
     /** Store _groupMap in localStore */
     const entries = Array.from(this._groupMap.entries());
     console.log({entries})
-    window.localStorage[this._dnaIdB64] = JSON.stringify(entries);
+    window.localStorage[this.dnaHash] = JSON.stringify(entries);
   }
 
 
@@ -1227,13 +1091,13 @@ export class SnapmailPage extends ScopedElementsMixin(LitElement) {
     if (DEV_MODE === 'dev') {
       const contactsMenu = this.contactsMenuElem;
       contactsMenu.items = [{ text: 'Refresh' }];
-      contactsMenu.addEventListener('item-selected', function(e:any) {
-        console.log(JSON.stringify(e.detail.value));
+      contactsMenu.addEventListener('item-selected', (e:any) => {
+        console.log('item-selected', JSON.stringify(e.detail.value));
         if(e.detail.value.text === 'Refresh') {
           console.log("contactsMenu Refresh clicked")
           contactsMenu.items[0].disabled = true;
           //contactsMenu.render();
-          controller.getAllHandles();
+          this._zvm.probeHandles();
         }
       });
     }
@@ -1341,38 +1205,11 @@ export class SnapmailPage extends ScopedElementsMixin(LitElement) {
   }
 
 
-  /** Add chunk to chunkList */
-  handle_writeChunk(callResult: any): void {
-    if (!callResult || callResult.Err !== undefined) {
-      const err = callResult.Err;
-      console.error('writeChunk zome call failed');
-      console.error(err);
-      return;
-    }
-    const chunkAddress: EntryHash = callResult;
-    this._chunkList.push(chunkAddress);
-  }
-
-
-  /** Add manifest to fileList */
-  handle_writeManifest(callResult: any): void {
-    //console.log('writeManifestResult: ' + JSON.stringify(callResult));
-    if (!callResult || callResult.Err !== undefined) {
-      const err = callResult.Err;
-      console.error('writeManifest zome call failed');
-      console.error(err);
-      return;
-    }
-    const manifestAddress: ActionHash = callResult;
-    this._fileList.push(manifestAddress);
-  }
-
-
   /** Perform send mail action */
   async sendAction(): Promise<void> {
     /** Submit each attachment */
     const files = this.uploadElem.files;
-    this._fileList = [];
+    this._filesToSend = [];
     for (const file of files) {
       // // Causes stack error on big files
       // if (!base64regex.test(file.content)) {
@@ -1389,11 +1226,11 @@ export class SnapmailPage extends ScopedElementsMixin(LitElement) {
 
 
       /** Submit each chunk */
-      this._chunkList = [];
+      this._chunksToSend = [];
       for (let i = 0; i < splitObj.numChunks; ++i) {
         //console.log('chunk' + i + ': ' + fileChunks.chunks[i])
-        const callResult = await this._dna!.writeChunk(splitObj.dataHash, i, splitObj.chunks[i]);
-        this.handle_writeChunk(callResult)
+        const eh = await this._zvm.writeChunk(splitObj.dataHash, i, splitObj.chunks[i]);
+        this._chunksToSend.push(eh);
         // while (g_chunkList.length !=  i + 1) {
         //   await sleep(10)
         // }
@@ -1401,9 +1238,10 @@ export class SnapmailPage extends ScopedElementsMixin(LitElement) {
       // while (g_chunkList.length < splitObj.numChunks) {
       //   await sleep(10);
       // }
-      const callResult = await this._dna!.writeManifest(splitObj.dataHash, file.name, filetype, file.size, this._chunkList)
-      this.handle_writeManifest(callResult)
+      const ah = await this._zvm.writeManifest(splitObj.dataHash, file.name, filetype, file.size, this._chunksToSend)
+      this._filesToSend.push(ah);
     }
+
     // while (g_fileList.length < files.length) {
     //   await sleep(10);
     // }
@@ -1437,26 +1275,27 @@ export class SnapmailPage extends ScopedElementsMixin(LitElement) {
       payload: this.outMailContentElem.value,
       reply_of: this._replyOf,
       to: toList, cc: ccList, bcc: bccList,
-      manifest_address_list: this._fileList
+      manifest_address_list: this._filesToSend
     };
     console.log('sending mail:', mail)
     /* Send Mail */
-    const outmail_hh = await this._dna!.sendMail(mail);
-    /* Update UI */
-    if (this._replyOf) {
-      const replyOfStr = htos(this._replyOf)
-      const mailItem = this._mailMap.get(replyOfStr)!;
-      mailItem.reply = outmail_hh;
-      this._mailMap.set(replyOfStr, mailItem);
-    }
+    const outmail_hh = await this._zvm.sendMail(mail);
+    // /* Update UI */
+    // if (this._replyOf) {
+    //   const replyOfStr = htos(this._replyOf)
+    //   const mailItem = this._mailMap.get(replyOfStr)!;
+    //   mailItem.reply = outmail_hh;
+    //   this._mailMap.set(replyOfStr, mailItem);
+    // }
     this._replyOf = undefined;
+
     this.outMailSubjectElem.value = '';
     this.outMailContentElem.value = '';
     this.updateContacts(true);
     this.updateContactGrid(false);
     this.contactGridElem.activeItem = null;
     this.contactSearchElem.value = '';
-    await this.getAllMails();
+
     this.uploadElem.files = [];
   }
 
@@ -1812,13 +1651,6 @@ export class SnapmailPage extends ScopedElementsMixin(LitElement) {
   }
 
 
-  /** */
-  storePingResult(callResult: any, agentB64: string) {
-    const isAgentPresent = callResult !== undefined && callResult.Err === undefined
-    console.log("storePingResult() " + agentB64 + " | " + isAgentPresent)
-    this._responseMap.set(agentB64, isAgentPresent);
-    this._pingMap.set(agentB64, Date.now());
-  }
 
 
   /** */
@@ -1826,24 +1658,24 @@ export class SnapmailPage extends ScopedElementsMixin(LitElement) {
     console.log('initDna()');
     try {
       //const cellId = await DNA.rsmConnectApp(this.handleSignal)
-      this.hcClient!.addSignalHandler(handleSignal)
-      this._dna = new SnapmailZvm(this.hcClient!, this.cellId!)
+      // this.hcClient!.addSignalHandler(handleSignal)
+      // this._dna = new SnapmailZvm(this.hcClient!, this.cellId!)
 
       const dnaId = htos(this.cellId![0]);
-      this._dnaIdB64 = dnaId;
-      this._myAgentId = this.cellId![1];
-      this._myAgentIdB64 = htos(this._myAgentId);
+      //this._dnaIdB64 = dnaId;
+      //this._myAgentId = this.cellId![1];
+      //this._myAgentIdB64 = htos(this._myAgentId);
 
-      this.storePingResult({}, this._myAgentIdB64);
+      this._zvm.storePingResult({}, this.agentPubKey);
 
       /** Load Groups from localStorage */
       this.loadGroupList(dnaId);
       this.regenerateGroupComboBox(SYSTEM_GROUP_LIST[0]);
       // let label = this.shadowRoot!.getElementById('agentIdDisplay');
       // label.textContent = g_myAgentId
-      this._dna!.getMyHandle()
+      this._zvm.getMyHandle()
         .then((myHandle:string) => this.showHandle(myHandle));
-      await this.getAllFromDht();
+      await this._zvm.probeAll();
 
       // -- findAgent ? -- //
       //const handleButton = this.shadowRoot!.getElementById('handleText');
@@ -1867,7 +1699,7 @@ export class SnapmailPage extends ScopedElementsMixin(LitElement) {
       }
       /** -- Update Abbr -- */
       const handleAbbr = this.shadowRoot!.getElementById('handleAbbr') as HTMLElement;
-      handleAbbr.title = "agentId: " + this._myAgentIdB64;
+      handleAbbr.title = "agentId: " + this.agentPubKey;
       const titleAbbr = this.shadowRoot!.getElementById('titleAbbr') as HTMLElement;
       titleAbbr.title = dnaId;
       /** -- Loading Done -- */
@@ -1908,7 +1740,7 @@ export class SnapmailPage extends ScopedElementsMixin(LitElement) {
       return;
     }
     console.log("Calling getMyHandle() for ELECTRON");
-    const startingHandle = await this._dna!.getMyHandle();
+    const startingHandle = await this._zvm.getMyHandle();
     console.log("getMyHandle() returned: " + startingHandle);
     const dnaHash = this.cellId![0];
     console.log("startingInfo sending dnaHash =", dnaHash);
@@ -1929,8 +1761,19 @@ export class SnapmailPage extends ScopedElementsMixin(LitElement) {
     this.initUi()
     this.initElectron();
 
-    /*let _10sec =*/ setInterval(onEvery10sec, 10 * 1000);
-    /*let _1Sec =*/ setInterval(onEverySec, 1 * 1000);
+    /*let _10sec =*/ setInterval(() => {
+      if (DEV_MODE === 'dev') {
+        return;
+      }
+      try {
+        this._zvm.probeAll();
+      } catch(e) {
+        console.error("onEvery10sec.probeAll() failed: ", e)
+      }
+    }, 10 * 1000);
+
+
+    ///*let _1Sec =*/ setInterval(onEverySec, 1 * 1000);
 
     /** Styling of vaadin components */
     this.mailGridElem.shadowRoot!.appendChild(tmpl.content.cloneNode(true));
@@ -1941,6 +1784,19 @@ export class SnapmailPage extends ScopedElementsMixin(LitElement) {
 
   /** Render the current state */
   render() {
+    console.log("<snapmail-page>.render()");
+
+    /* Reset contactGrid */
+    this.updateContacts(true);
+    this.updateContactGrid(false);
+    // if (this.contactsMenuElem.items && this.contactsMenuElem.items.length > 0) {
+    //   this.contactsMenuElem.items[0].disabled = false;
+    //   //contactsMenu.render();
+    // }
+    /* Update mailGrid */
+    this.update_mailGrid(this.folderElem.value);
+
+
     return html`
         <!-- Loading Spinner -->
         <vaadin-progress-bar indeterminate value="0" id="loadingBar" ></vaadin-progress-bar>
