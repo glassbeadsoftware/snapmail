@@ -1,6 +1,6 @@
 import {htos} from './utils'
 
-import {FileManifest} from "./bindings/snapmail";
+import {FileManifest} from "./bindings/snapmail.types";
 import {ContactGridItem} from "./viewModel/snapmail.perspective";
 import {AppSignal} from "@holochain/client/lib/api/app/types";
 import {Notification} from "@vaadin/notification";

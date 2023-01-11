@@ -1,10 +1,8 @@
 import { html } from "lit";
 import { state } from "lit/decorators.js";
-import {CellId} from "@holochain/client";
+import {encodeHashToBase64} from "@holochain/client";
 import {DEFAULT_SNAPMAIL_DEF, SnapmailDvm, SnapmailPage} from "@snapmail/elements";
 import {HvmDef, HappElement} from "@ddd-qc/lit-happ";
-import {serializeHash} from "@holochain-open-dev/utils";
-
 
 let HC_APP_PORT: number = Number(process.env.HC_PORT);
 
@@ -69,7 +67,7 @@ export class SnapmailApp extends HappElement {
     /** Send dnaHash to electron */
     if (IS_ELECTRON) {
       const ipc = window.require('electron').ipcRenderer;
-      const dnaHashB64 = serializeHash(this.snapmailDvm.installedCell.cell_id[0])
+      const dnaHashB64 = encodeHashToBase64(this.snapmailDvm.cellId[0])
       let _reply = ipc.sendSync('dnaHash', dnaHashB64);
     }
 
@@ -86,7 +84,7 @@ export class SnapmailApp extends HappElement {
       return html`<span>Loading...</span>`;
     }
     return html`
-       <cell-context .installedCell="${this.snapmailDvm.installedCell}">
+       <cell-context .cell="${this.snapmailDvm.cell}">
            <snapmail-page></snapmail-page>
        </cell-context>
     `;

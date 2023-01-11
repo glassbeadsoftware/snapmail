@@ -8,7 +8,7 @@ import {htos} from './utils'
 //import {MailItem} from "./bindings/snapmail";
 import {UsernameMap} from "./viewModel/snapmail.perspective";
 import {DEV_MODE} from "./snapmail";
-import {MailItem, MailStateVariantOut} from "./bindings/snapmail";
+import {MailItem, MailStateVariantOut} from "./bindings/snapmail.types";
 
 const checkMarkEmoji = String.fromCodePoint(0x2714); //FE0F
 const suspensionPoints = String.fromCodePoint(0x2026);

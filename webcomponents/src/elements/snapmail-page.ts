@@ -1,7 +1,6 @@
 /** Lit imports */
 import {css, html, LitElement} from "lit";
 import {property, state} from "lit/decorators.js";
-import {ScopedElementsMixin} from "@open-wc/scoped-elements";
 /** Vaadin imports */
 import '@vaadin/progress-bar';
 import '@vaadin/button';
@@ -49,7 +48,7 @@ import {
 } from "../viewModel/snapmail.perspective";
 import {
   FileManifest, HandleItem, Mail, MailItem, SendMailInput
-} from "../bindings/snapmail";
+} from "../bindings/snapmail.types";
 import {arrayBufferToBase64, base64ToArrayBuffer, splitFile,  htos, stoh} from "../utils";
 import {
   customDateString,

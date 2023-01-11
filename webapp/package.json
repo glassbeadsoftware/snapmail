@@ -1,6 +1,6 @@
 {
   "name": "snapmail",
-  "version": "0.2.1",
+  "version": "0.3.0",
   "scripts": {
     "lint": "eslint --ext .ts .",
     "tsc": "tsc",
@@ -41,11 +41,10 @@
     "eslint-plugin-import": "^2.26.0"
   },
   "dependencies": {
-    "@ddd-qc/lit-happ": "0.9.7",
-    "@ddd-qc/cell-proxy": "0.9.7",
-    "@holochain/client": "0.9.3",
-    "@holochain-open-dev/core-types": "^0.6.1",
-    "@holochain-open-dev/utils": "0.4.0",
+    "@ddd-qc/lit-happ": "0.10.1",
+    "@ddd-qc/cell-proxy": "0.10.1",
+    "@holochain/client": "0.11.9",
+    "@holochain-open-dev/core-types": "0.6.3",
     "@snapmail/elements": "file:../webcomponents",
     "@open-wc/scoped-elements": "^2.1.1",
     "lit": "2.3.1"

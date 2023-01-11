@@ -1,24 +1,9 @@
 {
+  "extends": "../tsconfig.json",
   "compilerOptions": {
-    "module": "commonjs",
-    "outDir": "out-tsc",
-    "esModuleInterop": true,
-    "target": "es2018",
-    "moduleResolution": "node",
-    "noEmitOnError": true,
-    "lib": ["es2017", "dom"],
-    "strict": false,
-    "allowSyntheticDefaultImports": true,
-    "experimentalDecorators": true,
     "resolveJsonModule": true,
-    "skipLibCheck": false,
-    "importHelpers": true,
-    "sourceMap": true,
-    "inlineSources": true,
+    "outDir": "out-tsc",
     "rootDir": "src",
-    "allowJs": true,
-    "declaration": true,
-    "incremental": true
   },
   "include": ["src/**/*.ts", "src/**/*.js"]
 }

@@ -7,7 +7,7 @@ import {
   FileManifest, FindManifestOutput,
   GetMissingAttachmentsInput,
   SendMailInput
-} from "../bindings/snapmail";
+} from "../bindings/snapmail.types";
 import {htos, stoh} from "../utils";
 
 /** */
