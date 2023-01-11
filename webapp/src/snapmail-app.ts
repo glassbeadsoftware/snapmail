@@ -1,8 +1,9 @@
 import { html } from "lit";
 import { state } from "lit/decorators.js";
-import {encodeHashToBase64} from "@holochain/client";
+import {AdminWebsocket, encodeHashToBase64} from "@holochain/client";
 import {DEFAULT_SNAPMAIL_DEF, SnapmailDvm, SnapmailPage} from "@snapmail/elements";
-import {HvmDef, HappElement} from "@ddd-qc/lit-happ";
+import {HvmDef, HappElement, cellContext} from "@ddd-qc/lit-happ";
+import {ContextProvider, createContext} from '@lit-labs/context';
 
 let HC_APP_PORT: number = Number(process.env.HC_PORT);
 
@@ -57,24 +58,29 @@ export class SnapmailApp extends HappElement {
   //   this._loaded = true;
   // }
 
+
   /** */
   async happInitialized() {
     console.log("happInitialized()")
-    //new ContextProvider(this, cellContext, this.taskerDvm.installedCell);
-    //this._cellId = this.snapmailDvm.installedCell.cell_id;
+    /** Provide Cell Context */
+    //console.log({cell: this.snapmailDvm.cell});
+    new ContextProvider(this, cellContext, this.snapmailDvm.cell);
+    /** Authorize all zome calls */
+    const adminWs = await AdminWebsocket.connect(`ws://localhost:${process.env.ADMIN_PORT}`);
+    //console.log({ adminWs });
+    await this.hvm.authorizeAllZomeCalls(adminWs);
+    console.log("*** Zome call authorization complete");
+    /** Probe */
     await this.hvm.probeAll();
-
     /** Send dnaHash to electron */
     if (IS_ELECTRON) {
       const ipc = window.require('electron').ipcRenderer;
       const dnaHashB64 = encodeHashToBase64(this.snapmailDvm.cellId[0])
       let _reply = ipc.sendSync('dnaHash', dnaHashB64);
     }
-
     /** Done */
     this._loaded = true;
   }
-
 
 
   /** */
@@ -84,9 +90,7 @@ export class SnapmailApp extends HappElement {
       return html`<span>Loading...</span>`;
     }
     return html`
-       <cell-context .cell="${this.snapmailDvm.cell}">
-           <snapmail-page></snapmail-page>
-       </cell-context>
+        <snapmail-page></snapmail-page>
     `;
   }
 
