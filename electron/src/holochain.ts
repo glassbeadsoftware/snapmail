@@ -1,11 +1,12 @@
 import * as path from 'path'
 import { app } from 'electron'
 import { ElectronHolochainOptions, StateSignal } from "@lightningrodlabs/electron-holochain"
-import {DNA_PATH, DNA_VERSION_FILENAME, SNAPMAIL_APP_ID} from './constants'
+import {ADMIN_WS, DNA_PATH, DNA_VERSION_FILENAME, SNAPMAIL_APP_ID} from './constants'
 import {NetworkSettings} from "./networkSettings";
 import fs from "fs";
 import {log} from "./logger";
 import {bytesToBase64} from "byte-base64";
+
 
 
 /** Convert holo hash to readable string */
@@ -65,7 +66,7 @@ export function createHolochainOptions(uid: string, storagePath: string, network
     appId: SNAPMAIL_APP_ID + '-' + uid,
     //appId: MAIN_APP_ID,
     appWsPort: 0,
-    adminWsPort: 1235,
+    adminWsPort: ADMIN_WS,
     proxyUrl: networkSettings.proxyUrl,
     bootstrapUrl: networkSettings.canProxy? networkSettings.bootstrapUrl : '',
     passphrase: "test-passphrase",

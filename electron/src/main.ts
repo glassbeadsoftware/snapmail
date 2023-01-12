@@ -43,7 +43,7 @@ import {
   MODEL_ZOME_HASH_FILEPATH,
   MAIN_FILE,
   BINARY_PATHS,
-  RUNNER_VERSION, DEFAULT_BOOTSTRAP_URL, DEFAULT_PROXY_URL, FAVICON_PATH
+  RUNNER_VERSION, DEFAULT_BOOTSTRAP_URL, DEFAULT_PROXY_URL, FAVICON_PATH, ADMIN_WS
 } from './constants';
 import { log, electronLogger } from './logger';
 import { pingBootstrap } from "./spawn";
@@ -270,6 +270,7 @@ ipc.on('newCountAsync', (event, newCount) => {
 
 ipc.on('exitNetworkStatus', (event) => {
   const indexUrl = INDEX_URL + g_appPort + '&UID=' + g_uid;
+  console.log("indexUrl", indexUrl);
   g_mainWindow?.loadURL(indexUrl)
 })
 
@@ -412,7 +413,7 @@ const createMainWindow = async (appPort: string): Promise<BrowserWindow> => {
     // use these settings so that the ui can check paths
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
-      contextIsolation: true,
+      contextIsolation: false, // for using window.require('electron')
       sandbox: false,
       nodeIntegration: true,
       devTools: true,
@@ -438,7 +439,7 @@ const createMainWindow = async (appPort: string): Promise<BrowserWindow> => {
 
   /** load the index.html of the app */
   let mainUrl = app.isPackaged? MAIN_FILE : path.join(DEVELOPMENT_UI_URL, "index.html")
-  mainUrl += "?APP=" + appPort + "&UID=" + g_uid
+  mainUrl += "?ADMIN="+ ADMIN_WS + "&APP=" + appPort + "&UID=" + g_uid
   log('info', "createMainWindow ; mainUrl = " + mainUrl)
   try {
     await mainWindow.loadURL("file://" + mainUrl)
@@ -1634,6 +1635,7 @@ const debugMenuTemplate: Array<MenuItemConstructorOptions> = [
         //const succeeded = pingBootstrap(g_bootstrapUrl);
       } else {
         const indexUrl = INDEX_URL + g_appPort + '&UID=' + g_uid;
+        console.log("indexUrl", indexUrl);
         await g_mainWindow!.loadURL(indexUrl);
       }
     }

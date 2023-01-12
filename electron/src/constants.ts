@@ -76,4 +76,6 @@ export const MAIN_FILE = path.join(__dirname, '../web/index.html')
 /** HTML PAGES URLS */
 export const NETWORK_URL = 'file://' + CURRENT_DIR + '/'+ DIST_DIR +'/networking.html';
 export const ERROR_URL = 'file://' + CURRENT_DIR + '/'+ DIST_DIR +'/error.html';
-export const INDEX_URL = 'file://' + CURRENT_DIR + '/'+ DIST_DIR +'/index.html?APP=';
+/** Shameful */
+export const ADMIN_WS = 1235
+export const INDEX_URL = 'file://' + CURRENT_DIR + '/'+ DIST_DIR +'/index.html?ADMIN='+ADMIN_WS+'&APP=';
