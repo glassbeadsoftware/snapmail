@@ -1,5 +1,5 @@
 /** Lit imports */
-import {css, html, LitElement} from "lit";
+import {css, html} from "lit";
 import {property, state} from "lit/decorators.js";
 /** Vaadin imports */
 import '@vaadin/progress-bar';
@@ -52,7 +52,7 @@ import {
 import {arrayBufferToBase64, base64ToArrayBuffer, splitFile,  htos, stoh} from "../utils";
 import {
   customDateString,
-  determineMailCssClass,
+  determineMailCssClass, hasMailBeenOpened,
   into_gridItem,
   into_mailText,
   is_OutMail,
@@ -163,19 +163,11 @@ export class SnapmailPage extends ZomeElement<SnapmailPerspective, SnapmailZvm> 
     super(SnapmailZvm.DEFAULT_ZOME_NAME);
   }
 
-
   @property()
   noTitle = false;
 
-  // @property()
-  // cellId: CellId | null = null;
-
-  // @property()
-  // hcClient: HolochainClient | null = null;
-
   /** -- */
 
-  //private _zvm: SnapmailZvm | null = null;
   //private _dnaIdB64 = '';
   //private _myAgentId: AgentPubKey | null = null;
   private _myHandle = '<unknown>';
@@ -194,8 +186,6 @@ export class SnapmailPage extends ZomeElement<SnapmailPerspective, SnapmailZvm> 
 
   private _chunksToSend: EntryHash[] = [];
   private _filesToSend: ActionHash[] = [];
-
-
 
 
   /** groupname -> agentIdB64[]  */
@@ -358,6 +348,7 @@ export class SnapmailPage extends ZomeElement<SnapmailPerspective, SnapmailZvm> 
       });
     });
 
+    /** Display network ID in top bar */
     // console.log({NETWORK_ID: DNA.NETWORK_ID})
     // const span = this.shadowRoot!.getElementById('networkIdDisplay') as HTMLElement;
     // console.assert(span);
@@ -426,7 +417,7 @@ export class SnapmailPage extends ZomeElement<SnapmailPerspective, SnapmailZvm> 
     //grid.items = folderItems;
     this._mailItems = folderItems;
     this.mailGridElem.items = filterMails(this._mailItems, this.mailSearchElem.value);
-    // - Re-activate activeItem
+    /** - Re-activate activeItem */
     if (activeItem !== undefined && activeItem !== null) {
       for(const item of Object.values(this.mailGridElem.items)) {
         const mailGridItem: MailGridItem = item as MailGridItem;
@@ -439,8 +430,8 @@ export class SnapmailPage extends ZomeElement<SnapmailPerspective, SnapmailZvm> 
         }
       }
     }
-    //
     //mailGrid.render();
+    this.requestUpdate();
   }
 
 
@@ -501,9 +492,14 @@ export class SnapmailPage extends ZomeElement<SnapmailPerspective, SnapmailZvm> 
    * Set Send button state according to selection
    */
   updateContactGrid(canResetSearch: boolean): void {
+    const contactGrid = this.contactGridElem;
+    if (!contactGrid) {
+      console.warn("No contact grid found")
+      return;
+    }
     /* Deselect all */
     for (const item of this._allContactItems) {
-      this.contactGridElem.deselectItem(item);
+      contactGrid.deselectItem(item);
     }
     /** Form selectedItems */
     const selected = []
@@ -511,13 +507,13 @@ export class SnapmailPage extends ZomeElement<SnapmailPerspective, SnapmailZvm> 
       const item = this._allContactItems.find((item) => item.agentIdB64 === idB64)!;
       selected.push(item)
     }
-    this.contactGridElem.selectedItems = selected;
+    contactGrid.selectedItems = selected;
     /* Reset search filter */
     if (canResetSearch) {
       this.contactSearchElem.value = '';
     }
     /** generated items */
-    this.contactGridElem.items = this.filterContacts(selected, this.contactSearchElem.value);
+    contactGrid.items = this.filterContacts(selected, this.contactSearchElem.value);
     /** Update SendButton state */
     this.disableSendButton(this._selectedContactIdB64s.length == 0);
   }
@@ -545,10 +541,9 @@ export class SnapmailPage extends ZomeElement<SnapmailPerspective, SnapmailZvm> 
 
     const selectedBox = this.folderElem.value.codePointAt(0);
 
-    const mailItems: MailItem[] = []; //this.perspective.mailMap;
+    const mailItems: MailItem[] = Object.values(this.perspective.mailMap);
     for (const mailItem of mailItems) {
       //console.log({mailItem})
-      //
       const isDeleted = isMailDeleted(mailItem);
       const isOutMail = is_OutMail(mailItem);
 
@@ -576,7 +571,6 @@ export class SnapmailPage extends ZomeElement<SnapmailPerspective, SnapmailZvm> 
       if (!isOutMail && selectedBox === systemFolders.SENT.codePointAt(0)) {
         continue;
       }
-      // items.push(into_gridItem(g_usernameMap, mailItem));
       const gridItem = into_gridItem(this.perspective.usernameMap, mailItem);
       // console.log('gridItem.id = ' + gridItem.id);
       items.push(gridItem);
@@ -850,15 +844,16 @@ export class SnapmailPage extends ZomeElement<SnapmailPerspective, SnapmailZvm> 
     this.mailGridElem.items = [];
     this.mailGridElem.multiSort = true;
     /** Display bold if mail not acknowledged */
-    this.mailGridElem.cellClassNameGenerator = (column, rowData:any) => {
+    this.mailGridElem.cellClassNameGenerator = (column, rowData: any) => {
       let classes = '';
-      const mailItem: MailItem = this.perspective.mailMap.get(htos(rowData.item.id))!;
+      const idB64 = htos(rowData.item.id);
+      const mailItem: MailItem = this.perspective.mailMap.get(idB64)!;
       classes += determineMailCssClass(mailItem!);
-      // let is_old = hasMailBeenOpened(mailItem);
-      // //console.log('answer: ' + is_old);
-      // if (!is_old) {
-      //   classes += ' newmail';
-      // }
+      const is_old = hasMailBeenOpened(mailItem);
+      //console.log('hasMailBeenOpened: ', is_old, idB64);
+      if (!is_old) {
+        classes += ' newmail';
+      }
       return classes;
     };
 
@@ -879,8 +874,9 @@ export class SnapmailPage extends ZomeElement<SnapmailPerspective, SnapmailZvm> 
       this.inMailAreaElem.value = into_mailText(this.perspective.usernameMap, mailItem);
 
       this.fillAttachmentGrid(mailItem.mail).then((missingCount: number) => {
-        if (missingCount <= 0) return;
-        this._zvm.getMissingAttachments(mailItem.author, mailItem.ah);
+        if (missingCount > 0) {
+          this._zvm.getMissingAttachments(mailItem.author, mailItem.ah);
+        }
         this._zvm.acknowledgeMail(item.id);
         /** Allow delete button */
         if (this._currentFolder.codePointAt(0) !== systemFolders.TRASH.codePointAt(0)) {
@@ -893,6 +889,7 @@ export class SnapmailPage extends ZomeElement<SnapmailPerspective, SnapmailZvm> 
     this.inMailAreaElem.style.backgroundColor = "#dfe7efd1";
     this.mailSearchElem.addEventListener('value-changed', (e:any /*TextFieldValueChangedEvent*/) => {
       this.mailGridElem.items = filterMails(this.mailGridElem.items!, e.detail.value);
+      this.requestUpdate();
       //mailGrid.render();
     });
   }
@@ -953,11 +950,11 @@ export class SnapmailPage extends ZomeElement<SnapmailPerspective, SnapmailZvm> 
 
   /** */
   initAttachmentGrid() {
-    const controller = this;
+    //const controller = this;
     /** attachmentGrid -- vaadin-grid */
     this.attachmentGridElem.items = [];
 
-    this.attachmentGridElem.cellClassNameGenerator = function(column, rowData:any) {
+    this.attachmentGridElem.cellClassNameGenerator = (column, rowData:any) => {
       //console.log({rowData})
       let classes = '';
       if (!rowData.item.hasFile) {
@@ -969,34 +966,35 @@ export class SnapmailPage extends ZomeElement<SnapmailPerspective, SnapmailZvm> 
     };
 
     /** On select, download attachment */
-    this.attachmentGridElem.addEventListener('active-item-changed', function(event:any) {
+    this.attachmentGridElem.addEventListener('active-item-changed', (event:any) => {
       const item = event.detail.value;
       console.log({item})
-      controller.attachmentGridElem.activeItem = null;
-      controller.attachmentGridElem.selectedItems = [];
+      this.attachmentGridElem.activeItem = null;
+      this.attachmentGridElem.selectedItems = [];
 
       if (!item || !item.hasFile) {
         return;
       }
 
-      if (!controller.attachmentGridElem.selectedItems.includes(item)) {
+      if (!this.attachmentGridElem.selectedItems.includes(item)) {
         //attachmentGrid.selectedItems = [];
         item.status = String.fromCodePoint(0x23F3);
-        controller.attachmentGridElem.selectedItems.push(item);
+        this.attachmentGridElem.selectedItems.push(item);
         item.disabled = true;
-        //controller.attachmentGridElem.render();
+        this.requestUpdate();
+        //this.attachmentGridElem.render();
       }
 
       /** Get File on source chain */
-      controller.getFile(item.fileId).then(function(manifest: FileManifest | null) {
+      this.getFile(item.fileId).then(function(manifest: FileManifest | null) {
         if (!manifest) {
           return;
         }
         //console.log({ manifest })
         item.status = String.fromCodePoint(0x2714);
-        //controller.attachmentGridElem.deselectItem(item);
+        //this.attachmentGridElem.deselectItem(item);
 
-        // DEBUG - check if content is valid base64
+        /** DEBUG - check if content is valid base64 */
         // if (!base64regex.test(manifest.content)) {
         //   const invalid_hash = sha256(manifest.content);
         //   console.error("File '" + manifest.filename + "' is invalid base64. hash is: " + invalid_hash);
@@ -1016,8 +1014,8 @@ export class SnapmailPage extends ZomeElement<SnapmailPerspective, SnapmailZvm> 
         a.download = item.filename || 'download';
         a.addEventListener('click', () => {}, false);
         a.click();
-        controller.attachmentGridElem.activeItem = null;
-        controller.attachmentGridElem.selectedItems = [];
+        this.attachmentGridElem.activeItem = null;
+        this.attachmentGridElem.selectedItems = [];
       });
     });
   }
@@ -1210,7 +1208,7 @@ export class SnapmailPage extends ZomeElement<SnapmailPerspective, SnapmailZvm> 
     const files = this.uploadElem.files;
     this._filesToSend = [];
     for (const file of files) {
-      // // Causes stack error on big files
+      // /** Causes stack error on big files */
       // if (!base64regex.test(file.content)) {
       //   const invalid_hash = sha256(file.content);
       //   console.error("File '" + file.name + "' is invalid base64. hash is: " + invalid_hash);
@@ -1280,6 +1278,7 @@ export class SnapmailPage extends ZomeElement<SnapmailPerspective, SnapmailZvm> 
     /* Send Mail */
     const outmail_hh = await this._zvm.sendMail(mail);
     // /* Update UI */
+    // FIXME
     // if (this._replyOf) {
     //   const replyOfStr = htos(this._replyOf)
     //   const mailItem = this._mailMap.get(replyOfStr)!;
@@ -1595,7 +1594,6 @@ export class SnapmailPage extends ZomeElement<SnapmailPerspective, SnapmailZvm> 
       okButton.setAttribute('style', 'margin-right: 1em');
 
 
-
       /** OnClick OK save agentIds of selected items for the group */
       okButton.addEventListener('click', function() {
         const ids = [];
@@ -1656,17 +1654,8 @@ export class SnapmailPage extends ZomeElement<SnapmailPerspective, SnapmailZvm> 
   async initDna() {
     console.log('initDna()');
     try {
-      //const cellId = await DNA.rsmConnectApp(this.handleSignal)
-      // this.hcClient!.addSignalHandler(handleSignal)
-      // this._dna = new SnapmailZvm(this.hcClient!, this.cellId!)
-
       const dnaId = htos(this.cellId![0]);
-      //this._dnaIdB64 = dnaId;
-      //this._myAgentId = this.cellId![1];
-      //this._myAgentIdB64 = htos(this._myAgentId);
-
       this._zvm.storePingResult({}, this.agentPubKey);
-
       /** Load Groups from localStorage */
       this.loadGroupList(dnaId);
       this.regenerateGroupComboBox(SYSTEM_GROUP_LIST[0]);
@@ -1783,7 +1772,7 @@ export class SnapmailPage extends ZomeElement<SnapmailPerspective, SnapmailZvm> 
 
   /** Render the current state */
   render() {
-    console.log("<snapmail-page>.render()");
+    console.log("*** <snapmail-page>.render() ***");
 
     /* Reset contactGrid */
     this.updateContacts(true);
@@ -1793,8 +1782,9 @@ export class SnapmailPage extends ZomeElement<SnapmailPerspective, SnapmailZvm> 
     //   //contactsMenu.render();
     // }
     /* Update mailGrid */
-    this.update_mailGrid(this.folderElem.value);
-
+    if (this.folderElem) {
+      this.update_mailGrid(this.folderElem.value);
+    }
 
     return html`
         <!-- Loading Spinner -->
@@ -1814,7 +1804,7 @@ export class SnapmailPage extends ZomeElement<SnapmailPerspective, SnapmailZvm> 
             <!-- TITLE BAR -->
             <vaadin-horizontal-layout id="titleLayout" theme="spacing-xs" style="background-color:beige; width:100%;">
                 <abbr title="dna" id="titleAbbr">
-                    <img src="dist/favicon.ico" width="32" height="32" style="padding-left: 5px;padding-top: 5px;"/>
+                    <img src="favicon.ico" width="32" height="32" style="padding-left: 5px;padding-top: 5px;"/>
                 </abbr>
                 <span id="snapTitle" style="text-align: center; font-size: larger; padding: 10px 0px 10px 5px;">SnapMail</span>
                 <span id="networkIdDisplay" style="text-align: center; font-size: small; padding: 15px 2px 0px 5px;"></span>

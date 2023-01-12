@@ -1,6 +1,4 @@
-
-import { ActionHash, AgentPubKey } from '@holochain/client';
-import {Mail, MailItem} from "../bindings/snapmail.types";
+import { MailItem} from "../bindings/snapmail.types";
 
 export type UsernameMap = Map<string, string>;
 

@@ -8,7 +8,7 @@ import {htos} from './utils'
 //import {MailItem} from "./bindings/snapmail";
 import {UsernameMap} from "./viewModel/snapmail.perspective";
 import {DEV_MODE} from "./snapmail";
-import {MailItem, MailStateVariantOut} from "./bindings/snapmail.types";
+import {MailItem, MailStateVariantIn, MailStateVariantOut} from "./bindings/snapmail.types";
 
 const checkMarkEmoji = String.fromCodePoint(0x2714); //FE0F
 const suspensionPoints = String.fromCodePoint(0x2026);
@@ -28,74 +28,72 @@ export const systemFolders = {
 
 /** Return True if mail has been deleted */
 export function isMailDeleted(mailItem: MailItem): boolean {
+  console.log({isMailDeleted_mail: mailItem})
+  if ("In" in mailItem.state) {
+    const inState = (mailItem.state as MailStateVariantIn).In;
+    console.log({inState})
+    return 'Deleted' in inState;
+  }
+  if ("Out" in mailItem.state) {
+    const outState = (mailItem.state as MailStateVariantOut).Out;
+    console.log({outState})
+    return 'Deleted' in outState;
+  }
+  console.error('isMailDeleted() Invalid mailItem object', mailItem)
   return false;
-  // const state = mailItem.state;
-  // if (state.In) {
-  //   return state.In.hasOwnProperty('Deleted')
-  // }
-  // if (state.Out) {
-  //   return state.Out.hasOwnProperty('Deleted');
-  // }
-  // console.error('Invalid mailItem object', mailItem)
-  // return false;
 }
 
 
 /** Return True if mail is an OutMail */
 export function is_OutMail(mailItem: MailItem): boolean {
+  if ("In" in mailItem.state) {
+    return false;
+  }
+  if ("Out" in mailItem.state) {
+    return true;
+  }
+  console.error('is_OutMail() Invalid mailItem object', mailItem)
   return false;
-  // const state = mailItem.state;
-  // if (state.In) {
-  //   return false;
-  // }
-  // if (state.Out) {
-  //   return true;
-  // }
-  // console.error('Invalid mailItem object', mailItem)
-  // return false;
 }
 
 
-// /**
-//  * Return True if mail has been acknoweldged by this agent
-//  */
-// function hasMailBeenOpened(mailItem) {
-//   //console.log('hasMailBeenOpened()? ' + JSON.stringify(mailItem.state));
-//   let state = mailItem.state;
-//
-//   if (state.hasOwnProperty('Out')) {
-//     return true;
-//   }
-//   if (state.hasOwnProperty('In')) {
-//     return state.In === 'Acknowledged' || state.In === 'AckReceived' || state.In === 'Deleted';
-//   }
-//   console.error('Invalid mailItem object')
-//   return false;
-// }
+/**
+ * Return True if mail has been acknoweldged by this agent
+ */
+export function hasMailBeenOpened(mailItem) {
+  if (is_OutMail(mailItem)) {
+    return true;
+  }
+  if ("In" in mailItem.state) {
+    const inState = (mailItem.state as MailStateVariantIn).In;
+    return !('Unacknowledged' in inState);
+  }
+  console.error('hasMailBeenOpened() Invalid mailItem object')
+  return false;
+}
 
 
 /** Return mailItem class */
 export function determineMailCssClass(mailItem: MailItem): string {
-  // const state = mailItem.state;
-  // if (state.hasOwnProperty('out')) {
-  //   const outMailState = (state as MailStateVariantOut).out;
-  //   // if (state.Out.hasOwnProperty('Unsent')) return ''; // 'pending';
-  //   // if (state.Out.hasOwnProperty('AllSent')) return ''; // 'partially';
-  //   // if (state.Out.hasOwnProperty('AllReceived')) return '';
-  //   // if (state.Out.hasOwnProperty('AllAcknowledged')) return ''; // 'received';
-  //   // if (state.Out.hasOwnProperty('Deleted')) return 'deleted';
-  //   return outMailState.Deleted? 'deleted' : '';
-  // }
-  //
-  // if (state.hasOwnProperty('in')) {
-  //   if (state.In.hasOwnProperty('Unacknowledged')) return 'newmail';
-  //   if (state.In.hasOwnProperty('AckUnsent')) return ''; //'pending';
-  //   if (state.In.hasOwnProperty('AckPending')) return ''; // 'partially';
-  //   if (state.In.hasOwnProperty('AckDelivered')) return ''; // 'received';
-  //   if (state.In.hasOwnProperty('Deleted')) return 'deleted';
-  // }
-  // console.error('Invalid mailItem object', mailItem);
-  return '';
+  if ("Out" in mailItem.state) {
+    const outMailState = (mailItem.state as MailStateVariantOut).Out;
+    if ('Unsent' in outMailState) return ''; // 'pending';
+    if ('AllSent' in outMailState) return ''; // 'partially';
+    if ('AllReceived' in outMailState) return '';
+    if ('AllAcknowledged' in outMailState) return ''; // 'received';
+    if ('Deleted' in outMailState) return 'deleted';
+    return outMailState === "Deleted" ? 'deleted' : '';
+  }
+
+  if ("In" in mailItem.state) {
+    const inState = (mailItem.state as MailStateVariantIn).In;
+    if ('Unacknowledged' in inState) return 'newmail';
+    if ('AckUnsent' in inState) return ''; //'pending';
+    if ('AckPending' in inState) return ''; // 'partially';
+    if ('AckDelivered' in inState) return ''; // 'received';
+    if ('Deleted' in inState) return 'deleted';
+  }
+  console.error('determineMailCssClass() Invalid mailItem object', mailItem);
 }
 
 
@@ -142,38 +140,38 @@ function getUsername(usernameMap: UsernameMap, agentHash: Uint8Array): string {
 /** Determine which Username to display (recipient or author) */
 function determineFromLine(usernameMap: UsernameMap, mailItem: MailItem): string {
   /* Outmail special case */
-  // if (mailItem.state.Out) {
-  //   if (mailItem.mail.to.length > 0) {
-  //     return 'To: ' + vecToUsernames(usernameMap, mailItem.mail.to)
-  //   } else if (mailItem.mail.cc.length > 0) {
-  //     return 'To: ' + vecToUsernames(usernameMap, mailItem.mail.cc)
-  //   } else if (mailItem.bcc && mailItem.bcc!.length > 0) {
-  //     return 'To: ' + vecToUsernames(usernameMap, mailItem.bcc!)
-  //   }
-  // }
+  if (is_OutMail(mailItem)) {
+    if (mailItem.mail.to.length > 0) {
+      return 'To: ' + vecToUsernames(usernameMap, mailItem.mail.to)
+    } else if (mailItem.mail.cc.length > 0) {
+      return 'To: ' + vecToUsernames(usernameMap, mailItem.mail.cc)
+    } else if (mailItem.bcc && mailItem.bcc!.length > 0) {
+      return 'To: ' + vecToUsernames(usernameMap, mailItem.bcc!)
+    }
+  }
   return getUsername(usernameMap, mailItem.author);
 }
 
 
 /** Return mailItem status icon */
 export function determineMailStatus(mailItem: MailItem): string {
-  //console.log('determineMailClass()? ' + JSON.stringify(mailItem.state));
-  // const state = mailItem.state;
+  console.log('determineMailStatus()', mailItem);
+  const state = mailItem.state;
   // console.log("determineMailStatus() state", mailItem.state);
-  // if (state.hasOwnProperty('out')) {
-  //   const outMailState = state as MailStateVariantOut;
-  //   if (outMailState.hasOwnProperty('Unsent')) return suspensionPoints;
-  //   if (outMailState.hasOwnProperty('AllSent')) return suspensionPoints;
-  //   if (outMailState.hasOwnProperty('AllReceived')) return checkMarkEmoji;
-  //   if (outMailState.hasOwnProperty('AllAcknowledged')) return checkMarkEmoji;
-  //   if (outMailState.hasOwnProperty('Deleted')) return '';
-  // } else {
-  //   if (state.hasOwnProperty('in')) {
-  //     if (mailItem.reply) {
-  //       return returnArrowEmoji;
-  //     }
-  //   }
-  // }
+  if ("Out" in state) {
+    const outMailState = (state as MailStateVariantOut).Out;
+    if ('Unsent' in outMailState) return suspensionPoints;
+    if ('AllSent' in outMailState) return suspensionPoints;
+    if ('AllReceived' in outMailState) return checkMarkEmoji;
+    if ('AllAcknowledged' in outMailState) return checkMarkEmoji;
+    if ('Deleted' in outMailState) return '';
+  } else {
+    if ("In" in state) {
+      if (mailItem.reply) {
+        return returnArrowEmoji;
+      }
+    }
+  }
   return '';
 }
 

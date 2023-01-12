@@ -136,16 +136,16 @@ export enum DirectMessageProtocolType {
 	UnknownEntry = 'UnknownEntry',
 	Ping = 'Ping',
 }
-export type DirectMessageProtocolVariantFailure = {failure: string}
-export type DirectMessageProtocolVariantSuccess = {success: string}
-export type DirectMessageProtocolVariantMail = {mail: MailMessage}
-export type DirectMessageProtocolVariantAck = {ack: AckMessage}
-export type DirectMessageProtocolVariantChunk = {chunk: FileChunk}
-export type DirectMessageProtocolVariantFileManifest = {fileManifest: FileManifest}
-export type DirectMessageProtocolVariantRequestChunk = {requestChunk: EntryHash}
-export type DirectMessageProtocolVariantRequestManifest = {requestManifest: EntryHash}
-export type DirectMessageProtocolVariantUnknownEntry = {unknownEntry: null}
-export type DirectMessageProtocolVariantPing = {ping: null}
+export type DirectMessageProtocolVariantFailure = {Failure: string}
+export type DirectMessageProtocolVariantSuccess = {Success: string}
+export type DirectMessageProtocolVariantMail = {Mail: MailMessage}
+export type DirectMessageProtocolVariantAck = {Ack: AckMessage}
+export type DirectMessageProtocolVariantChunk = {Chunk: FileChunk}
+export type DirectMessageProtocolVariantFileManifest = {FileManifest: FileManifest}
+export type DirectMessageProtocolVariantRequestChunk = {RequestChunk: EntryHash}
+export type DirectMessageProtocolVariantRequestManifest = {RequestManifest: EntryHash}
+export type DirectMessageProtocolVariantUnknownEntry = {UnknownEntry: null}
+export type DirectMessageProtocolVariantPing = {Ping: null}
 export type DirectMessageProtocol = 
  | DirectMessageProtocolVariantFailure | DirectMessageProtocolVariantSuccess | DirectMessageProtocolVariantMail | DirectMessageProtocolVariantAck | DirectMessageProtocolVariantChunk | DirectMessageProtocolVariantFileManifest | DirectMessageProtocolVariantRequestChunk | DirectMessageProtocolVariantRequestManifest | DirectMessageProtocolVariantUnknownEntry | DirectMessageProtocolVariantPing;
 
@@ -219,9 +219,9 @@ export enum SignalProtocolType {
 	ReceivedAck = 'ReceivedAck',
 	ReceivedFile = 'ReceivedFile',
 }
-export type SignalProtocolVariantReceivedMail = {receivedMail: MailItem}
-export type SignalProtocolVariantReceivedAck = {receivedAck: ReceivedAck}
-export type SignalProtocolVariantReceivedFile = {receivedFile: FileManifest}
+export type SignalProtocolVariantReceivedMail = {ReceivedMail: MailItem}
+export type SignalProtocolVariantReceivedAck = {ReceivedAck: ReceivedAck}
+export type SignalProtocolVariantReceivedFile = {ReceivedFile: FileManifest}
 export type SignalProtocol = 
  | SignalProtocolVariantReceivedMail | SignalProtocolVariantReceivedAck | SignalProtocolVariantReceivedFile;
 
@@ -268,23 +268,23 @@ export enum SnapmailEntryType {
 	FileChunk = 'FileChunk',
 	FileManifest = 'FileManifest',
 }
-export type SnapmailEntryVariantPubEncKey = {pubEncKey: PubEncKey}
-export type SnapmailEntryVariantHandle = {handle: Handle}
-export type SnapmailEntryVariantInMail = {inMail: InMail}
-export type SnapmailEntryVariantOutMail = {outMail: OutMail}
-export type SnapmailEntryVariantOutAck = {outAck: OutAck}
-export type SnapmailEntryVariantInAck = {inAck: InAck}
-export type SnapmailEntryVariantPendingMail = {pendingMail: PendingMail}
-export type SnapmailEntryVariantPendingAck = {pendingAck: PendingAck}
-export type SnapmailEntryVariantDeliveryConfirmation = {deliveryConfirmation: DeliveryConfirmation}
-export type SnapmailEntryVariantFileChunk = {fileChunk: FileChunk}
-export type SnapmailEntryVariantFileManifest = {fileManifest: FileManifest}
+export type SnapmailEntryVariantPubEncKey = {PubEncKey: PubEncKey}
+export type SnapmailEntryVariantHandle = {Handle: Handle}
+export type SnapmailEntryVariantInMail = {InMail: InMail}
+export type SnapmailEntryVariantOutMail = {OutMail: OutMail}
+export type SnapmailEntryVariantOutAck = {OutAck: OutAck}
+export type SnapmailEntryVariantInAck = {InAck: InAck}
+export type SnapmailEntryVariantPendingMail = {PendingMail: PendingMail}
+export type SnapmailEntryVariantPendingAck = {PendingAck: PendingAck}
+export type SnapmailEntryVariantDeliveryConfirmation = {DeliveryConfirmation: DeliveryConfirmation}
+export type SnapmailEntryVariantFileChunk = {FileChunk: FileChunk}
+export type SnapmailEntryVariantFileManifest = {FileManifest: FileManifest}
 export type SnapmailEntry = 
  | SnapmailEntryVariantPubEncKey | SnapmailEntryVariantHandle | SnapmailEntryVariantInMail | SnapmailEntryVariantOutMail | SnapmailEntryVariantOutAck | SnapmailEntryVariantInAck | SnapmailEntryVariantPendingMail | SnapmailEntryVariantPendingAck | SnapmailEntryVariantDeliveryConfirmation | SnapmailEntryVariantFileChunk | SnapmailEntryVariantFileManifest;
 
 /** List of all Link kinds handled by this Zome */
 export type LinkKind =
-  | "Members" | "AckInbox" | "MailInbox" | "Handle" | "Pending" | "Pendings" | "EncKey";
+  | {Members: null} | {AckInbox: null} | {MailInbox: null} | {Handle: null} | {Pending: null} | {Pendings: null} | {EncKey: null};
 
 /** Entry for a received Acknowledgement Receipt */
 export interface DeliveryConfirmation {
@@ -312,22 +312,22 @@ export interface InMail {
 
 /** Possible states of an InMail entry */
 export type InMailState =
-  | "Unacknowledged" | "AckUnsent" | "AckPending" | "AckDelivered" | "Deleted";
+  | {Unacknowledged: null} | {AckUnsent: null} | {AckPending: null} | {AckDelivered: null} | {Deleted: null};
 
 /** State of a single delivery of a mail or ack to a unique recipient */
 export type DeliveryState =
-  | "Unsent" | "Pending" | "Delivered";
+  | {Unsent: null} | {Pending: null} | {Delivered: null};
 
 /** Possible states of an OutMail entry */
 export type OutMailState =
-  | "Unsent" | "AllSent" | "AllReceived" | "AllAcknowledged" | "Deleted";
+  | {Unsent: null} | {AllSent: null} | {AllReceived: null} | {AllAcknowledged: null} | {Deleted: null};
 
 export enum MailStateType {
 	In = 'In',
 	Out = 'Out',
 }
-export type MailStateVariantIn = {in: InMailState}
-export type MailStateVariantOut = {out: OutMailState}
+export type MailStateVariantIn = {In: InMailState}
+export type MailStateVariantOut = {Out: OutMailState}
 export type MailState = 
  | MailStateVariantIn | MailStateVariantOut;
 
@@ -345,7 +345,7 @@ export interface MailItem {
 }
 
 export type RecipientKind =
-  | "TO" | "CC" | "BCC";
+  | {TO: null} | {CC: null} | {BCC: null};
 
 /**
  * Core content of all *Mail Entries

@@ -30,6 +30,7 @@ export class SnapmailZvm extends ZomeViewModel {
     return this._perspective;
   }
 
+
   /* */
   protected hasChanged(): boolean {
     // TODO
@@ -44,7 +45,6 @@ export class SnapmailZvm extends ZomeViewModel {
     await this.zomeProxy.checkMailInbox();
     await this.probeMails();
   }
-
 
 
   /** */
@@ -62,6 +62,7 @@ export class SnapmailZvm extends ZomeViewModel {
         this._perspective.responseMap.set(agentIdB64, false);
       }
     }
+    this.notifySubscribers();
   }
 
 
@@ -108,6 +109,7 @@ export class SnapmailZvm extends ZomeViewModel {
       //items.push(gridItem);
     }
     //console.log('Counters: ' + newCount + ' / ' + inboxCount + ' / ' + sentCount + ' / ' + trashCount + ' / '+ mailItems.length);
+    this.notifySubscribers();
   }
 
 
@@ -148,6 +150,7 @@ export class SnapmailZvm extends ZomeViewModel {
         this.storePingResult(undefined, pingedAgentB64);
         //contactGrid.render();
       })
+    this.notifySubscribers();
   }
 
 
@@ -158,7 +161,6 @@ export class SnapmailZvm extends ZomeViewModel {
     this.perspective.responseMap.set(agentB64, isAgentPresent);
     this.perspective.pingMap.set(agentB64, Date.now());
   }
-
 
 
 
