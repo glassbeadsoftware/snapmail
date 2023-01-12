@@ -14,7 +14,7 @@
     "inlineSources": true,
     "incremental": true,
     "skipLibCheck": true,
-    "outDir": "out-tsc",
+    "outDir": "dist",
     "rootDir": "./src",
     "declaration": true
   },

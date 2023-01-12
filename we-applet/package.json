@@ -12,12 +12,12 @@
   },
   "dependencies": {
     "@holochain-open-dev/profiles": "0.5.2",
-    "@holochain/client": "0.8.0",
+    "@holochain/client": "0.11.9",
     "@lightningrodlabs/we-applet": "0.1.1",
     "@lit-labs/context": "^0.1.2",
     "@open-wc/scoped-elements": "^2.1.1",
     "@scoped-elements/material-web": "^0.0.19",
-    "lit": "^2.2.0",
+    "lit": "^2.3.0",
     "@snapmail/elements": "file:../webcomponents"
   },
   "devDependencies": {
@@ -39,12 +39,8 @@
     "eslint-plugin-import": "^2.26.0",
     "new-port-cli": "^1.0.0",
     "rollup": "^2.56.2",
-    "rollup-plugin-node-builtins": "^2.1.2",
-    "rollup-plugin-node-globals": "^1.4.0",
-    "rollup-plugin-terser": "^7.0.2",
-    "rollup-plugin-workbox": "^6.2.0",
     "tslib": "^2.3.1",
-    "typescript": "^4.5.0"
+    "typescript": "^4.9.0"
   },
   "private": true
 }

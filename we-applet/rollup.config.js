@@ -1,19 +1,18 @@
 import nodeResolve from "@rollup/plugin-node-resolve";
 import commonjs from "@rollup/plugin-commonjs";
-import replace from "@rollup/plugin-replace";
 // import builtins from "rollup-plugin-node-builtins";
 // import globals from "rollup-plugin-node-globals";
 
 import babel from "@rollup/plugin-babel";
-import { importMetaAssets } from "@web/rollup-plugin-import-meta-assets";
-import { terser } from "rollup-plugin-terser";
+//import { importMetaAssets } from "@web/rollup-plugin-import-meta-assets";
+//import { terser } from "rollup-plugin-terser";
 //import copy from "rollup-plugin-copy";
 
 const DEV_MODE = process.env.DEV_MODE || "prod";
 const HC_PORT = process.env.HC_PORT || 8888;
 
 export default {
-  input: "out-tsc/index.js",
+  input: "dist/index.js",
   output: {
     format: "es",
     dir: 'dist',
@@ -30,19 +29,13 @@ export default {
       browser: true,
       preferBuiltins: false,
     }),
-    replace({
-      "preventAssignment": true,
-      "process.env.DEV_MODE": `"${DEV_MODE}"`,
-      "process.env.HC_PORT": `"${HC_PORT}"`,
-    }),
     // copy({
     //   targets: [{ src: "icon.png", dest: "dist" }],
     // }),
-    commonjs({}),
     /** Minify JS */
-    terser(),
+    //terser(),
     /** Bundle assets references via import.meta.url */
-    importMetaAssets(),
+    //importMetaAssets(),
     /** Compile JS to a lower language target */
     babel({
       exclude: /node_modules/,
@@ -83,5 +76,6 @@ export default {
         ],
       ],
     }),
+    commonjs({}),
   ],
 };
