@@ -419,10 +419,12 @@ export class SnapmailPage extends ZomeElement<SnapmailPerspective, SnapmailZvm> 
     this.mailGridElem.items = filterMails(this._mailItems, this.mailSearchElem.value);
     /** - Re-activate activeItem */
     if (activeItem !== undefined && activeItem !== null) {
+      const activeIdB64 = htos(activeItem.id);
+      console.log('activeIdB64', activeIdB64);
       for(const item of Object.values(this.mailGridElem.items)) {
         const mailGridItem: MailGridItem = item as MailGridItem;
-        //console.log('Item id = ' + item.id);
-        if(activeItem.id === mailGridItem.id) {
+        //console.log('Item id = ', htos(item.id));
+        if(activeIdB64 === htos(mailGridItem.id)) {
           //console.log('activeItem match found');
           this.mailGridElem.activeItem = item;
           this.mailGridElem.selectedItems = [item];
@@ -430,8 +432,6 @@ export class SnapmailPage extends ZomeElement<SnapmailPerspective, SnapmailZvm> 
         }
       }
     }
-    //mailGrid.render();
-    this.requestUpdate();
   }
 
 
