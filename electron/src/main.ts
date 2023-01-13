@@ -413,7 +413,7 @@ const createMainWindow = async (appPort: string): Promise<BrowserWindow> => {
     // use these settings so that the ui can check paths
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
-      contextIsolation: false, // for using window.require('electron')
+      contextIsolation: true, // Use preload and MY_ELECTRON_API to use ipc
       sandbox: false,
       nodeIntegration: true,
       devTools: true,

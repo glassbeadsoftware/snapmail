@@ -3,7 +3,7 @@ import {AppSignalCb, encodeHashToBase64} from "@holochain/client";
 import {SnapmailZvm} from "./snapmail.zvm";
 import {AppSignal} from "@holochain/client/lib/api/app/types";
 import {Notification} from "@vaadin/notification";
-import {ELECTRON_API, getController} from "../snapmail";
+import {MY_ELECTRON_API, getController} from "../snapmail";
 
 
 /**
@@ -48,7 +48,7 @@ export class SnapmailDvm extends DnaViewModel {
       const pingedAgentB64 = encodeHashToBase64(mail.author);
       this.snapmailZvm.storePingResult({}, pingedAgentB64);
 
-      if (ELECTRON_API) {
+      if (MY_ELECTRON_API) {
         //console.log("handleSignal for ELECTRON");
         console.log({mail});
         const author_name = this.snapmailZvm.perspective.usernameMap.get(encodeHashToBase64(mail.author)) || 'unknown user';
@@ -63,7 +63,7 @@ export class SnapmailDvm extends DnaViewModel {
         //  .onclick = () => console.log(CLICK_MESSAGE)
 
         /* Notify Electron main */
-        const reply = ELECTRON_API.newMailSync(NOTIFICATION_TITLE, NOTIFICATION_BODY)
+        const reply = MY_ELECTRON_API.newMailSync(NOTIFICATION_TITLE, NOTIFICATION_BODY)
         console.log({reply});
       }
 

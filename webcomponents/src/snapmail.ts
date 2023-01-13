@@ -1,33 +1,18 @@
-import {FileManifest} from "./bindings/snapmail.types";
 import {ContactGridItem} from "./viewModel/snapmail.perspective";
-import {AppSignal} from "@holochain/client/lib/api/app/types";
-import {Notification} from "@vaadin/notification";
 import {SnapmailPage} from "./elements/snapmail-page";
 
-/** -- APP SETUP -- **/
-/* @ts-ignore */
-export const ELECTRON_API = window.electronAPI
-// export let APP_ID = 'snapmail'
-// export let HC_PORT: any;
- export let DEV_MODE: any;
-// export let NETWORK_ID: any = null
-
-
- if (ELECTRON_API) {
-//   //console.log(ELECTRON_API)
-//   console.log(ELECTRON_API.versions)
-//   APP_ID = 'snapmail-app'
-   DEV_MODE = ELECTRON_API.DEV_MODE;
-//   let searchParams = new URLSearchParams(window.location.search);
-//   HC_PORT = searchParams.get("APP");
-//   NETWORK_ID = searchParams.get("UID");
+// /** -- APP SETUP -- **/
+export let DEV_MODE: string;
+export const MY_ELECTRON_API = (window as any).myElectronAPI;
+console.log("MY_ELECTRON_API = ", MY_ELECTRON_API);
+ if (MY_ELECTRON_API) {
+   DEV_MODE = MY_ELECTRON_API.DEV_MODE;
  } else {
-//   HC_PORT = process.env.HC_PORT;
    DEV_MODE = process.env.DEV_MODE;
 }
  console.log("  DEV_MODE =", DEV_MODE)
-// console.log("   HC_PORT =", HC_PORT);
-// console.log("NETWORK_ID =", NETWORK_ID);
+
+
 
 /** Remove console.log() in PROD */
 if (DEV_MODE !== 'dev') {
@@ -107,10 +92,10 @@ export function filterMails(mailItems: any[] /*GridItems*/, searchValue: string)
 
 /** */
 export function updateTray(newCount: number): void {
-  if (!ELECTRON_API) {
+  if (!MY_ELECTRON_API) {
     return;
   }
-  const reply = ELECTRON_API.newCountAsync(newCount);
+  const reply = MY_ELECTRON_API.newCountAsync(newCount);
   console.log({reply});
 
 }

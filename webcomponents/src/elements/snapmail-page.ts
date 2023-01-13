@@ -63,7 +63,7 @@ import {
   filterMails,
   updateTray,
   ids_to_items,
-  ELECTRON_API,
+  MY_ELECTRON_API,
   DEV_MODE,
   setController,
 } from "../snapmail"
@@ -1671,7 +1671,7 @@ export class SnapmailPage extends ZomeElement<SnapmailPerspective, SnapmailZvm> 
         titleLayout.style.backgroundColor = "#ec8383d1";
       }
       //const IS_ELECTRON = (window.location.port === ""); // No HREF PORT when run by Electron
-      if (ELECTRON_API || this.noTitle) {
+      if (MY_ELECTRON_API || this.noTitle) {
         titleLayout.style.display = "none";
         // if (DEV_MODE === 'dev') {
         //   /** -- Update Title with DNA ID */
@@ -1720,7 +1720,7 @@ export class SnapmailPage extends ZomeElement<SnapmailPerspective, SnapmailZvm> 
 
 
   async initElectron() {
-    if (!ELECTRON_API) {
+    if (!MY_ELECTRON_API) {
       return;
     }
     console.log("Calling getMyHandle() for ELECTRON");
@@ -1728,7 +1728,7 @@ export class SnapmailPage extends ZomeElement<SnapmailPerspective, SnapmailZvm> 
     console.log("getMyHandle() returned: " + startingHandle);
     const dnaHash = this.cellId![0];
     console.log("startingInfo sending dnaHash =", dnaHash);
-    const reply = ELECTRON_API.startingInfo(startingHandle, dnaHash)
+    const reply = MY_ELECTRON_API.startingInfo(startingHandle, dnaHash)
     console.log("startingInfo reply =", {reply});
     if (reply != "<noname>") {
       const callResult = await this.setUsername(reply);
