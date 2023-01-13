@@ -93,7 +93,7 @@ export class SnapmailZvm extends ZomeViewModel {
       //console.log({mailItem})
       this._perspective.mailMap.set(encodeHashToBase64(mailItem.ah), mailItem);
 
-      // FIXME
+      // FIXME: Decide if should delete this dead code
       // const isDeleted = isMailDeleted(mailItem);
       // const isOutMail = is_OutMail(mailItem);
 

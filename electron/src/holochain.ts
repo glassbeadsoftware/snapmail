@@ -5,14 +5,6 @@ import {ADMIN_WS, DNA_PATH, DNA_VERSION_FILENAME, SNAPMAIL_APP_ID} from './const
 import {NetworkSettings} from "./networkSettings";
 import fs from "fs";
 import {log} from "./logger";
-import {bytesToBase64} from "byte-base64";
-
-
-
-/** Convert holo hash to readable string */
-export function htos(u8array: number[] | Uint8Array): string {
-  return bytesToBase64(u8array)
-}
 
 
 /** Messages displayed on the splashscreen */

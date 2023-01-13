@@ -1,36 +1,4 @@
-
-const CHUNK_MAX_SIZE = 200 * 1024;
-
-import * as base64 from "byte-base64";
-
-//export const base64regex = /^([0-9a-zA-Z+/]{4})*(([0-9a-zA-Z+/]{2}==)|([0-9a-zA-Z+/]{3}=))?$/;
-
-
-// /** Convert hash (Uint8Array) to/from base64 string */
-// export function htos(u8array: Uint8Array): string {
-//   if (!u8array) {
-//     console.error("htos() argument is undefined")
-//   }
-//   return base64.bytesToBase64(u8array)
-// }
-// export function stoh(str: string): Uint8Array {
-//   if (!str) {
-//     console.error("stoh() argument is undefined")
-//   }
-//   return base64.base64ToBytes(str)
-// }
-
-
-// /** */
-// export function cellIdToStr(cell: any): string {
-//   let res = '('
-//   res += htos(cell.cellId[0])
-//   res += ', '
-//   res += htos(cell.cellId[1])
-//   res += ')'
-//   return res
-// }
-
+import {CHUNK_MAX_SIZE} from "./bindings/snapmail.types";
 
 /** Sleep via timeout promise */
 export function sleep(ms: number) {

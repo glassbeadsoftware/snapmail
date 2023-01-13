@@ -119,6 +119,8 @@ ValidationStatus,
 ValidationReceipt,
    } from '@holochain-open-dev/core-types';
 
+export const REMOTE_ENDPOINT = "receive_dm";
+
 export interface DmPacket {
   from: AgentPubKey
   dm: DirectMessageProtocol
@@ -214,6 +216,9 @@ export interface CommitPendingMailInput {
   destination: AgentPubKey
 }
 
+/** Listing all Holochain Path used in this DNA */
+export const Directory = "directory";
+
 export enum SignalProtocolType {
 	ReceivedMail = 'ReceivedMail',
 	ReceivedAck = 'ReceivedAck',
@@ -229,6 +234,19 @@ export interface ReceivedAck {
   from: AgentPubKey
   for_mail: ActionHash
 }
+
+export const ZOME_NAME = "snapmail";
+
+export const DIRECT_SEND_TIMEOUT_MS = 1000;
+
+export const DIRECT_SEND_CHUNK_TIMEOUT_MS = 10000;
+
+export const CHUNK_MAX_SIZE = 200 * 1024;
+
+export const FILE_MAX_SIZE = 10 * 1024 * 1024;
+
+/** PSEUDO CONDITIONAL COMPILATION FOR DEBUGGING / TESTING */
+export const CAN_DM = true;
 
 /** Entry representing a file chunk. */
 export interface FileChunk {

@@ -1274,7 +1274,7 @@ export class SnapmailPage extends ZomeElement<SnapmailPerspective, SnapmailZvm> 
     /* Send Mail */
     const outmail_hh = await this._zvm.sendMail(mail);
     // /* Update UI */
-    // FIXME
+    // FIXME: Decide if should remove this dead code?
     // if (this._replyOf) {
     //   const replyOfStr = encodeHashToBase64(this._replyOf)
     //   const mailItem = this._mailMap.get(replyOfStr)!;
