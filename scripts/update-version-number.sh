@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 # Script for updating version number across the code base
 

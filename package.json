@@ -1,5 +1,6 @@
 {
   "name": "Snapmail",
+  "version": "0.3.0",
   "private": true,
   "repository": {
     "type": "git",
@@ -32,6 +33,8 @@
     "restart"             : "DEV_MODE='dev' HC_PORT=$(port) ADMIN_PORT=$(port) concurrently \"npm run restart:happ\" \"sleep 8 && npm run start:ui -w webapp\"",
     "restart:happ"        : "RUST_LOG=warn echo \"pass\" | hc s --piped -f=$ADMIN_PORT run $SINDEX -p=$HC_PORT",
     "network"             : "npm run clean:agents && concurrently-repeat \"npm run start\"",
+
+    "update-version"      : "bash scripts/update-version-number.sh $(cat ./package.json | grep version | head -1 | awk -F: '{ print $2 }' | sed 's/[\",]//g' | tr -d '[[:space:]]')",
 
     "dist:webhapp"        : "npm run build:devtest && npm run package -w webapp",
     "dist:we"             : "npm run build:devtest && npm run build -w we-applet && npm run package -w we-applet",

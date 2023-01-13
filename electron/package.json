@@ -1,6 +1,6 @@
 {
   "name": "Snapmail",
-  "version": "0.2.1",
+  "version": "0.3.0",
   "description": "A minimalist P2P email application on holochain",
   "keywords": [
     "Electron",
