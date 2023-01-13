@@ -1,5 +1,3 @@
-import {htos} from './utils'
-
 import {FileManifest} from "./bindings/snapmail.types";
 import {ContactGridItem} from "./viewModel/snapmail.perspective";
 import {AppSignal} from "@holochain/client/lib/api/app/types";
@@ -51,42 +49,6 @@ export function getController(): SnapmailPage {
   console.assert(g_controller)
   return g_controller!;
 }
-
-
-/** -- CALLBACKS -- **/
-
-
-/** Setup recurrent pull from DHT every 10 seconds */
-// export function onEvery10sec() {
-//   console.log("**** onEvery10sec CALLED ****");
-//   if (DEV_MODE === 'dev') {
-//     return;
-//   }
-//   const controller = getController();
-//   try {
-//     controller.probeAll();
-//   } catch(e) {
-//     console.error("onEvery10sec.getAllFromDht() failed: ", e)
-//   }
-// }
-//
-
-// /** Stuff to do every 1 second */
-// export function onEverySec() {
-//   // console.log("**** onEverySec CALLED ****");
-//   if (DEV_MODE === 'dev') {
-//     return;
-//   }
-//   const controller = getController();
-//   try {
-//     if (controller._canPing) {
-//       controller.pingNextAgent();
-//     }
-//   } catch(e) {
-//     console.error("onEverySec.pingNextAgent() failed: ", e)
-//   }
-// }
-
 
 
 /** -- FUNCTIONS -- **/
@@ -167,42 +129,3 @@ export function updateTray(newCount: number): void {
 //   button.title = callResult[0];
 // }
 
-
-// /** */
-// function handle_acknowledgeMail(callResult: any): void {
-//   if (!callResult || callResult.Err !== undefined) {
-//     const err = callResult.Err;
-//     console.error('AcknowledgeMail zome call failed');
-//     console.error(err);
-//     return;
-//   }
-//   getAllMails();
-// }
-
-
-/** */
-export function handle_getChunk(callResult: any): string | null {
-  if (!callResult || callResult.Err !== undefined) {
-    const err = callResult.Err;
-    console.error('GetChunk zome call failed');
-    console.error(err);
-    return null;
-  }
-  const chunk = callResult;
-  console.log({chunk});
-  return chunk
-}
-
-
-/** */
-export function handle_findManifest(callResult: any): FileManifest | null {
-  if (!callResult || callResult.Err !== undefined) {
-    const err = callResult.Err;
-    console.error('FindManifest zome call failed');
-    console.error(err);
-    return null;
-  }
-  const maybeManifest = callResult;
-  console.log({maybeManifest});
-  return maybeManifest;
-}

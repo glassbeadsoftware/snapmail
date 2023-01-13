@@ -41,7 +41,7 @@ import '@vaadin/vaadin-icon';
 import '@vaadin/vaadin-lumo-styles';
 //import { ThemableMixin } from '@vaadin/vaadin-themable-mixin/vaadin-themable-mixin.js';
 /** Holochain imports*/
-import {ActionHash, EntryHash} from "@holochain/client";
+import {ActionHash, decodeHashFromBase64, encodeHashToBase64, EntryHash} from "@holochain/client";
 /** my imports */
 import {
   ContactGridItem, MailGridItem, SnapmailPerspective,
@@ -49,7 +49,7 @@ import {
 import {
   FileManifest, HandleItem, Mail, MailItem, SendMailInput
 } from "../bindings/snapmail.types";
-import {arrayBufferToBase64, base64ToArrayBuffer, splitFile,  htos, stoh} from "../utils";
+import {arrayBufferToBase64, base64ToArrayBuffer, splitFile} from "../utils";
 import {
   customDateString,
   determineMailCssClass, hasMailBeenOpened,
@@ -62,14 +62,10 @@ import {
 import {
   filterMails,
   updateTray,
-  handle_findManifest,
-  handle_getChunk,
   ids_to_items,
   ELECTRON_API,
   DEV_MODE,
-  setController, getController,
-  //onEvery10sec,
-  //onEverySec
+  setController,
 } from "../snapmail"
 
 import {SnapmailZvm} from "../viewModel/snapmail.zvm";
@@ -419,12 +415,12 @@ export class SnapmailPage extends ZomeElement<SnapmailPerspective, SnapmailZvm> 
     this.mailGridElem.items = filterMails(this._mailItems, this.mailSearchElem.value);
     /** - Re-activate activeItem */
     if (activeItem !== undefined && activeItem !== null) {
-      const activeIdB64 = htos(activeItem.id);
+      const activeIdB64 = encodeHashToBase64(activeItem.id);
       console.log('activeIdB64', activeIdB64);
       for(const item of Object.values(this.mailGridElem.items)) {
         const mailGridItem: MailGridItem = item as MailGridItem;
-        //console.log('Item id = ', htos(item.id));
-        if(activeIdB64 === htos(mailGridItem.id)) {
+        //console.log('Item id = ', encodeHashToBase64(item.id));
+        if(activeIdB64 === encodeHashToBase64(mailGridItem.id)) {
           //console.log('activeItem match found');
           this.mailGridElem.activeItem = item;
           this.mailGridElem.selectedItems = [item];
@@ -527,7 +523,7 @@ export class SnapmailPage extends ZomeElement<SnapmailPerspective, SnapmailZvm> 
     if (this.mailGridElem.selectedItems) {
       for (const item of this.mailGridElem.selectedItems) {
         const mailItem: MailGridItem = item as MailGridItem;
-        prevSelected.push(htos(mailItem.id));
+        prevSelected.push(encodeHashToBase64(mailItem.id));
       }
     }
 
@@ -574,7 +570,7 @@ export class SnapmailPage extends ZomeElement<SnapmailPerspective, SnapmailZvm> 
       const gridItem = into_gridItem(this.perspective.usernameMap, mailItem);
       // console.log('gridItem.id = ' + gridItem.id);
       items.push(gridItem);
-      if (prevSelected.includes(htos(gridItem.id))) {
+      if (prevSelected.includes(encodeHashToBase64(gridItem.id))) {
         selected.push(gridItem);
       }
     }
@@ -688,7 +684,7 @@ export class SnapmailPage extends ZomeElement<SnapmailPerspective, SnapmailZvm> 
       /* -- Handle 'Print' -- */
       if (e.detail.value.text === 'Print') {
         console.log({_currentMailItem: controller._currentMailItem})
-        const mailItem = controller.perspective.mailMap.get(htos(controller._currentMailItem!.id));
+        const mailItem = controller.perspective.mailMap.get(encodeHashToBase64(controller._currentMailItem!.id));
         const mailText = into_mailText(controller.perspective.usernameMap, mailItem!)
         /** Save to disk */
         const blob = new Blob([mailText], { type: 'text/plain'});
@@ -714,7 +710,7 @@ export class SnapmailPage extends ZomeElement<SnapmailPerspective, SnapmailZvm> 
       if (e.detail.value.text === 'Reply to sender') {
         controller.outMailSubjectElem.value = 'Re: ' + controller._currentMailItem!.subject;
         controller._replyOf = controller._currentMailItem!.id;
-        console.log("g_replyOf set ", htos(controller._replyOf));
+        console.log("g_replyOf set ", encodeHashToBase64(controller._replyOf));
         controller.updateContacts(false);
         for (const contactItem of controller._allContactItems) {
           if (contactItem.username === controller._currentMailItem!.username) {
@@ -725,25 +721,25 @@ export class SnapmailPage extends ZomeElement<SnapmailPerspective, SnapmailZvm> 
         controller.updateContactGrid(true);
       }
       if (e.detail.value.text === 'Reply to all') {
-        const mailItem = controller.perspective.mailMap.get(htos(controller._currentMailItem!.id));
+        const mailItem = controller.perspective.mailMap.get(encodeHashToBase64(controller._currentMailItem!.id));
         controller._replyOf = controller._currentMailItem!.id;
         if (mailItem) {
           controller.outMailSubjectElem.value = 'Re: ' + controller._currentMailItem!.subject;
           controller.updateContacts(false);
           /* TO */
           for (const agentId of mailItem.mail.to) {
-            const to_username = controller.perspective.usernameMap.get(htos(agentId));
+            const to_username = controller.perspective.usernameMap.get(encodeHashToBase64(agentId));
             controller.selectUsername(to_username!, 1);
           }
           /* CC */
           for (const agentId of mailItem.mail.cc) {
-            const cc_username = controller.perspective.usernameMap.get(htos(agentId));
+            const cc_username = controller.perspective.usernameMap.get(encodeHashToBase64(agentId));
             controller.selectUsername(cc_username!, 2);
           }
           /* BCC */
           if (mailItem.bcc) {
             for (const agentId of mailItem.bcc) {
-              const bcc_username = controller.perspective.usernameMap.get(htos(agentId));
+              const bcc_username = controller.perspective.usernameMap.get(encodeHashToBase64(agentId));
               controller.selectUsername(bcc_username!, 3);
             }
           }
@@ -753,9 +749,9 @@ export class SnapmailPage extends ZomeElement<SnapmailPerspective, SnapmailZvm> 
       }
       if (e.detail.value.text === 'Forward') {
         controller.outMailSubjectElem.value = 'Fwd: ' + controller._currentMailItem!.subject;
-        const mailItem = controller.perspective.mailMap.get(htos(controller._currentMailItem!.id));
+        const mailItem = controller.perspective.mailMap.get(encodeHashToBase64(controller._currentMailItem!.id));
         let fwd = '\n\n';
-        fwd += '> ' + 'Mail from: ' + controller.perspective.usernameMap.get(htos(mailItem!.author)) + ' at ' + customDateString(mailItem!.date) + '\n';
+        fwd += '> ' + 'Mail from: ' + controller.perspective.usernameMap.get(encodeHashToBase64(mailItem!.author)) + ' at ' + customDateString(mailItem!.date) + '\n';
         const arrayOfLines = mailItem!.mail.payload.match(/[^\r\n]+/g);
         for (const line of arrayOfLines!) {
           fwd += '> ' + line + '\n';
@@ -846,7 +842,7 @@ export class SnapmailPage extends ZomeElement<SnapmailPerspective, SnapmailZvm> 
     /** Display bold if mail not acknowledged */
     this.mailGridElem.cellClassNameGenerator = (column, rowData: any) => {
       let classes = '';
-      const idB64 = htos(rowData.item.id);
+      const idB64 = encodeHashToBase64(rowData.item.id);
       const mailItem: MailItem = this.perspective.mailMap.get(idB64)!;
       classes += determineMailCssClass(mailItem!);
       const is_old = hasMailBeenOpened(mailItem);
@@ -868,7 +864,7 @@ export class SnapmailPage extends ZomeElement<SnapmailPerspective, SnapmailZvm> 
         return;
       }
       this._currentMailItem = item;
-      const mailItem = this.perspective.mailMap.get(htos(item.id))!;
+      const mailItem = this.perspective.mailMap.get(encodeHashToBase64(item.id))!;
       console.assert(mailItem)
       //console.log('mail item:', mailItem)
       this.inMailAreaElem.value = into_mailText(this.perspective.usernameMap, mailItem);
@@ -890,28 +886,28 @@ export class SnapmailPage extends ZomeElement<SnapmailPerspective, SnapmailZvm> 
     this.mailSearchElem.addEventListener('value-changed', (e:any /*TextFieldValueChangedEvent*/) => {
       this.mailGridElem.items = filterMails(this.mailGridElem.items!, e.detail.value);
       this.requestUpdate();
-      //mailGrid.render();
     });
   }
 
 
   /** Return manifest with added content field */
   async getFile(fileId: string): Promise<FileManifest | null> {
-    const callResult = await this._zvm.findManifest(fileId);
-    const manifest = handle_findManifest(callResult)
-    if (!manifest) {
+    let manifest;
+    try {
+      manifest = await this._zvm.findManifest(fileId);
+    } catch(e) {
       return null;
     }
     const chunks = [];
     let i = 0;
     for (const chunkAddress of manifest.chunks) {
       i++;
-      const callResult = await this._zvm.getChunk(chunkAddress)
-      const maybeChunk = handle_getChunk(callResult)
-      if (!maybeChunk) {
+      try {
+        const chunk = await this._zvm.getChunk(chunkAddress);
+        chunks.push(chunk);
+      } catch (e) {
         return null;
       }
-      chunks.push(maybeChunk)
     }
     /** concat chunks */
     let content = '';
@@ -1260,9 +1256,9 @@ export class SnapmailPage extends ZomeElement<SnapmailPerspective, SnapmailZvm> 
       console.log('recipientType: ' + contactItem.recipientType);
       switch (contactItem.recipientType) {
         case '': break;
-        case 'to': toList.push(stoh(contactItem.agentIdB64)); break;
-        case 'cc': ccList.push(stoh(contactItem.agentIdB64)); break;
-        case 'bcc': bccList.push(stoh(contactItem.agentIdB64)); break;
+        case 'to': toList.push(decodeHashFromBase64(contactItem.agentIdB64)); break;
+        case 'cc': ccList.push(decodeHashFromBase64(contactItem.agentIdB64)); break;
+        case 'bcc': bccList.push(decodeHashFromBase64(contactItem.agentIdB64)); break;
         default: console.error('unknown recipientType');
       }
     }
@@ -1280,7 +1276,7 @@ export class SnapmailPage extends ZomeElement<SnapmailPerspective, SnapmailZvm> 
     // /* Update UI */
     // FIXME
     // if (this._replyOf) {
-    //   const replyOfStr = htos(this._replyOf)
+    //   const replyOfStr = encodeHashToBase64(this._replyOf)
     //   const mailItem = this._mailMap.get(replyOfStr)!;
     //   mailItem.reply = outmail_hh;
     //   this._mailMap.set(replyOfStr, mailItem);
@@ -1654,7 +1650,7 @@ export class SnapmailPage extends ZomeElement<SnapmailPerspective, SnapmailZvm> 
   async initDna() {
     console.log('initDna()');
     try {
-      const dnaId = htos(this.cellId![0]);
+      const dnaId = encodeHashToBase64(this.cellId![0]);
       this._zvm.storePingResult({}, this.agentPubKey);
       /** Load Groups from localStorage */
       this.loadGroupList(dnaId);
@@ -1749,19 +1745,32 @@ export class SnapmailPage extends ZomeElement<SnapmailPerspective, SnapmailZvm> 
     this.initUi()
     this.initElectron();
 
+    /** Setup recurrent pull from DHT every 10 seconds */
     /*let _10sec =*/ setInterval(() => {
-      if (DEV_MODE === 'dev') {
-        return;
-      }
+      // if (DEV_MODE === 'dev') {
+      //   return;
+      // }
       try {
         this._zvm.probeAll();
       } catch(e) {
-        console.error("onEvery10sec.probeAll() failed: ", e)
+        console.error("_10sec.probeAll() failed: ", e)
       }
     }, 10 * 1000);
 
 
-    ///*let _1Sec =*/ setInterval(onEverySec, 1 * 1000);
+    /** Stuff to do every 1 second */
+    /*let _1sec =*/ setInterval(() => {
+      // if (DEV_MODE === 'dev') {
+      //   return;
+      // }
+      try {
+        if (this._zvm.canPing) {
+          this._zvm.pingNextAgent();
+        }
+      } catch(e) {
+        console.error("_1sec.pingNextAgent() failed: ", e)
+      }
+    }, 1 * 1000);
 
     /** Styling of vaadin components */
     this.mailGridElem.shadowRoot!.appendChild(tmpl.content.cloneNode(true));

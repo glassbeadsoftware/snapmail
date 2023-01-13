@@ -6,6 +6,7 @@
     "url": "https://github.com/glassbeadsoftware/snapmail.git"
   },
   "workspaces": [
+    "we-applet",
     "webcomponents",
     "webapp",
     "electron"

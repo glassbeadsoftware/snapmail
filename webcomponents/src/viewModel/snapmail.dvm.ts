@@ -1,11 +1,9 @@
 import { DnaViewModel, ZvmDef } from "@ddd-qc/lit-happ";
-import {AppSignalCb} from "@holochain/client";
+import {AppSignalCb, encodeHashToBase64} from "@holochain/client";
 import {SnapmailZvm} from "./snapmail.zvm";
 import {AppSignal} from "@holochain/client/lib/api/app/types";
 import {Notification} from "@vaadin/notification";
-import {htos} from "../utils";
 import {ELECTRON_API, getController} from "../snapmail";
-
 
 
 /**
@@ -47,13 +45,13 @@ export class SnapmailDvm extends DnaViewModel {
       notification.open();
 
       const mail = signalwrapper.data.payload.ReceivedMail;
-      const pingedAgentB64 = htos(mail.author);
+      const pingedAgentB64 = encodeHashToBase64(mail.author);
       this.snapmailZvm.storePingResult({}, pingedAgentB64);
 
       if (ELECTRON_API) {
         //console.log("handleSignal for ELECTRON");
         console.log({mail});
-        const author_name = this.snapmailZvm.perspective.usernameMap.get(htos(mail.author)) || 'unknown user';
+        const author_name = this.snapmailZvm.perspective.usernameMap.get(encodeHashToBase64(mail.author)) || 'unknown user';
 
         /** ELECTRON NOTIFICATION */
         const NOTIFICATION_TITLE = 'New mail received from ' + author_name;
@@ -75,7 +73,7 @@ export class SnapmailDvm extends DnaViewModel {
     if (Object.prototype.hasOwnProperty.call(signalwrapper.data.payload,'ReceivedAck')) {
       const item = signalwrapper.data.payload.ReceivedAck;
       console.log("received_ack:", item);
-      const pingedAgentB64 = htos(item.from);
+      const pingedAgentB64 = encodeHashToBase64(item.from);
       this.snapmailZvm.storePingResult({}, pingedAgentB64);
       const notification = controller.shadowRoot!.getElementById('notifyAck') as Notification;
       notification.open();

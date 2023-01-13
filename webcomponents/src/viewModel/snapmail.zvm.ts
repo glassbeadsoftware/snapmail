@@ -1,4 +1,11 @@
-import {ActionHash, AgentPubKey, AnyDhtHash, EntryHash} from '@holochain/client';
+import {
+  ActionHash,
+  AgentPubKey,
+  AnyDhtHash,
+  decodeHashFromBase64,
+  encodeHashToBase64,
+  EntryHash
+} from '@holochain/client';
 import {ZomeViewModel} from "@ddd-qc/lit-happ";
 import {SnapmailProxy} from "../bindings/snapmail.proxy";
 import {defaultPerspective, SnapmailPerspective} from "./snapmail.perspective";
@@ -8,7 +15,6 @@ import {
   GetMissingAttachmentsInput,
   SendMailInput
 } from "../bindings/snapmail.types";
-import {htos, stoh} from "../utils";
 
 /** */
 export class SnapmailZvm extends ZomeViewModel {
@@ -19,6 +25,7 @@ export class SnapmailZvm extends ZomeViewModel {
 
   private _canPing = true;
 
+  get canPing(): boolean { return this._canPing}
 
   /** -- ViewModel -- */
 
@@ -53,7 +60,7 @@ export class SnapmailZvm extends ZomeViewModel {
     this._perspective.usernameMap.clear();
     for(const handleItem of handleItems) {
       /* TODO: exclude self from list when in prod? */
-      const agentIdB64 = htos(handleItem.agentId);
+      const agentIdB64 = encodeHashToBase64(handleItem.agentId);
       console.log('' + handleItem.name + ': ' + agentIdB64);
       this._perspective.usernameMap.set(agentIdB64, handleItem.name);
       if(this._perspective.pingMap.get(agentIdB64) === undefined) {
@@ -84,7 +91,7 @@ export class SnapmailZvm extends ZomeViewModel {
 
     for (const mailItem of mailItems) {
       //console.log({mailItem})
-      this._perspective.mailMap.set(htos(mailItem.ah), mailItem);
+      this._perspective.mailMap.set(encodeHashToBase64(mailItem.ah), mailItem);
 
       // FIXME
       // const isDeleted = isMailDeleted(mailItem);
@@ -116,8 +123,8 @@ export class SnapmailZvm extends ZomeViewModel {
 
   /** Ping oldest pinged agent */
   pingNextAgent(): void {
-    //console.log({this._pingMap});
-    //console.log({this._responseMap});
+    console.log({pingMap: this.perspective.pingMap});
+    console.log({responseMap: this.perspective.responseMap});
     /* Skip if empty map */
     if (this.perspective.pingMap.size === 0) {
       return;
@@ -129,7 +136,7 @@ export class SnapmailZvm extends ZomeViewModel {
     console.log({nextMap})
     /* Ping first agent in sorted list */
     const pingedAgentB64 = nextMap.keys().next().value
-    const pingedAgent = stoh(pingedAgentB64);
+    const pingedAgent = decodeHashFromBase64(pingedAgentB64);
     console.log("pinging: ", pingedAgentB64);
     if (pingedAgentB64 === this.agentPubKey) {
       console.log("pinging self");

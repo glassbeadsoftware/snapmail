@@ -2,9 +2,8 @@
  * Functions for manipulating mailItems
  */
 
-import {AgentPubKey} from "@holochain/client";
+import {AgentPubKey, encodeHashToBase64} from "@holochain/client";
 
-import {htos} from './utils'
 //import {MailItem} from "./bindings/snapmail";
 import {UsernameMap} from "./viewModel/snapmail.perspective";
 import {DEV_MODE} from "./snapmail";
@@ -128,7 +127,7 @@ function vecToUsernames(usernameMap: UsernameMap, agentVec: AgentPubKey[]): stri
 
 /** */
 function getUsername(usernameMap: UsernameMap, agentHash: Uint8Array): string {
-  const authorId = htos(agentHash);
+  const authorId = encodeHashToBase64(agentHash);
   let username = usernameMap.get(authorId)
   if (username === undefined) {
     username = "<" + authorId.substr(0, 8) + "...>";
@@ -179,7 +178,7 @@ export function determineMailStatus(mailItem: MailItem): string {
 /** */
 export function into_gridItem(usernameMap: UsernameMap, mailItem: MailItem) {
   /* username */
-  // console.log('into_gridItem: ' + htos(mailItem.author) + ' username: ' + username);
+  // console.log('into_gridItem: ' + encodeHashToBase64(mailItem.author) + ' username: ' + username);
   const username = determineFromLine(usernameMap, mailItem);
   /* Date */
   const dateStr = customDateString(mailItem.date)
@@ -205,7 +204,7 @@ export function into_gridItem(usernameMap: UsernameMap, mailItem: MailItem) {
 export function into_mailText(usernameMap: UsernameMap, mailItem: MailItem): string {
   let intext = 'Subject: ' + mailItem.mail.subject + '\n\n'
     + mailItem.mail.payload + '\n\n'
-    + 'Mail from: ' + usernameMap.get(htos(mailItem.author)) + ' at ' + customDateString(mailItem.date);
+    + 'Mail from: ' + usernameMap.get(encodeHashToBase64(mailItem.author)) + ' at ' + customDateString(mailItem.date);
 
   const to_line = vecToUsernames(usernameMap, mailItem.mail.to!);
 
@@ -227,7 +226,7 @@ export function into_mailText(usernameMap: UsernameMap, mailItem: MailItem): str
   if (DEV_MODE === 'dev') {
     intext += '\n\nDEBUG INFO';
     intext += '\nState: ' + JSON.stringify(mailItem.state);
-    intext += '\nActionHash: ' + htos(mailItem.ah);
+    intext += '\nActionHash: ' + encodeHashToBase64(mailItem.ah);
     intext += '\nReply: ' + JSON.stringify(mailItem.reply);
     intext += '\nstatus: ' + JSON.stringify(mailItem.status);
     intext += '\nFiles: ' + mailItem.mail.attachments.length;
