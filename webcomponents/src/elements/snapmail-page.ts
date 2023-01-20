@@ -90,94 +90,12 @@ export class SnapmailPage extends ZomeElement<SnapmailPerspective, SnapmailZvm> 
 
   /** -- sub Elements -- */
 
-
-
-
-
   get contactsMenuElem() : MenuBar {
     return this.shadowRoot!.getElementById("ContactsMenu") as MenuBar;
   }
 
 
-
-
-  get mailSearchElem() : TextField {
-    return this.shadowRoot!.getElementById("mailSearch") as TextField;
-  }
-
-
-  /** -- -- */
-
-
-  /** */
-  update_mailGrid(folderName: string): void {
-    const folderItems = [];
-    const activeItem: MailGridItem = this.mailGridElem.activeItem as MailGridItem;
-    const codePoint = folderName.codePointAt(0);
-    console.log('update_mailGrid: ' + folderName + ' (' + codePoint + ')');
-
-    switch(codePoint) {
-      case systemFolders.ALL.codePointAt(0):
-        for (const mailItem of this.perspective.mailMap.values()) {
-          //folderItems = Array.from(g_mail_map.values());
-          folderItems.push(into_gridItem(this.perspective.usernameMap, mailItem));
-        }
-        break;
-      case systemFolders.INBOX.codePointAt(0):
-      case systemFolders.SENT.codePointAt(0):
-        for (const mailItem of this.perspective.mailMap.values()) {
-          //console.log('mailItem: ' + JSON.stringify(mailItem))
-          const is_out = is_OutMail(mailItem);
-          if (isMailDeleted(mailItem)) {
-            continue;
-          }
-          if (is_out && codePoint == systemFolders.SENT.codePointAt(0)) {
-            folderItems.push(into_gridItem(this.perspective.usernameMap, mailItem));
-            continue;
-          }
-          if (!is_out && codePoint == systemFolders.INBOX.codePointAt(0)) {
-            folderItems.push(into_gridItem(this.perspective.usernameMap, mailItem));
-          }
-        }
-        break;
-      case systemFolders.TRASH.codePointAt(0): {
-        for (const mailItem of this.perspective.mailMap.values()) {
-          if(isMailDeleted(mailItem)) {
-            folderItems.push(into_gridItem(this.perspective.usernameMap, mailItem));
-          }
-        }
-      }
-        break;
-      default:
-        console.error('Unknown folder')
-    }
-
-    const span = this.shadowRoot!.getElementById('messageCount') as HTMLElement;
-    console.assert(span);
-    span.textContent = '' + folderItems.length;
-
-    console.log('folderItems count: ' + folderItems.length);
-    // console.log('folderItems: ' + JSON.stringify(folderItems))
-    //grid.items = folderItems;
-    this._mailItems = folderItems;
-    this.mailGridElem.items = filterMails(this._mailItems, this.mailSearchElem.value);
-    /** - Re-activate activeItem */
-    if (activeItem !== undefined && activeItem !== null) {
-      const activeIdB64 = encodeHashToBase64(activeItem.id);
-      console.log('activeIdB64', activeIdB64);
-      for(const item of Object.values(this.mailGridElem.items)) {
-        const mailGridItem: MailGridItem = item as MailGridItem;
-        //console.log('Item id = ', encodeHashToBase64(item.id));
-        if(activeIdB64 === encodeHashToBase64(mailGridItem.id)) {
-          //console.log('activeItem match found');
-          this.mailGridElem.activeItem = item;
-          this.mailGridElem.selectedItems = [item];
-          break;
-        }
-      }
-    }
-  }
-
+  /** -- */
 
   /** Refresh mailGrid */
   handle_getAllMails() {

@@ -2,7 +2,7 @@
  * Functions for manipulating mailItems
  */
 
-import {ActionHash, AgentPubKey, encodeHashToBase64} from "@holochain/client";
+import {ActionHash, ActionHashB64, AgentPubKey, encodeHashToBase64} from "@holochain/client";
 
 //import {MailItem} from "./bindings/snapmail";
 import {UsernameMap} from "./viewModel/snapmail.perspective";
@@ -16,7 +16,7 @@ export const paperClipEmoji = String.fromCodePoint(0x1F4CE)
 
 
 export interface MailGridItem {
-  id: ActionHash,
+  id: ActionHashB64,
   username: string,
   subject: string,
   date: string,
@@ -201,7 +201,7 @@ export function determineMailStatus(mailItem: MailItem): string {
 
 
 /** */
-export function into_gridItem(usernameMap: UsernameMap, mailItem: MailItem) {
+export function into_gridItem(usernameMap: UsernameMap, mailItem: MailItem): MailGridItem {
   /* username */
   // console.log('into_gridItem: ' + encodeHashToBase64(mailItem.author) + ' username: ' + username);
   const username = determineFromLine(usernameMap, mailItem);
@@ -213,7 +213,7 @@ export function into_gridItem(usernameMap: UsernameMap, mailItem: MailItem) {
   const status = determineMailStatus(mailItem);
   // Done
   const item: MailGridItem = {
-    id: mailItem.ah,
+    id: encodeHashToBase64(mailItem.ah),
     username: username,
     subject: mailItem.mail.subject,
     date: dateStr,

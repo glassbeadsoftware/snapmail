@@ -1,4 +1,5 @@
 import { MailItem} from "../bindings/snapmail.types";
+import {ActionHashB64} from "@holochain/client";
 
 export type UsernameMap = Map<string, string>;
 
@@ -74,7 +75,7 @@ export interface ContactGridItem {
 
 
 export interface MailGridItem {
-  id: Uint8Array,
+  id: ActionHashB64,
   status: string,
   username: string,
   subject: string,
