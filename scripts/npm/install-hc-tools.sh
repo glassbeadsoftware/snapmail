@@ -3,7 +3,7 @@
 rustc --version
 
 # For ts-bindings
-cargo install zits --version 1.2.1
+cargo install zits --version 1.4.0
 
 ### install `hc` cli tool
 # use the version to match version holochain + hdk version used

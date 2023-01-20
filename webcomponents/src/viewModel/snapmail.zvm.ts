@@ -220,8 +220,8 @@ export class SnapmailZvm extends ZomeViewModel {
     }
 
 
-    async findManifest(dataHash: string): Promise<FindManifestOutput> {
-      return this.zomeProxy.findManifest(dataHash);
+    async findManifest(contentHash: string): Promise<FindManifestOutput> {
+      return this.zomeProxy.findManifest(contentHash);
     }
 
     async getChunk(chunkEh: EntryHash): Promise<string> {

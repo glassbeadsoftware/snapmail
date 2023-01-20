@@ -4,6 +4,8 @@
 */.running
 */*.tsbuildinfo
 
+artifacts/
+
 submodules/**
 electron/out-builder/**
 electron/out-tsc/**

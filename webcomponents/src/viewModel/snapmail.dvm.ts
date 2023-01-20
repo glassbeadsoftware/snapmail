@@ -2,7 +2,7 @@ import { DnaViewModel, ZvmDef } from "@ddd-qc/lit-happ";
 import {AppSignal, AppSignalCb, encodeHashToBase64} from "@holochain/client";
 import {SnapmailZvm} from "./snapmail.zvm";
 import {Notification} from "@vaadin/notification";
-import {MY_ELECTRON_API, getController} from "../snapmail";
+import {MY_ELECTRON_API} from "../snapmail";
 
 
 /**
@@ -35,7 +35,7 @@ export class SnapmailDvm extends DnaViewModel {
   /** */
   handleSignal(signalwrapper: AppSignal) {
     console.log('Received signal:', signalwrapper);
-    const controller = getController();
+    const controller = this.host;
     /** Handle signal */
     if (Object.prototype.hasOwnProperty.call(signalwrapper.data.payload,'ReceivedMail')) {
       const item = signalwrapper.data.payload.ReceivedMail;

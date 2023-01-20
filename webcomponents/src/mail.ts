@@ -2,16 +2,39 @@
  * Functions for manipulating mailItems
  */
 
-import {AgentPubKey, encodeHashToBase64} from "@holochain/client";
+import {ActionHash, AgentPubKey, encodeHashToBase64} from "@holochain/client";
 
 //import {MailItem} from "./bindings/snapmail";
 import {UsernameMap} from "./viewModel/snapmail.perspective";
-import {DEV_MODE} from "./snapmail";
 import {MailItem, MailStateVariantIn, MailStateVariantOut} from "./bindings/snapmail.types";
+import {DEV_MODE} from "./electron";
 
 const checkMarkEmoji = String.fromCodePoint(0x2714); //FE0F
 const suspensionPoints = String.fromCodePoint(0x2026);
 const returnArrowEmoji = String.fromCodePoint(0x21A9);
+export const paperClipEmoji = String.fromCodePoint(0x1F4CE)
+
+
+export interface MailGridItem {
+  id: ActionHash,
+  username: string,
+  subject: string,
+  date: string,
+  attachment: string
+  status: string,
+  content: string,
+}
+
+export interface AttGridItem {
+  fileId: string,
+  filename: string,
+  filesize: number,
+  filetype: string,
+  status: string,
+  hasFile: boolean,
+  disabled?: boolean,
+}
+
 
 /**
  * All Folders for fileBox
@@ -175,6 +198,8 @@ export function determineMailStatus(mailItem: MailItem): string {
 }
 
 
+
+
 /** */
 export function into_gridItem(usernameMap: UsernameMap, mailItem: MailItem) {
   /* username */
@@ -183,18 +208,18 @@ export function into_gridItem(usernameMap: UsernameMap, mailItem: MailItem) {
   /* Date */
   const dateStr = customDateString(mailItem.date)
   /* Attachment Status */
-  const attachmentStatus = mailItem.mail.attachments.length > 0? String.fromCodePoint(0x1F4CE) : '';
+  const attachmentStatus = mailItem.mail.attachments.length > 0? paperClipEmoji : '';
   /* Status */
   const status = determineMailStatus(mailItem);
   // Done
-  const item = {
-    "id": mailItem.ah,
-    "username": username,
-    "subject": mailItem.mail.subject,
-    "date": dateStr,
-    "attachment": attachmentStatus,
-    "status": status,
-    "content": mailItem.mail.payload
+  const item: MailGridItem = {
+    id: mailItem.ah,
+    username: username,
+    subject: mailItem.mail.subject,
+    date: dateStr,
+    attachment: attachmentStatus,
+    status: status,
+    content: mailItem.mail.payload
   };
   return item;
 }
