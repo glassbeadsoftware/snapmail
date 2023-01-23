@@ -4,7 +4,6 @@ import {ScopedElementsMixin} from "@open-wc/scoped-elements";
 import {TextArea} from "@vaadin/text-area";
 import {TextField} from "@vaadin/text-field";
 import {VerticalLayout} from "@vaadin/vertical-layout";
-import {MailItem} from "../bindings/snapmail.types";
 import {Upload} from "@vaadin/upload";
 import {UploadFile} from "@vaadin/upload/src/vaadin-upload";
 
@@ -19,6 +18,11 @@ export class SnapmailMailWrite extends ScopedElementsMixin(LitElement) {
   content: string;
 
 
+
+  /** -- Getters -- */
+
+  getSubject(): string {return this.outMailSubjectElem.value}
+  getContent(): string {return this.outMailContentElem.value}
 
   get outMailSubjectElem() : TextField {
     return this.shadowRoot!.getElementById("outMailSubjectArea") as TextField;
@@ -78,7 +82,7 @@ export class SnapmailMailWrite extends ScopedElementsMixin(LitElement) {
   /** */
   render() {
     return html`
-        <vaadin-vertical-layout>
+        <vaadin-vertical-layout style="height:100%;">
           <vaadin-text-field id="outMailSubjectArea"
                              style="width: 100%;"
                              .value="${this.subject}"
@@ -95,7 +99,6 @@ export class SnapmailMailWrite extends ScopedElementsMixin(LitElement) {
                          max-files="10"
                          @file-reject="${(e:any) => {window.alert(e.detail.file.name + ' error: ' + e.detail.error);}}"
                          @upload-before="${this.onUpload}"
-
           >
             <span slot="drop-label">Maximum file size: 8 MB</span>
           </vaadin-upload>            
@@ -117,6 +120,7 @@ export class SnapmailMailWrite extends ScopedElementsMixin(LitElement) {
       'vaadin-vertical-layout': VerticalLayout,
       'vaadin-text-field':TextField,
       'vaadin-text-area':TextArea,
+      'vaadin-upload': Upload,
     }
   }
 }

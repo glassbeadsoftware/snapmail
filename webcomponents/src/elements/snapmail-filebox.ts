@@ -339,7 +339,7 @@ export class SnapmailFilebox extends ZomeElement<SnapmailPerspective, SnapmailZv
       }
       try {
         /** Update mailGrid */
-        this.update_mailGrid(this.folderElem.value);
+        this.update_mailGrid(this.folderElem? this.folderElem.value : systemFolders.INBOX);
         /** Update active Item */
         console.log('<snapmail-filebox>.willUpdate() activeItem = ', this.mailGridElem.activeItem);
         if(this.mailGridElem.activeItem) {

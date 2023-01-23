@@ -12,7 +12,14 @@ import {Dialog} from "@vaadin/dialog";
 import {VerticalLayout} from "@vaadin/vertical-layout";
 import {HorizontalLayout} from "@vaadin/horizontal-layout";
 import {SplitLayout} from "@vaadin/split-layout";
-import {ActionHash, ActionHashB64, decodeHashFromBase64, encodeHashToBase64, EntryHash} from "@holochain/client";
+import {
+  ActionHash,
+  ActionHashB64,
+  AgentPubKey,
+  decodeHashFromBase64,
+  encodeHashToBase64,
+  EntryHash
+} from "@holochain/client";
 import {customDateString, into_mailText} from "../mail";
 import {property, state} from "lit/decorators.js";
 import {SnapmailMailWrite} from "./snapmail-mail-write";
@@ -146,6 +153,13 @@ export class SnapmailPage extends ZomeElement<SnapmailPerspective, SnapmailZvm> 
   }
 
 
+  /** */
+  updated() {
+    if (!this._canHideHandleInput) {
+      this.handleInputElem.focus();
+    }
+  }
+
 
   /** */
   initNotification() {
@@ -225,24 +239,16 @@ export class SnapmailPage extends ZomeElement<SnapmailPerspective, SnapmailZvm> 
     this.handleInputElem.value = '';
     this.hideHandleInput(true);
 
-    // FIXME
-    // /** - Update my Handle in the contacts grid */
-    // for (const item of this.contactGridElem.items!) {
-    //   const contactItem: ContactGridItem = item as ContactGridItem;
-    //   if (contactItem.agentIdB64 === this.agentPubKey) {
-    //     contactItem.username = newHandle;
-    //   }
-    // }
+    /** - Update my Handle in the contacts grid */
+    this._zvm.probeHandles();
   }
 
 
   /** */
-  hideHandleInput(hideInput: boolean): void {
-    this._canHideHandleInput = hideInput;
-    if (!hideInput) {
-      this.handleInputElem.focus();
-    }
-    if (!hideInput && this._myHandle !== '<unknown>') {
+  hideHandleInput(canHideInput: boolean): void {
+    //console.log("hideHandleInput()", canHideInput);
+    this._canHideHandleInput = canHideInput;
+    if (!canHideInput && this._myHandle !== '<unknown>') {
       this.handleInputElem.value = this._myHandle
     } else {
       this.handleInputElem.value = ''
@@ -254,15 +260,17 @@ export class SnapmailPage extends ZomeElement<SnapmailPerspective, SnapmailZvm> 
 
   /** */
   disableSendButton(isDisabled: boolean): void {
+    console.log("disableSendButton()", isDisabled);
     if (this.actionMenuElem.items[2].disabled == isDisabled) {
       return;
     }
+
     this.actionMenuElem.items[2].disabled = isDisabled;
     /** Deep-copy MenuBarItems so it can trigger a new render */
-    //const items = JSON.parse(JSON.stringify(this.actionMenuElem.items)) as MenuBarItem[];
-    //items[2].disabled = isDisabled;
-    //this.actionMenuElem.items = items;
-    this.requestUpdate();
+    const items = JSON.parse(JSON.stringify(this.actionMenuElem.items)) as MenuBarItem[];
+    items[2].disabled = isDisabled;
+    this.actionMenuElem.items = items;
+    //this.requestUpdate();
   }
 
 
@@ -427,26 +435,27 @@ export class SnapmailPage extends ZomeElement<SnapmailPerspective, SnapmailZvm> 
       return;
     }
 
-    const toList = [];
-    const ccList = [];
-    const bccList = [];
+    const toList: AgentPubKey[] = [];
+    const ccList: AgentPubKey[] = [];
+    const bccList: AgentPubKey[] = [];
     /* Get recipients from contactGrid */
     for (const contactItem of selection) {
-      console.log('recipientType: ' + contactItem.recipientType);
+      console.log('recipient: ', contactItem.agentIdB64);
+      const agentId = decodeHashFromBase64(contactItem.agentIdB64);
       switch (contactItem.recipientType) {
         case '': break;
-        case 'to': toList.push(decodeHashFromBase64(contactItem.agentIdB64)); break;
-        case 'cc': ccList.push(decodeHashFromBase64(contactItem.agentIdB64)); break;
-        case 'bcc': bccList.push(decodeHashFromBase64(contactItem.agentIdB64)); break;
+        case 'to': toList.push(agentId); break;
+        case 'cc': ccList.push(agentId); break;
+        case 'bcc': bccList.push(agentId); break;
         default: console.error('unknown recipientType');
       }
     }
 
     /* Create Mail */
     const mail: SendMailInput = {
-      subject: this.mailWriteElem.subject,
-      payload: this.mailWriteElem.content,
-      reply_of: decodeHashFromBase64(this._replyOf),
+      subject: this.mailWriteElem.getSubject()? this.mailWriteElem.getSubject(): "",
+      payload: this.mailWriteElem.getContent()? this.mailWriteElem.getContent(): "",
+      reply_of: this._replyOf? decodeHashFromBase64(this._replyOf) : undefined,
       to: toList, cc: ccList, bcc: bccList,
       manifest_address_list: filesToSend,
     };
@@ -454,8 +463,9 @@ export class SnapmailPage extends ZomeElement<SnapmailPerspective, SnapmailZvm> 
     /* Send Mail */
     const outmail_hh = await this._zvm.sendMail(mail);
 
-    /** Clear Write UI */
+    /** Clear UI */
     this.clearWriteMail();
+    this.contactsElem.resetSelection();
   }
 
 
@@ -521,17 +531,19 @@ export class SnapmailPage extends ZomeElement<SnapmailPerspective, SnapmailZvm> 
           <!--        <span style="text-align: center; font-size: larger; padding: 10px 10px 10px 5px;"> - </span>-->
         </vaadin-horizontal-layout>
 
-        <!-- Vertical split between filebox and Inmail 
+        <!-- Vertical split between filebox and Inmail -->
         <vaadin-split-layout orientation="vertical" style="width:100%; height:50%; margin-top:0px;">
-            <snapmail-filebox id="snapmailFilebox"
+                <!-- <snapmail-filebox id="snapmailFilebox"
                     @menu-item-selected="${(e:any) => {this.onFileboxMenuItemSelected(e.detail)}}"
             ></snapmail-filebox>
+                
             <vaadin-horizontal-layout theme="spacing-xs" style="min-height:120px; height:50%; width:100%; margin-top: 4px; flex: 1 1 100px">
               <snapmail-mail-view .inMailItem="${this._currentMailItem}" .usernameMap="${this.perspective.usernameMap}"></snapmail-mail-view>
               <snapmail-att-view style="width:30%; height:100%;" .inMailItem="${this._currentMailItem}"></snapmail-att-view>
             </vaadin-horizontal-layout>
+            -->
         </vaadin-split-layout>
--->
+
           
         <!-- Horizontal split between Write and Contacts -->
         <h4 style="margin:10px 0px 0px 0px;">&#128394; Write Mail</h4>
