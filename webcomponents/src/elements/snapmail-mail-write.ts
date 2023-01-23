@@ -78,27 +78,27 @@ export class SnapmailMailWrite extends ScopedElementsMixin(LitElement) {
   /** */
   render() {
     return html`
-        <vaadin-vertical-layout style="min-width: 40px; width: 65%;">
-            <vaadin-text-field id="outMailSubjectArea"
-                               style="width: 100%;"
-                               .value"${this.subject}"
-                               placeholder="Write subject here..."
-            ></vaadin-text-field>
-            <vaadin-text-area id="outMailContentArea"
-                              style="width: 100%; height: 100%;padding-bottom:0;"
-                              .value"${this.content}"
-                              placeholder="Write here..."
-            ></vaadin-text-area>
-            <vaadin-upload id="myUpload" nodrop
-                           style="width:280px; margin-top:0;"
-                           max-file-size="8000000" 
-                           max-files="10"
-                           @file-reject="${(e:any) => {window.alert(e.detail.file.name + ' error: ' + e.detail.error);}}"
-                           @upload-before="${this.onUpload}"
+        <vaadin-vertical-layout>
+          <vaadin-text-field id="outMailSubjectArea"
+                             style="width: 100%;"
+                             .value="${this.subject}"
+                             placeholder="Write subject here..."
+          ></vaadin-text-field>
+          <vaadin-text-area id="outMailContentArea"
+                            style="width: 100%; height: 100%;padding-bottom:0;"
+                            .value="${this.content}"
+                            placeholder="Write here..."
+          ></vaadin-text-area>
+          <vaadin-upload id="myUpload" nodrop
+                         style="width:280px; margin-top:0;"
+                         max-file-size="8000000" 
+                         max-files="10"
+                         @file-reject="${(e:any) => {window.alert(e.detail.file.name + ' error: ' + e.detail.error);}}"
+                         @upload-before="${this.onUpload}"
 
-            >
-                <span slot="drop-label">Maximum file size: 8 MB</span>
-            </vaadin-upload>            
+          >
+            <span slot="drop-label">Maximum file size: 8 MB</span>
+          </vaadin-upload>            
         </vaadin-vertical-layout>
     `;
   }

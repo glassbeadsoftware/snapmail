@@ -1,5 +1,5 @@
 import {
-  ActionHash,
+  ActionHash, ActionHashB64,
   AgentPubKey,
   AnyDhtHash,
   decodeHashFromBase64,
@@ -201,8 +201,8 @@ export class SnapmailZvm extends ZomeViewModel {
     return this.zomeProxy.acknowledgeMail(inmailAh);
   }
 
-  async deleteMail(ah: ActionHash): Promise<DeleteMailOutput> {
-    return this.zomeProxy.deleteMail(ah);
+  async deleteMail(ah: ActionHashB64): Promise<DeleteMailOutput> {
+    return this.zomeProxy.deleteMail(decodeHashFromBase64(ah));
 
   }
 

@@ -5,7 +5,7 @@ import {HorizontalLayout} from "@vaadin/horizontal-layout";
 import {TextField} from "@vaadin/text-field";
 import {ComboBox} from "@vaadin/combo-box";
 import { state, property } from "lit/decorators.js";
-import {DEV_MODE} from "../electron";
+import {DEV_MODE, updateTray} from "../electron";
 import {stylesTemplate} from "../constants";
 import {MailItem} from "../bindings/snapmail.types";
 import {
@@ -19,6 +19,8 @@ import {MenuBarItem} from "@vaadin/menu-bar";
 import {ZomeElement} from "@ddd-qc/lit-happ";
 import {MailGridItem, SnapmailPerspective} from "../viewModel/snapmail.perspective";
 import {SnapmailZvm} from "../viewModel/snapmail.zvm";
+import {encodeHashToBase64} from "@holochain/client";
+import {Icon} from "@vaadin/vaadin-icon";
 
 
 /** */
@@ -79,6 +81,11 @@ export class SnapmailFilebox extends ZomeElement<SnapmailPerspective, SnapmailZv
 
   get mailSearchElem() : TextField {
     return this.shadowRoot!.getElementById("mailSearch") as TextField;
+  }
+
+
+  get folderElem() : ComboBox {
+    return this.shadowRoot!.getElementById("fileboxFolder") as ComboBox;
   }
 
 
@@ -166,6 +173,92 @@ export class SnapmailFilebox extends ZomeElement<SnapmailPerspective, SnapmailZv
   }
 
 
+
+  fillMailGrid() {
+    /** Get currently selected hashs */
+    const prevSelected = [];
+    if (this.mailGridElem.selectedItems) {
+      for (const item of this.mailGridElem.selectedItems) {
+        const mailItem: MailGridItem = item as MailGridItem;
+        prevSelected.push(mailItem.id);
+      }
+    }
+
+    let trashCount = 0;
+    let inboxCount = 0;
+    let sentCount = 0;
+    let newCount = 0;
+
+    const selected = [];
+    const items = [];
+
+    const selectedBox = this.folderElem.value.codePointAt(0);
+
+    const mailItems: MailItem[] = Object.values(this.perspective.mailMap);
+    for (const mailItem of mailItems) {
+      //console.log({mailItem})
+      const isDeleted = isMailDeleted(mailItem);
+      const isOutMail = is_OutMail(mailItem);
+
+      /** Counters */
+      if (isOutMail) {
+        sentCount = sentCount + 1;
+      }
+      if (isDeleted) {
+        trashCount = trashCount + 1;
+      }
+      if (!isDeleted && !isOutMail) {
+        inboxCount = inboxCount + 1;
+      }
+      if (determineMailCssClass(mailItem) === 'newmail') {
+        newCount = newCount + 1;
+      }
+
+      /** Determine if we should add to grid depending on current folder */
+      if (isDeleted && selectedBox !== systemFolders.TRASH.codePointAt(0)) {
+        continue;
+      }
+      if (isOutMail && selectedBox === systemFolders.INBOX.codePointAt(0)) {
+        continue;
+      }
+      if (!isOutMail && selectedBox === systemFolders.SENT.codePointAt(0)) {
+        continue;
+      }
+      const gridItem = into_gridItem(this.perspective.usernameMap, mailItem);
+      // console.log('gridItem.id = ' + gridItem.id);
+      items.push(gridItem);
+      if (prevSelected.includes(gridItem.id)) {
+        selected.push(gridItem);
+      }
+    }
+    console.log('Counters: ' + newCount + ' / ' + inboxCount + ' / ' + sentCount + ' / ' + trashCount + ' / '+ mailItems.length);
+
+    updateTray(newCount);
+
+    const systemFoldersVec = [
+      systemFolders.ALL // + ' ('+ allCount +')'
+      , newCount === 0 ? systemFolders.INBOX : systemFolders.INBOX + ' ('+ newCount + ')' //+ inboxCount +')'
+      , systemFolders.SENT // + ' ('+ sentCount +')'
+      , systemFolders.TRASH // + ' ('+ trashCount +')'
+    ];
+    const folderBoxAll = this.folderElem;
+    folderBoxAll.items = systemFoldersVec;
+    for (const systemFolder of systemFoldersVec) {
+      //console.log("systemFolder.codePointAt(0) = " + systemFolder.codePointAt(0));
+      if (selectedBox == systemFolder.codePointAt(0)) {
+        folderBoxAll.value = systemFolder;
+        break;
+      }
+    }
+
+    console.log('mailCount = ' + items.length + ' (' + selected.length + ')');
+    this._allMailItems = items;
+    this.mailGridElem.items = filterMails(this._allMailItems, this.mailSearchElem.value);
+    this.mailGridElem.selectedItems = selected;
+    this.mailGridElem.activeItem = selected[0];
+  }
+
+
   /** */
   update_mailGrid(folderName: string): void {
     const folderItems: MailGridItem[] = [];
@@ -236,13 +329,36 @@ export class SnapmailFilebox extends ZomeElement<SnapmailPerspective, SnapmailZv
   /** */
   protected willUpdate(changedProperties: PropertyValues<this>) {
     super.willUpdate(changedProperties);
+    console.log("<snapmail-filebox>.willUpdate()");
+
+    /** Handle mails from perspective */
     if (changedProperties.has('perspective')) {
       this._allMailItems = [];
       for (const mailItem of this.perspective.mailMap.values()) {
         this._allMailItems.push(into_gridItem(this.perspective.usernameMap, mailItem));
       }
+      try {
+        /** Update mailGrid */
+        this.update_mailGrid(this.folderElem.value);
+        /** Update active Item */
+        console.log('<snapmail-filebox>.willUpdate() activeItem = ', this.mailGridElem.activeItem);
+        if(this.mailGridElem.activeItem) {
+          let newActiveItem = null;
+          for(const item of this.mailGridElem.items!) {
+            const mailItem: MailGridItem = item as MailGridItem;
+            if(mailItem.id === this.mailGridElem.activeItem.id) {
+              newActiveItem = mailItem;
+              break;
+            }
+          }
+          this.mailGridElem.selectItem(newActiveItem);
+        }
+      } catch(e) {
+        console.error("<snapmail-filebox>.willUpdate() failed", e)
+      }
     }
   }
+
 
   /** */
   render() {
@@ -299,6 +415,7 @@ export class SnapmailFilebox extends ZomeElement<SnapmailPerspective, SnapmailZv
   /** */
   static get scopedElements() {
     return {
+      "vaadin-icon": Icon,
       'vaadin-combo-box':ComboBox,
       'vaadin-grid':Grid,
       'vaadin-grid-column':GridColumn,

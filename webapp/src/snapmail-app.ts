@@ -80,8 +80,7 @@ export class SnapmailApp extends HappElement {
     await this.hvm.probeAll();
     /** Send dnaHash to electron */
     if (IS_ELECTRON) {
-      const dnaHashB64 = encodeHashToBase64(this.snapmailDvm.cellId[0])
-      let _reply = MY_ELECTRON_API.dnaHashSync(dnaHashB64);
+      let _reply = MY_ELECTRON_API.dnaHashSync(this.snapmailDvm.dnaHash);
     }
     /** Done */
     this._loaded = true;

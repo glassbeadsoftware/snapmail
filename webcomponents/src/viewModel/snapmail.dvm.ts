@@ -2,7 +2,7 @@ import { DnaViewModel, ZvmDef } from "@ddd-qc/lit-happ";
 import {AppSignal, AppSignalCb, encodeHashToBase64} from "@holochain/client";
 import {SnapmailZvm} from "./snapmail.zvm";
 import {Notification} from "@vaadin/notification";
-import {MY_ELECTRON_API} from "../snapmail";
+import {MY_ELECTRON_API} from "../electron";
 
 
 /**

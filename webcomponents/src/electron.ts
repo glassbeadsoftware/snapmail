@@ -8,7 +8,7 @@ console.log("MY_ELECTRON_API = ", MY_ELECTRON_API);
  } else {
    DEV_MODE = process.env.DEV_MODE;
 }
- console.log("  DEV_MODE =", DEV_MODE)
+ console.log("DEV_MODE =", DEV_MODE)
 
 
 /** Remove console.log() in PROD */

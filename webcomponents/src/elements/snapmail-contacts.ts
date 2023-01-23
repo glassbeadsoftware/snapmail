@@ -16,7 +16,6 @@ import {GridSelectionColumn} from "@vaadin/grid/vaadin-grid-selection-column";
 import {ZomeElement} from "@ddd-qc/lit-happ";
 import {SnapmailZvm} from "../viewModel/snapmail.zvm";
 
-
 /** Find and collect grid items that have the given agentIds */
 function ids_to_items(ids: string[], items: ContactGridItem[]) {
   const subGroup = [];
@@ -52,11 +51,17 @@ export class SnapmailContacts extends ZomeElement<SnapmailPerspective, SnapmailZ
   @state() private _selectedItems: ContactGridItem[] = [];
   //_activeItem:any = null;
 
-  private _currentGroup = '';
+  @state() private _currentGroup = SYSTEM_GROUP_LIST[0];
 
 
   get allContacts(): ContactGridItem[] { return this._allContactItems}
   get selectedContacts(): ContactGridItem[] { return this._selectedItems}
+
+
+  // get contactsMenuElem() : MenuBar {
+  //   return this.shadowRoot!.getElementById("ContactsMenu") as MenuBar;
+  // }
+
 
   get contactGridElem() : Grid {
     return this.shadowRoot!.getElementById("contactGrid") as Grid;
@@ -84,6 +89,8 @@ export class SnapmailContacts extends ZomeElement<SnapmailPerspective, SnapmailZ
   protected firstUpdated(_changedProperties: PropertyValues) {
     super.firstUpdated(_changedProperties);
 
+    this.initGroupsDialog();
+
     this.contactGridElem.cellClassNameGenerator = function(column, rowData:any) {
       //console.log(rowData)
       let classes = rowData.item.status;
@@ -98,11 +105,38 @@ export class SnapmailContacts extends ZomeElement<SnapmailPerspective, SnapmailZ
 
     this.contactGridElem.shadowRoot!.appendChild(stylesTemplate.content.cloneNode(true));
 
-    this.regenerateGroupComboBox(SYSTEM_GROUP_LIST[0]);
-    this._currentGroup = this.groupComboElem.value;
+    this.loadGroupList(this.dnaHash);
 
-    this.loadGroupList('');
+    this._zvm.storePingResult({}, this.agentPubKey);
 
+    /** Ping an agent every 1 second */
+    // /*let _1sec =*/ setInterval(() => {
+    //   // if (DEV_MODE === 'dev') {
+    //   //   return;
+    //   // }
+    //   try {
+    //     if (this._zvm.canPing) {
+    //       this._zvm.pingNextAgent();
+    //     }
+    //   } catch(e) {
+    //     console.error("_1sec.pingNextAgent() failed: ", e)
+    //   }
+    // }, 1 * 1000);
+
+    // /** Add Refresh button in DEBUG */
+    // if (DEV_MODE === 'dev') {
+    //   const contactsMenu = this.contactsMenuElem;
+    //   contactsMenu.items = [{ text: 'Refresh' }];
+    //   contactsMenu.addEventListener('item-selected', (e:any) => {
+    //     console.log('item-selected', JSON.stringify(e.detail.value));
+    //     if(e.detail.value.text === 'Refresh') {
+    //       console.log("contactsMenu Refresh clicked")
+    //       contactsMenu.items[0].disabled = true;
+    //       //contactsMenu.render();
+    //       this._zvm.probeHandles();
+    //     }
+    //   });
+    // }
   }
 
 
@@ -264,13 +298,16 @@ export class SnapmailContacts extends ZomeElement<SnapmailPerspective, SnapmailZ
     this.updateContactGrid(false);
 
     console.log({click_after_SelectedItems: this.contactGridElem.selectedItems})
+    this.dispatchEvent(new CustomEvent('contact-selected',
+      { detail: this._selectedContactIdB64s, bubbles: true, composed: true }));
+
   }
 
 
   /** */
   setCurrentGroup(groupName: string): void {
     console.log('Current Group changed: ' + groupName);
-    if(groupName === 'new...') {
+    if(groupName === SYSTEM_GROUP_LIST[1]) {
       const newDialog = this.shadowRoot!.getElementById('newGroupDlg') as Dialog;
       newDialog.opened = true;
       return;
@@ -280,7 +317,7 @@ export class SnapmailContacts extends ZomeElement<SnapmailPerspective, SnapmailZ
     this.updateContactGrid(false);
     /** Store _groupMap in localStore */
     const entries = Array.from(this._groupMap.entries());
-    console.log({entries})
+    console.log("Storing groups",  entries)
     window.localStorage[this.dnaHash] = JSON.stringify(entries);
   }
 
@@ -302,15 +339,17 @@ export class SnapmailContacts extends ZomeElement<SnapmailPerspective, SnapmailZ
 
 
   /** */
-  regenerateGroupComboBox(current: string): void {
-    if (this._groupMap === undefined || this._groupMap === null) {
-      return;
+  generateGroupComboBox(): string[] {
+    const groupKeys = [];
+    //groupKeys.push(SYSTEM_GROUP_LIST[0]);
+    if (this._groupMap) {
+      for (const groupName of this._groupMap.keys()) {
+        groupKeys.push(groupName);
+      }
     }
-    const keys = Array.from(this._groupMap.keys());
-    console.log({groupKeys: keys})
-    keys.push('new...');
-    this.groupComboElem.items = keys;
-    this.groupComboElem.value = current;
+    groupKeys.push(SYSTEM_GROUP_LIST[1]);
+    //console.log({groupKeys})
+    return groupKeys;
   }
 
 
@@ -340,8 +379,9 @@ export class SnapmailContacts extends ZomeElement<SnapmailPerspective, SnapmailZ
     }
     this._groupMap.set(textField.value, []);
     //console.log('g_groupList: ' + JSON.stringify(g_groupList.keys()));
-    this.regenerateGroupComboBox(textField.value);
+    this.generateGroupComboBox();
     this.setCurrentGroup(textField.value);
+    this.groupComboElem.selectedItem = textField.value;
     textField.value = '';
     dialog.opened = false;
   }
@@ -350,10 +390,9 @@ export class SnapmailContacts extends ZomeElement<SnapmailPerspective, SnapmailZ
   /** */
   initGroupsDialog() {
     console.log("initGroupsDialog() called");
-    const controller = this;
     /** -- New Group Dialog */
     const newDialog = this.shadowRoot!.getElementById('newGroupDlg') as Dialog;
-    newDialog.renderer = function (root, dialog) {
+    newDialog.renderer = (root, dialog) => {
       /** Check if there is a DOM generated with the previous renderer call to update its content instead of recreation */
       if (root.firstElementChild) {
         //console.log({root});
@@ -377,7 +416,7 @@ export class SnapmailContacts extends ZomeElement<SnapmailPerspective, SnapmailZ
       vaadin.addEventListener("keyup", (event) => {
         /** On return key */
         if (event.keyCode == 13) {
-          controller.createNewGroup(dialog!, vaadin);
+          this.createNewGroup(dialog!, vaadin);
         }
       });
 
@@ -386,15 +425,13 @@ export class SnapmailContacts extends ZomeElement<SnapmailPerspective, SnapmailZ
       okButton.setAttribute('theme', 'primary');
       okButton.textContent = 'OK';
       okButton.setAttribute('style', 'margin-right: 1em');
-      okButton.addEventListener('click', function () {
-        controller.createNewGroup(dialog!, vaadin);
-      });
+      okButton.addEventListener('click', () => {this.createNewGroup(dialog!, vaadin);});
       /** Cancel Button */
       const cancelButton = window.document.createElement('vaadin-button') as Button;
       cancelButton.textContent = 'Cancel';
-      cancelButton.addEventListener('click', function () {
+      cancelButton.addEventListener('click', () => {
         vaadin.value = '';
-        controller.groupComboElem.value = controller._currentGroup;
+        //this.groupComboElem.value = this._currentGroup;
         dialog!.opened = false;
       });
       /** Add all elements */
@@ -409,15 +446,15 @@ export class SnapmailContacts extends ZomeElement<SnapmailPerspective, SnapmailZ
       /** -- Edit Group Dialog */
 
       const editDialog = this.shadowRoot!.getElementById('editGroupDlg') as Dialog;
-      editDialog.renderer = function (root, dialog) {
-        console.log("Edit Groups dialog called: ", controller._currentGroup);
+      editDialog.renderer = (root, dialog) => {
+        console.log("Edit Groups dialog called", this._currentGroup);
         /** Check if there is a DOM generated with the previous renderer call to update its content instead of recreation */
         if (root.firstElementChild) {
           const title = root.children[0];
-          title.textContent = 'Edit Group: ' + controller._currentGroup;
+          title.textContent = 'Edit Group: ' + this._currentGroup;
           const grid = root.children[1] as Grid;
-          grid.items = controller._allContactItems;
-          const groupIds = controller._groupMap.get(controller._currentGroup);
+          grid.items = this._allContactItems;
+          const groupIds = this._groupMap.get(this._currentGroup);
           if (groupIds) {
             grid.selectedItems = ids_to_items(groupIds, grid.items);
           }
@@ -425,7 +462,7 @@ export class SnapmailContacts extends ZomeElement<SnapmailPerspective, SnapmailZ
         }
         /** Title */
         const div = window.document.createElement('h3');
-        div.textContent = 'Edit Group: ' + controller._currentGroup;
+        div.textContent = 'Edit Group: ' + this._currentGroup;
         div.setAttribute('style', 'margin-bottom: 10px; margin-top: 0px;');
         const br = window.document.createElement('br');
 
@@ -444,9 +481,9 @@ export class SnapmailContacts extends ZomeElement<SnapmailPerspective, SnapmailZ
         grid.id = "groupGrid";
         //grid.heightByRows = true;
         grid.setAttribute('style', 'width: 360px;display:block;');
-        grid.items = controller._allContactItems;
+        grid.items = this._allContactItems;
         console.log({groupItems: grid.items})
-        const groupIds = controller._groupMap.get(controller._currentGroup);
+        const groupIds = this._groupMap.get(this._currentGroup);
         const items = ids_to_items(groupIds!, grid.items)
         //grid.selectedItems = items; // does not work here
         /** Confirm Button */
@@ -457,15 +494,15 @@ export class SnapmailContacts extends ZomeElement<SnapmailPerspective, SnapmailZ
 
 
         /** OnClick OK save agentIds of selected items for the group */
-        okButton.addEventListener('click', function () {
+        okButton.addEventListener('click', () => {
           const ids = [];
           for (const item of grid.selectedItems!) {
             const contactItem: ContactGridItem = item as ContactGridItem;
             ids.push(contactItem.agentIdB64);
           }
-          controller._groupMap.set(controller._currentGroup, ids);
+          this._groupMap.set(this._currentGroup, ids);
           grid.selectedItems = [];
-          controller.setCurrentGroup(controller._currentGroup);
+          this.setCurrentGroup(this._currentGroup);
           dialog!.opened = false;
         });
         /** Delete Button */
@@ -473,10 +510,10 @@ export class SnapmailContacts extends ZomeElement<SnapmailPerspective, SnapmailZ
         delButton.setAttribute('theme', 'error');
         delButton.textContent = 'Delete';
         delButton.setAttribute('style', 'margin-right: 1em');
-        delButton.addEventListener('click', function () {
-          controller._groupMap.delete(controller._currentGroup);
-          controller.regenerateGroupComboBox(SYSTEM_GROUP_LIST[0]);
-          controller.setCurrentGroup(SYSTEM_GROUP_LIST[0]);
+        delButton.addEventListener('click', () => {
+          this._groupMap.delete(this._currentGroup);
+          this.generateGroupComboBox();
+          this.setCurrentGroup(SYSTEM_GROUP_LIST[0]);
           grid.selectedItems = [];
           dialog!.opened = false;
         });
@@ -503,7 +540,7 @@ export class SnapmailContacts extends ZomeElement<SnapmailPerspective, SnapmailZ
       const button = this.shadowRoot!.getElementById('groupsBtn') as Button;
       button.addEventListener('click', () => {
         /** open if not 'All' group selected */
-        if (controller._currentGroup !== SYSTEM_GROUP_LIST[0]) {
+        if (this._currentGroup !== SYSTEM_GROUP_LIST[0]) {
           editDialog.opened = true;
         }
       });
@@ -519,16 +556,20 @@ export class SnapmailContacts extends ZomeElement<SnapmailPerspective, SnapmailZ
         <vaadin-dialog no-close-on-esc no-close-on-outside-click id="newGroupDlg"></vaadin-dialog>
         <vaadin-dialog no-close-on-esc no-close-on-outside-click id="editGroupDlg"></vaadin-dialog>
         <!-- CONTACTS -->
-        <vaadin-vertical-layout theme="spacing-xs" style="min-width: 20px; width: 35%;">
+        <vaadin-vertical-layout theme="spacing-xs">
             <!-- MENU -->
             <!-- <vaadin-horizontal-layout theme="spacing-xs" id="fileboxLayout">-->
             <vaadin-horizontal-layout theme="spacing-xs" style="background-color: #f7f7f1; width: 100%;">
                 <h4 style="min-width:85px;text-align: center; font-size: large; padding: 10px 10px 10px 10px; margin: 0px 0px 0px 5px;">📇 Groups</h4>
                 <vaadin-combo-box id="groupCombo" 
                                   style="min-width:100px;max-width:200px;"
+                                  .value="${this._currentGroup}"
+                                  .items="${this.generateGroupComboBox()}"
                                   @change="${(e) => this.setCurrentGroup(e.target.value)}"
                 ></vaadin-combo-box>
-                <vaadin-button id="groupsBtn" style="margin: 5px; min-width: 40px; padding-left: 5px;">
+                <vaadin-button id="groupsBtn" 
+                               style="margin: 5px; min-width: 40px; padding-left: 5px;"
+                               .disabled="${this._currentGroup == SYSTEM_GROUP_LIST[0]}">
                     <vaadin-icon icon="lumo:edit" slot="suffix"></vaadin-icon>
                 </vaadin-button>
                 <vaadin-text-field id="contactSearch" clear-button-visible 
@@ -550,6 +591,9 @@ export class SnapmailContacts extends ZomeElement<SnapmailPerspective, SnapmailZ
               <vaadin-grid-column auto-width path="recipientType" header=" "></vaadin-grid-column>
               <vaadin-grid-column path="agentId" hidden></vaadin-grid-column>
             </vaadin-grid>
+
+            <vaadin-menu-bar open-on-hover id="ContactsMenu" style="margin-top:2px;"></vaadin-menu-bar>
+
         </vaadin-vertical-layout>
     `;
   }
