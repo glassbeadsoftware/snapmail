@@ -148,7 +148,7 @@ export class SnapmailPage extends ZomeElement<SnapmailPerspective, SnapmailZvm> 
     mainPage.style.display = "flex";
     /* init Send progress bar */
     this.sendProgressBarElem.style.display = "none";
-
+    /* Init Electron specific variables */
     this.initElectron();
   }
 
@@ -165,7 +165,7 @@ export class SnapmailPage extends ZomeElement<SnapmailPerspective, SnapmailZvm> 
   initNotification() {
     /** -- Mail  */
     const notificationMail = this.shadowRoot!.getElementById('notifyMail') as Notification;
-    notificationMail.renderer = function(root) {
+    notificationMail.renderer = (root) => {
       /** Check if there is a content generated with the previous renderer call not to recreate it. */
       if (root.firstElementChild) {
         return;
@@ -178,7 +178,7 @@ export class SnapmailPage extends ZomeElement<SnapmailPerspective, SnapmailZvm> 
     };
     /** -- Ack */
     let notification = this.shadowRoot!.getElementById('notifyAck') as Notification;
-    notification.renderer = function(root) {
+    notification.renderer = (root) => {
       /** Check if there is a content generated with the previous renderer call not to recreate it. */
       if (root.firstElementChild) {
         return;
@@ -193,7 +193,7 @@ export class SnapmailPage extends ZomeElement<SnapmailPerspective, SnapmailZvm> 
     };
     /** -- File  */
     notification = this.shadowRoot!.getElementById('notifyFile') as Notification;
-    notification.renderer = function(root) {
+    notification.renderer = (root) => {
       /** Check if there is a content generated with the previous renderer call not to recreate it. */
       if (root.firstElementChild) {
         return;
@@ -533,10 +533,10 @@ export class SnapmailPage extends ZomeElement<SnapmailPerspective, SnapmailZvm> 
 
         <!-- Vertical split between filebox and Inmail -->
         <vaadin-split-layout orientation="vertical" style="width:100%; height:50%; margin-top:0px;">
-                <!-- <snapmail-filebox id="snapmailFilebox"
+                 <snapmail-filebox id="snapmailFilebox"
                     @menu-item-selected="${(e:any) => {this.onFileboxMenuItemSelected(e.detail)}}"
             ></snapmail-filebox>
-                
+                <!--  
             <vaadin-horizontal-layout theme="spacing-xs" style="min-height:120px; height:50%; width:100%; margin-top: 4px; flex: 1 1 100px">
               <snapmail-mail-view .inMailItem="${this._currentMailItem}" .usernameMap="${this.perspective.usernameMap}"></snapmail-mail-view>
               <snapmail-att-view style="width:30%; height:100%;" .inMailItem="${this._currentMailItem}"></snapmail-att-view>

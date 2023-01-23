@@ -177,7 +177,7 @@ function determineFromLine(usernameMap: UsernameMap, mailItem: MailItem): string
 
 /** Return mailItem status icon */
 export function determineMailStatus(mailItem: MailItem): string {
-  console.log('determineMailStatus()', mailItem);
+  console.log('determineMailStatus()', encodeHashToBase64(mailItem.ah));
   const state = mailItem.state;
   // console.log("determineMailStatus() state", mailItem.state);
   if ("Out" in state) {

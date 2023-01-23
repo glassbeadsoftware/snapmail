@@ -340,7 +340,7 @@ export class SnapmailContacts extends ZomeElement<SnapmailPerspective, SnapmailZ
       this._groupMap = new Map();
       this._groupMap.set('All', []);
     }
-    console.log({ groupList: this._groupMap });
+    //console.log({ groupList: this._groupMap });
   }
 
 

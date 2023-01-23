@@ -35,12 +35,11 @@ export class SnapmailDvm extends DnaViewModel {
   /** */
   handleSignal(signalwrapper: AppSignal) {
     console.log('Received signal:', signalwrapper);
-    const controller = this.host;
     /** Handle signal */
     if (Object.prototype.hasOwnProperty.call(signalwrapper.data.payload,'ReceivedMail')) {
       const item = signalwrapper.data.payload.ReceivedMail;
       console.log("received_mail:", item);
-      const notification = controller.shadowRoot!.getElementById('notifyMail') as Notification;
+      const notification = this.host.shadowRoot!.getElementById('notifyMail') as Notification;
       notification.open();
 
       const mail = signalwrapper.data.payload.ReceivedMail;
@@ -74,7 +73,7 @@ export class SnapmailDvm extends DnaViewModel {
       console.log("received_ack:", item);
       const pingedAgentB64 = encodeHashToBase64(item.from);
       this.snapmailZvm.storePingResult({}, pingedAgentB64);
-      const notification = controller.shadowRoot!.getElementById('notifyAck') as Notification;
+      const notification = this.host.shadowRoot!.getElementById('notifyAck') as Notification;
       notification.open();
       this.snapmailZvm.probeMails();
       return;
@@ -82,7 +81,7 @@ export class SnapmailDvm extends DnaViewModel {
     if (Object.prototype.hasOwnProperty.call(signalwrapper.data.payload,'ReceivedFile')) {
       const item = signalwrapper.data.payload.ReceivedFile;
       console.log("received_file:", item);
-      const notification = controller.shadowRoot!.getElementById('notifyFile') as Notification;
+      const notification = this.host.shadowRoot!.getElementById('notifyFile') as Notification;
       notification.open();
       return
     }
