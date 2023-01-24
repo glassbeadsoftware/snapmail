@@ -1,11 +1,11 @@
-import {css, html, LitElement, PropertyValues} from "lit";
-import {Grid, GridActiveItemChangedEvent, GridColumn, GridItemModel} from "@vaadin/grid";
+import {css, html, PropertyValues} from "lit";
+import {Grid, GridColumn} from "@vaadin/grid";
 import { state, property } from "lit/decorators.js";
 import {FileManifest, Mail, MailItem} from "../bindings/snapmail.types";
-import {SnapmailPerspective, UsernameMap} from "../viewModel/snapmail.perspective";
+import {SnapmailPerspective} from "../viewModel/snapmail.perspective";
 import {base64ToArrayBuffer} from "../utils";
 import {redStopEmoji, hourGlassEmoji, stylesTemplate, greenCheckEmoji} from "../constants";
-import {AttGridItem, systemFolders} from "../mail";
+import {AttGridItem} from "../mail";
 import {ZomeElement} from "@ddd-qc/lit-happ";
 import {SnapmailZvm} from "../viewModel/snapmail.zvm";
 
@@ -21,9 +21,11 @@ export class SnapmailAttView extends ZomeElement<SnapmailPerspective, SnapmailZv
   @property({type: Object})
   inMailItem: MailItem;
 
-  _items:any = []
-  _selectedItems:any = [];
-  //_activeItem:any = null;
+  @state() _items: AttGridItem[] = []
+  @state() _selectedItems: AttGridItem[] = [];
+
+
+  /** -- Getter -- */
 
   get attachmentGridElem() : Grid {
     return this.shadowRoot!.getElementById("attachmentGrid") as Grid;
@@ -49,18 +51,6 @@ export class SnapmailAttView extends ZomeElement<SnapmailPerspective, SnapmailZv
 
     this.attachmentGridElem.shadowRoot!.appendChild(stylesTemplate.content.cloneNode(true));
   }
-
-
-  /** */
-  async willUpdate(changedProperties: PropertyValues<this>) {
-    if (changedProperties.has('inMailItem')) {
-      const missingCount = await this.fillAttachmentGrid(this.inMailItem.mail);
-      if (missingCount > 0) {
-        this._zvm.getMissingAttachments(this.inMailItem.author, this.inMailItem.ah);
-      }
-    }
-  }
-
 
 
   /** Return manifest with added content field */
@@ -97,9 +87,8 @@ export class SnapmailAttView extends ZomeElement<SnapmailPerspective, SnapmailZv
     /** Convert each attachment to gridItem */
     const items = [];
     let missingCount = 0;
+    console.log("   fillAttachmentGrid()", mail.attachments.length);
     for (const attachmentInfo of mail.attachments) {
-      //console.log({attachmentInfo});
-
       /** Check if attachment is available in local source-chain */
       let hasDownloadedAttachment = false;
       try {
@@ -128,79 +117,97 @@ export class SnapmailAttView extends ZomeElement<SnapmailPerspective, SnapmailZv
     //this._activeItem = null;
 
     /** Done */
-    console.log({missingCount})
+    console.log("   fillAttachmentGrid() missingCount", missingCount);
     return missingCount;
   }
 
 
   /** */
   async onActiveChanged(item: AttGridItem) {
-      console.log({item})
-      //this._activeItem = null;
-      this._selectedItems = [];
+    console.log("   <snapmail-att-view>.onActiveChanged()", item)
+    //this._activeItem = null;
+    this._selectedItems = [];
 
-      if (!item || !item.hasFile) {
-        return;
-      }
-
-      if (!this._selectedItems.includes(item)) {
-        item.status = hourGlassEmoji;
-        this._selectedItems.push(item);
-        item.disabled = true;
-      }
-
-      /** Get File on source chain */
-      const manifest = await this.fetchFile(item.fileId)
-
-      if (!manifest) {
-        return;
-      }
-      //console.log({ manifest })
-      item.status = greenCheckEmoji;
-      //this.attachmentGridElem.deselectItem(item);
-
-      /** DEBUG - check if content is valid base64 */
-        // if (!base64regex.test(manifest.content)) {
-        //   const invalid_hash = sha256(manifest.content);
-        //   console.error("File '" + manifest.filename + "' is invalid base64. hash is: " + invalid_hash);
-        // }
-
-      let filetype = manifest.filetype;
-      const fields = manifest.filetype.split(':');
-      if (fields.length > 1) {
-        const types = fields[1].split(';');
-        filetype = types[0];
-      }
-      const byteArray = base64ToArrayBuffer(manifest.content!)
-      const blob = new Blob([byteArray], { type: filetype});
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = item.filename || 'download';
-      a.addEventListener('click', () => {}, false);
-      a.click();
-      //this._activeItem = null;
-      this._selectedItems = [];
+    if (!item || !item.hasFile) {
+      return;
     }
+
+    if (!this._selectedItems.includes(item)) {
+      item.status = hourGlassEmoji;
+      this._selectedItems.push(item);
+      item.disabled = true;
+    }
+
+    /** Get File on source chain */
+    const manifest = await this.fetchFile(item.fileId)
+
+    if (!manifest) {
+      return;
+    }
+    //console.log({ manifest })
+    item.status = greenCheckEmoji;
+    //this.attachmentGridElem.deselectItem(item);
+
+    /** DEBUG - check if content is valid base64 */
+      // if (!base64regex.test(manifest.content)) {
+      //   const invalid_hash = sha256(manifest.content);
+      //   console.error("File '" + manifest.filename + "' is invalid base64. hash is: " + invalid_hash);
+      // }
+
+    let filetype = manifest.filetype;
+    const fields = manifest.filetype.split(':');
+    if (fields.length > 1) {
+      const types = fields[1].split(';');
+      filetype = types[0];
+    }
+    const byteArray = base64ToArrayBuffer(manifest.content!)
+    const blob = new Blob([byteArray], { type: filetype});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = item.filename || 'download';
+    a.addEventListener('click', () => {}, false);
+    a.click();
+    //this._activeItem = null;
+    this._selectedItems = [];
+  }
+
+
+  // /** debug */
+  // updated() {
+  //   console.log("   <snapmail-att-view>.updated()", this._items);
+  // }
+
+
+  /** */
+  async willUpdate(changedProperties: PropertyValues<this>) {
+    console.log("<snapmail-att-view>.willUpdate()", changedProperties)
+    if (changedProperties.has('inMailItem')) {
+      const missingCount = await this.fillAttachmentGrid(this.inMailItem.mail);
+      if (missingCount > 0) {
+        this._zvm.getMissingAttachments(this.inMailItem.author, this.inMailItem.ah);
+      }
+    }
+  }
 
 
   /** */
   render() {
     return html`
-        <!-- ATTACHMENT GRID -->
-        <vaadin-grid theme="no-row-borders" id="attachmentGrid"
-                     style="border-style:dotted; height:auto;"
-                     .items="${this.inMailItem? this.inMailItem.mail.attachments : []}"
-                     .selectedItems="${this._selectedItems}"
-                     @active-item-changed="${(e: any) => {this.onActiveChanged(e.detail.value)}}">
-            <vaadin-grid-column path="status" header=" " width="40px" flex-grow="0"></vaadin-grid-column>
-            <vaadin-grid-column auto-width path="filename" header="Attachments"></vaadin-grid-column>
-            <vaadin-grid-column auto-width path="filesize" text-align="end" header="KiB"></vaadin-grid-column>
-            <vaadin-grid-column path="filetype" hidden></vaadin-grid-column>
-            <vaadin-grid-column path="fileId" hidden></vaadin-grid-column>
-        </vaadin-grid>
+      <vaadin-grid theme="no-row-borders" id="attachmentGrid"
+                   style="border-style:dotted; height:auto;"
+                   .items="${this.inMailItem? this._items : []}"
+                   .selectedItems="${this._selectedItems}"
+                   @active-item-changed="${(e: any) => {this.onActiveChanged(e.detail.value)}}">
+        <vaadin-grid-column path="status" header=" " width="40px" flex-grow="0"></vaadin-grid-column>
+        <vaadin-grid-column auto-width path="filename" header="Attachments"></vaadin-grid-column>
+        <vaadin-grid-column auto-width path="filesize" text-align="end" header="KiB"></vaadin-grid-column>
+        <vaadin-grid-column path="filetype" hidden></vaadin-grid-column>
+        <vaadin-grid-column path="fileId" hidden></vaadin-grid-column>
+      </vaadin-grid>
     `;
   }
+
 
   /** */
   static get styles() {
