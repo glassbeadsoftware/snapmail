@@ -1,4 +1,5 @@
 import { MailItem} from "../bindings/snapmail.types";
+import {ActionHashB64, AgentPubKey, AgentPubKeyB64} from "@holochain/client";
 
 export type UsernameMap = Map<string, string>;
 
@@ -11,7 +12,7 @@ export interface SnapmailPerspective {
   /* Map of (agentIdB64 -> bool) */
   responseMap: Map<string, boolean>,
   /* Map of (mailId -> mailItem) */
-  mailMap: Map<string, MailItem>,
+  mailMap: Map<ActionHashB64, MailItem>,
   /** folderName -> mailId */
   folderMap: Map<string, string>,
   /** */
@@ -26,7 +27,7 @@ export function defaultPerspective(): SnapmailPerspective {
     responseMap: new Map(),
     mailMap:  new Map(),
     folderMap: new Map(),
-    myHandle: "<noname>",
+    myHandle: "<unknown>",
   }
 }
 
@@ -69,15 +70,5 @@ export interface ContactGridItem {
   status: string,
   username: string,
   recipientType: string,
-  agentIdB64: string,
-}
-
-
-export interface MailGridItem {
-  id: Uint8Array,
-  status: string,
-  username: string,
-  subject: string,
-  date: string,
-  attachment: string,
+  agentIdB64: AgentPubKeyB64,
 }

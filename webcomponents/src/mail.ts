@@ -2,16 +2,40 @@
  * Functions for manipulating mailItems
  */
 
-import {AgentPubKey, encodeHashToBase64} from "@holochain/client";
+import {ActionHashB64, AgentPubKey, encodeHashToBase64} from "@holochain/client";
 
 //import {MailItem} from "./bindings/snapmail";
 import {UsernameMap} from "./viewModel/snapmail.perspective";
-import {DEV_MODE} from "./snapmail";
 import {MailItem, MailStateVariantIn, MailStateVariantOut} from "./bindings/snapmail.types";
+import {DEV_MODE} from "./electron";
 
 const checkMarkEmoji = String.fromCodePoint(0x2714); //FE0F
 const suspensionPoints = String.fromCodePoint(0x2026);
 const returnArrowEmoji = String.fromCodePoint(0x21A9);
+export const paperClipEmoji = String.fromCodePoint(0x1F4CE)
+
+
+export interface MailGridItem {
+  id: ActionHashB64,
+  username: string,
+  subject: string,
+  date: string,
+  attachment: string
+  status: string,
+  content: string,
+  mailItem: MailItem,
+}
+
+export interface AttGridItem {
+  fileId: string,
+  filename: string,
+  filesize: number,
+  filetype: string,
+  status: string,
+  hasFile: boolean,
+  disabled?: boolean,
+}
+
 
 /**
  * All Folders for fileBox
@@ -154,7 +178,7 @@ function determineFromLine(usernameMap: UsernameMap, mailItem: MailItem): string
 
 /** Return mailItem status icon */
 export function determineMailStatus(mailItem: MailItem): string {
-  console.log('determineMailStatus()', mailItem);
+  //console.log('determineMailStatus()', encodeHashToBase64(mailItem.ah));
   const state = mailItem.state;
   // console.log("determineMailStatus() state", mailItem.state);
   if ("Out" in state) {
@@ -175,26 +199,29 @@ export function determineMailStatus(mailItem: MailItem): string {
 }
 
 
+
+
 /** */
-export function into_gridItem(usernameMap: UsernameMap, mailItem: MailItem) {
+export function into_gridItem(usernameMap: UsernameMap, mailItem: MailItem): MailGridItem {
   /* username */
   // console.log('into_gridItem: ' + encodeHashToBase64(mailItem.author) + ' username: ' + username);
   const username = determineFromLine(usernameMap, mailItem);
   /* Date */
   const dateStr = customDateString(mailItem.date)
   /* Attachment Status */
-  const attachmentStatus = mailItem.mail.attachments.length > 0? String.fromCodePoint(0x1F4CE) : '';
+  const attachmentStatus = mailItem.mail.attachments.length > 0? paperClipEmoji : '';
   /* Status */
   const status = determineMailStatus(mailItem);
   // Done
-  const item = {
-    "id": mailItem.ah,
-    "username": username,
-    "subject": mailItem.mail.subject,
-    "date": dateStr,
-    "attachment": attachmentStatus,
-    "status": status,
-    "content": mailItem.mail.payload
+  const item: MailGridItem = {
+    id: encodeHashToBase64(mailItem.ah),
+    username: username,
+    subject: mailItem.mail.subject == "" ? "<no subject>" : mailItem.mail.subject,
+    date: dateStr,
+    attachment: attachmentStatus,
+    status: status,
+    content: mailItem.mail.payload,
+    mailItem,
   };
   return item;
 }
@@ -202,8 +229,11 @@ export function into_gridItem(usernameMap: UsernameMap, mailItem: MailItem) {
 
 /** */
 export function into_mailText(usernameMap: UsernameMap, mailItem: MailItem): string {
-  let intext = 'Subject: ' + mailItem.mail.subject + '\n\n'
-    + mailItem.mail.payload + '\n\n'
+  const subject = mailItem.mail.subject == "" ? "<no subject>" : mailItem.mail.subject;
+  const content = mailItem.mail.payload == "" ? "<no content>" : mailItem.mail.payload;
+
+  let intext = 'Subject: ' + subject + '\n\n'
+    + content + '\n\n'
     + 'Mail from: ' + usernameMap.get(encodeHashToBase64(mailItem.author)) + ' at ' + customDateString(mailItem.date);
 
   const to_line = vecToUsernames(usernameMap, mailItem.mail.to!);

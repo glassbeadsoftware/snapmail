@@ -41,8 +41,8 @@
     "eslint-plugin-import": "^2.26.0"
   },
   "dependencies": {
-    "@ddd-qc/lit-happ": "0.10.1",
-    "@ddd-qc/cell-proxy": "0.10.1",
+    "@ddd-qc/lit-happ": "0.11.0",
+    "@ddd-qc/cell-proxy": "0.11.0",
     "@holochain/client": "0.11.9",
     "@holochain-open-dev/core-types": "0.6.3",
     "@snapmail/elements": "file:../webcomponents",

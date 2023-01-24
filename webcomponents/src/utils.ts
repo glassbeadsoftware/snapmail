@@ -1,7 +1,7 @@
 import {CHUNK_MAX_SIZE} from "./bindings/snapmail.types";
 
 /** Sleep via timeout promise */
-export function sleep(ms: number) {
+export function delay(ms: number) {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
 
