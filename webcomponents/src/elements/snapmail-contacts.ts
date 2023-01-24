@@ -145,7 +145,7 @@ export class SnapmailContacts extends ZomeElement<SnapmailPerspective, SnapmailZ
   //   console.log("   <snapmail-contacts> updated()", this.contactGridElem.selectedItems);
   // }
 
-  
+
   /** Regenerate _allContactItems from _usernameMap, _pingMap and _selectedContactIds */
   updateContacts(canKeepSelection: boolean): void {
     console.log('updateContacts()', canKeepSelection)
@@ -454,7 +454,6 @@ export class SnapmailContacts extends ZomeElement<SnapmailPerspective, SnapmailZ
 
 
       /** -- Edit Group Dialog */
-
       const editDialog = this.shadowRoot!.getElementById('editGroupDlg') as Dialog;
       editDialog.renderer = (root, dialog) => {
         console.log("Edit Groups dialog called", this._currentGroup);
@@ -545,15 +544,6 @@ export class SnapmailContacts extends ZomeElement<SnapmailPerspective, SnapmailZ
         /** Set selected at the end otherwise it won't register */
         grid.selectedItems = items;
       };
-
-      /** -- Edit Group Button */
-      const button = this.shadowRoot!.getElementById('groupsBtn') as Button;
-      button.addEventListener('click', () => {
-        /** open if not 'All' group selected */
-        if (this._currentGroup !== SYSTEM_GROUP_LIST[0]) {
-          editDialog.opened = true;
-        }
-      });
     }
   }
 
@@ -566,6 +556,14 @@ export class SnapmailContacts extends ZomeElement<SnapmailPerspective, SnapmailZ
     if (changedProperties.has('perspective')) {
       this.updateContacts(true);
     }
+  }
+
+
+  /** */
+  onEditGroup(_e: any) {
+    const editDialog = this.shadowRoot!.getElementById('editGroupDlg') as Dialog;
+    console.log("   onEditGroup()", editDialog)
+    editDialog.opened = true;
   }
 
 
@@ -591,7 +589,9 @@ export class SnapmailContacts extends ZomeElement<SnapmailPerspective, SnapmailZ
                 ></vaadin-combo-box>
                 <vaadin-button id="groupsBtn" 
                                style="margin: 5px; min-width: 40px; padding-left: 5px;"
-                               .disabled="${this._currentGroup == SYSTEM_GROUP_LIST[0]}">
+                               .disabled="${this._currentGroup == SYSTEM_GROUP_LIST[0]}"
+                               @click="${this.onEditGroup}"
+                >
                     <vaadin-icon icon="lumo:edit" slot="suffix"></vaadin-icon>
                 </vaadin-button>
                 <vaadin-text-field id="contactSearch" clear-button-visible 
@@ -639,6 +639,7 @@ export class SnapmailContacts extends ZomeElement<SnapmailPerspective, SnapmailZ
       'vaadin-text-field':TextField,
       'vaadin-grid':Grid,
       'vaadin-grid-column':GridColumn,
+      'vaadin-grid-selection-column': GridSelectionColumn,
       'vaadin-vertical-layout': VerticalLayout,
       'vaadin-horizontal-layout': HorizontalLayout,
     }
