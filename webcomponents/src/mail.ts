@@ -215,11 +215,11 @@ export function into_gridItem(usernameMap: UsernameMap, mailItem: MailItem): Mai
   const item: MailGridItem = {
     id: encodeHashToBase64(mailItem.ah),
     username: username,
-    subject: mailItem.mail.subject,
+    subject: mailItem.mail.subject == "" ? "<no subject>" : mailItem.mail.subject,
     date: dateStr,
     attachment: attachmentStatus,
     status: status,
-    content: mailItem.mail.payload
+    content: mailItem.mail.payload == "" ? "<no content>" : mailItem.mail.payload,
   };
   return item;
 }
@@ -227,7 +227,8 @@ export function into_gridItem(usernameMap: UsernameMap, mailItem: MailItem): Mai
 
 /** */
 export function into_mailText(usernameMap: UsernameMap, mailItem: MailItem): string {
-  let intext = 'Subject: ' + mailItem.mail.subject + '\n\n'
+  const subject = mailItem.mail.subject == "" ? "<no subject>" : mailItem.mail.subject;
+  let intext = 'Subject: ' + subject + '\n\n'
     + mailItem.mail.payload + '\n\n'
     + 'Mail from: ' + usernameMap.get(encodeHashToBase64(mailItem.author)) + ' at ' + customDateString(mailItem.date);
 
