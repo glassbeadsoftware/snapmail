@@ -1,5 +1,5 @@
 import {css, html, PropertyValues} from "lit";
-import {Grid, GridColumn} from "@vaadin/grid";
+import {Grid, GridColumn, GridEventContext} from "@vaadin/grid";
 import {GridSortColumn} from "@vaadin/grid/vaadin-grid-sort-column";
 import {HorizontalLayout} from "@vaadin/horizontal-layout";
 import {TextField} from "@vaadin/text-field";
@@ -17,7 +17,7 @@ import {
 } from "../mail";
 import {MenuBar, MenuBarItem} from "@vaadin/menu-bar";
 import {ZomeElement} from "@ddd-qc/lit-happ";
-import {MailGridItem, SnapmailPerspective} from "../viewModel/snapmail.perspective";
+import {ContactGridItem, MailGridItem, SnapmailPerspective} from "../viewModel/snapmail.perspective";
 import {SnapmailZvm} from "../viewModel/snapmail.zvm";
 import {Icon} from "@vaadin/vaadin-icon";
 import '@vaadin/vaadin-icon';
@@ -104,6 +104,7 @@ export class SnapmailFilebox extends ZomeElement<SnapmailPerspective, SnapmailZv
 
   /** -- Methods -- */
 
+  /** */
   resetSelection() {
     this._selectedItems = [];
     //this._activeItem = null;
@@ -153,9 +154,11 @@ export class SnapmailFilebox extends ZomeElement<SnapmailPerspective, SnapmailZv
 
   /** On item select: Display in inMailArea */
   onMailSelected(e:any) {
+    /** Clicked on MailGridItem */
     const item = e.detail.value
     this.dispatchEvent(new CustomEvent('mail-item-selected', { detail: item, bubbles: true, composed: true }));
     this._selectedItems = item ? [item] : [];
+    console.log("filebox.onMailSelect()", this._selectedItems)
 }
 
 
@@ -279,7 +282,7 @@ export class SnapmailFilebox extends ZomeElement<SnapmailPerspective, SnapmailZv
 
   /** */
   update_mailGrid(folderValue: string): void {
-    console.log('update_mailGrid', folderValue);
+    console.log('update_mailGrid:', folderValue);
     this._curFolderItems = [];
 
     switch(folderValue) {
@@ -327,55 +330,38 @@ export class SnapmailFilebox extends ZomeElement<SnapmailPerspective, SnapmailZv
     console.log('folderItems count: ' + this._curFolderItems.length);
     this._shownItems = filterMails(this._curFolderItems, this.mailSearchElem.value);
     console.log('update_mailGrid() _shownItems', this._shownItems);
+  }
 
-    // /** - Re-activate activeItem */
-    // const activeItem: MailGridItem = this.mailGridElem.activeItem as MailGridItem;
-    // if (activeItem !== undefined && activeItem !== null) {
-    //   console.log(activeIdB64);
-    //   for(const item of Object.values(this.mailGridElem.items)) {
-    //     const mailGridItem: MailGridItem = item as MailGridItem;
-    //     //console.log('Item id = ', item.id);
-    //     if(activeIdB64 === mailGridItem.id) {
-    //       //console.log('activeItem match found');
-    //       this.mailGridElem.activeItem = item;
-    //       this.mailGridElem.selectedItems = [item];
-    //       break;
-    //     }
-    //   }
-    // }
+
+  /** debugging */
+  updated() {
+    const activeItem = this.mailGridElem.activeItem as MailGridItem;
+    const selectedItems = this.mailGridElem.selectedItems as MailGridItem[];
+    console.log("<snapmail-filebox>.updated()", activeItem, selectedItems, this._selectedItems);
   }
 
 
   /** */
   protected willUpdate(changedProperties: PropertyValues<this>) {
     super.willUpdate(changedProperties);
-    console.log("<snapmail-filebox>.willUpdate()", this._shownItems);
+    //console.log("<snapmail-filebox>.willUpdate()", this._shownItems);
 
     /** Handle mails from perspective */
     if (changedProperties.has('perspective')) {
-      this._allMailItems = [];
-      for (const mailItem of this.perspective.mailMap.values()) {
-        this._allMailItems.push(into_gridItem(this.perspective.usernameMap, mailItem));
+      if (this.perspective.mailMap.size === this._allMailItems.length) {
+        return;
       }
+      const allMailItems = [];
+      for (const mailItem of this.perspective.mailMap.values()) {
+        allMailItems.push(into_gridItem(this.perspective.usernameMap, mailItem));
+      }
+      this._allMailItems = allMailItems;
+      /** Update grid if it exists */
       if (!this.folderElem || !this.mailGridElem) {
         return;
       }
       try {
-        /** Update mailGrid */
         this.update_mailGrid(this.folderElem.value);
-        /** Update active Item */
-        console.log('<snapmail-filebox>.willUpdate() activeItem = ', this.mailGridElem.activeItem);
-        if(this.mailGridElem.activeItem) {
-          let newActiveItem = null;
-          for(const item of this.mailGridElem.items!) {
-            const mailItem: MailGridItem = item as MailGridItem;
-            if(mailItem.id === this.mailGridElem.activeItem.id) {
-              newActiveItem = mailItem;
-              break;
-            }
-          }
-          this.mailGridElem.selectItem(newActiveItem);
-        }
       } catch(e) {
         console.error("<snapmail-filebox>.willUpdate() failed", e)
       }
@@ -387,7 +373,7 @@ export class SnapmailFilebox extends ZomeElement<SnapmailPerspective, SnapmailZv
   /**
    */
   render() {
-    console.log("*** <snapmail-filebox>.render()", this._shownItems);
+    console.log("*** <snapmail-filebox>.render()", this._selectedItems.length);
     return html`
         <vaadin-vertical-layout theme="spacing-s" style="height:100%;">
           <!-- FILEBOX MENU -->
