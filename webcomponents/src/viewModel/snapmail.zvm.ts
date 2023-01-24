@@ -124,7 +124,7 @@ export class SnapmailZvm extends ZomeViewModel {
   /** Ping oldest pinged agent */
   pingNextAgent(): void {
     console.log({pingMap: this.perspective.pingMap});
-    console.log({responseMap: this.perspective.responseMap});
+    //console.log({responseMap: this.perspective.responseMap});
     /* Skip if empty map */
     if (this.perspective.pingMap.size === 0) {
       return;
@@ -133,13 +133,13 @@ export class SnapmailZvm extends ZomeViewModel {
     /* Sort g_pingMap by value to get oldest pinged agent */
     const nextMap = new Map([...this.perspective.pingMap.entries()]
       .sort((a, b) => a[1] - b[1]));
-    console.log({nextMap})
+    //console.log({nextMap})
     /* Ping first agent in sorted list */
     const pingedAgentB64 = nextMap.keys().next().value
     const pingedAgent = decodeHashFromBase64(pingedAgentB64);
-    console.log("pinging: ", pingedAgentB64);
+    //console.log("pinging: ", pingedAgentB64);
     if (pingedAgentB64 === this.agentPubKey) {
-      console.log("pinging self");
+      //console.log("pinging self");
       this.storePingResult({}, pingedAgentB64);
       this._canPing = true;
       return;

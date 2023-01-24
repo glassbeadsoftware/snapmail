@@ -109,19 +109,32 @@ export class SnapmailContacts extends ZomeElement<SnapmailPerspective, SnapmailZ
 
     this._zvm.storePingResult({}, this.agentPubKey);
 
+    /** Probe Handles every 10 second */
+    /*let _1sec =*/ setInterval(() => {
+      // if (DEV_MODE === 'dev') {
+      //   return;
+      // }
+      try {
+          this._zvm.probeHandles();
+      } catch(e) {
+        console.error("_10sec.probeHandles() failed: ", e)
+      }
+    }, 10 * 1000);
+
+
     /** Ping an agent every 1 second */
-    // /*let _1sec =*/ setInterval(() => {
-    //   // if (DEV_MODE === 'dev') {
-    //   //   return;
-    //   // }
-    //   try {
-    //     if (this._zvm.canPing) {
-    //       this._zvm.pingNextAgent();
-    //     }
-    //   } catch(e) {
-    //     console.error("_1sec.pingNextAgent() failed: ", e)
-    //   }
-    // }, 1 * 1000);
+    /*let _1sec =*/ setInterval(() => {
+      // if (DEV_MODE === 'dev') {
+      //   return;
+      // }
+      try {
+        if (this._zvm.canPing) {
+          this._zvm.pingNextAgent();
+        }
+      } catch(e) {
+        console.error("_1sec.pingNextAgent() failed: ", e)
+      }
+    }, 1 * 1000);
 
     /** Add Refresh button in DEBUG */
     const contactsMenu = this.shadowRoot!.getElementById("ContactsMenu") as MenuBar;
