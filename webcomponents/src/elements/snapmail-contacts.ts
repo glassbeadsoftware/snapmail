@@ -140,10 +140,15 @@ export class SnapmailContacts extends ZomeElement<SnapmailPerspective, SnapmailZ
   }
 
 
+  // /** debug */
+  // updated() {
+  //   console.log("   <snapmail-contacts> updated()", this.contactGridElem.selectedItems);
+  // }
 
+  
   /** Regenerate _allContactItems from _usernameMap, _pingMap and _selectedContactIds */
   updateContacts(canKeepSelection: boolean): void {
-    //console.log('updateContacts() - START', canKeepSelection)
+    console.log('updateContacts()', canKeepSelection)
     /* Stash currently selected items (by hash) */
     const prevSelected: string[] = [];
     const recipientTypeMap: Map<string, string> = new Map();

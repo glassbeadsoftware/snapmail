@@ -352,6 +352,7 @@ export class SnapmailPage extends DnaElement<unknown, SnapmailDvm> {
       }
       break;
     }
+    this.contactsElem.updateContacts(true);
   }
 
 
