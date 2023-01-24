@@ -20,6 +20,8 @@ export class SnapmailMailView extends ScopedElementsMixin(LitElement) {
 
   /** */
   render() {
+    console.log("*** <snapmail-mail-view>.render()", this.inMailItem);
+
     let mailText = '<no mail selected>';
     if (this.inMailItem && this.usernameMap) {
       mailText = into_mailText(this.usernameMap, this.inMailItem);
@@ -28,7 +30,7 @@ export class SnapmailMailView extends ScopedElementsMixin(LitElement) {
     /** */
     return html`
         <vaadin-text-area id="inMailArea" readonly
-                style="backgroundColor: #dfe7efd1; height: 100%; padding:0px;"                 
+                style="backgroundColor:#dfe7efd1; height:100%; padding:0px; width:100%;"                 
                 .value="${mailText}"
         >
             <!-- <span id="mailDisplay"></span>-->

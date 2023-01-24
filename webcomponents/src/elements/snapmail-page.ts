@@ -1,4 +1,4 @@
-import {ZomeElement} from "@ddd-qc/lit-happ";
+import {DnaElement, ZomeElement} from "@ddd-qc/lit-happ";
 import {MailGridItem, SnapmailPerspective} from "../viewModel/snapmail.perspective";
 import {SnapmailZvm} from "../viewModel/snapmail.zvm";
 import {css, html} from "lit";
@@ -15,7 +15,7 @@ import {SplitLayout} from "@vaadin/split-layout";
 import {
   ActionHash,
   ActionHashB64,
-  AgentPubKey,
+  AgentPubKey, AgentPubKeyB64, AppSignal,
   decodeHashFromBase64,
   encodeHashToBase64,
   EntryHash
@@ -25,20 +25,21 @@ import {property, state} from "lit/decorators.js";
 import {SnapmailMailWrite} from "./snapmail-mail-write";
 import {SnapmailContacts} from "./snapmail-contacts";
 import {arrayBufferToBase64, splitFile} from "../utils";
-import {SendMailInput} from "../bindings/snapmail.types";
+import {MailItem, SendMailInput} from "../bindings/snapmail.types";
 import {SnapmailFilebox} from "./snapmail-filebox";
 import {SnapmailAttView} from "./snapmail-att-view";
 import {SnapmailMailView} from "./snapmail-mail-view";
 import {DEV_MODE, MY_ELECTRON_API} from "../electron";
 import '@vaadin/vaadin-icon';
 import '@vaadin/vaadin-lumo-styles';
+import {SnapmailDvm} from "../viewModel/snapmail.dvm";
 
 /**
  *
  */
-export class SnapmailPage extends ZomeElement<SnapmailPerspective, SnapmailZvm> {
+export class SnapmailPage extends DnaElement<unknown, SnapmailDvm> {
   constructor() {
-    super(SnapmailZvm.DEFAULT_ZOME_NAME);
+    super(SnapmailDvm.DEFAULT_BASE_ROLE_NAME);
   }
 
 
@@ -48,7 +49,7 @@ export class SnapmailPage extends ZomeElement<SnapmailPerspective, SnapmailZvm> 
   @state() private _myHandle = '<unknown>';
   @state() private _canHideHandleInput = true;
   private _replyOf?: ActionHashB64;
-  private _currentMailItem?: MailGridItem;
+  @state() private _currentMailItem?: MailItem;
 
 
   private readonly _actionMenuItems: MenuBarItem[] = [
@@ -60,6 +61,10 @@ export class SnapmailPage extends ZomeElement<SnapmailPerspective, SnapmailZvm> 
 
 
   /** -- Getters -- */
+
+  get zPerspective(): SnapmailPerspective {
+    return this._dvm.snapmailZvm.perspective;
+  }
 
   get handleButtonElem(): Button {
     return this.shadowRoot!.getElementById("handleDisplay") as Button;
@@ -93,6 +98,67 @@ export class SnapmailPage extends ZomeElement<SnapmailPerspective, SnapmailZvm> 
 
   /** -- Methods -- */
 
+
+  /** */
+  handleSignal(signalwrapper: AppSignal) {
+    console.log('Received signal:', signalwrapper);
+
+    /** Handle 'ReceivedMail' signal */
+    if (Object.prototype.hasOwnProperty.call(signalwrapper.data.payload,'ReceivedMail')) {
+      const item = signalwrapper.data.payload.ReceivedMail;
+      console.log("received_mail:", item);
+      const notification = this.shadowRoot!.getElementById('notifyMail') as Notification;
+      notification.open();
+
+      const mail = signalwrapper.data.payload.ReceivedMail;
+      const pingedAgentB64 = encodeHashToBase64(mail.author);
+      this._dvm.snapmailZvm.storePingResult({}, pingedAgentB64);
+
+      if (MY_ELECTRON_API) {
+        //console.log("handleSignal for ELECTRON");
+        console.log({mail});
+        const author_name = this.zPerspective.usernameMap.get(encodeHashToBase64(mail.author)) || 'unknown user';
+
+        /** ELECTRON NOTIFICATION */
+        const NOTIFICATION_TITLE = 'New mail received from ' + author_name;
+        const NOTIFICATION_BODY = signalwrapper.data.payload.ReceivedMail.mail.subject;
+        //const CLICK_MESSAGE = 'Notification clicked';
+
+        // - Do Notification directly from web UI
+        //new Notification(NOTIFICATION_TITLE, { body: NOTIFICATION_BODY })
+        //  .onclick = () => console.log(CLICK_MESSAGE)
+
+        /* Notify Electron main */
+        const reply = MY_ELECTRON_API.newMailSync(NOTIFICATION_TITLE, NOTIFICATION_BODY)
+        console.log({reply});
+      }
+
+      this._dvm.snapmailZvm.probeMails();
+      return;
+    }
+
+    /** Handle 'ReceivedAck' signal */
+    if (Object.prototype.hasOwnProperty.call(signalwrapper.data.payload,'ReceivedAck')) {
+      const item = signalwrapper.data.payload.ReceivedAck;
+      console.log("received_ack:", item);
+      const pingedAgentB64 = encodeHashToBase64(item.from);
+      this._dvm.snapmailZvm.storePingResult({}, pingedAgentB64);
+      const notification = this.shadowRoot!.getElementById('notifyAck') as Notification;
+      notification.open();
+      this._dvm.snapmailZvm.probeMails();
+      return;
+    }
+
+    /** Handle 'ReceivedFile' signal */
+    if (Object.prototype.hasOwnProperty.call(signalwrapper.data.payload,'ReceivedFile')) {
+      const item = signalwrapper.data.payload.ReceivedFile;
+      console.log("received_file:", item);
+      const notification = this.shadowRoot!.getElementById('notifyFile') as Notification;
+      notification.open();
+      return
+    }
+  }
+
   /** After first render only */
   async firstUpdated() {
     console.log("<snapmail-page> firstUpdated()");
@@ -110,9 +176,9 @@ export class SnapmailPage extends ZomeElement<SnapmailPerspective, SnapmailZvm> 
     /** Probe */
     try {
 
-      await this._zvm.getMyHandle();
+      await this._dvm.snapmailZvm.getMyHandle();
       //  .then((myHandle:string) => this.showHandle(myHandle));
-      await this._zvm.probeAll();
+      await this._dvm.probeAll();
     } catch(error:any) {
       console.error('probeAll() FAILED');
       console.error({ error })
@@ -206,6 +272,8 @@ export class SnapmailPage extends ZomeElement<SnapmailPerspective, SnapmailZvm> 
       container.appendChild(plainText);
       root.appendChild(container);
     };
+
+    this._dvm.setSignalHandler((s:any) => {this.handleSignal(s)});
   }
 
 
@@ -215,7 +283,7 @@ export class SnapmailPage extends ZomeElement<SnapmailPerspective, SnapmailZvm> 
       return;
     }
     console.log("Calling getMyHandle() for ELECTRON");
-    const startingHandle = await this._zvm.getMyHandle();
+    const startingHandle = await this._dvm.snapmailZvm.getMyHandle();
     console.log("getMyHandle() returned: " + startingHandle);
     console.log("startingInfo sending dnaHash =", this.dnaHash);
     const reply = MY_ELECTRON_API.startingInfo(startingHandle, decodeHashFromBase64(this.dnaHash))
@@ -234,13 +302,13 @@ export class SnapmailPage extends ZomeElement<SnapmailPerspective, SnapmailZvm> 
   async setUsername(maybeHandle?: string) {
     const newHandle = maybeHandle? maybeHandle : this.handleInputElem.value;
     console.log('setUsername()', newHandle);
-    /*const callResult =*/ await this._zvm.setHandle(newHandle)
+    /*const callResult =*/ await this._dvm.snapmailZvm.setHandle(newHandle)
     this._myHandle = newHandle;
     this.handleInputElem.value = '';
     this.hideHandleInput(true);
 
     /** - Update my Handle in the contacts grid */
-    this._zvm.probeHandles();
+    this._dvm.snapmailZvm.probeHandles();
   }
 
 
@@ -275,9 +343,9 @@ export class SnapmailPage extends ZomeElement<SnapmailPerspective, SnapmailZvm> 
 
 
   /** */
-  selectContact(candidate: string, count: number) {
+  selectContact(candidate: AgentPubKeyB64, count: number) {
     for(const contactItem of this.contactsElem.allContacts) {
-      if(contactItem.username !== candidate) {
+      if(contactItem.agentIdB64 !== candidate) {
         continue;
       }
       for (let i = 0; i < count; i++) {
@@ -288,25 +356,21 @@ export class SnapmailPage extends ZomeElement<SnapmailPerspective, SnapmailZvm> 
   }
 
 
-
   /** */
   onFileboxMenuItemSelected(menuItemName: string) {
-    //const currentMailItem =  this._selectedItems[0];
-    const currentMailItem = this._currentMailItem;
-    if (!currentMailItem) {
+    if (!this._currentMailItem) {
       console.log("onFileboxMenuItemSelected() no mail selected");
       return;
     }
     /* -- Handle 'Print' -- */
     if (menuItemName === 'Print') {
-      const mailItem = this.perspective.mailMap.get(currentMailItem.id);
-      const mailText = into_mailText(this.perspective.usernameMap, mailItem!)
+      const mailText = into_mailText(this.zPerspective.usernameMap, this._currentMailItem!)
       /** Save to disk */
       const blob = new Blob([mailText], { type: 'text/plain'});
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = mailItem!.mail.subject + ".txt";
+      a.download = this._currentMailItem!.mail.subject + ".txt";
       a.addEventListener('click', () => {}, false);
       a.click();
     }
@@ -314,55 +378,54 @@ export class SnapmailPage extends ZomeElement<SnapmailPerspective, SnapmailZvm> 
     /* -- Handle 'Trash' -- */
     if (menuItemName === 'Trash') {
       this._replyOf = undefined;
-      this._zvm.deleteMail(currentMailItem.id)
-        .then((/*maybeAh: ActionHash | null*/) => this._zvm.probeMails()) // On delete, refresh filebox
+      this._dvm.snapmailZvm.deleteMail(encodeHashToBase64(this._currentMailItem.ah))
+        .then((/*maybeAh: ActionHash | null*/) => this._dvm.snapmailZvm.probeMails()) // On delete, refresh filebox
       this.fileboxElem.resetSelection();
     }
     /* -- Handle 'Reply to sender' -- */
     if (menuItemName === 'Reply to sender') {
-      this.mailWriteElem.subject = 'Re: ' + currentMailItem.subject;
-      this._replyOf = currentMailItem.id;
+      this.mailWriteElem.subject = 'Re: ' + this._currentMailItem.mail.subject;
+      this._replyOf = encodeHashToBase64(this._currentMailItem.ah);
       console.log("this._replyOf set to", this._replyOf);
       this.contactsElem.resetSelection();
-      this.selectContact(currentMailItem.username, 1)
+      this.selectContact(encodeHashToBase64(this._currentMailItem.author), 1)
       this.disableSendButton(this.contactsElem.selectedContacts.length == 0);
     }
 
     /* -- Handle 'Reply to All' -- */
     if (menuItemName === 'Reply to all') {
-      const mailItem = this.perspective.mailMap.get(currentMailItem.id);
-      this._replyOf = currentMailItem.id;
-      if (mailItem) {
-        this.mailWriteElem.subject = 'Re: ' + currentMailItem.subject;
-        this.contactsElem.resetSelection();
-        /* TO */
-        for (const agentId of mailItem.mail.to) {
-          const to_username = this.perspective.usernameMap.get(encodeHashToBase64(agentId));
-          this.selectContact(to_username!, 1);
-        }
-        /* CC */
-        for (const agentId of mailItem.mail.cc) {
-          const cc_username = this.perspective.usernameMap.get(encodeHashToBase64(agentId));
-          this.selectContact(cc_username!, 2);
-        }
-        /* BCC */
-        if (mailItem.bcc) {
-          for (const agentId of mailItem.bcc) {
-            const bcc_username = this.perspective.usernameMap.get(encodeHashToBase64(agentId));
-            this.selectContact(bcc_username!, 3);
-          }
-        }
-        /* Done */
-        this.disableSendButton(this.contactsElem.selectedContacts.length == 0);
+      this._replyOf = encodeHashToBase64(this._currentMailItem.ah);
+      this.mailWriteElem.subject = 'Re: ' + this._currentMailItem.mail.subject;
+      this.contactsElem.resetSelection();
+      /* TO */
+      for (const agentId of this._currentMailItem.mail.to) {
+        //const to_username = this.zPerspective.usernameMap.get(encodeHashToBase64(agentId));
+        this.selectContact(encodeHashToBase64(agentId), 1);
       }
+      /* CC */
+      for (const agentId of this._currentMailItem.mail.cc) {
+        //const cc_username = this.zPerspective.usernameMap.get(encodeHashToBase64(agentId));
+        this.selectContact(encodeHashToBase64(agentId), 2);
+      }
+      /* BCC */
+      if (this._currentMailItem.bcc) {
+        for (const agentId of this._currentMailItem.bcc) {
+          //const bcc_username = this.zPerspective.usernameMap.get(encodeHashToBase64(agentId));
+          this.selectContact(encodeHashToBase64(agentId), 3);
+        }
+      }
+      /* Done */
+      this.disableSendButton(this.contactsElem.selectedContacts.length == 0);
     }
     /** -- Handle 'Forward' -- */
     if (menuItemName === 'Forward') {
-      this.mailWriteElem.subject = 'Fwd: ' + currentMailItem.subject;
-      const mailItem = this.perspective.mailMap.get(currentMailItem.id);
+      this.mailWriteElem.subject = 'Fwd: ' + this._currentMailItem.mail.subject;
       let fwd = '\n\n';
-      fwd += '> ' + 'Mail from: ' + this.perspective.usernameMap.get(encodeHashToBase64(mailItem!.author)) + ' at ' + customDateString(mailItem!.date) + '\n';
-      const arrayOfLines = mailItem!.mail.payload.match(/[^\r\n]+/g);
+      fwd += '> ' + 'Mail from: '
+        + this.zPerspective.usernameMap.get(encodeHashToBase64(this._currentMailItem!.author))
+        + ' at ' + customDateString(this._currentMailItem!.date)
+        + '\n';
+      const arrayOfLines = this._currentMailItem!.mail.payload.match(/[^\r\n]+/g);
       for (const line of arrayOfLines!) {
         fwd += '> ' + line + '\n';
       }
@@ -372,20 +435,20 @@ export class SnapmailPage extends ZomeElement<SnapmailPerspective, SnapmailZvm> 
     /** -- Handle 'Refresh' -- */
     if (menuItemName === 'Refresh') {
       //console.log('Refresh called');
-      this._zvm.probeAll();
+      this._dvm.probeAll();
     }
   }
 
 
   /** */
-  onMailSelected(item:any) {
+  onMailSelected(item: MailGridItem) {
     console.log('onMailSelected()', item);
     this._replyOf = undefined;
     if (!item) {
       return;
     }
-    this._currentMailItem = item;
-    this._zvm.acknowledgeMail(item.id);
+    this._currentMailItem = this.zPerspective.mailMap.get(item.id);
+    this._dvm.snapmailZvm.acknowledgeMail(item.id);
   }
 
 
@@ -421,10 +484,10 @@ export class SnapmailPage extends ZomeElement<SnapmailPerspective, SnapmailZvm> 
       /** Submit each chunk */
       let chunksToSend: EntryHash[] = [];
       for (let i = 0; i < splitObj.numChunks; ++i) {
-        const eh = await this._zvm.writeChunk(splitObj.dataHash, i, splitObj.chunks[i]);
+        const eh = await this._dvm.snapmailZvm.writeChunk(splitObj.dataHash, i, splitObj.chunks[i]);
         chunksToSend.push(eh);
       }
-      const ah = await this._zvm.writeManifest(splitObj.dataHash, file.name, filetype, file.size, chunksToSend)
+      const ah = await this._dvm.snapmailZvm.writeManifest(splitObj.dataHash, file.name, filetype, file.size, chunksToSend)
       filesToSend.push(ah);
     }
 
@@ -461,7 +524,7 @@ export class SnapmailPage extends ZomeElement<SnapmailPerspective, SnapmailZvm> 
     };
     console.log('sending mail:', mail)
     /* Send Mail */
-    const outmail_hh = await this._zvm.sendMail(mail);
+    const outmail_hh = await this._dvm.snapmailZvm.sendMail(mail);
 
     /** Clear UI */
     this.clearWriteMail();
@@ -539,11 +602,12 @@ export class SnapmailPage extends ZomeElement<SnapmailPerspective, SnapmailZvm> 
             <snapmail-filebox id="snapmailFilebox"
                               style="min-height:50px; margin-top:0;height: auto;"
                               @menu-item-selected="${(e:any) => {this.onFileboxMenuItemSelected(e.detail)}}"
+                              @mail-item-selected="${(e:any) => {this.onMailSelected(e.detail)}}"
             ></snapmail-filebox>
             <vaadin-horizontal-layout theme="spacing-xs" style="min-height:120px; height:50%; width:100%; margin-top: 4px; flex: 1 1 100px">
               <snapmail-mail-view style="width:70%;height:100%;"
                                   .inMailItem="${this._currentMailItem}" 
-                                  .usernameMap="${this.perspective.usernameMap}"
+                                  .usernameMap="${this.zPerspective.usernameMap}"
               ></snapmail-mail-view>
               <snapmail-att-view style="width:30%;height:100%;display:flex;" 
                                  .inMailItem="${this._currentMailItem}"

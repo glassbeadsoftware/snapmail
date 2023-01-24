@@ -197,8 +197,8 @@ export class SnapmailZvm extends ZomeViewModel {
 
   /** -- Mail -- */
 
-  async acknowledgeMail(inmailAh: ActionHash): Promise<EntryHash> {
-    return this.zomeProxy.acknowledgeMail(inmailAh);
+  async acknowledgeMail(inmailAh: ActionHashB64): Promise<EntryHash> {
+    return this.zomeProxy.acknowledgeMail(decodeHashFromBase64(inmailAh));
   }
 
   async deleteMail(ah: ActionHashB64): Promise<DeleteMailOutput> {
