@@ -2,7 +2,7 @@
  * Functions for manipulating mailItems
  */
 
-import {ActionHash, ActionHashB64, AgentPubKey, encodeHashToBase64} from "@holochain/client";
+import {ActionHashB64, AgentPubKey, encodeHashToBase64} from "@holochain/client";
 
 //import {MailItem} from "./bindings/snapmail";
 import {UsernameMap} from "./viewModel/snapmail.perspective";
@@ -23,6 +23,7 @@ export interface MailGridItem {
   attachment: string
   status: string,
   content: string,
+  mailItem: MailItem,
 }
 
 export interface AttGridItem {
@@ -177,7 +178,7 @@ function determineFromLine(usernameMap: UsernameMap, mailItem: MailItem): string
 
 /** Return mailItem status icon */
 export function determineMailStatus(mailItem: MailItem): string {
-  console.log('determineMailStatus()', encodeHashToBase64(mailItem.ah));
+  //console.log('determineMailStatus()', encodeHashToBase64(mailItem.ah));
   const state = mailItem.state;
   // console.log("determineMailStatus() state", mailItem.state);
   if ("Out" in state) {
@@ -219,7 +220,8 @@ export function into_gridItem(usernameMap: UsernameMap, mailItem: MailItem): Mai
     date: dateStr,
     attachment: attachmentStatus,
     status: status,
-    content: mailItem.mail.payload == "" ? "<no content>" : mailItem.mail.payload,
+    content: mailItem.mail.payload,
+    mailItem,
   };
   return item;
 }
@@ -228,8 +230,10 @@ export function into_gridItem(usernameMap: UsernameMap, mailItem: MailItem): Mai
 /** */
 export function into_mailText(usernameMap: UsernameMap, mailItem: MailItem): string {
   const subject = mailItem.mail.subject == "" ? "<no subject>" : mailItem.mail.subject;
+  const content = mailItem.mail.payload == "" ? "<no content>" : mailItem.mail.payload;
+
   let intext = 'Subject: ' + subject + '\n\n'
-    + mailItem.mail.payload + '\n\n'
+    + content + '\n\n'
     + 'Mail from: ' + usernameMap.get(encodeHashToBase64(mailItem.author)) + ' at ' + customDateString(mailItem.date);
 
   const to_line = vecToUsernames(usernameMap, mailItem.mail.to!);

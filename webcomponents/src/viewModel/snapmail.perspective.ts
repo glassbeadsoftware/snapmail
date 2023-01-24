@@ -72,13 +72,3 @@ export interface ContactGridItem {
   recipientType: string,
   agentIdB64: AgentPubKeyB64,
 }
-
-
-export interface MailGridItem {
-  id: ActionHashB64,
-  status: string,
-  username: string,
-  subject: string,
-  date: string,
-  attachment: string,
-}

@@ -1,6 +1,5 @@
-import {DnaElement, ZomeElement} from "@ddd-qc/lit-happ";
-import {MailGridItem, SnapmailPerspective} from "../viewModel/snapmail.perspective";
-import {SnapmailZvm} from "../viewModel/snapmail.zvm";
+import {DnaElement} from "@ddd-qc/lit-happ";
+import {SnapmailPerspective} from "../viewModel/snapmail.perspective";
 import {css, html} from "lit";
 import {Icon} from "@vaadin/vaadin-icon";
 import {ProgressBar} from "@vaadin/progress-bar";
@@ -20,7 +19,7 @@ import {
   encodeHashToBase64,
   EntryHash
 } from "@holochain/client";
-import {customDateString, into_mailText} from "../mail";
+import {customDateString, into_mailText, MailGridItem} from "../mail";
 import {property, state} from "lit/decorators.js";
 import {SnapmailMailWrite} from "./snapmail-mail-write";
 import {SnapmailContacts} from "./snapmail-contacts";
@@ -447,7 +446,7 @@ export class SnapmailPage extends DnaElement<unknown, SnapmailDvm> {
     if (!item) {
       return;
     }
-    this._currentMailItem = this.zPerspective.mailMap.get(item.id);
+    this._currentMailItem = item.mailItem;
     this._dvm.snapmailZvm.acknowledgeMail(item.id);
   }
 

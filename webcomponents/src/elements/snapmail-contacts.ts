@@ -556,7 +556,7 @@ export class SnapmailContacts extends ZomeElement<SnapmailPerspective, SnapmailZ
   /** */
   protected willUpdate(changedProperties: PropertyValues<this>) {
     super.willUpdate(changedProperties);
-    console.log("<snapmail-contacts>.willUpdate()");
+    //console.log("<snapmail-contacts>.willUpdate()");
     /** Handle mails from perspective */
     if (changedProperties.has('perspective')) {
       this.updateContacts(true);
