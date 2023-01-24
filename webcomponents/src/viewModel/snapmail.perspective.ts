@@ -27,7 +27,7 @@ export function defaultPerspective(): SnapmailPerspective {
     responseMap: new Map(),
     mailMap:  new Map(),
     folderMap: new Map(),
-    myHandle: "<noname>",
+    myHandle: "<unknown>",
   }
 }
 

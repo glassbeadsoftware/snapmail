@@ -281,7 +281,7 @@ export class SnapmailFilebox extends ZomeElement<SnapmailPerspective, SnapmailZv
         break;
       case systemFolders.INBOX/*.codePointAt(0)*/:
       case systemFolders.SENT/*.codePointAt(0)*/:
-        console.log("this.perspective.mailMap", this.perspective.mailMap)
+        //console.log("this.perspective.mailMap", this.perspective.mailMap)
         for (const mailGridItem of Object.values(this._allMailGridItems)) {
           console.log('mailItem', mailGridItem.id);
           const is_out = is_OutMail(mailGridItem.mailItem);

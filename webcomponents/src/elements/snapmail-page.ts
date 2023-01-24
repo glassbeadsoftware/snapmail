@@ -174,14 +174,12 @@ export class SnapmailPage extends DnaElement<unknown, SnapmailDvm> {
 
     /** Probe */
     try {
-
-      await this._dvm.snapmailZvm.getMyHandle();
-      //  .then((myHandle:string) => this.showHandle(myHandle));
+      this._myHandle = await this._dvm.snapmailZvm.getMyHandle();
       await this._dvm.probeAll();
     } catch(error:any) {
       console.error('probeAll() FAILED');
       console.error({ error })
-      alert("Failed to connect to holochain. Holochain conductor service might not be up and running.");
+      alert("Failed to connect to holochain. Conductor service might not be up and running.");
     }
 
 
@@ -288,8 +286,7 @@ export class SnapmailPage extends DnaElement<unknown, SnapmailDvm> {
     const reply = MY_ELECTRON_API.startingInfo(startingHandle, decodeHashFromBase64(this.dnaHash))
     console.log("startingInfo reply =", reply);
     if (reply != "<noname>") {
-      const callResult = await this.setUsername(reply);
-      console.log({callResult});
+      await this.setUsername(reply);
     }
   }
 
@@ -315,7 +312,7 @@ export class SnapmailPage extends DnaElement<unknown, SnapmailDvm> {
   hideHandleInput(canHideInput: boolean): void {
     //console.log("hideHandleInput()", canHideInput);
     this._canHideHandleInput = canHideInput;
-    if (!canHideInput && this._myHandle !== '<unknown>') {
+    if (!canHideInput && this._myHandle !== '<unknown>' && this._myHandle !== '<noname>') {
       this.handleInputElem.value = this._myHandle
     } else {
       this.handleInputElem.value = ''
@@ -571,7 +568,7 @@ export class SnapmailPage extends DnaElement<unknown, SnapmailDvm> {
 
   /** */
   render() {
-    console.log("*** <snapmail-page>.render()", this._myHandle);
+    console.log("<snapmail-page>.render()", this._myHandle);
 
     return html`
       <!-- Loading Spinner -->

@@ -181,7 +181,7 @@ export class SnapmailAttView extends ZomeElement<SnapmailPerspective, SnapmailZv
 
   /** */
   async willUpdate(changedProperties: PropertyValues<this>) {
-    console.log("<snapmail-att-view>.willUpdate()", changedProperties)
+    //console.log("<snapmail-att-view>.willUpdate()", changedProperties)
     if (changedProperties.has('inMailItem')) {
       const missingCount = await this.fillAttachmentGrid(this.inMailItem.mail);
       if (missingCount > 0) {
