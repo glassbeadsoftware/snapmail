@@ -190,7 +190,7 @@ export class SnapmailAttView extends ZomeElement<SnapmailPerspective, SnapmailZv
         <!-- ATTACHMENT GRID -->
         <vaadin-grid theme="no-row-borders" id="attachmentGrid"
                      style="border-style: dotted;"
-                     .items="${this.inMailItem.mail.attachments}"
+                     .items="${this.inMailItem? this.inMailItem.mail.attachments : []}"
                      .selectedItems="${this._selectedItems}"
                      @active-item-changed="${(e: any) => {this.onActiveChanged(e.detail.value)}}">
             <vaadin-grid-column path="status" header=" " width="40px" flex-grow="0"></vaadin-grid-column>

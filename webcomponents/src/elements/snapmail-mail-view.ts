@@ -27,9 +27,8 @@ export class SnapmailMailView extends ScopedElementsMixin(LitElement) {
 
     /** */
     return html`
-        <vaadin-text-area readonly
-                id="inMailArea"
-                style="backgroundColor: #dfe7efd1"                          
+        <vaadin-text-area id="inMailArea" readonly
+                style="backgroundColor: #dfe7efd1; height: 100%; padding:0px;"                 
                 .value="${mailText}"
         >
             <!-- <span id="mailDisplay"></span>-->

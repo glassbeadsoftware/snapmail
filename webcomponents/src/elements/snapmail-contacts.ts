@@ -1,7 +1,6 @@
 import {css, html, PropertyValues} from "lit";
 import { state, property } from "lit/decorators.js";
 import {Grid, GridColumn, GridEventContext} from "@vaadin/grid";
-import {GridSortColumn} from "@vaadin/grid/vaadin-grid-sort-column";
 import {VerticalLayout} from "@vaadin/vertical-layout";
 import {HorizontalLayout} from "@vaadin/horizontal-layout";
 import {ComboBox} from "@vaadin/combo-box";
@@ -144,7 +143,7 @@ export class SnapmailContacts extends ZomeElement<SnapmailPerspective, SnapmailZ
 
   /** Regenerate _allContactItems from _usernameMap, _pingMap and _selectedContactIds */
   updateContacts(canKeepSelection: boolean): void {
-    console.log('updateContacts() - START', canKeepSelection)
+    //console.log('updateContacts() - START', canKeepSelection)
     /* Stash currently selected items (by hash) */
     const prevSelected: string[] = [];
     const recipientTypeMap: Map<string, string> = new Map();
@@ -164,7 +163,7 @@ export class SnapmailContacts extends ZomeElement<SnapmailPerspective, SnapmailZ
     const selected: ContactGridItem[] = [];
     const allItems: ContactGridItem[] = [];
     for (const [agentIdB64, username] of this.perspective.usernameMap.entries()) {
-      console.log('' + agentIdB64 + '=> ' + username)
+      //console.log('' + agentIdB64 + ' => ' + username)
       let status = whiteDot
       if (this.perspective.pingMap.get(agentIdB64)) {
         status = this.perspective.responseMap.get(agentIdB64)? greenDot : redDot
@@ -194,15 +193,15 @@ export class SnapmailContacts extends ZomeElement<SnapmailPerspective, SnapmailZ
 
     this._shownItems = this.filterContacts(selected, this.contactSearchElem? this.contactSearchElem.value : '');
 
-    console.log('updateContacts() - END', this._allContactItems)
+    //console.log('updateContacts() - END', this._allContactItems)
   }
 
 
   /** */
   filterContacts(selectedItems: ContactGridItem[], searchValue: string): ContactGridItem[] {
-    console.log("filterContacts() called");
+    //console.log("filterContacts() called");
     /** Get contacts from current group only */
-      //console.log({items});
+    //console.log({items});
     let groupItems = this._allContactItems;
     if (this._currentGroup !== SYSTEM_GROUP_LIST[0]) {
       const ids = this._groupMap.get(this._currentGroup);
@@ -635,7 +634,6 @@ export class SnapmailContacts extends ZomeElement<SnapmailPerspective, SnapmailZ
       'vaadin-text-field':TextField,
       'vaadin-grid':Grid,
       'vaadin-grid-column':GridColumn,
-      'vaadin-grid-sort-column':GridSortColumn,
       'vaadin-vertical-layout': VerticalLayout,
       'vaadin-horizontal-layout': HorizontalLayout,
     }

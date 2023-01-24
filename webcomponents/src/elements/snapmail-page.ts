@@ -260,7 +260,7 @@ export class SnapmailPage extends ZomeElement<SnapmailPerspective, SnapmailZvm> 
 
   /** */
   disableSendButton(isDisabled: boolean): void {
-    console.log("disableSendButton()", isDisabled);
+    //console.log("disableSendButton()", isDisabled);
     if (this.actionMenuElem.items[2].disabled == isDisabled) {
       return;
     }
@@ -294,7 +294,7 @@ export class SnapmailPage extends ZomeElement<SnapmailPerspective, SnapmailZvm> 
     //const currentMailItem =  this._selectedItems[0];
     const currentMailItem = this._currentMailItem;
     if (!currentMailItem) {
-      console.warn("onFileboxMenuItemSelected() no mail selected");
+      console.log("onFileboxMenuItemSelected() no mail selected");
       return;
     }
     /* -- Handle 'Print' -- */
@@ -531,75 +531,87 @@ export class SnapmailPage extends ZomeElement<SnapmailPerspective, SnapmailZvm> 
           <!--        <span style="text-align: center; font-size: larger; padding: 10px 10px 10px 5px;"> - </span>-->
         </vaadin-horizontal-layout>
 
-        <!-- Vertical split between filebox and Inmail -->
-        <vaadin-split-layout orientation="vertical" style="width:100%; height:50%; margin-top:0px;">
-                 <snapmail-filebox id="snapmailFilebox"
-                    @menu-item-selected="${(e:any) => {this.onFileboxMenuItemSelected(e.detail)}}"
+        <!-- Vertical split between filebox&Inmail and the rest -->
+        <vaadin-split-layout orientation="vertical" style="width:100%; height:100%; margin-top:0px;">
+            
+          <!-- Vertical split between filebox and Inmail -->
+          <vaadin-split-layout orientation="vertical" style="width:100%; height:50%; margin-top:0px;">
+            <snapmail-filebox id="snapmailFilebox"
+                              style="min-height:50px; margin-top:0;height: auto;"
+                              @menu-item-selected="${(e:any) => {this.onFileboxMenuItemSelected(e.detail)}}"
             ></snapmail-filebox>
-                <!--  
             <vaadin-horizontal-layout theme="spacing-xs" style="min-height:120px; height:50%; width:100%; margin-top: 4px; flex: 1 1 100px">
-              <snapmail-mail-view .inMailItem="${this._currentMailItem}" .usernameMap="${this.perspective.usernameMap}"></snapmail-mail-view>
-              <snapmail-att-view style="width:30%; height:100%;" .inMailItem="${this._currentMailItem}"></snapmail-att-view>
+              <snapmail-mail-view style="width:70%;height:100%;"
+                                  .inMailItem="${this._currentMailItem}" 
+                                  .usernameMap="${this.perspective.usernameMap}"
+              ></snapmail-mail-view>
+              <snapmail-att-view style="width:30%;height:100%;display:flex;" 
+                                 .inMailItem="${this._currentMailItem}"
+              ></snapmail-att-view>
             </vaadin-horizontal-layout>
-            -->
-        </vaadin-split-layout>
+          </vaadin-split-layout>
 
-          
-        <!-- Horizontal split between Write and Contacts -->
-        <h4 style="margin:10px 0px 0px 0px;">&#128394; Write Mail</h4>
-        <vaadin-split-layout style="min-height:50px; height:100%; width:100%; margin:0px;">
-          <snapmail-mail-write id="mailWrite"
-                               style="min-width: 40px; width: 65%;"
-          ></snapmail-mail-write>
-          <snapmail-contacts id="snapmailContacts"
-                             style="min-width: 20px; width: 35%;"
-                             @contact-selected="${(e:any) => {this.disableSendButton(e.detail.length == 0)}}"></snapmail-contacts>
-        </vaadin-split-layout>
-
-        <!-- ACTION MENU BAR -->
-        <div style="width:100%; display:flex;justify-content: flex-end">
-            <vaadin-menu-bar id="ActionBar" theme="primary"
-                             style="height:40px; margin-top:5px; margin-bottom:10px;"
-                             .items="${this._actionMenuItems}"
-                             @item-selected="${(e:any) => {this.onActionMenuSelected(e.detail.value.text)}}"
-            >
-            </vaadin-menu-bar>
-        </div>
-
-        <!-- Handle MENU -->
-        <div style="margin-left: auto;display: flex;">
-            <h4 style="margin: 14px 10px 0px 0px;">Username:</h4>
-            <abbr title="handle" id="handleAbbr" style="margin-left:0px;">
-                <vaadin-button id="handleDisplay" 
-                               style="min-width: 100px;"
-                               .hidden="${!this._canHideHandleInput}"
-                               @click=${() => {this.hideHandleInput(false);}}>
-                    <span>${this._myHandle}</span>
-                    <vaadin-icon icon="lumo:edit" slot="suffix"></vaadin-icon>
-                </vaadin-button>
-            </abbr>
-            <!-- <vcf-tooltip id="handleDisplayTT" for="handleDisplay" position="bottom">fucking tooltip</vcf-tooltip> -->
-            <vaadin-text-field id="myHandleInput" clear-button-visible 
-                               placeholder="username"
+          <!-- OUT-MAIL AREA -->
+          <vaadin-vertical-layout style="width:100%; height:50%">
+            <h4 style="margin:10px 0px 0px 0px;">&#128394; Write Mail</h4>
+            <!-- Horizontal split between Write and Contacts -->              
+            <vaadin-split-layout style="min-height:50px; height:100%; width:100%; margin:0px;">
+              <snapmail-mail-write id="mailWrite"
+                                   style="min-width: 40px; width: 65%;"
+              ></snapmail-mail-write>
+              <snapmail-contacts id="snapmailContacts"
+                                 style="min-width: 20px; width: 35%;"
+                                 @contact-selected="${(e:any) => {this.disableSendButton(e.detail.length == 0)}}"></snapmail-contacts>
+            </vaadin-split-layout>
+    
+            <!-- ACTION MENU BAR -->
+            <div style="width:100%; display:flex;justify-content: flex-end">
+                <vaadin-menu-bar id="ActionBar" theme="primary"
+                                 style="height:40px; margin-top:5px; margin-bottom:10px;"
+                                 .items="${this._actionMenuItems}"
+                                 @item-selected="${(e:any) => {this.onActionMenuSelected(e.detail.value.text)}}"
+                >
+                </vaadin-menu-bar>
+            </div>
+    
+            <!-- Handle MENU -->
+            <div style="margin-left: auto;display: flex;">
+                <h4 style="margin: 14px 10px 0px 0px;">Username:</h4>
+                <abbr title="handle" id="handleAbbr" style="margin-left:0px;">
+                    <vaadin-button id="handleDisplay" 
+                                   style="min-width: 100px;"
+                                   .hidden="${!this._canHideHandleInput}"
+                                   @click=${() => {this.hideHandleInput(false);}}>
+                        <span>${this._myHandle}</span>
+                        <vaadin-icon icon="lumo:edit" slot="suffix"></vaadin-icon>
+                    </vaadin-button>
+                </abbr>
+                <!-- <vcf-tooltip id="handleDisplayTT" for="handleDisplay" position="bottom">fucking tooltip</vcf-tooltip> -->
+                <vaadin-text-field id="myHandleInput" clear-button-visible 
+                                   placeholder="username"
+                                   .hidden="${this._canHideHandleInput}"
+                ></vaadin-text-field>
+                <vaadin-button id="setMyHandleButton" theme="icon"
+                               title="unknown"
                                .hidden="${this._canHideHandleInput}"
-            ></vaadin-text-field>
-            <vaadin-button id="setMyHandleButton" theme="icon"
-                           title="unknown"
-                           .hidden="${this._canHideHandleInput}"
-                           @click=${(e:any) => this.setUsername(e.detail.value)}>
-                <vaadin-icon icon="lumo:checkmark" slot="prefix"></vaadin-icon>
-            </vaadin-button>
-            <vaadin-button id="cancelHandleButton" theme="icon"
-                           .hidden="${this._canHideHandleInput}"
-                           @click=${() => {this.hideHandleInput(true);}}>
-                <vaadin-icon icon="lumo:cross" slot="prefix"></vaadin-icon>
-            </vaadin-button>
-        </div>
+                               @click=${(e:any) => this.setUsername(e.detail.value)}>
+                    <vaadin-icon icon="lumo:checkmark" slot="prefix"></vaadin-icon>
+                </vaadin-button>
+                <vaadin-button id="cancelHandleButton" theme="icon"
+                               .hidden="${this._canHideHandleInput}"
+                               @click=${() => {this.hideHandleInput(true);}}>
+                    <vaadin-icon icon="lumo:cross" slot="prefix"></vaadin-icon>
+                </vaadin-button>
+            </div>
+              
+         
+            <!-- Progress Bar -->
+            <h3 style="margin:10px 0 5px 0;display:none;" id="sendingTitle">Sending</h3>
+            <vaadin-progress-bar indeterminate value="0" id="sendProgressBar" style="margin-bottom:20px;"></vaadin-progress-bar>
+          </vaadin-vertical-layout>
+            
+        </vaadin-split-layout>
           
-     
-        <!-- Progress Bar -->
-        <h3 style="margin:10px 0 5px 0;display:none;" id="sendingTitle">Sending</h3>
-        <vaadin-progress-bar indeterminate value="0" id="sendProgressBar" style="margin-bottom:20px;"></vaadin-progress-bar>
       </vaadin-vertical-layout>          
     `;
   }
