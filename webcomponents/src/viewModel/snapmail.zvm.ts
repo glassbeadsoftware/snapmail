@@ -138,7 +138,7 @@ export class SnapmailZvm extends ZomeViewModel {
     const pingedAgentB64 = nextMap.keys().next().value
     const pingedAgent = decodeHashFromBase64(pingedAgentB64);
     //console.log("pinging: ", pingedAgentB64);
-    if (pingedAgentB64 === this.agentPubKey) {
+    if (pingedAgentB64 === this.cell.agentPubKey) {
       //console.log("pinging self");
       this.storePingResult({}, pingedAgentB64);
       this._canPing = true;

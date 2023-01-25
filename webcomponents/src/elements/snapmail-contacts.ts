@@ -105,9 +105,9 @@ export class SnapmailContacts extends ZomeElement<SnapmailPerspective, SnapmailZ
 
     this.contactGridElem.shadowRoot!.appendChild(stylesTemplate.content.cloneNode(true));
 
-    this.loadGroupList(this.dnaHash);
+    this.loadGroupList(this.cell.dnaHash);
 
-    this._zvm.storePingResult({}, this.agentPubKey);
+    this._zvm.storePingResult({}, this.cell.agentPubKey);
 
     /** Probe Handles every 10 second */
     /*let _1sec =*/ setInterval(() => {
@@ -341,7 +341,7 @@ export class SnapmailContacts extends ZomeElement<SnapmailPerspective, SnapmailZ
     /** Store _groupMap in localStore */
     const entries = Array.from(this._groupMap.entries());
     console.log("Storing groups",  entries)
-    window.localStorage[this.dnaHash] = JSON.stringify(entries);
+    window.localStorage[this.cell.dnaHash] = JSON.stringify(entries);
   }
 
 

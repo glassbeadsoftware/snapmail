@@ -1,6 +1,6 @@
 import { html } from "lit";
 import { state } from "lit/decorators.js";
-import {AdminWebsocket, encodeHashToBase64} from "@holochain/client";
+import {AdminWebsocket} from "@holochain/client";
 import {DEFAULT_SNAPMAIL_DEF, MY_ELECTRON_API, SnapmailDvm, SnapmailPage} from "@snapmail/elements";
 import {HvmDef, HappElement, cellContext} from "@ddd-qc/lit-happ";
 import {ContextProvider} from '@lit-labs/context';
@@ -80,7 +80,7 @@ export class SnapmailApp extends HappElement {
     await this.hvm.probeAll();
     /** Send dnaHash to electron */
     if (IS_ELECTRON) {
-      let _reply = MY_ELECTRON_API.dnaHashSync(this.snapmailDvm.dnaHash);
+      let _reply = MY_ELECTRON_API.dnaHashSync(this.snapmailDvm.cell.dnaHash);
     }
     /** Done */
     this._loaded = true;

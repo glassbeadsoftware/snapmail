@@ -7,10 +7,9 @@
     "url": "https://github.com/glassbeadsoftware/snapmail.git"
   },
   "workspaces": [
-    "we-applet",
+    "electron",
     "webcomponents",
-    "webapp",
-    "electron"
+    "webapp"
   ],
   "scripts": {
     "version"             : "hc --version && holochain --version && lair-keystore --version",
@@ -47,6 +46,7 @@
   "devDependencies": {
     "@holochain-playground/cli": "^0.0.11",
     "@web/rollup-plugin-html": "^1.11.0",
+    "@types/ws": "^8.5.3",
     "bestzip": "^2.2.0",
     "concurrently": "^6.2.1",
     "concurrently-repeat": "^0.0.1",

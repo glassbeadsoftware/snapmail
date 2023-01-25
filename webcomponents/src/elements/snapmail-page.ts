@@ -24,7 +24,14 @@ import {property, state} from "lit/decorators.js";
 import {SnapmailMailWrite} from "./snapmail-mail-write";
 import {SnapmailContacts} from "./snapmail-contacts";
 import {arrayBufferToBase64, splitFile} from "../utils";
-import {MailItem, SendMailInput} from "../bindings/snapmail.types";
+import {
+  FileManifest,
+  MailItem,
+  ReceivedAck,
+  SendMailInput,
+  SignalProtocol,
+  SignalProtocolType
+} from "../bindings/snapmail.types";
 import {SnapmailFilebox} from "./snapmail-filebox";
 import {SnapmailAttView} from "./snapmail-att-view";
 import {SnapmailMailView} from "./snapmail-mail-view";
@@ -102,14 +109,16 @@ export class SnapmailPage extends DnaElement<unknown, SnapmailDvm> {
   handleSignal(signalwrapper: AppSignal) {
     console.log('Received signal:', signalwrapper);
 
+    const payload: SignalProtocol = signalwrapper.payload as SignalProtocol;
+
     /** Handle 'ReceivedMail' signal */
-    if (Object.prototype.hasOwnProperty.call(signalwrapper.data.payload,'ReceivedMail')) {
-      const item = signalwrapper.data.payload.ReceivedMail;
+    if (SignalProtocolType.ReceivedMail in payload) {
+      const item: MailItem = payload.ReceivedMail;
       console.log("received_mail:", item);
       const notification = this.shadowRoot!.getElementById('notifyMail') as Notification;
       notification.open();
 
-      const mail = signalwrapper.data.payload.ReceivedMail;
+      const mail = payload.ReceivedMail;
       const pingedAgentB64 = encodeHashToBase64(mail.author);
       this._dvm.snapmailZvm.storePingResult({}, pingedAgentB64);
 
@@ -120,7 +129,7 @@ export class SnapmailPage extends DnaElement<unknown, SnapmailDvm> {
 
         /** ELECTRON NOTIFICATION */
         const NOTIFICATION_TITLE = 'New mail received from ' + author_name;
-        const NOTIFICATION_BODY = signalwrapper.data.payload.ReceivedMail.mail.subject;
+        const NOTIFICATION_BODY = payload.ReceivedMail.mail.subject;
         //const CLICK_MESSAGE = 'Notification clicked';
 
         // - Do Notification directly from web UI
@@ -137,8 +146,8 @@ export class SnapmailPage extends DnaElement<unknown, SnapmailDvm> {
     }
 
     /** Handle 'ReceivedAck' signal */
-    if (Object.prototype.hasOwnProperty.call(signalwrapper.data.payload,'ReceivedAck')) {
-      const item = signalwrapper.data.payload.ReceivedAck;
+    if (SignalProtocolType.ReceivedAck in payload) {
+      const item: ReceivedAck = payload.ReceivedAck;
       console.log("received_ack:", item);
       const pingedAgentB64 = encodeHashToBase64(item.from);
       this._dvm.snapmailZvm.storePingResult({}, pingedAgentB64);
@@ -149,8 +158,8 @@ export class SnapmailPage extends DnaElement<unknown, SnapmailDvm> {
     }
 
     /** Handle 'ReceivedFile' signal */
-    if (Object.prototype.hasOwnProperty.call(signalwrapper.data.payload,'ReceivedFile')) {
-      const item = signalwrapper.data.payload.ReceivedFile;
+    if (SignalProtocolType.ReceivedFile in payload) {
+      const item: FileManifest = payload.ReceivedFile;
       console.log("received_file:", item);
       const notification = this.shadowRoot!.getElementById('notifyFile') as Notification;
       notification.open();
@@ -201,9 +210,9 @@ export class SnapmailPage extends DnaElement<unknown, SnapmailDvm> {
     }
     /** -- Update Abbr -- */
     const handleAbbr = this.shadowRoot!.getElementById('handleAbbr') as HTMLElement;
-    handleAbbr.title = "agentId: " + this.agentPubKey;
+    handleAbbr.title = "agentId: " + this.cell.agentPubKey;
     const titleAbbr = this.shadowRoot!.getElementById('titleAbbr') as HTMLElement;
-    titleAbbr.title = this.dnaHash;
+    titleAbbr.title = this.cell.dnaHash;
     /** -- Loading Done -- */
     const loadingBar = this.shadowRoot!.getElementById('loadingBar') as ProgressBar;
     loadingBar.style.display = "none";
@@ -282,8 +291,8 @@ export class SnapmailPage extends DnaElement<unknown, SnapmailDvm> {
     console.log("Calling getMyHandle() for ELECTRON");
     const startingHandle = await this._dvm.snapmailZvm.getMyHandle();
     console.log("getMyHandle() returned: " + startingHandle);
-    console.log("startingInfo sending dnaHash =", this.dnaHash);
-    const reply = MY_ELECTRON_API.startingInfo(startingHandle, decodeHashFromBase64(this.dnaHash))
+    console.log("startingInfo sending dnaHash =", this.cell.dnaHash);
+    const reply = MY_ELECTRON_API.startingInfo(startingHandle, decodeHashFromBase64(this.cell.dnaHash))
     console.log("startingInfo reply =", reply);
     if (reply != "<noname>") {
       await this.setUsername(reply);

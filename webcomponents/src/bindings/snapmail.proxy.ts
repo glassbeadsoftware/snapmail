@@ -2,7 +2,7 @@
 
 import {REMOTE_ENDPOINT, Directory, ZOME_NAME, DIRECT_SEND_TIMEOUT_MS, DIRECT_SEND_CHUNK_TIMEOUT_MS, CHUNK_MAX_SIZE, FILE_MAX_SIZE, CAN_DM, DirectMessageProtocol, SignalProtocol, SnapmailEntry, LinkKind, InMailState, DeliveryState, OutMailState, MailState, RecipientKind, DmPacket, MailMessage, AckMessage, FindManifestOutput, ZomeManifestVec, GetMissingAttachmentsInput, GetMissingChunksInput, WriteManifestInput, HandleItem, CommitPendingAckInput, DeleteMailOutput, GetMailOutput, SendMailInput, CommitPendingMailInput, ReceivedAck, FileChunk, FileManifest, Handle, DeliveryConfirmation, InAck, InMail, MailItem, Mail, AttachmentInfo, OutAck, OutMail, PendingAck, PendingMail, PubEncKey, } from './snapmail.types';
 import {
-/** Types */
+/** types.ts */
 HoloHash,
 AgentPubKey,
 DnaHash,
@@ -24,12 +24,12 @@ Signature,
 CellId,
 DnaProperties,
 RoleName,
-InstalledCell,
 Timestamp,
+Duration,
 HoloHashed,
 NetworkInfo,
 FetchQueueInfo,
-/** Action */
+/** hdk/action.ts */
 SignedActionHashed,
 ActionHashed,
 ActionType,
@@ -45,14 +45,14 @@ CloseChain,
 Update,
 Delete,
 Create,
-/** Capabilities */
+/** hdk/capabilities.ts */
 CapSecret,
 CapClaim,
 ZomeCallCapGrant,
 CapAccess,
 CapGrant,
 GrantedFunctionsType,
-/** CounterSigning */
+///** hdk/countersigning.ts */
 //CounterSigningSessionData,
 //PreflightRequest,
 //CounterSigningSessionTimes,
@@ -61,26 +61,27 @@ GrantedFunctionsType,
 //PreflightBytes,
 //Role,
 //CountersigningAgentState,
-/** DhtOps */
+/** hdk/dht-ops.ts */
 DhtOpType,
 DhtOp,
 getDhtOpType,
 getDhtOpAction,
 getDhtOpEntry,
 getDhtOpSignature,
-/** Entry */
+/** hdk/entry.ts */
 EntryVisibility,
 AppEntryDef,
 EntryType,
 EntryContent,
 Entry,
-/** Record */
+/** hdk/record.ts */
 Record as HcRecord,
 RecordEntry as HcRecordEntry,
-/** admin types */
+/** api/admin/types.ts */
 InstalledAppInfoStatus,
 StemCell,
-Cell,
+ProvisionedCell,
+ClonedCell,
 CellType,
 CellInfo,
 AppInfo,
@@ -93,9 +94,15 @@ CoordinatorZome,
 DnaDefinition,
 ResourceBytes,
 ResourceMap,
+CellProvisioningStrategy,
 CellProvisioning,
 DnaVersionSpec,
 DnaVersionFlexible,
+AppRoleDnaManifest,
+AppRoleManifest,
+AppManifest,
+AppBundle,
+AppBundleSource,
 NetworkSeed,
 ZomeLocation,
    } from '@holochain/client';
