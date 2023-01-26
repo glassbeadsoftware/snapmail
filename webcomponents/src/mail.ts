@@ -152,7 +152,7 @@ function vecToUsernames(usernameMap: UsernameMap, agentVec: AgentPubKey[]): stri
 /** */
 function getUsername(usernameMap: UsernameMap, agentHash: Uint8Array): string {
   const authorId = encodeHashToBase64(agentHash);
-  let username = usernameMap.get(authorId)
+  let username = usernameMap[authorId]
   if (username === undefined) {
     username = "<" + authorId.substr(0, 8) + "...>";
   }
@@ -234,7 +234,7 @@ export function into_mailText(usernameMap: UsernameMap, mailItem: MailItem): str
 
   let intext = 'Subject: ' + subject + '\n\n'
     + content + '\n\n'
-    + 'Mail from: ' + usernameMap.get(encodeHashToBase64(mailItem.author)) + ' at ' + customDateString(mailItem.date);
+    + 'Mail from: ' + usernameMap[encodeHashToBase64(mailItem.author)] + ' at ' + customDateString(mailItem.date);
 
   const to_line = vecToUsernames(usernameMap, mailItem.mail.to!);
 

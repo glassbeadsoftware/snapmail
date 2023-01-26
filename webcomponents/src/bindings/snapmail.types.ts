@@ -192,8 +192,8 @@ export interface WriteManifestInput {
 }
 
 export interface HandleItem {
-  name: string
-  agentId: AgentPubKey
+  username: string
+  agent_pub_key: AgentPubKey
   handle_eh: EntryHash
 }
 
@@ -202,8 +202,6 @@ export interface CommitPendingAckInput {
   outmail_eh: EntryHash
   original_sender: AgentPubKey
 }
-
-export type DeleteMailOutput = ActionHash | null;
 
 export type GetMailOutput = InMail | OutMail | null;
 
@@ -277,7 +275,7 @@ export interface FileManifest {
 
 /** Entry representing the username of an Agent */
 export interface Handle {
-  name: string
+  username: string
 }
 
 export enum SnapmailEntryType {

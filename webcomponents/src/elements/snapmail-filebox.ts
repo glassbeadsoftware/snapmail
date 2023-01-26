@@ -345,7 +345,7 @@ export class SnapmailFilebox extends ZomeElement<SnapmailPerspective, SnapmailZv
     /** Handle mails from perspective */
     if (changedProperties.has('perspective')) {
       const allMailGridItem = [];
-      for (const mailItem of this.perspective.mailMap.values()) {
+      for (const mailItem of Object.values(this.perspective.mailMap)) {
         allMailGridItem.push(into_gridItem(this.perspective.usernameMap, mailItem));
       }
       //console.log("   <snapmail-filebox>.willUpdate() this._allMailItems", this._allMailGridItems, allMailGridItem);

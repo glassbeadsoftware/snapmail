@@ -1,20 +1,21 @@
-import { MailItem} from "../bindings/snapmail.types";
-import {ActionHashB64, AgentPubKey, AgentPubKeyB64} from "@holochain/client";
+import {MailItem} from "../bindings/snapmail.types";
+import {AgentPubKeyB64} from "@holochain/client";
+import {Dictionary} from "@ddd-qc/cell-proxy";
 
-export type UsernameMap = Map<string, string>;
+export type UsernameMap = Dictionary<string>;
 
-// FIXME
+/** */
 export interface SnapmailPerspective {
   /* Map of (agentIdB64 -> username) */
   usernameMap: UsernameMap,
   /* Map of (agentIdB64 -> timestamp of last ping) */
-  pingMap: Map<string, number>,
+  pingMap: Dictionary<number>,
   /* Map of (agentIdB64 -> bool) */
-  responseMap: Map<string, boolean>,
+  responseMap: Dictionary<boolean>,
   /* Map of (mailId -> mailItem) */
-  mailMap: Map<ActionHashB64, MailItem>,
-  /** folderName -> mailId */
-  folderMap: Map<string, string>,
+  mailMap: Dictionary<MailItem>,
+  // /** folderName -> mailId */
+  // folderMap: Dictionary<ActionHashB64>,
   /** */
   myHandle: string,
 }
@@ -22,16 +23,14 @@ export interface SnapmailPerspective {
 
 export function defaultPerspective(): SnapmailPerspective {
   return {
-    usernameMap: new Map(),
-    pingMap: new Map(),
-    responseMap: new Map(),
-    mailMap:  new Map(),
-    folderMap: new Map(),
+    usernameMap: {},
+    pingMap: {},
+    responseMap: {},
+    mailMap:  {},
+    //folderMap: {},
     myHandle: "<unknown>",
   }
 }
-
-
 
 
 export interface InMailState {

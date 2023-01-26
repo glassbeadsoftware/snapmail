@@ -16,6 +16,7 @@ import {ZomeElement} from "@ddd-qc/lit-happ";
 import {SnapmailZvm} from "../viewModel/snapmail.zvm";
 import {DEV_MODE} from "../electron";
 import {MenuBar} from "@vaadin/menu-bar";
+import {Dictionary} from "@ddd-qc/cell-proxy";
 
 /** Find and collect grid items that have the given agentIds */
 function ids_to_items(ids: string[], items: ContactGridItem[]) {
@@ -46,16 +47,16 @@ export class SnapmailContacts extends ZomeElement<SnapmailPerspective, SnapmailZ
   private _groupMap: Map<string, string[]> = new Map();
 
 
-  @state() private _shownItems: ContactGridItem[] = []
-  @state() private _allContactItems: ContactGridItem[] = [];
-  @state() private _selectedContactIdB64s: string[] = [];
+  /** ContactGridItem lists */
+  @state() private _allContactItems: Dictionary<ContactGridItem> = {};
   @state() private _selectedItems: ContactGridItem[] = [];
-  //_activeItem:any = null;
+  @state() private _shownItems: ContactGridItem[] = [];
+  @state() private _selectedContactIdB64s: string[] = [];
 
   @state() private _currentGroup = SYSTEM_GROUP_LIST[0];
 
 
-  get allContacts(): ContactGridItem[] { return this._allContactItems}
+  get allContacts(): ContactGridItem[] { return Object.values(this._allContactItems)}
   get selectedContacts(): ContactGridItem[] { return this._selectedItems}
 
 
@@ -107,7 +108,7 @@ export class SnapmailContacts extends ZomeElement<SnapmailPerspective, SnapmailZ
 
     this.loadGroupList(this.cell.dnaHash);
 
-    this._zvm.storePingResult({}, this.cell.agentPubKey);
+    this._zvm.storePingResult(this.cell.agentPubKey, true);
 
     /** Probe Handles every 10 second */
     /*let _1sec =*/ setInterval(() => {
@@ -127,6 +128,7 @@ export class SnapmailContacts extends ZomeElement<SnapmailPerspective, SnapmailZ
       // if (DEV_MODE === 'dev') {
       //   return;
       // }
+      console.log(" can pingNextAgent?", this._zvm.canPing);
       try {
         if (this._zvm.canPing) {
           this._zvm.pingNextAgent();
@@ -159,15 +161,27 @@ export class SnapmailContacts extends ZomeElement<SnapmailPerspective, SnapmailZ
   // }
 
 
-  /** Regenerate _allContactItems from _usernameMap, _pingMap and _selectedContactIds */
+  /** Regenerate _selectedItems */
+  updateSelection(): void {
+    const selection: ContactGridItem[] = [];
+    for (const selecetedContactId of this._selectedContactIdB64s) {
+      const contactItem: ContactGridItem = this.allContacts.find((item) => item.agentIdB64 === selecetedContactId)!;
+      console.assert(contactItem);
+      selection.push(contactItem);
+    }
+    this._selectedItems = selection;
+  }
+
+
+  /** Regenerate GridItem lists from perspective and _selectedContactIdB64s */
   updateContacts(canKeepSelection: boolean): void {
-    //console.log('updateContacts()', canKeepSelection)
+    console.log('   updateContacts()', canKeepSelection)
     /* Stash currently selected items (by hash) */
     const prevSelected: string[] = [];
     const recipientTypeMap: Map<string, string> = new Map();
     if (canKeepSelection) {
       for (const selecetedContactId of this._selectedContactIdB64s) {
-        const contactItem: ContactGridItem = this._allContactItems.find((item) => item.agentIdB64 === selecetedContactId)!;
+        const contactItem: ContactGridItem = this.allContacts.find((item) => item.agentIdB64 === selecetedContactId)!;
         console.assert(contactItem);
         prevSelected.push(contactItem.agentIdB64);
         recipientTypeMap.set(contactItem.agentIdB64, contactItem.recipientType);
@@ -179,12 +193,13 @@ export class SnapmailContacts extends ZomeElement<SnapmailPerspective, SnapmailZ
 
     /* Convert each handle into a contactGridItem */
     const selected: ContactGridItem[] = [];
-    const allItems: ContactGridItem[] = [];
-    for (const [agentIdB64, username] of this.perspective.usernameMap.entries()) {
+    //const allItems: ContactGridItem[] = [];
+    this._allContactItems = {};
+    for (const [agentIdB64, username] of Object.entries(this.perspective.usernameMap)) {
       //console.log('' + agentIdB64 + ' => ' + username)
       let status = whiteDot
-      if (this.perspective.pingMap.get(agentIdB64)) {
-        status = this.perspective.responseMap.get(agentIdB64)? greenDot : redDot
+      if (this.perspective.pingMap[agentIdB64]) {
+        status = this.perspective.responseMap[agentIdB64]? greenDot : redDot
       }
       //const status = blueDot
       const item: ContactGridItem = {
@@ -196,20 +211,19 @@ export class SnapmailContacts extends ZomeElement<SnapmailPerspective, SnapmailZ
       /** Retrieve stashed selectedItems */
       if (canKeepSelection && prevSelected.includes(agentIdB64)) {
         console.log("keep selected: " + item.username);
-        item.recipientType = recipientTypeMap.get(agentIdB64)!;
+        item.recipientType = recipientTypeMap[agentIdB64]!;
         selected.push(item);
       }
-      allItems.push(item);
+      //allItems.push(item);
+      this._allContactItems[item.agentIdB64] = item;
     }
     this._selectedItems = selected;
 
     /* Sort by username */
-    this._allContactItems = allItems.sort((obj1, obj2) => {
+    this._shownItems = this.filterContacts(selected, this.contactSearchElem? this.contactSearchElem.value : '')
+      .sort((obj1, obj2) => {
       return obj1.username < obj2.username? -1 : 1;
     });
-
-
-    this._shownItems = this.filterContacts(selected, this.contactSearchElem? this.contactSearchElem.value : '');
 
     //console.log('updateContacts() - END', this._allContactItems)
   }
@@ -220,11 +234,11 @@ export class SnapmailContacts extends ZomeElement<SnapmailPerspective, SnapmailZ
     //console.log("filterContacts() called");
     /** Get contacts from current group only */
     //console.log({items});
-    let groupItems = this._allContactItems;
+    let groupItems = this.allContacts;
     if (this._currentGroup !== SYSTEM_GROUP_LIST[0]) {
       const ids = this._groupMap.get(this._currentGroup);
       //console.log({ids});
-      groupItems = ids_to_items(ids!, this._allContactItems);
+      groupItems = ids_to_items(ids!, this.allContacts);
       //console.log({items});
     }
     /** Set filter */
@@ -253,6 +267,7 @@ export class SnapmailContacts extends ZomeElement<SnapmailPerspective, SnapmailZ
 
   /** update state */
   toggleContact(contactItem: ContactGridItem) {
+    console.log("   toggleContact()", contactItem.username)
     let nextType = '';
     switch(contactItem.recipientType) {
       case '': {
@@ -275,15 +290,16 @@ export class SnapmailContacts extends ZomeElement<SnapmailPerspective, SnapmailZ
       default: console.error('unknown recipientType');
     }
     contactItem.recipientType = nextType;
+    //this._allContactItems[contactItem.agentIdB64] = contactItem;
   }
 
 
 
   /**
-   * Populate contactGrid according to:
-   * _allContactItems, _selectedContactIds and search value
+   * Populate _shownItems according to:
+   *    _allContactItems, _selectedContactIdB64s and search value
    */
-  updateContactGrid(canResetSearch: boolean): void {
+  updateShownItems(canResetSearch: boolean): void {
     // /* Deselect all */
     // for (const item of this._allContactItems) {
     //   this.contactGridElem.deselectItem(item);
@@ -291,7 +307,7 @@ export class SnapmailContacts extends ZomeElement<SnapmailPerspective, SnapmailZ
     /** Form selectedItems */
     const selected = []
     for (const idB64 of this._selectedContactIdB64s) {
-      const item = this._allContactItems.find((item) => item.agentIdB64 === idB64)!;
+      const item = this.allContacts.find((item) => item.agentIdB64 === idB64)!;
       selected.push(item)
     }
     this._selectedItems = selected;
@@ -312,12 +328,12 @@ export class SnapmailContacts extends ZomeElement<SnapmailPerspective, SnapmailZ
     if (!eventContext.item) {
       return;
     }
-    const index = this._allContactItems.indexOf(eventContext.item)
-    console.assert(index > -1)
+    // const index = this.allContacts.indexOf(eventContext.item)
+    // console.assert(index > -1)
     console.log({click_before_SelectedItems: this.contactGridElem.selectedItems})
 
-    this.toggleContact(this._allContactItems[index]);
-    this.updateContactGrid(false);
+    this.toggleContact(this._allContactItems[eventContext.item.agentIdB64]);
+    this.updateShownItems(false);
 
     //console.log({click_after_SelectedItems: this.contactGridElem.selectedItems})
     this.dispatchEvent(new CustomEvent('contact-selected',
@@ -337,7 +353,7 @@ export class SnapmailContacts extends ZomeElement<SnapmailPerspective, SnapmailZ
     }
     /** Set current Group and update contact Grid */
     this._currentGroup = groupName;
-    this.updateContactGrid(false);
+    this.updateShownItems(false);
     /** Store _groupMap in localStore */
     const entries = Array.from(this._groupMap.entries());
     console.log("Storing groups",  entries)
@@ -475,7 +491,7 @@ export class SnapmailContacts extends ZomeElement<SnapmailPerspective, SnapmailZ
           const title = root.children[0];
           title.textContent = 'Edit Group: ' + this._currentGroup;
           const grid = root.children[1] as Grid;
-          grid.items = this._allContactItems;
+          grid.items = this.allContacts;
           const groupIds = this._groupMap.get(this._currentGroup);
           if (groupIds) {
             grid.selectedItems = ids_to_items(groupIds, grid.items);
@@ -503,7 +519,7 @@ export class SnapmailContacts extends ZomeElement<SnapmailPerspective, SnapmailZ
         grid.id = "groupGrid";
         //grid.heightByRows = true;
         grid.setAttribute('style', 'width: 360px;display:block;');
-        grid.items = this._allContactItems;
+        grid.items = this.allContacts;
         console.log({groupItems: grid.items})
         const groupIds = this._groupMap.get(this._currentGroup);
         const items = ids_to_items(groupIds!, grid.items)

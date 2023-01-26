@@ -107,7 +107,7 @@ export class SnapmailPage extends DnaElement<unknown, SnapmailDvm> {
 
   /** */
   handleSignal(signalwrapper: AppSignal) {
-    console.log('Received signal:', signalwrapper);
+    console.log('<snapmail-page>.Received signal:', signalwrapper);
 
     const payload: SignalProtocol = signalwrapper.payload as SignalProtocol;
 
@@ -120,12 +120,12 @@ export class SnapmailPage extends DnaElement<unknown, SnapmailDvm> {
 
       const mail = payload.ReceivedMail;
       const pingedAgentB64 = encodeHashToBase64(mail.author);
-      this._dvm.snapmailZvm.storePingResult({}, pingedAgentB64);
+      this._dvm.snapmailZvm.storePingResult(pingedAgentB64, true);
 
       if (MY_ELECTRON_API) {
         //console.log("handleSignal for ELECTRON");
         console.log({mail});
-        const author_name = this.zPerspective.usernameMap.get(encodeHashToBase64(mail.author)) || 'unknown user';
+        const author_name = this.zPerspective.usernameMap[encodeHashToBase64(mail.author)] || 'unknown user';
 
         /** ELECTRON NOTIFICATION */
         const NOTIFICATION_TITLE = 'New mail received from ' + author_name;
@@ -140,8 +140,7 @@ export class SnapmailPage extends DnaElement<unknown, SnapmailDvm> {
         const reply = MY_ELECTRON_API.newMailSync(NOTIFICATION_TITLE, NOTIFICATION_BODY)
         console.log({reply});
       }
-
-      this._dvm.snapmailZvm.probeMails();
+      //this._dvm.snapmailZvm.probeMails();
       return;
     }
 
@@ -150,7 +149,7 @@ export class SnapmailPage extends DnaElement<unknown, SnapmailDvm> {
       const item: ReceivedAck = payload.ReceivedAck;
       console.log("received_ack:", item);
       const pingedAgentB64 = encodeHashToBase64(item.from);
-      this._dvm.snapmailZvm.storePingResult({}, pingedAgentB64);
+      this._dvm.snapmailZvm.storePingResult(pingedAgentB64, true);
       const notification = this.shadowRoot!.getElementById('notifyAck') as Notification;
       notification.open();
       this._dvm.snapmailZvm.probeMails();
@@ -166,6 +165,7 @@ export class SnapmailPage extends DnaElement<unknown, SnapmailDvm> {
       return
     }
   }
+
 
   /** After first render only */
   async firstUpdated() {
@@ -307,7 +307,7 @@ export class SnapmailPage extends DnaElement<unknown, SnapmailDvm> {
   async setUsername(maybeHandle?: string) {
     const newHandle = maybeHandle? maybeHandle : this.handleInputElem.value;
     console.log('setUsername()', newHandle);
-    /*const callResult =*/ await this._dvm.snapmailZvm.setHandle(newHandle)
+    const _ah = await this._dvm.snapmailZvm.setHandle(newHandle);
     this._myHandle = newHandle;
     this.handleInputElem.value = '';
     this.hideHandleInput(true);
@@ -358,7 +358,8 @@ export class SnapmailPage extends DnaElement<unknown, SnapmailDvm> {
       }
       break;
     }
-    this.contactsElem.updateContacts(true);
+    //this.contactsElem.updateContacts(true);
+    this.contactsElem.updateSelection();
   }
 
 
@@ -428,7 +429,7 @@ export class SnapmailPage extends DnaElement<unknown, SnapmailDvm> {
       this.mailWriteElem.subject = 'Fwd: ' + this._currentMailItem.mail.subject;
       let fwd = '\n\n';
       fwd += '> ' + 'Mail from: '
-        + this.zPerspective.usernameMap.get(encodeHashToBase64(this._currentMailItem!.author))
+        + this.zPerspective.usernameMap[encodeHashToBase64(this._currentMailItem!.author)]
         + ' at ' + customDateString(this._currentMailItem!.date)
         + '\n';
       const arrayOfLines = this._currentMailItem!.mail.payload.match(/[^\r\n]+/g);

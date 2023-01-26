@@ -1,4 +1,5 @@
 #!/bin/bash
+set -e
 # Compile the WASM
 cargo build --release --target wasm32-unknown-unknown --manifest-path submodules/snapmail-rsm/Cargo.toml
 # Pack DNAs
