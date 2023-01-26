@@ -358,8 +358,8 @@ export class SnapmailPage extends DnaElement<unknown, SnapmailDvm> {
       }
       break;
     }
-    //this.contactsElem.updateContacts(true);
-    this.contactsElem.updateSelection();
+    this.contactsElem.updateContacts(true);
+    //this.contactsElem.updateSelection();
   }
 
 

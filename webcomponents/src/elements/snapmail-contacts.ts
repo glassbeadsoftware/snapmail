@@ -123,7 +123,7 @@ export class SnapmailContacts extends ZomeElement<SnapmailPerspective, SnapmailZ
     }, 10 * 1000);
 
 
-    /** Ping an agent every 1 second */
+    /** Ping an agent every x seconds */
     /*let _1sec =*/ setInterval(() => {
       // if (DEV_MODE === 'dev') {
       //   return;
@@ -136,7 +136,7 @@ export class SnapmailContacts extends ZomeElement<SnapmailPerspective, SnapmailZ
       } catch(e) {
         console.error("_1sec.pingNextAgent() failed: ", e)
       }
-    }, 1 * 1000);
+    }, 2 * 1000);
 
     /** Add Refresh button in DEBUG */
     const contactsMenu = this.shadowRoot!.getElementById("ContactsMenu") as MenuBar;
@@ -178,13 +178,13 @@ export class SnapmailContacts extends ZomeElement<SnapmailPerspective, SnapmailZ
     console.log('   updateContacts()', canKeepSelection)
     /* Stash currently selected items (by hash) */
     const prevSelected: string[] = [];
-    const recipientTypeMap: Map<string, string> = new Map();
+    const recipientTypeMap: Dictionary<string> = {};
     if (canKeepSelection) {
       for (const selecetedContactId of this._selectedContactIdB64s) {
         const contactItem: ContactGridItem = this.allContacts.find((item) => item.agentIdB64 === selecetedContactId)!;
         console.assert(contactItem);
         prevSelected.push(contactItem.agentIdB64);
-        recipientTypeMap.set(contactItem.agentIdB64, contactItem.recipientType);
+        recipientTypeMap[contactItem.agentIdB64] = contactItem.recipientType;
       }
     } else {
       this._selectedContactIdB64s = []

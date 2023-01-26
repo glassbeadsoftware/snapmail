@@ -61,9 +61,10 @@ export class SnapmailZvm extends ZomeViewModel {
     const payload: SignalProtocol = appSignal.payload as SignalProtocol;
     /** Handle 'ReceivedMail' signal */
     if (SignalProtocolType.ReceivedMail in payload) {
-      const mailItem: MailItem = payload.ReceivedMail;
-      this._perspective.mailMap[encodeHashToBase64(mailItem.ah)] = mailItem;
-      this.notifySubscribers();
+      //const mailItem: MailItem = payload.ReceivedMail;
+      //this._perspective.mailMap[encodeHashToBase64(mailItem.ah)] = mailItem;
+      //this.notifySubscribers();
+      /* await */ this.probeMails();
     }
   }
 
@@ -142,7 +143,7 @@ export class SnapmailZvm extends ZomeViewModel {
     /* Ping first agent in sorted list */
     const pingedAgentB64 = sortedPings[0][0];
     const pingedAgent = decodeHashFromBase64(pingedAgentB64);
-    console.log("pinging: ", pingedAgentB64);
+    //console.log("pinging: ", pingedAgentB64);
     if (pingedAgentB64 === this.cell.agentPubKey) {
       //console.log("pinging self");
       this.storePingResult(pingedAgentB64, true);
@@ -154,25 +155,23 @@ export class SnapmailZvm extends ZomeViewModel {
       .then((result: boolean) => {
         this.storePingResult(pingedAgentB64, result);
         this._canPing = true;
-        //contactGrid.render();
       })
       .catch((error: any) => {
         console.error('Ping failed for: ' + pingedAgentB64);
         console.error({ error })
         this.storePingResult(pingedAgentB64, false);
-        //contactGrid.render();
       })
-    this.notifySubscribers();
   }
 
 
   /** */
   storePingResult(agentId: AgentPubKeyB64, isAgentPresent: boolean) {
     //console.log("storePingResult() responseMap[" + agentId + "] | " + isAgentPresent)
-    console.log("storePingResult() before pingMap[" + agentId + "]", this.perspective.pingMap)
+    //console.log("storePingResult() before pingMap[" + agentId + "]", this.perspective.pingMap)
     this.perspective.responseMap[agentId] = isAgentPresent;
     this.perspective.pingMap[agentId] = Date.now();
-    console.log("storePingResult() after pingMap", this.perspective.pingMap);
+    //console.log("storePingResult() after pingMap", this.perspective.pingMap);
+    this.notifySubscribers();
   }
 
 
