@@ -77,5 +77,34 @@ export const MAIN_FILE = path.join(__dirname, '../web/index.html')
 export const NETWORK_URL = 'file://' + CURRENT_DIR + '/'+ DIST_DIR +'/networking.html';
 export const ERROR_URL = 'file://' + CURRENT_DIR + '/'+ DIST_DIR +'/error.html';
 /** Shameful */
-export const ADMIN_WS = 1235
-export const INDEX_URL = 'file://' + CURRENT_DIR + '/'+ DIST_DIR +'/index.html?ADMIN='+ADMIN_WS+'&APP=';
+
+
+/** */
+export async function getIndexUrl(): Promise<string> {
+  return 'file://' + CURRENT_DIR + '/'+ DIST_DIR +'/index.html?ADMIN='+ await getAdminPort() +'&APP=';
+}
+
+
+
+/** */
+let g_adminPort = null;
+export async function getAdminPort(): Promise<number> {
+  if (g_adminPort === null) {
+    g_adminPort = await getPortFree();
+  }
+  return g_adminPort;
+}
+
+
+import net, {AddressInfo} from "net"
+
+async function getPortFree() {
+  console.log("debug", "getPortFree()")
+  return new Promise( res => {
+    const srv = net.createServer();
+    srv.listen(0, () => {
+      const port = (srv.address() as AddressInfo).port;
+      srv.close((err) => res(port))
+    });
+  })
+}

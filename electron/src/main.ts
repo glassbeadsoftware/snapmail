@@ -30,7 +30,6 @@ import {
   CURRENT_DIR,
   REPORT_BUG_URL,
   NETWORK_URL,
-  INDEX_URL,
   IS_DEBUG,
   ICON_FILEPATH,
   BACKGROUND_COLOR,
@@ -40,10 +39,9 @@ import {
   USER_DATA_PATH,
   APP_DATA_PATH,
   DNA_VERSION_FILENAME,
-  MODEL_ZOME_HASH_FILEPATH,
   MAIN_FILE,
   BINARY_PATHS,
-  RUNNER_VERSION, DEFAULT_BOOTSTRAP_URL, DEFAULT_PROXY_URL, FAVICON_PATH, ADMIN_WS
+  RUNNER_VERSION, DEFAULT_BOOTSTRAP_URL, DEFAULT_PROXY_URL, FAVICON_PATH, getIndexUrl, getAdminPort
 } from './constants';
 import { log, electronLogger } from './logger';
 import { pingBootstrap } from "./spawn";
@@ -268,8 +266,8 @@ ipc.on('newCountAsync', (event, newCount) => {
   event.returnValue = true;
 });
 
-ipc.on('exitNetworkStatus', (event) => {
-  const indexUrl = INDEX_URL + g_appPort + '&UID=' + g_uid;
+ipc.on('exitNetworkStatus', async (event) => {
+  const indexUrl = await getIndexUrl() + g_appPort + '&UID=' + g_uid;
   console.log("indexUrl", indexUrl);
   g_mainWindow?.loadURL(indexUrl)
 })
@@ -439,7 +437,7 @@ const createMainWindow = async (appPort: string): Promise<BrowserWindow> => {
 
   /** load the index.html of the app */
   let mainUrl = app.isPackaged? MAIN_FILE : path.join(DEVELOPMENT_UI_URL, "index.html")
-  mainUrl += "?ADMIN="+ ADMIN_WS + "&APP=" + appPort + "&UID=" + g_uid
+  mainUrl += "?ADMIN="+ await getAdminPort() + "&APP=" + appPort + "&UID=" + g_uid
   log('info', "createMainWindow ; mainUrl = " + mainUrl)
   try {
     await mainWindow.loadURL("file://" + mainUrl)
@@ -851,7 +849,7 @@ const createMainWindow = async (appPort: string): Promise<BrowserWindow> => {
 /** */
 async function startMainWindow(splashWindow: BrowserWindow) {
   /** Create holochain settings */
-  const opts = createHolochainOptions(g_uid, g_sessionDataPath, g_networkSettings)
+  const opts = await createHolochainOptions(g_uid, g_sessionDataPath, g_networkSettings)
   //log('debug', opts)
   /** Init conductor */
   try {
@@ -1634,7 +1632,7 @@ const debugMenuTemplate: Array<MenuItemConstructorOptions> = [
         await g_mainWindow!.loadURL(NETWORK_URL);
         //const succeeded = pingBootstrap(g_bootstrapUrl);
       } else {
-        const indexUrl = INDEX_URL + g_appPort + '&UID=' + g_uid;
+        const indexUrl = await getIndexUrl() + g_appPort + '&UID=' + g_uid;
         console.log("indexUrl", indexUrl);
         await g_mainWindow!.loadURL(indexUrl);
       }

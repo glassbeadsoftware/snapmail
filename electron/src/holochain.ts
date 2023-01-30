@@ -1,7 +1,7 @@
 import * as path from 'path'
 import { app } from 'electron'
 import { ElectronHolochainOptions, StateSignal } from "@lightningrodlabs/electron-holochain"
-import {ADMIN_WS, DNA_PATH, DNA_VERSION_FILENAME, SNAPMAIL_APP_ID} from './constants'
+import {DNA_PATH, DNA_VERSION_FILENAME, getAdminPort, SNAPMAIL_APP_ID} from './constants'
 import {NetworkSettings} from "./networkSettings";
 import fs from "fs";
 import {log} from "./logger";
@@ -44,7 +44,7 @@ export function stateSignalToText(state: StateSignal): StateSignalText {
 
 
 /** */
-export function createHolochainOptions(uid: string, storagePath: string, networkSettings: NetworkSettings): ElectronHolochainOptions {
+export async function createHolochainOptions(uid: string, storagePath: string, networkSettings: NetworkSettings): Promise<ElectronHolochainOptions> {
   const keystorePath = path.join(storagePath, 'keystore-' + app.getVersion())
   const datastorePath =  path.join(storagePath, 'databases-' + app.getVersion())
   //console.log('info', {__dirname});
@@ -58,12 +58,12 @@ export function createHolochainOptions(uid: string, storagePath: string, network
     appId: SNAPMAIL_APP_ID + '-' + uid,
     //appId: MAIN_APP_ID,
     appWsPort: 0,
-    adminWsPort: ADMIN_WS,
+    adminWsPort: await getAdminPort(),
     proxyUrl: networkSettings.proxyUrl,
     bootstrapUrl: networkSettings.canProxy? networkSettings.bootstrapUrl : '',
     passphrase: "test-passphrase",
   }
-  //console.log('info', {keystorePath: options.keystorePath});
+  console.log('info', {adminWsPort: options.adminWsPort});
   return options;
 }
 
