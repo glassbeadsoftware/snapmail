@@ -12,8 +12,8 @@
     "allowSyntheticDefaultImports": true,
     "experimentalDecorators": true,
     "importHelpers": true,
-    "skipLibCheck": false,
     "sourceMap": true,
+    "skipLibCheck": true,
     "inlineSources": true,
     "declaration": true
   },

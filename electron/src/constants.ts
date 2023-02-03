@@ -99,7 +99,6 @@ export async function getAdminPort(): Promise<number> {
 import net, {AddressInfo} from "net"
 
 async function getPortFree() {
-  console.log("debug", "getPortFree()")
   return new Promise( res => {
     const srv = net.createServer();
     srv.listen(0, () => {

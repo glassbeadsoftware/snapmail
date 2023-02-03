@@ -8,6 +8,7 @@
   },
   "workspaces": [
     "electron",
+    "we-applet",
     "webcomponents",
     "webapp"
   ],

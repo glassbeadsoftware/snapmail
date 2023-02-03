@@ -1,6 +1,6 @@
 import { html } from "lit";
 import { state } from "lit/decorators.js";
-import {AdminWebsocket} from "@holochain/client";
+import {AdminWebsocket, AppWebsocket, InstalledAppId} from "@holochain/client";
 import {DEFAULT_SNAPMAIL_DEF, MY_ELECTRON_API, SnapmailDvm, SnapmailPage} from "@snapmail/elements";
 import {HvmDef, HappElement, cellContext} from "@ddd-qc/lit-happ";
 import {ContextProvider} from '@lit-labs/context';
@@ -38,8 +38,13 @@ export class SnapmailApp extends HappElement {
 
   static readonly HVM_DEF: HvmDef = DEFAULT_SNAPMAIL_DEF;
 
-  constructor() {
-    super(HC_APP_PORT);
+  // constructor() {
+  //   super(HC_APP_PORT);
+  // }
+
+  /** */
+  constructor(socket?: AppWebsocket, appId?: InstalledAppId) {
+    super(socket? socket : HC_APP_PORT, appId);
   }
 
   get snapmailDvm(): SnapmailDvm { return this.hvm.getDvm(SnapmailDvm.DEFAULT_BASE_ROLE_NAME)! as SnapmailDvm }

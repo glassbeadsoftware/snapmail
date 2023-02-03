@@ -63,7 +63,7 @@ export async function createHolochainOptions(uid: string, storagePath: string, n
     bootstrapUrl: networkSettings.canProxy? networkSettings.bootstrapUrl : '',
     passphrase: "test-passphrase",
   }
-  console.log('info', {adminWsPort: options.adminWsPort});
+  //console.log('info', {adminWsPort: options.adminWsPort});
   return options;
 }
 

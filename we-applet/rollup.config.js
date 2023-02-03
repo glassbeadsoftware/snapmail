@@ -1,5 +1,7 @@
 import nodeResolve from "@rollup/plugin-node-resolve";
 import commonjs from "@rollup/plugin-commonjs";
+import typescript from "@rollup/plugin-typescript";
+
 // import builtins from "rollup-plugin-node-builtins";
 // import globals from "rollup-plugin-node-globals";
 
@@ -8,14 +10,17 @@ import babel from "@rollup/plugin-babel";
 //import { terser } from "rollup-plugin-terser";
 //import copy from "rollup-plugin-copy";
 
-const DEV_MODE = process.env.DEV_MODE || "prod";
-const HC_PORT = process.env.HC_PORT || 8888;
+//const DEV_MODE = process.env.DEV_MODE || "prod";
+//const HC_PORT = process.env.HC_PORT || 8888;
+
+const DIST_FOLDER = "dist"
+
 
 export default {
   input: "dist/index.js",
   output: {
     format: "es",
-    dir: 'dist',
+    dir: DIST_FOLDER,
     sourcemap: false
   },
   watch: {
@@ -29,6 +34,7 @@ export default {
       browser: true,
       preferBuiltins: false,
     }),
+    typescript({ experimentalDecorators: true, outDir: DIST_FOLDER }),
     // copy({
     //   targets: [{ src: "icon.png", dest: "dist" }],
     // }),

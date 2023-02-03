@@ -1,6 +1,9 @@
 {
   "name": "snapmail",
   "version": "0.3.0",
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "typings": "./dist/index.d.ts",
   "scripts": {
     "lint": "eslint --ext .ts .",
     "tsc": "tsc",
