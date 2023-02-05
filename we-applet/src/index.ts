@@ -20,7 +20,8 @@ const snapmailApplet: WeApplet = {
   ): Promise<AppletRenderers> {
     return {
       full(element: HTMLElement, registry: CustomElementRegistry) {
-        registry.define("snapmail-applet", SnapmailApp);
+        console.log("snapmailApplet.full()")
+        registry.define("snapmail-app", SnapmailApp);
         const app = new SnapmailApp(appWebsocket, "snapmail-applet");
         element.appendChild(app);
 

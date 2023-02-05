@@ -2,9 +2,13 @@
 import { fromRollup } from "@web/dev-server-rollup";
 import rollupReplace from "@rollup/plugin-replace";
 import rollupCommonjs from "@rollup/plugin-commonjs";
+import rollupBuiltins from 'rollup-plugin-node-builtins';
+import rollupGlobals from 'rollup-plugin-node-globals';
 
 const replace = fromRollup(rollupReplace);
 const commonjs = fromRollup(rollupCommonjs);
+const builtins = fromRollup(rollupBuiltins);
+const globals = fromRollup(rollupGlobals);
 
 /** Use Hot Module replacement by adding --hmr to the start command */
 const hmr = process.argv.includes("--hmr");
@@ -30,13 +34,15 @@ export default /** @type {import('@web/dev-server').DevServerConfig} */ ({
   plugins: [
     replace({
       "preventAssignment": true,
+      'process.env.ENV': JSON.stringify(process.env.ENV),      
       "process.env.DEV_MODE": JSON.stringify(process.env.DEV_MODE),
-      "process.env.HC_PORT": JSON.stringify(process.env.HC_PORT),
-      "process.env.ADMIN_PORT": JSON.stringify(process.env.ADMIN_PORT) || undefined,
+      'process.env.HC_APP_PORT': JSON.stringify(process.env.HC_PORT || 8888),
+      'process.env.HC_ADMIN_PORT': JSON.stringify(process.env.ADMIN_PORT || 8889),
+      '  COMB =': 'window.COMB =',
       delimiters: ["", ""],
     }),
-
-    commonjs(),
+    builtins(),
+  commonjs(),
     /** Use Hot Module Replacement by uncommenting. Requires @open-wc/dev-server-hmr plugin */
     // hmr && hmrPlugin({ exclude: ['**/*/node_modules/**/*'], presets: [presets.litElement] }),
   ],
