@@ -14,7 +14,6 @@
   ],
   "scripts": {
     "version"             : "hc --version && holochain --version && lair-keystore --version",
-    "postinstall"         : "bash scripts/copy-binaries.sh",
     "ci:hc-install"       : "bash scripts/npm/install-hc-tools.sh",
     "install:hash-zome"   : "bash scripts/npm/install-hash-zome.sh",
     "setup"               : "bash scripts/npm/setup.sh",
