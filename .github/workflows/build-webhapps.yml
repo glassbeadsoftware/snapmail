@@ -62,12 +62,10 @@ jobs:
       # Regroup artifacts
       - name: Regroup artifacts
         run: |
-          mkdir artifacts
+          mkdir -p artifacts
           cp electron/bin/model_zome_hash.txt ./artifacts          
           cp submodules/snapmail-rsm/target/wasm32-unknown-unknown/release/snapmail_model.wasm ./artifacts
-          cp submodules/snapmail-rsm/target/wasm32-unknown-unknown/release/snapmail.wasm ./artifacts
-          cp submodules/snapmail.dna ./artifacts
-          cp submodules/snapmail.happ ./artifacts                   
+          cp submodules/snapmail-rsm/target/wasm32-unknown-unknown/release/snapmail.wasm ./artifacts                 
           cp webapp/webhapp.workdir/snapmail.webhapp ./artifacts
           cp we-applet/webhapp.workdir/snapmail-we_applet.webhapp ./artifacts
           cp we-applet/snapmail-we_applet-ui.zip ./artifacts
