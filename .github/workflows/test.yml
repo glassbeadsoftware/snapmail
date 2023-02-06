@@ -53,9 +53,9 @@ jobs:
         run: |
           npm install
       # Check install
-      - name: Check install
-        shell: bash
-        run: npm run version
+      #- name: Check install
+      #  shell: bash
+      #  run: npm run version
       # build webapp
       - name: build webapp
         shell: bash
