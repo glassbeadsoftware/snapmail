@@ -51,7 +51,7 @@ jobs:
       - name: build webapp
         shell: bash
         run: |
-          npm run build:devtest
+          npm run package
       # build electron
       - name: build electron
         shell: bash
