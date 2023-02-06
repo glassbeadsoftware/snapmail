@@ -2,26 +2,27 @@
 
 rustc --version
 
-# For ts-bindings
+### ts-bindings
 # KEEP THIS IN SYNC
 cargo install zits --version 1.6.0
 
 
 ### install wasm32 compilation target
-#rustup install 1.61.0
-#rustup override set 1.61.0
+
+#rustup install 1.65.0
+#rustup override set 1.65.0
 
 rustup target install wasm32-unknown-unknown
 
 
-#install prebuilt "hc" tool
+### Install prebuilt "hc" tool
 
-platform="pc-windows-msvc"
+platform="windows"
 
 if [[ "$OSTYPE" == "linux-gnu"* ]]; then
-        platform="unknown-linux-gnu"
+        platform="linux"
 elif [[ "$OSTYPE" == "darwin"* ]]; then
-        platform="apple-darwin"
+        platform="mac"
 #elif [[ "$OSTYPE" == "cygwin" ]]; then
 #        # POSIX compatibility layer and Linux environment emulation for Windows
 #elif [[ "$OSTYPE" == "msys" ]]; then
@@ -38,11 +39,11 @@ echo
 echo OSTYPE is: $OSTYPE
 echo platform : $platform
 
-value=`curl -s https://api.github.com/repos/ddd-mtl/holochain-prebuilt/releases/tag/holochain-0.1.0 | grep "/hc-x86_64-$platform.tar.gz" | cut -d '"' -f 4`
+value=`curl -s https://api.github.com/repos/ddd-mtl/hc-prebuilt/releases/tags/v0.1.0 | grep "/hc_$platform.tar.gz" | cut -d '"' -f 4`
 echo Donwloading \'$value\'
 wget $value
 
-tar -xvzf submodules/hc-x86_64-$platform.tar.gz
+tar -xvzf hc_$platform.tar.gz
 echo
 echo ls ./
 ls
