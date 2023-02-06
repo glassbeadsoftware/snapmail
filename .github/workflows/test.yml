@@ -104,14 +104,14 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |       
           gh release upload "workflow-test" "electron/out-builder/Snapmail-$SNAPMAIL_VERSION.AppImage" --clobber
-          gh release upload "workflow-test" "snapmail-web-ui.zip" --clobber
-          gh release upload "workflow-test" "snapmail-we_applet-ui.zip" --clobber          
-          gh release upload "workflow-test" "snapmail-we_applet.webhapp" --clobber            
-          gh release upload "workflow-test" "snapmail.webhapp" --clobber
-          gh release upload "workflow-test" "snapmail.happ" --clobber
-          gh release upload "workflow-test" "snapmail.dna" --clobber
-          gh release upload "workflow-test" "snapmail.wasm" --clobber
-          gh release upload "workflow-test" "snapmail_model.wasm" --clobber
+          gh release upload "workflow-test" "artifacts/snapmail-web-ui.zip" --clobber
+          gh release upload "workflow-test" "artifacts/snapmail-we_applet-ui.zip" --clobber          
+          gh release upload "workflow-test" "artifacts/snapmail-we_applet.webhapp" --clobber            
+          gh release upload "workflow-test" "artifacts/snapmail.webhapp" --clobber
+          gh release upload "workflow-test" "artifacts/snapmail.happ" --clobber
+          gh release upload "workflow-test" "artifacts/snapmail.dna" --clobber
+          gh release upload "workflow-test" "artifacts/snapmail.wasm" --clobber
+          gh release upload "workflow-test" "artifacts/snapmail_model.wasm" --clobber
       - name: upload binary (macos only)
         if: ${{ runner.os == 'macOs' }}
         env:
