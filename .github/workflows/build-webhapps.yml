@@ -70,6 +70,7 @@ jobs:
           cp we-applet/webhapp.workdir/snapmail-we_applet.webhapp ./artifacts
           cp we-applet/snapmail-we_applet-ui.zip ./artifacts
           cp webapp/snapmail-web-ui.zip ./artifacts
+          cp ./hc ./artifacts
       # List uploaded files
       - name: List uploaded files
         run: ls -R

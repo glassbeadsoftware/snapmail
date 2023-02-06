@@ -42,11 +42,16 @@ jobs:
         run: |
           cp ./snapmail.happ ./electron/bin
           cp ./model_zome_hash.txt ./electron/bin
+          cp ./artifacts/hc ./
       # Install nodejs dependencies
       - name: Install nodejs dependencies
         shell: bash
         run: |
           npm install
+      # Check install
+      - name: Check install
+        shell: bash
+        run: npm run version
       # build webapp
       - name: build webapp
         shell: bash
