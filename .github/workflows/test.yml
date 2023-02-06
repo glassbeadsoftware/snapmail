@@ -30,18 +30,19 @@ jobs:
       ##    fileName: 'win-certificate.pfx'
       ##    encodedString: ${{ secrets.CERTIFICATE_WINDOWS_PFX }}
       # Download previously uploaded artifacts
-      - uses: actions/download-artifact@master
+      - uses: actions/download-artifact@v3
         with:
           name: all-happ-artifact
+          path: artifacts
       # Display structure of downloaded files
       - name: Display structure of downloaded files
         run: ls
-        working-directory: ./
+        working-directory: ./artifacts
       # Dispatch artifacts
       - name: Dispatch artifacts
         run: |
-          cp ./snapmail.happ ./electron/bin
-          cp ./model_zome_hash.txt ./electron/bin
+          cp ./artifacts/snapmail.happ ./electron/bin
+          cp ./artifacts/model_zome_hash.txt ./electron/bin
       # install hc tool
       - name: Install hc tool
         shell: bash
