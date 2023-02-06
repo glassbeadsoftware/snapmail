@@ -39,11 +39,20 @@ echo
 echo OSTYPE is: $OSTYPE
 echo platform : $platform
 
-value=`curl -s https://api.github.com/repos/ddd-mtl/hc-prebuilt/releases/tags/v0.1.0 | grep "/hc_$platform.tar.gz" | cut -d '"' -f 4`
+tarfile=hc_$platform.tar.gz
+
+if test -f "$tarfile"; then
+  echo hc file found
+  exit 0
+fi
+
+value=`curl -s https://api.github.com/repos/ddd-mtl/hc-prebuilt/releases/tags/v0.1.0 | grep "/$tarfile" | cut -d '"' -f 4`
 echo Donwloading \'$value\'
 wget $value
 
-tar -xvzf hc_$platform.tar.gz
+tar -xvzf $tarfile
+mv holochain/target/release/* ./
+rm -rf holochain
 echo
 echo ls ./
 ls
