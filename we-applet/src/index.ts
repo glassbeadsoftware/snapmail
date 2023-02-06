@@ -23,7 +23,7 @@ const snapmailApplet: WeApplet = {
         console.log("snapmailApplet.full()")
         registry.define("snapmail-app", SnapmailApp);
         const app = new SnapmailApp(appWebsocket, adminWebsocket, "snapmail-applet");
-        app.style = "flex:1;display: flex;";
+        //app.style = "flex:1;display: flex;";
         element.appendChild(app);
       },
       blocks: [],
