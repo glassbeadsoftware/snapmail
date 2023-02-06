@@ -38,15 +38,13 @@ export class SnapmailApp extends HappElement {
 
   static readonly HVM_DEF: HvmDef = DEFAULT_SNAPMAIL_DEF;
 
-  private _adminWs;
-
   // constructor() {
   //   super(HC_APP_PORT);
   // }
 
   /** */
-  constructor(socket?: AppWebsocket, appId?: InstalledAppId) {
-    super(socket? socket : HC_APP_PORT, appId);
+  constructor(appWs?: AppWebsocket, private _adminWs?: AdminWebsocket, appId?: InstalledAppId) {
+    super(appWs? appWs : HC_APP_PORT, appId);
   }
 
   get snapmailDvm(): SnapmailDvm { return this.hvm.getDvm(SnapmailDvm.DEFAULT_BASE_ROLE_NAME)! as SnapmailDvm }
@@ -60,10 +58,11 @@ export class SnapmailApp extends HappElement {
     //console.log({cell: this.snapmailDvm.cell});
     new ContextProvider(this, cellContext, this.snapmailDvm.cell);
     /** Authorize all zome calls */
-    this._adminWs = await AdminWebsocket.connect(`ws://localhost:${HC_ADMIN_PORT}`);
+    if (!this._adminWs) {
+      this._adminWs = await AdminWebsocket.connect(`ws://localhost:${HC_ADMIN_PORT}`);
+    }
     //console.log({ adminWs });
     await this.hvm.authorizeAllZomeCalls(this._adminWs);
-    await this._adminWs.authorizeSigningCredentials(this.snapmailDvm.cell.id);
     console.log("*** Zome call authorization complete");
     /** Probe */
     await this.hvm.probeAll();

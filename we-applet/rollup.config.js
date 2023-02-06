@@ -1,14 +1,12 @@
 import nodeResolve from "@rollup/plugin-node-resolve";
 import commonjs from "@rollup/plugin-commonjs";
 import typescript from "@rollup/plugin-typescript";
-
  import builtins from "rollup-plugin-node-builtins";
 // import globals from "rollup-plugin-node-globals";
-
 import babel from "@rollup/plugin-babel";
 //import { importMetaAssets } from "@web/rollup-plugin-import-meta-assets";
 //import { terser } from "rollup-plugin-terser";
-//import copy from "rollup-plugin-copy";
+import copy from "rollup-plugin-copy";
 
 //const DEV_MODE = process.env.DEV_MODE || "prod";
 
@@ -34,9 +32,9 @@ export default {
       preferBuiltins: false,
     }),
     typescript({ experimentalDecorators: true, outDir: DIST_FOLDER }),
-    // copy({
-    //   targets: [{ src: "icon.png", dest: "dist" }],
-    // }),
+    copy({
+      targets: [{ src: "../assets/favicon.ico", dest: DIST_FOLDER }, { src: "../assets/favicon.ico", dest: "demo"} ],
+    }),
     /** Minify JS */
     //terser(),
     /** Bundle assets references via import.meta.url */

@@ -15,21 +15,16 @@ const snapmailApplet: WeApplet = {
   async appletRenderers(
     appWebsocket: AppWebsocket,
     adminWebsocket: AdminWebsocket,
-    weServices: WeServices,
-    appletAppInfo: AppletInfo[],
+    _weServices: WeServices,
+    _appletAppInfo: AppletInfo[],
   ): Promise<AppletRenderers> {
     return {
       full(element: HTMLElement, registry: CustomElementRegistry) {
         console.log("snapmailApplet.full()")
         registry.define("snapmail-app", SnapmailApp);
-        const app = new SnapmailApp(appWebsocket, "snapmail-applet");
+        const app = new SnapmailApp(appWebsocket, adminWebsocket, "snapmail-applet");
+        app.style = "flex:1;display: flex;";
         element.appendChild(app);
-
-        //element.innerHTML = `<snapmail-applet style="flex:1;display: flex;"></snapmail-applet>`;
-        //const appletElement = element.querySelector("snapmail-applet") as any;
-        //appletElement.appWebsocket =  appWebsocket;
-        //appletElement.appletAppInfo = appletAppInfo;
-        //appletElement.profilesStore = weServices.profilesStore;
       },
       blocks: [],
     };
