@@ -14,6 +14,7 @@
   ],
   "scripts": {
     "version"             : "./hc --version && holochain --version && lair-keystore --version",
+    "ci:rust-install"     : "bash scripts/npm/install-rust-tools.sh",
     "ci:hc-install"       : "bash scripts/npm/install-hc-tools.sh",
     "install:hash-zome"   : "bash scripts/npm/install-hash-zome.sh",
     "setup"               : "bash scripts/npm/setup.sh",

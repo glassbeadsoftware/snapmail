@@ -8,9 +8,14 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
+      # install rust tools
+      - name: install rust tools
+        shell: bash
+        run: |
+          npm run ci:rust-install
       # install hc tool
-      - name: Install hc tool and wasm target
-        shell: bash # important because this runs shell scripts
+      - name: Install hc tool
+        shell: bash
         run: |
           npm run ci:hc-install
       # Download rsm repo
@@ -70,7 +75,6 @@ jobs:
           cp we-applet/webhapp.workdir/snapmail-we_applet.webhapp ./artifacts
           cp we-applet/snapmail-we_applet-ui.zip ./artifacts
           cp webapp/snapmail-web-ui.zip ./artifacts
-          cp ./hc ./artifacts
       # List uploaded files
       - name: List uploaded files
         run: ls -R
