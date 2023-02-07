@@ -7,7 +7,7 @@ export function delay(ms: number) {
 
 
 /** */
-export function arrayBufferToBase64(buffer: any): string {
+export function arrayBufferToBase64(buffer: ArrayBuffer): string {
   let binary = '';
   const bytes = new Uint8Array(buffer);
   const len = bytes.byteLength;
@@ -45,9 +45,9 @@ async function sha256(message: string) {
 /** */
 function chunkSubstr(str: string, size: number): Array<string> {
   const numChunks = Math.ceil(str.length / size);
-  const chunks = new Array(numChunks);
-  for (let i = 0, o = 0; i < numChunks; ++i, o += size) {
-    chunks[i] = str.substr(o, size);
+  const chunks = new Array<string>(numChunks);
+  for (let i = 0, y = 0; i < numChunks; ++i, y += size) {
+    chunks[i] = str.substring(y, y + size);
   }
   return chunks;
 }

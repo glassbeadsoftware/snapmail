@@ -11,7 +11,6 @@ import {SnapmailProxy} from "../bindings/snapmail.proxy";
 import {defaultPerspective, SnapmailPerspective} from "./snapmail.perspective";
 import {
   FileManifest, FindManifestOutput,
-  MailItem,
   SendMailInput, SignalProtocol, SignalProtocolType
 } from "../bindings/snapmail.types";
 import {AppSignal} from "@holochain/client/lib/api/app/types";
@@ -64,7 +63,7 @@ export class SnapmailZvm extends ZomeViewModel {
       //const mailItem: MailItem = payload.ReceivedMail;
       //this._perspective.mailMap[encodeHashToBase64(mailItem.ah)] = mailItem;
       //this.notifySubscribers();
-      /* await */ this.probeMails();
+      void this.probeMails();
     }
   }
 
@@ -156,9 +155,9 @@ export class SnapmailZvm extends ZomeViewModel {
         this.storePingResult(pingedAgentB64, result);
         this._canPing = true;
       })
-      .catch((error: any) => {
+      .catch((error) => {
         console.error('Ping failed for: ' + pingedAgentB64);
-        console.error({ error })
+        console.error(error);
         this.storePingResult(pingedAgentB64, false);
       })
   }
