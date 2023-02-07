@@ -1420,7 +1420,7 @@ async function showAbout() {
     //width: 900,
     title: `About ${app.getName()}`,
     message: `${app.getName()} - v${app.getVersion()}`,
-    detail: `A minimalist email app on Holochain from Glass Bead Software\n\n`
+    detail: `A minimalist messaging app on Holochain from Glass Bead Software\n\n`
       + `Data model version:\n${g_modelZomeHash}\n`
       + `DNA hash for "${g_uid}":\n${g_runningDnaIdB64}\n\n`
       + '' + RUNNER_VERSION + ''
