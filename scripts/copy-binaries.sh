@@ -1,7 +1,8 @@
 #!/bin/bash
 
 echo copy-binaries.sh for $OSTYPE
-
+echo PWD:
+pwd
 binFolder="electron/bin"
 moduleFolder="node_modules/@lightningrodlabs/electron-holochain/binaries"
 

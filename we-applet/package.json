@@ -33,7 +33,6 @@
     "@web/rollup-plugin-import-meta-assets": "^1.0.7",
     "babel-plugin-template-html-minifier": "^4.1.0",
     "@joseph184/rollup-plugin-node-builtins": "^2.1.4",
-    "bestzip": "^2.2.0",
     "concurrently": "^5.3.0",
     "deepmerge": "^4.2.2",
     "eslint": "^8.24.0",

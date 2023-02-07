@@ -4,11 +4,13 @@ import {ScopedElementsMixin} from "@open-wc/scoped-elements";
 import {TextArea} from "@vaadin/text-area";
 import {TextField} from "@vaadin/text-field";
 import {VerticalLayout} from "@vaadin/vertical-layout";
-import {Upload} from "@vaadin/upload";
+import {Upload, UploadBeforeEvent, UploadFileRejectEvent} from "@vaadin/upload";
 import {UploadFile} from "@vaadin/upload/src/vaadin-upload";
 
 
-
+/**
+ *
+ */
 export class SnapmailMailWrite extends ScopedElementsMixin(LitElement) {
 
   @property()
@@ -25,15 +27,15 @@ export class SnapmailMailWrite extends ScopedElementsMixin(LitElement) {
   getContent(): string {return this.outMailContentElem.value}
 
   get outMailSubjectElem() : TextField {
-    return this.shadowRoot!.getElementById("outMailSubjectArea") as TextField;
+    return this.shadowRoot.getElementById("outMailSubjectArea") as TextField;
   }
 
   get outMailContentElem() : TextArea {
-    return this.shadowRoot!.getElementById("outMailContentArea") as TextArea;
+    return this.shadowRoot.getElementById("outMailContentArea") as TextArea;
   }
 
   get uploadElem() : Upload {
-    return this.shadowRoot!.getElementById("myUpload") as Upload;
+    return this.shadowRoot.getElementById("myUpload") as Upload;
   }
 
 
@@ -52,7 +54,7 @@ export class SnapmailMailWrite extends ScopedElementsMixin(LitElement) {
 
 
   /** */
-  private onUpload(e:any) {
+  private onUpload(e: UploadBeforeEvent) {
     console.log('upload-before event: ', e);
     const file = e.detail.file;
     //const xhr = event.detail.xhr;
@@ -62,18 +64,18 @@ export class SnapmailMailWrite extends ScopedElementsMixin(LitElement) {
 
     /** Read file just so we can change vaadin's upload-file css */
     const reader = new FileReader();
-    reader.addEventListener('loadend', (event:any) => {
+    reader.addEventListener('loadend', (event: unknown) => {
       console.log('FileReader loadend event: ', event);
       /** Hide all unnecessary UI */
-      const uploadFiles = this.uploadElem.shadowRoot!.querySelectorAll("vaadin-upload-file");
+      const uploadFiles = this.uploadElem.shadowRoot.querySelectorAll("vaadin-upload-file");
       console.log({uploadFiles});
       uploadFiles.forEach((uploadFile) => {
-        const progressBar = uploadFile.shadowRoot!.querySelector("vaadin-progress-bar");
-        progressBar!.style.display = 'none';
-        const status = uploadFile.shadowRoot!.querySelector('[part="status"]') as HTMLElement;
-        status!.style.display = 'none';
-        const start = uploadFile.shadowRoot!.querySelector('[part="start-button"]') as HTMLElement;
-        start!.style.display = 'none';
+        const progressBar = uploadFile.shadowRoot.querySelector("vaadin-progress-bar");
+        progressBar.style.display = 'none';
+        const status: HTMLElement = uploadFile.shadowRoot.querySelector('[part="status"]');
+        status.style.display = 'none';
+        const start: HTMLElement = uploadFile.shadowRoot.querySelector('[part="start-button"]');
+        start.style.display = 'none';
       });
     });
     reader.readAsArrayBuffer(file);
@@ -97,8 +99,8 @@ export class SnapmailMailWrite extends ScopedElementsMixin(LitElement) {
                          style="width:280px; margin-top:0;"
                          max-file-size="8000000" 
                          max-files="10"
-                         @file-reject="${(e:any) => {window.alert(e.detail.file.name + ' error: ' + e.detail.error);}}"
-                         @upload-before="${this.onUpload}"
+                         @file-reject="${(e:UploadFileRejectEvent) => {window.alert(e.detail.file.name + ' error: ' + e.detail.error);}}"
+                         @upload-before="${(e:UploadBeforeEvent) => this.onUpload(e)}"
           >
             <span slot="drop-label">Maximum file size: 8 MB</span>
           </vaadin-upload>            

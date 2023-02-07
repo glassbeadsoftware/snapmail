@@ -404,7 +404,7 @@ export interface OutMail {
   bcc: AgentPubKey[]
 }
 
-/** Entry representing an AcknowldegmentReceipt on the DHT waiting to be received */
+/** Entry representing an AcknowledgmentReceipt on the DHT waiting to be received */
 export interface PendingAck {
   outmail_eh: EntryHash
   /** Signed outmail_eh */

@@ -1,7 +1,22 @@
 
-// /** -- APP SETUP -- **/
+
+export interface MyElectronApi {
+  dnaHashSync: (dnaHashB64: string) => unknown,
+  newMailSync: (title: string, body: string)  => unknown,
+  startingInfo: (startingHandle, dnaHash)  => string,
+  newCountAsync: (newCount)  => unknown,
+  DEV_MODE: string,
+  versions: {
+    node: string,
+    chrome: string,
+    electron: string,
+  }
+}
+
+/** APP SETUP */
+
 export let DEV_MODE: string;
-export const MY_ELECTRON_API = (window as any).myElectronAPI;
+export const MY_ELECTRON_API = 'myElectronAPI' in window? window.myElectronAPI as MyElectronApi : undefined;
 console.log("MY_ELECTRON_API = ", MY_ELECTRON_API);
  if (MY_ELECTRON_API) {
    DEV_MODE = MY_ELECTRON_API.DEV_MODE;

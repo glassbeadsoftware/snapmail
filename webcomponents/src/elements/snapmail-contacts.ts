@@ -3,8 +3,8 @@ import { state, property } from "lit/decorators.js";
 import {Grid, GridColumn, GridEventContext} from "@vaadin/grid";
 import {VerticalLayout} from "@vaadin/vertical-layout";
 import {HorizontalLayout} from "@vaadin/horizontal-layout";
-import {ComboBox} from "@vaadin/combo-box";
-import {TextField} from "@vaadin/text-field";
+import {ComboBox, ComboBoxChangeEvent} from "@vaadin/combo-box";
+import {TextField, TextFieldValueChangedEvent} from "@vaadin/text-field";
 import {Icon} from "@vaadin/vaadin-icon";
 import {Button} from "@vaadin/button";
 import {Dialog} from "@vaadin/dialog";
@@ -17,10 +17,12 @@ import {SnapmailZvm} from "../viewModel/snapmail.zvm";
 import {DEV_MODE} from "../electron";
 import {MenuBar} from "@vaadin/menu-bar";
 import {Dictionary} from "@ddd-qc/cell-proxy";
+import {GridItemModel} from "@vaadin/grid/src/vaadin-grid";
+
 
 /** Find and collect grid items that have the given agentIds */
-function ids_to_items(ids: string[], items: ContactGridItem[]) {
-  const subGroup = [];
+function ids_to_items(ids: string[], items: ContactGridItem[]): ContactGridItem[] {
+  const subGroup: ContactGridItem[] = [];
   for (const id of ids) {
     for (const item of items) {
       //const itemStr = htos(item.agentId);
@@ -63,15 +65,15 @@ export class SnapmailContacts extends ZomeElement<SnapmailPerspective, SnapmailZ
   /** -- Getters -- */
 
   get contactGridElem() : Grid {
-    return this.shadowRoot!.getElementById("contactGrid") as Grid;
+    return this.shadowRoot.getElementById("contactGrid") as Grid;
   }
 
   get contactSearchElem() : TextField {
-    return this.shadowRoot!.getElementById("contactSearch") as TextField;
+    return this.shadowRoot.getElementById("contactSearch") as TextField;
   }
 
   get groupComboElem() : ComboBox {
-    return this.shadowRoot!.getElementById("groupCombo") as ComboBox;
+    return this.shadowRoot.getElementById("groupCombo") as ComboBox;
   }
 
 
@@ -92,7 +94,7 @@ export class SnapmailContacts extends ZomeElement<SnapmailPerspective, SnapmailZ
 
     this.initGroupsDialog();
 
-    this.contactGridElem.cellClassNameGenerator = function(column, rowData:any) {
+    this.contactGridElem.cellClassNameGenerator = function(column, rowData: GridItemModel<ContactGridItem>) {
       //console.log(rowData)
       let classes = rowData.item.status;
       if (column.path === 'status') {
@@ -104,7 +106,7 @@ export class SnapmailContacts extends ZomeElement<SnapmailPerspective, SnapmailZ
       return classes;
     };
 
-    this.contactGridElem.shadowRoot!.appendChild(stylesTemplate.content.cloneNode(true));
+    this.contactGridElem.shadowRoot.appendChild(stylesTemplate.content.cloneNode(true));
 
     this.loadGroupList(this.cell.dnaHash);
 
@@ -116,7 +118,7 @@ export class SnapmailContacts extends ZomeElement<SnapmailPerspective, SnapmailZ
       //   return;
       // }
       try {
-          this._zvm.probeHandles();
+          void this._zvm.probeHandles();
       } catch(e) {
         console.error("_10sec.probeHandles() failed: ", e)
       }
@@ -139,16 +141,16 @@ export class SnapmailContacts extends ZomeElement<SnapmailPerspective, SnapmailZ
     }, 2 * 1000);
 
     /** Add Refresh button in DEBUG */
-    const contactsMenu = this.shadowRoot!.getElementById("ContactsMenu") as MenuBar;
+    const contactsMenu = this.shadowRoot.getElementById("ContactsMenu") as MenuBar;
     if (DEV_MODE === 'dev' && contactsMenu) {
       contactsMenu.items = [{ text: 'Refresh' }];
-      contactsMenu.addEventListener('item-selected', (e:any) => {
+      contactsMenu.addEventListener('item-selected', e => {
         console.log('item-selected', JSON.stringify(e.detail.value));
         if(e.detail.value.text === 'Refresh') {
           console.log("contactsMenu Refresh clicked")
           //contactsMenu.items[0].disabled = true;
           //contactsMenu.render();
-          this._zvm.probeHandles();
+          void this._zvm.probeHandles();
         }
       });
     }
@@ -164,8 +166,8 @@ export class SnapmailContacts extends ZomeElement<SnapmailPerspective, SnapmailZ
   /** Regenerate _selectedItems */
   updateSelection(): void {
     const selection: ContactGridItem[] = [];
-    for (const selecetedContactId of this._selectedContactIdB64s) {
-      const contactItem: ContactGridItem = this.allContacts.find((item) => item.agentIdB64 === selecetedContactId)!;
+    for (const selectedContactId of this._selectedContactIdB64s) {
+      const contactItem: ContactGridItem = this.allContacts.find((item) => item.agentIdB64 === selectedContactId);
       console.assert(contactItem);
       selection.push(contactItem);
     }
@@ -180,8 +182,8 @@ export class SnapmailContacts extends ZomeElement<SnapmailPerspective, SnapmailZ
     const prevSelected: string[] = [];
     const recipientTypeMap: Dictionary<string> = {};
     if (canKeepSelection) {
-      for (const selecetedContactId of this._selectedContactIdB64s) {
-        const contactItem: ContactGridItem = this.allContacts.find((item) => item.agentIdB64 === selecetedContactId)!;
+      for (const selectedContactId of this._selectedContactIdB64s) {
+        const contactItem: ContactGridItem = this.allContacts.find((item) => item.agentIdB64 === selectedContactId);
         console.assert(contactItem);
         prevSelected.push(contactItem.agentIdB64);
         recipientTypeMap[contactItem.agentIdB64] = contactItem.recipientType;
@@ -211,7 +213,7 @@ export class SnapmailContacts extends ZomeElement<SnapmailPerspective, SnapmailZ
       /** Retrieve stashed selectedItems */
       if (canKeepSelection && prevSelected.includes(agentIdB64)) {
         console.log("keep selected: " + item.username);
-        item.recipientType = recipientTypeMap[agentIdB64]!;
+        item.recipientType = recipientTypeMap[agentIdB64];
         selected.push(item);
       }
       //allItems.push(item);
@@ -238,7 +240,7 @@ export class SnapmailContacts extends ZomeElement<SnapmailPerspective, SnapmailZ
     if (this._currentGroup !== SYSTEM_GROUP_LIST[0]) {
       const ids = this._groupMap.get(this._currentGroup);
       //console.log({ids});
-      groupItems = ids_to_items(ids!, this.allContacts);
+      groupItems = ids_to_items(ids, this.allContacts);
       //console.log({items});
     }
     /** Set filter */
@@ -305,9 +307,9 @@ export class SnapmailContacts extends ZomeElement<SnapmailPerspective, SnapmailZ
     //   this.contactGridElem.deselectItem(item);
     // }
     /** Form selectedItems */
-    const selected = []
+    const selected: ContactGridItem[] = []
     for (const idB64 of this._selectedContactIdB64s) {
-      const item = this.allContacts.find((item) => item.agentIdB64 === idB64)!;
+      const item = this.allContacts.find((item) => item.agentIdB64 === idB64);
       selected.push(item)
     }
     this._selectedItems = selected;
@@ -321,8 +323,8 @@ export class SnapmailContacts extends ZomeElement<SnapmailPerspective, SnapmailZ
 
 
   /** */
-  onGridClick(e) {
-    const eventContext: GridEventContext<ContactGridItem> = this.contactGridElem.getEventContext(e)!;
+  onGridClick(e: Event) {
+    const eventContext: GridEventContext<ContactGridItem> = this.contactGridElem.getEventContext(e) as GridEventContext<ContactGridItem>;
     console.log("contactGrid.click:", eventContext)
     /* Bail if clicked on empty space */
     if (!eventContext.item) {
@@ -336,7 +338,7 @@ export class SnapmailContacts extends ZomeElement<SnapmailPerspective, SnapmailZ
     this.updateShownItems(false);
 
     //console.log({click_after_SelectedItems: this.contactGridElem.selectedItems})
-    this.dispatchEvent(new CustomEvent('contact-selected',
+    this.dispatchEvent(new CustomEvent<string[]>('contact-selected',
       { detail: this._selectedContactIdB64s, bubbles: true, composed: true }));
 
   }
@@ -346,7 +348,7 @@ export class SnapmailContacts extends ZomeElement<SnapmailPerspective, SnapmailZ
   setCurrentGroup(groupName: string): void {
     console.log('Current Group changed: ' + groupName);
     if(groupName === SYSTEM_GROUP_LIST[1]) {
-      const newDialog = this.shadowRoot!.getElementById('newGroupDlg') as Dialog;
+      const newDialog = this.shadowRoot.getElementById('newGroupDlg') as Dialog;
       this._currentGroup = SYSTEM_GROUP_LIST[0];
       newDialog.opened = true;
       return;
@@ -364,11 +366,14 @@ export class SnapmailContacts extends ZomeElement<SnapmailPerspective, SnapmailZ
   /** */
   loadGroupList(dnaId: string) {
     try {
-      this._groupMap = new Map(JSON.parse(window.localStorage[dnaId]));
-    } catch(err) {
+      const json: unknown = window.localStorage[dnaId];
+      if (typeof json !== 'string') { throw Error("Stored localStorage is not of type string")}
+      const entries = JSON.parse(json) as [string, string[]][];
+      this._groupMap = new Map(entries);
+    } catch(err: unknown) {
       if (!dnaId || dnaId === '') {
         console.warn("localStorage parse failed. No contact groups will be loaded. DnaId =", dnaId);
-        console.warn({err});
+        console.warn(err);
       }
       this._groupMap = new Map();
       this._groupMap.set('All', []);
@@ -379,7 +384,7 @@ export class SnapmailContacts extends ZomeElement<SnapmailPerspective, SnapmailZ
 
   /** */
   generateGroupComboBox(): string[] {
-    const groupKeys = [];
+    const groupKeys: string[] = [];
     //groupKeys.push(SYSTEM_GROUP_LIST[0]);
     if (this._groupMap) {
       for (const groupName of this._groupMap.keys()) {
@@ -430,7 +435,7 @@ export class SnapmailContacts extends ZomeElement<SnapmailPerspective, SnapmailZ
   initGroupsDialog() {
     console.log("initGroupsDialog() called");
     /** -- New Group Dialog */
-    const newDialog = this.shadowRoot!.getElementById('newGroupDlg') as Dialog;
+    const newDialog = this.shadowRoot.getElementById('newGroupDlg') as Dialog;
     newDialog.renderer = (root, dialog) => {
       /** Check if there is a DOM generated with the previous renderer call to update its content instead of recreation */
       if (root.firstElementChild) {
@@ -441,11 +446,11 @@ export class SnapmailContacts extends ZomeElement<SnapmailPerspective, SnapmailZ
         return;
       }
       /** Title */
-      const div = window.document.createElement('div') as HTMLDivElement;
+      const div: HTMLDivElement = window.document.createElement('div');
       div.textContent = 'Create new group: ';
       const br = window.document.createElement('br');
       /** Name text-field */
-      const vaadin = window.document.createElement('vaadin-text-field') as TextField;
+      const vaadin: TextField = window.document.createElement('vaadin-text-field');
       vaadin.placeholder = "name";
       vaadin.autofocus = true;
       vaadin.minlength = 1;
@@ -454,24 +459,25 @@ export class SnapmailContacts extends ZomeElement<SnapmailPerspective, SnapmailZ
       vaadin.allowedCharPattern = "[a-zA-Z0-9_.]";
       vaadin.addEventListener("keyup", (event) => {
         /** On return key */
-        if (event.keyCode == 13) {
-          this.createNewGroup(dialog!, vaadin);
+        //console.log("keyup", event);
+        if (event.key == "Enter") {
+          this.createNewGroup(dialog, vaadin);
         }
       });
 
       /** Confirm Button */
-      const okButton = window.document.createElement('vaadin-button') as Button;
+      const okButton: Button = window.document.createElement('vaadin-button');
       okButton.setAttribute('theme', 'primary');
       okButton.textContent = 'OK';
       okButton.setAttribute('style', 'margin-right: 1em');
-      okButton.addEventListener('click', () => {this.createNewGroup(dialog!, vaadin);});
+      okButton.addEventListener('click', () => {this.createNewGroup(dialog, vaadin);});
       /** Cancel Button */
-      const cancelButton = window.document.createElement('vaadin-button') as Button;
+      const cancelButton: Button = window.document.createElement('vaadin-button');
       cancelButton.textContent = 'Cancel';
       cancelButton.addEventListener('click', () => {
         vaadin.value = '';
         //this.groupComboElem.value = this._currentGroup;
-        dialog!.opened = false;
+        dialog.opened = false;
       });
       /** Add all elements */
       root.appendChild(div);
@@ -483,14 +489,14 @@ export class SnapmailContacts extends ZomeElement<SnapmailPerspective, SnapmailZ
 
 
       /** -- Edit Group Dialog */
-      const editDialog = this.shadowRoot!.getElementById('editGroupDlg') as Dialog;
+      const editDialog = this.shadowRoot.getElementById('editGroupDlg') as Dialog;
       editDialog.renderer = (root, dialog) => {
         console.log("Edit Groups dialog called", this._currentGroup);
         /** Check if there is a DOM generated with the previous renderer call to update its content instead of recreation */
         if (root.firstElementChild) {
           const title = root.children[0];
           title.textContent = 'Edit Group: ' + this._currentGroup;
-          const grid = root.children[1] as Grid;
+          const grid = root.children[1] as Grid<ContactGridItem>;
           grid.items = this.allContacts;
           const groupIds = this._groupMap.get(this._currentGroup);
           if (groupIds) {
@@ -513,7 +519,7 @@ export class SnapmailContacts extends ZomeElement<SnapmailPerspective, SnapmailZ
         column.header = "Name";
         column.flexGrow = 0;
         column.width = "300px";
-        const grid = window.document.createElement('vaadin-grid') as Grid;
+        const grid = window.document.createElement('vaadin-grid') as Grid<ContactGridItem>;
         grid.appendChild(selectColumn);
         grid.appendChild(column);
         grid.id = "groupGrid";
@@ -522,7 +528,7 @@ export class SnapmailContacts extends ZomeElement<SnapmailPerspective, SnapmailZ
         grid.items = this.allContacts;
         console.log({groupItems: grid.items})
         const groupIds = this._groupMap.get(this._currentGroup);
-        const items = ids_to_items(groupIds!, grid.items)
+        const items = ids_to_items(groupIds, grid.items)
         //grid.selectedItems = items; // does not work here
         /** Confirm Button */
         const okButton = window.document.createElement('vaadin-button');
@@ -533,15 +539,14 @@ export class SnapmailContacts extends ZomeElement<SnapmailPerspective, SnapmailZ
 
         /** OnClick OK save agentIds of selected items for the group */
         okButton.addEventListener('click', () => {
-          const ids = [];
-          for (const item of grid.selectedItems!) {
-            const contactItem: ContactGridItem = item as ContactGridItem;
-            ids.push(contactItem.agentIdB64);
+          const ids: string[] = [];
+          for (const item of grid.selectedItems) {
+            ids.push(item.agentIdB64);
           }
           this._groupMap.set(this._currentGroup, ids);
           grid.selectedItems = [];
           this.setCurrentGroup(this._currentGroup);
-          dialog!.opened = false;
+          dialog.opened = false;
         });
         /** Delete Button */
         const delButton = window.document.createElement('vaadin-button');
@@ -553,14 +558,14 @@ export class SnapmailContacts extends ZomeElement<SnapmailPerspective, SnapmailZ
           this.generateGroupComboBox();
           this.setCurrentGroup(SYSTEM_GROUP_LIST[0]);
           grid.selectedItems = [];
-          dialog!.opened = false;
+          dialog.opened = false;
         });
         /** Cancel Button */
         const cancelButton = window.document.createElement('vaadin-button');
         cancelButton.textContent = 'Cancel';
         cancelButton.addEventListener('click', function () {
           grid.selectedItems = [];
-          dialog!.opened = false;
+          dialog.opened = false;
         });
         /** Add all elements */
         root.appendChild(div);
@@ -589,9 +594,9 @@ export class SnapmailContacts extends ZomeElement<SnapmailPerspective, SnapmailZ
 
 
   /** */
-  onEditGroup(_e: any) {
-    const editDialog = this.shadowRoot!.getElementById('editGroupDlg') as Dialog;
-    console.log("   onEditGroup()", editDialog)
+  onEditGroup(e: unknown) {
+    const editDialog = this.shadowRoot.getElementById('editGroupDlg') as Dialog;
+    console.log("   onEditGroup()", editDialog, e)
     editDialog.opened = true;
   }
 
@@ -614,19 +619,19 @@ export class SnapmailContacts extends ZomeElement<SnapmailPerspective, SnapmailZ
                                   style="min-width:100px;max-width:200px;"
                                   .value="${this._currentGroup}"
                                   .items="${this.generateGroupComboBox()}"
-                                  @change="${(e) => this.setCurrentGroup(e.target.value)}"
+                                  @change="${(e:ComboBoxChangeEvent<string>) => this.setCurrentGroup(e.target.value)}"
                 ></vaadin-combo-box>
                 <vaadin-button id="groupsBtn" 
                                style="margin: 5px; min-width: 40px; padding-left: 5px;"
                                .disabled="${this._currentGroup == SYSTEM_GROUP_LIST[0]}"
-                               @click="${this.onEditGroup}"
+                               @click="${(e:Event) => this.onEditGroup(e)}"
                 >
                     <vaadin-icon icon="lumo:edit" slot="suffix"></vaadin-icon>
                 </vaadin-button>
                 <vaadin-text-field id="contactSearch" clear-button-visible 
                                    style="width: 35%; min-width:100px; margin-left: auto;margin-right: 3px;"
                                    placeholder="Search"
-                                   @value-changed="${(e:any) => {this._shownItems = this.filterContacts(this._selectedItems, e.detail.value);}}">
+                                   @value-changed="${(e: TextFieldValueChangedEvent) => {this._shownItems = this.filterContacts(this._selectedItems, e.detail.value);}}">
                     <vaadin-icon slot="prefix" icon="lumo:search"></vaadin-icon>
                 </vaadin-text-field>
             </vaadin-horizontal-layout>
@@ -635,7 +640,7 @@ export class SnapmailContacts extends ZomeElement<SnapmailPerspective, SnapmailZ
                          style="height: 100%; min-width: 50px;min-height: 150px;"
                          .items="${this._shownItems}"
                          .selectedItems="${this._selectedItems}"
-                         @click="${this.onGridClick}"                         
+                         @click="${(e:Event) => this.onGridClick(e)}"                         
             >
                 <vaadin-grid-column path="status" width="30px" flex-grow="0" header=" "></vaadin-grid-column>
                 <vaadin-grid-column auto-width path="username" header=" "></vaadin-grid-column>

@@ -47,7 +47,6 @@
     "@vaadin/text-area": "23.2.0",
     "@vaadin/menu-bar": "23.2.0",
     "@vaadin/vaadin-icon": "23.2.0",
-    "assert": "^2.0.0",
     "browserify-zlib": "^0.2.0",
     "cqfill": "^0.6.1",
     "moment": "^2.24.0",

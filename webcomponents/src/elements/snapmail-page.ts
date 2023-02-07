@@ -4,7 +4,7 @@ import {css, html} from "lit";
 import {Icon} from "@vaadin/vaadin-icon";
 import {ProgressBar} from "@vaadin/progress-bar";
 import {Button} from "@vaadin/button";
-import {MenuBar, MenuBarItem} from "@vaadin/menu-bar";
+import {MenuBar, MenuBarItem, MenuBarItemSelectedEvent} from "@vaadin/menu-bar";
 import {TextField} from "@vaadin/text-field";
 import {Notification} from "@vaadin/notification";
 import {Dialog} from "@vaadin/dialog";
@@ -73,32 +73,32 @@ export class SnapmailPage extends DnaElement<unknown, SnapmailDvm> {
   }
 
   get handleButtonElem(): Button {
-    return this.shadowRoot!.getElementById("handleDisplay") as Button;
+    return this.shadowRoot.getElementById("handleDisplay") as Button;
   }
 
   get handleInputElem(): TextField {
-    return this.shadowRoot!.getElementById("myHandleInput") as TextField;
+    return this.shadowRoot.getElementById("myHandleInput") as TextField;
   }
 
 
   get actionMenuElem() : MenuBar {
-    return this.shadowRoot!.getElementById("ActionBar") as MenuBar;
+    return this.shadowRoot.getElementById("ActionBar") as MenuBar;
   }
 
   get mailWriteElem() : SnapmailMailWrite {
-    return this.shadowRoot!.getElementById("mailWrite") as SnapmailMailWrite;
+    return this.shadowRoot.getElementById("mailWrite") as SnapmailMailWrite;
   }
 
   get contactsElem() : SnapmailContacts {
-    return this.shadowRoot!.getElementById("snapmailContacts") as SnapmailContacts;
+    return this.shadowRoot.getElementById("snapmailContacts") as SnapmailContacts;
   }
 
   get sendProgressBarElem() : ProgressBar {
-    return this.shadowRoot!.getElementById("sendProgressBar") as ProgressBar;
+    return this.shadowRoot.getElementById("sendProgressBar") as ProgressBar;
   }
 
   get fileboxElem() : SnapmailFilebox {
-    return this.shadowRoot!.getElementById("snapmailFilebox") as SnapmailFilebox;
+    return this.shadowRoot.getElementById("snapmailFilebox") as SnapmailFilebox;
   }
 
 
@@ -115,7 +115,7 @@ export class SnapmailPage extends DnaElement<unknown, SnapmailDvm> {
     if (SignalProtocolType.ReceivedMail in payload) {
       const item: MailItem = payload.ReceivedMail;
       console.log("received_mail:", item);
-      const notification = this.shadowRoot!.getElementById('notifyMail') as Notification;
+      const notification = this.shadowRoot.getElementById('notifyMail') as Notification;
       notification.open();
 
       const mail = payload.ReceivedMail;
@@ -137,7 +137,7 @@ export class SnapmailPage extends DnaElement<unknown, SnapmailDvm> {
         //  .onclick = () => console.log(CLICK_MESSAGE)
 
         /* Notify Electron main */
-        const reply = MY_ELECTRON_API.newMailSync(NOTIFICATION_TITLE, NOTIFICATION_BODY)
+        const reply: unknown = MY_ELECTRON_API.newMailSync(NOTIFICATION_TITLE, NOTIFICATION_BODY)
         console.log({reply});
       }
       //this._dvm.snapmailZvm.probeMails();
@@ -150,9 +150,9 @@ export class SnapmailPage extends DnaElement<unknown, SnapmailDvm> {
       console.log("received_ack:", item);
       const pingedAgentB64 = encodeHashToBase64(item.from);
       this._dvm.snapmailZvm.storePingResult(pingedAgentB64, true);
-      const notification = this.shadowRoot!.getElementById('notifyAck') as Notification;
+      const notification = this.shadowRoot.getElementById('notifyAck') as Notification;
       notification.open();
-      this._dvm.snapmailZvm.probeMails();
+      void this._dvm.snapmailZvm.probeMails();
       return;
     }
 
@@ -160,7 +160,7 @@ export class SnapmailPage extends DnaElement<unknown, SnapmailDvm> {
     if (SignalProtocolType.ReceivedFile in payload) {
       const item: FileManifest = payload.ReceivedFile;
       console.log("received_file:", item);
-      const notification = this.shadowRoot!.getElementById('notifyFile') as Notification;
+      const notification = this.shadowRoot.getElementById('notifyFile') as Notification;
       notification.open();
       return
     }
@@ -173,10 +173,10 @@ export class SnapmailPage extends DnaElement<unknown, SnapmailDvm> {
 
     this.initNotification();
 
-    customElements.whenDefined('vaadin-button').then(() => {
+    void customElements.whenDefined('vaadin-button').then(() => {
       this.handleInputElem.addEventListener("keyup", (event) => {
-        if (event.keyCode == 13) {
-          this.setUsername();
+        if (event.key == "Enter") {
+          void this.setUsername();
         }
       });
     });
@@ -185,7 +185,7 @@ export class SnapmailPage extends DnaElement<unknown, SnapmailDvm> {
     try {
       this._myHandle = await this._dvm.snapmailZvm.getMyHandle();
       await this._dvm.probeAll();
-    } catch(error:any) {
+    } catch(error: unknown) {
       console.error('probeAll() FAILED');
       console.error({ error })
       alert("Failed to connect to holochain. Conductor service might not be up and running.");
@@ -193,7 +193,7 @@ export class SnapmailPage extends DnaElement<unknown, SnapmailDvm> {
 
 
     /** -- Change title color in debug -- */
-    const titleLayout = this.shadowRoot!.getElementById('titleLayout') as HorizontalLayout;
+    const titleLayout = this.shadowRoot.getElementById('titleLayout') as HorizontalLayout;
     if (DEV_MODE === 'dev') {
       titleLayout.style.backgroundColor = "#ec8383d1";
     }
@@ -209,19 +209,19 @@ export class SnapmailPage extends DnaElement<unknown, SnapmailDvm> {
       // }
     }
     /** -- Update Abbr -- */
-    const handleAbbr = this.shadowRoot!.getElementById('handleAbbr') as HTMLElement;
+    const handleAbbr: HTMLElement = this.shadowRoot.getElementById('handleAbbr');
     handleAbbr.title = "agentId: " + this.cell.agentPubKey;
-    const titleAbbr = this.shadowRoot!.getElementById('titleAbbr') as HTMLElement;
+    const titleAbbr: HTMLElement = this.shadowRoot.getElementById('titleAbbr');
     titleAbbr.title = this.cell.dnaHash;
     /** -- Loading Done -- */
-    const loadingBar = this.shadowRoot!.getElementById('loadingBar') as ProgressBar;
+    const loadingBar = this.shadowRoot.getElementById('loadingBar') as ProgressBar;
     loadingBar.style.display = "none";
-    const mainPage = this.shadowRoot!.getElementById('mainPage') as VerticalLayout;
+    const mainPage = this.shadowRoot.getElementById('mainPage') as VerticalLayout;
     mainPage.style.display = "flex";
     /* init Send progress bar */
     this.sendProgressBarElem.style.display = "none";
     /* Init Electron specific variables */
-    this.initElectron();
+    void this.initElectron();
   }
 
 
@@ -236,7 +236,7 @@ export class SnapmailPage extends DnaElement<unknown, SnapmailDvm> {
   /** */
   initNotification() {
     /** -- Mail  */
-    const notificationMail = this.shadowRoot!.getElementById('notifyMail') as Notification;
+    const notificationMail = this.shadowRoot.getElementById('notifyMail') as Notification;
     notificationMail.renderer = (root) => {
       /** Check if there is a content generated with the previous renderer call not to recreate it. */
       if (root.firstElementChild) {
@@ -249,7 +249,7 @@ export class SnapmailPage extends DnaElement<unknown, SnapmailDvm> {
       root.appendChild(container);
     };
     /** -- Ack */
-    let notification = this.shadowRoot!.getElementById('notifyAck') as Notification;
+    let notification = this.shadowRoot.getElementById('notifyAck') as Notification;
     notification.renderer = (root) => {
       /** Check if there is a content generated with the previous renderer call not to recreate it. */
       if (root.firstElementChild) {
@@ -264,7 +264,7 @@ export class SnapmailPage extends DnaElement<unknown, SnapmailDvm> {
       root.appendChild(container);
     };
     /** -- File  */
-    notification = this.shadowRoot!.getElementById('notifyFile') as Notification;
+    notification = this.shadowRoot.getElementById('notifyFile') as Notification;
     notification.renderer = (root) => {
       /** Check if there is a content generated with the previous renderer call not to recreate it. */
       if (root.firstElementChild) {
@@ -279,12 +279,12 @@ export class SnapmailPage extends DnaElement<unknown, SnapmailDvm> {
       root.appendChild(container);
     };
 
-    this._dvm.setSignalHandler((s:any) => {this.handleSignal(s)});
+    this._dvm.setSignalHandler((s :AppSignal) => {this.handleSignal(s)});
   }
 
 
   /** */
-  async initElectron() {
+  async initElectron(): Promise<void> {
     if (!MY_ELECTRON_API) {
       return;
     }
@@ -307,13 +307,13 @@ export class SnapmailPage extends DnaElement<unknown, SnapmailDvm> {
   async setUsername(maybeHandle?: string) {
     const newHandle = maybeHandle? maybeHandle : this.handleInputElem.value;
     console.log('setUsername()', newHandle);
-    const _ah = await this._dvm.snapmailZvm.setHandle(newHandle);
+    /*const _ah =*/ await this._dvm.snapmailZvm.setHandle(newHandle);
     this._myHandle = newHandle;
     this.handleInputElem.value = '';
     this.hideHandleInput(true);
 
     /** - Update my Handle in the contacts grid */
-    this._dvm.snapmailZvm.probeHandles();
+    void this._dvm.snapmailZvm.probeHandles();
   }
 
 
@@ -371,13 +371,13 @@ export class SnapmailPage extends DnaElement<unknown, SnapmailDvm> {
     }
     /* -- Handle 'Print' -- */
     if (menuItemName === 'Print') {
-      const mailText = into_mailText(this.zPerspective.usernameMap, this._currentMailItem!)
+      const mailText = into_mailText(this.zPerspective.usernameMap, this._currentMailItem)
       /** Save to disk */
       const blob = new Blob([mailText], { type: 'text/plain'});
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = this._currentMailItem!.mail.subject + ".txt";
+      a.download = this._currentMailItem.mail.subject + ".txt";
       a.addEventListener('click', () => {}, false);
       a.click();
     }
@@ -385,7 +385,7 @@ export class SnapmailPage extends DnaElement<unknown, SnapmailDvm> {
     /* -- Handle 'Trash' -- */
     if (menuItemName === 'Trash') {
       this._replyOf = undefined;
-      this._dvm.snapmailZvm.deleteMail(encodeHashToBase64(this._currentMailItem.ah))
+      void this._dvm.snapmailZvm.deleteMail(encodeHashToBase64(this._currentMailItem.ah))
         .then((/*maybeAh: ActionHash | null*/) => this._dvm.snapmailZvm.probeMails()) // On delete, refresh filebox
       this.fileboxElem.resetSelection();
     }
@@ -429,11 +429,11 @@ export class SnapmailPage extends DnaElement<unknown, SnapmailDvm> {
       this.mailWriteElem.subject = 'Fwd: ' + this._currentMailItem.mail.subject;
       let fwd = '\n\n';
       fwd += '> ' + 'Mail from: '
-        + this.zPerspective.usernameMap[encodeHashToBase64(this._currentMailItem!.author)]
-        + ' at ' + customDateString(this._currentMailItem!.date)
+        + this.zPerspective.usernameMap[encodeHashToBase64(this._currentMailItem.author)]
+        + ' at ' + customDateString(this._currentMailItem.date)
         + '\n';
-      const arrayOfLines = this._currentMailItem!.mail.payload.match(/[^\r\n]+/g);
-      for (const line of arrayOfLines!) {
+      const arrayOfLines = this._currentMailItem.mail.payload.match(/[^\r\n]+/g);
+      for (const line of arrayOfLines) {
         fwd += '> ' + line + '\n';
       }
       this.mailWriteElem.content = fwd;
@@ -442,7 +442,7 @@ export class SnapmailPage extends DnaElement<unknown, SnapmailDvm> {
     /** -- Handle 'Refresh' -- */
     if (menuItemName === 'Refresh') {
       //console.log('Refresh called');
-      this._dvm.probeAll();
+      void this._dvm.probeAll();
     }
   }
 
@@ -455,7 +455,7 @@ export class SnapmailPage extends DnaElement<unknown, SnapmailDvm> {
       return;
     }
     this._currentMailItem = item.mailItem;
-    this._dvm.snapmailZvm.acknowledgeMail(item.id);
+    void this._dvm.snapmailZvm.acknowledgeMail(item.id);
   }
 
 
@@ -472,7 +472,7 @@ export class SnapmailPage extends DnaElement<unknown, SnapmailDvm> {
   async sendAction(): Promise<void> {
     /** Submit each attachment */
     const files = this.mailWriteElem.files;
-    let filesToSend: ActionHash[] = [];
+    const filesToSend: ActionHash[] = [];
     for (const file of files) {
       // /** Causes stack error on big files */
       // if (!base64regex.test(file.content)) {
@@ -489,12 +489,12 @@ export class SnapmailPage extends DnaElement<unknown, SnapmailDvm> {
 
 
       /** Submit each chunk */
-      let chunksToSend: EntryHash[] = [];
+      const chunksToSend: EntryHash[] = [];
       for (let i = 0; i < splitObj.numChunks; ++i) {
         const eh = await this._dvm.snapmailZvm.writeChunk(splitObj.dataHash, i, splitObj.chunks[i]);
         chunksToSend.push(eh);
       }
-      const ah = await this._dvm.snapmailZvm.writeManifest(splitObj.dataHash, file.name, filetype, file.size, chunksToSend)
+      const ah = await this._dvm.snapmailZvm.writeManifest(splitObj.dataHash, file.name, filetype, file.size, chunksToSend);
       filesToSend.push(ah);
     }
 
@@ -529,9 +529,9 @@ export class SnapmailPage extends DnaElement<unknown, SnapmailDvm> {
       to: toList, cc: ccList, bcc: bccList,
       manifest_address_list: filesToSend,
     };
-    console.log('sending mail:', mail)
+    console.log('sending mail:', mail);
     /* Send Mail */
-    const outmail_hh = await this._dvm.snapmailZvm.sendMail(mail);
+    /*const outmail_hh =*/ await this._dvm.snapmailZvm.sendMail(mail);
 
     /** Clear UI */
     this.clearWriteMail();
@@ -561,12 +561,12 @@ export class SnapmailPage extends DnaElement<unknown, SnapmailDvm> {
     /** Send */
     if (actionName === 'Send') {
       /** Hide actionMenu and display progress bar */
-      const sendingTitle = this.shadowRoot!.getElementById('sendingTitle') as HTMLElement;
+      const sendingTitle = this.shadowRoot.getElementById('sendingTitle');
       this.sendProgressBarElem.style.display = "block";
       sendingTitle.style.display = "block";
       this.actionMenuElem.style.display = "none";
       /** Perform send */
-      this.sendAction().then(() => {
+      void this.sendAction().then(() => {
         /** Show actionMenu and hid progress bar */
         this.sendProgressBarElem.style.display = "none";
         sendingTitle.style.display = "none";
@@ -594,7 +594,7 @@ export class SnapmailPage extends DnaElement<unknown, SnapmailDvm> {
         <!-- TITLE BAR -->
         <vaadin-horizontal-layout id="titleLayout" theme="spacing-xs" style="background-color:beige; width:100%;">
           <abbr title="dna" id="titleAbbr">
-              <img src="favicon.ico" width="32" height="32" style="padding-left: 5px;padding-top: 5px;"/>
+              <img src="favicon.ico" width="32" height="32" alt="favicon" style="padding-left: 5px;padding-top: 5px;"/>
           </abbr>
           <span id="snapTitle" style="text-align: center; font-size: larger; padding: 10px 0px 10px 5px;">SnapMail</span>
           <span id="networkIdDisplay" style="text-align: center; font-size: small; padding: 15px 2px 0px 5px;"></span>
@@ -608,8 +608,8 @@ export class SnapmailPage extends DnaElement<unknown, SnapmailDvm> {
           <vaadin-split-layout orientation="vertical" style="width:100%; height:50%; margin-top:0px;">
             <snapmail-filebox id="snapmailFilebox"
                               style="min-height:50px; margin-top:0;height: auto;"
-                              @menu-item-selected="${(e:any) => {this.onFileboxMenuItemSelected(e.detail)}}"
-                              @mail-item-selected="${(e:any) => {this.onMailSelected(e.detail)}}"
+                              @menu-item-selected="${(e: CustomEvent<string>) => {this.onFileboxMenuItemSelected(e.detail)}}"
+                              @mail-item-selected="${(e: CustomEvent<MailGridItem>) => {this.onMailSelected(e.detail)}}"
             ></snapmail-filebox>
             <vaadin-horizontal-layout theme="spacing-xs" style="min-height:120px; height:50%; width:100%; margin-top: 4px; flex: 1 1 100px">
               <snapmail-mail-view style="width:70%;height:100%;"
@@ -632,7 +632,7 @@ export class SnapmailPage extends DnaElement<unknown, SnapmailDvm> {
               ></snapmail-mail-write>
               <snapmail-contacts id="snapmailContacts"
                                  style="min-width: 20px; width: 35%;"
-                                 @contact-selected="${(e:any) => {this.disableSendButton(e.detail.length == 0)}}"></snapmail-contacts>
+                                 @contact-selected="${(e: CustomEvent<string[]>) => {this.disableSendButton(e.detail.length == 0)}}"></snapmail-contacts>
             </vaadin-split-layout>
     
             <!-- ACTION MENU BAR -->
@@ -640,7 +640,7 @@ export class SnapmailPage extends DnaElement<unknown, SnapmailDvm> {
                 <vaadin-menu-bar id="ActionBar" theme="primary"
                                  style="height:40px; margin-top:5px; margin-bottom:10px;"
                                  .items="${this._actionMenuItems}"
-                                 @item-selected="${(e:any) => {this.onActionMenuSelected(e.detail.value.text)}}"
+                                 @item-selected="${(e:MenuBarItemSelectedEvent) => {this.onActionMenuSelected(e.detail.value.text)}}"
                 >
                 </vaadin-menu-bar>
             </div>
@@ -665,7 +665,7 @@ export class SnapmailPage extends DnaElement<unknown, SnapmailDvm> {
                 <vaadin-button id="setMyHandleButton" theme="icon"
                                title="unknown"
                                .hidden="${this._canHideHandleInput}"
-                               @click=${(e:any) => this.setUsername(e.detail.value)}>
+                               @click=${(e) => this.setUsername(e.detail.value as string)}>
                     <vaadin-icon icon="lumo:checkmark" slot="prefix"></vaadin-icon>
                 </vaadin-button>
                 <vaadin-button id="cancelHandleButton" theme="icon"

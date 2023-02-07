@@ -1,13 +1,14 @@
 import {css, html, PropertyValues} from "lit";
-import {Grid, GridColumn} from "@vaadin/grid";
+import {Grid, GridActiveItemChangedEvent, GridColumn} from "@vaadin/grid";
 import { state, property } from "lit/decorators.js";
-import {FileManifest, Mail, MailItem} from "../bindings/snapmail.types";
+import {FileManifest, FindManifestOutput, Mail, MailItem} from "../bindings/snapmail.types";
 import {SnapmailPerspective} from "../viewModel/snapmail.perspective";
 import {base64ToArrayBuffer} from "../utils";
 import {redStopEmoji, hourGlassEmoji, stylesTemplate, greenCheckEmoji} from "../constants";
 import {AttGridItem} from "../mail";
 import {ZomeElement} from "@ddd-qc/lit-happ";
 import {SnapmailZvm} from "../viewModel/snapmail.zvm";
+import {GridItemModel} from "@vaadin/grid/src/vaadin-grid";
 
 
 /**
@@ -28,7 +29,7 @@ export class SnapmailAttView extends ZomeElement<SnapmailPerspective, SnapmailZv
   /** -- Getter -- */
 
   get attachmentGridElem() : Grid {
-    return this.shadowRoot!.getElementById("attachmentGrid") as Grid;
+    return this.shadowRoot.getElementById("attachmentGrid") as Grid;
   }
 
 
@@ -38,7 +39,7 @@ export class SnapmailAttView extends ZomeElement<SnapmailPerspective, SnapmailZv
   protected firstUpdated(_changedProperties: PropertyValues) {
     super.firstUpdated(_changedProperties);
 
-    this.attachmentGridElem.cellClassNameGenerator = (column, rowData:any) => {
+    this.attachmentGridElem.cellClassNameGenerator = (column, rowData: GridItemModel<AttGridItem>) => {
       //console.log({rowData})
       let classes = '';
       if (!rowData.item.hasFile) {
@@ -49,22 +50,20 @@ export class SnapmailAttView extends ZomeElement<SnapmailPerspective, SnapmailZv
       return classes;
     };
 
-    this.attachmentGridElem.shadowRoot!.appendChild(stylesTemplate.content.cloneNode(true));
+    this.attachmentGridElem.shadowRoot.appendChild(stylesTemplate.content.cloneNode(true));
   }
 
 
   /** Return manifest with added content field */
   async fetchFile(contentHash: string): Promise<FileManifest | null> {
-    let manifest;
+    let manifest: FindManifestOutput;
     try {
       manifest = await this._zvm.findManifest(contentHash);
     } catch(e) {
       return null;
     }
     const chunks = [];
-    let i = 0;
     for (const chunkAddress of manifest.chunks) {
-      i++;
       try {
         const chunk = await this._zvm.getChunk(chunkAddress);
         chunks.push(chunk);
@@ -85,16 +84,16 @@ export class SnapmailAttView extends ZomeElement<SnapmailPerspective, SnapmailZv
   /** */
   async fillAttachmentGrid(mail: Mail): Promise<number> {
     /** Convert each attachment to gridItem */
-    const items = [];
+    const items: AttGridItem[] = [];
     let missingCount = 0;
     console.log("   fillAttachmentGrid()", mail.attachments.length);
     for (const attachmentInfo of mail.attachments) {
       /** Check if attachment is available in local source-chain */
       let hasDownloadedAttachment = false;
       try {
-        const _fileManifest = await this._zvm.getManifest(attachmentInfo.manifest_eh);
+        /*const fileManifest =*/ await this._zvm.getManifest(attachmentInfo.manifest_eh);
         hasDownloadedAttachment = true;
-      } catch (e:any) {
+      } catch (_e) {
         // TODO error message?
         missingCount += 1;
       }
@@ -107,7 +106,7 @@ export class SnapmailAttView extends ZomeElement<SnapmailPerspective, SnapmailZv
         status: hasDownloadedAttachment? ' ' : redStopEmoji,
         hasFile: hasDownloadedAttachment,
       };
-      items.push(item)
+      items.push(item);
     }
 
     /** Reset grid */
@@ -123,7 +122,7 @@ export class SnapmailAttView extends ZomeElement<SnapmailPerspective, SnapmailZv
 
 
   /** */
-  async onActiveChanged(item: AttGridItem) {
+  async onActiveChanged(item: AttGridItem): Promise<void> {
     console.log("   <snapmail-att-view>.onActiveChanged()", item)
     //this._activeItem = null;
     this._selectedItems = [];
@@ -139,7 +138,7 @@ export class SnapmailAttView extends ZomeElement<SnapmailPerspective, SnapmailZv
     }
 
     /** Get File on source chain */
-    const manifest = await this.fetchFile(item.fileId)
+    const manifest: FileManifest | null = await this.fetchFile(item.fileId)
 
     if (!manifest) {
       return;
@@ -160,7 +159,7 @@ export class SnapmailAttView extends ZomeElement<SnapmailPerspective, SnapmailZv
       const types = fields[1].split(';');
       filetype = types[0];
     }
-    const byteArray = base64ToArrayBuffer(manifest.content!)
+    const byteArray = base64ToArrayBuffer(manifest.content)
     const blob = new Blob([byteArray], { type: filetype});
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -180,12 +179,12 @@ export class SnapmailAttView extends ZomeElement<SnapmailPerspective, SnapmailZv
 
 
   /** */
-  async willUpdate(changedProperties: PropertyValues<this>) {
+  async willUpdate(changedProperties: PropertyValues<this>): Promise<void> {
     //console.log("<snapmail-att-view>.willUpdate()", changedProperties)
     if (changedProperties.has('inMailItem')) {
       const missingCount = await this.fillAttachmentGrid(this.inMailItem.mail);
       if (missingCount > 0) {
-        this._zvm.getMissingAttachments(this.inMailItem.author, this.inMailItem.ah);
+        await this._zvm.getMissingAttachments(this.inMailItem.author, this.inMailItem.ah);
       }
     }
   }
@@ -198,7 +197,7 @@ export class SnapmailAttView extends ZomeElement<SnapmailPerspective, SnapmailZv
                    style="border-style:dotted; height:auto;"
                    .items="${this.inMailItem? this._items : []}"
                    .selectedItems="${this._selectedItems}"
-                   @active-item-changed="${(e: any) => {this.onActiveChanged(e.detail.value)}}">
+                   @active-item-changed="${(e: GridActiveItemChangedEvent<AttGridItem>) => {void this.onActiveChanged(e.detail.value)}}">
         <vaadin-grid-column path="status" header=" " width="40px" flex-grow="0"></vaadin-grid-column>
         <vaadin-grid-column auto-width path="filename" header="Attachments"></vaadin-grid-column>
         <vaadin-grid-column auto-width path="filesize" text-align="end" header="KiB"></vaadin-grid-column>

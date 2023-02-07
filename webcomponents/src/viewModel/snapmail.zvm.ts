@@ -238,7 +238,7 @@ export class SnapmailZvm extends ZomeViewModel {
     filename: string,
     filetype: string,
     orig_filesize: number,
-    chunks: EntryHash[]): Promise<any> {
+    chunks: EntryHash[]): Promise<ActionHash> {
     const params = {
       data_hash: dataHash,
       filename, filetype, orig_filesize,

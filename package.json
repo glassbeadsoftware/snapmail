@@ -14,15 +14,16 @@
   ],
   "scripts": {
     "version"             : "./hc --version && holochain --version && lair-keystore --version",
-    "ci:rust-install"     : "bash scripts/npm/install-rust-tools.sh",
+    "ci:rust-install"     : "bash scripts/npm/install-rust.sh",
+    "ci:zits-install"     : "bash scripts/npm/install-zits.sh",
     "ci:hc-install"       : "bash scripts/npm/install-hc-tools.sh",
     "install:hash-zome"   : "bash scripts/npm/install-hash-zome.sh",
     "setup"               : "bash scripts/npm/setup.sh",
     "hash-zome"           : "bash scripts/npm/hash-zome.sh",
-    "build:happ"          : "bash scripts/npm/dist-dna.sh && npm run hash-zome && bash scripts/ts-bindings.sh",
+    "build:happ"          : "bash scripts/npm/dist-dna.sh && npm run hash-zome",
     "build:webapp"        : "npm run build -w webcomponents && npm run build -w webapp",
 
-    "build:devtest"       : "npm run clean:agents & npm run build:happ && npm run build:webapp",
+    "build:devtest"       : "npm run clean:agents & npm run build:happ && bash scripts/ts-bindings.sh && npm run build:webapp",
     "devtest"             : "npm run build:devtest && npm run start",
     "devtest:electron"    : "npm run build:devtest && DEV_MODE='dev' npm run devtest -w electron",
     "devtest:we"          : "npm run build:devtest && npm run devtest -w we-applet",
@@ -40,7 +41,7 @@
     "dist:we"             : "npm run build:devtest && npm run build -w we-applet && npm run package -w we-applet",
     "dist:win"            : "bash scripts/copy-binaries.sh && npm run dist:win -w electron",
 
-    "update-version"         : "bash scripts/update-version-number.sh $(cat ./package.json | grep version | head -1 | awk -F: '{ print $2 }' | sed 's/[\",]//g' | tr -d '[[:space:]]')",
+    "update-version"      : "bash scripts/update-version-number.sh $(cat ./package.json | grep version | head -1 | awk -F: '{ print $2 }' | sed 's/[\",]//g' | tr -d '[[:space:]]')",
 
     "clean"               : "bash scripts/npm/clean.sh",
     "clean:npm"           : "bash scripts/npm/clean-npm.sh",
@@ -48,7 +49,6 @@
     "clean:all"           : "npm run clean:agents & npm run clean:npm & npm run clean"
   },
   "devDependencies": {
-    "@holochain-playground/cli": "^0.0.11",
     "@web/rollup-plugin-html": "^1.11.0",
     "@types/ws": "^8.5.3",
     "bestzip": "^2.2.0",
