@@ -166,7 +166,6 @@ export class SnapmailFilebox extends ZomeElement<SnapmailPerspective, SnapmailZv
     items[3].disabled = isDisabled;
 
     this._menuItems = items;
-    //this.requestUpdate();
   }
 
 

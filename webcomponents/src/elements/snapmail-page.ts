@@ -58,7 +58,7 @@ export class SnapmailPage extends DnaElement<unknown, SnapmailDvm> {
   @state() private _currentMailItem?: MailItem;
 
 
-  private readonly _actionMenuItems: MenuBarItem[] = [
+  private _actionMenuItems: MenuBarItem[] = [
     { text: 'Clear' },
     //{ text: '+File', disabled: true },
     { text: 'Snap', disabled: true },
@@ -333,17 +333,22 @@ export class SnapmailPage extends DnaElement<unknown, SnapmailDvm> {
 
   /** */
   disableSendButton(isDisabled: boolean): void {
-    //console.log("disableSendButton()", isDisabled);
-    if (this.actionMenuElem.items[2].disabled == isDisabled) {
+    console.log("disableSendButton()", isDisabled);
+    // if (this.actionMenuElem.items[2].disabled == isDisabled) {
+    //   return;
+    // }
+    // this.actionMenuElem.items[2].disabled = isDisabled;
+    // /** Deep-copy MenuBarItems so it can trigger a new render */
+    // const items = JSON.parse(JSON.stringify(this.actionMenuElem.items)) as MenuBarItem[];
+    // items[2].disabled = isDisabled;
+    // this.actionMenuElem.items = items;
+
+
+    if (this._actionMenuItems[2].disabled == isDisabled) {
       return;
     }
-
-    this.actionMenuElem.items[2].disabled = isDisabled;
-    /** Deep-copy MenuBarItems so it can trigger a new render */
-    const items = JSON.parse(JSON.stringify(this.actionMenuElem.items)) as MenuBarItem[];
-    items[2].disabled = isDisabled;
-    this.actionMenuElem.items = items;
-    //this.requestUpdate();
+    this._actionMenuItems[2].disabled = isDisabled;
+    this.requestUpdate();
   }
 
 
@@ -539,18 +544,6 @@ export class SnapmailPage extends DnaElement<unknown, SnapmailDvm> {
   }
 
 
-  // /** */
-  // allowActionMenu(canShowMenu: boolean): void {
-  //   if (canShowMenu) {
-  //     this.sendProgressBarElem.style.display = "none";
-  //     this.actionMenuElem.style.display = "block";
-  //   } else  {
-  //     this.sendProgressBarElem.style.display = "block";
-  //     this.actionMenuElem.style.display = "none";
-  //   }
-  // }
-
-
   /** */
   onActionMenuSelected(actionName: string) {
     /** Clear */
@@ -578,7 +571,7 @@ export class SnapmailPage extends DnaElement<unknown, SnapmailDvm> {
 
   /** */
   render() {
-    console.log("<snapmail-page>.render()", this._myHandle);
+    console.log("<snapmail-page>.render()", this._myHandle, this._actionMenuItems, this.actionMenuElem? this.actionMenuElem.items : "<none>");
 
     return html`
       <!-- Loading Spinner -->

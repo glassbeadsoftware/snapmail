@@ -48,15 +48,15 @@ export const systemFolders = {
 
 /** Return True if mail has been deleted */
 export function isMailDeleted(mailItem: MailItem): boolean {
-  console.log({isMailDeleted_mail: mailItem})
+  //console.log({isMailDeleted_mail: mailItem})
   if ("In" in mailItem.state) {
     const inState = mailItem.state.In;
-    console.log({inState})
+    //console.log({inState})
     return 'Deleted' in inState;
   }
   if ("Out" in mailItem.state) {
     const outState = mailItem.state.Out;
-    console.log({outState})
+    //console.log({outState})
     return 'Deleted' in outState;
   }
   console.error('isMailDeleted() Invalid mailItem object', mailItem)
