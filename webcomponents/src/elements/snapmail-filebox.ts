@@ -319,7 +319,7 @@ export class SnapmailFilebox extends ZomeElement<SnapmailPerspective, SnapmailZv
 
   /** */
   updated() {
-     /** Update active Item */
+    /** Update active Item */
     console.log('   <snapmail-filebox>.updated()');
     if(this.mailGridElem.activeItem) {
       let newActiveItem: MailGridItem;

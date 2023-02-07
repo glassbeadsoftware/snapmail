@@ -141,11 +141,11 @@ autoUpdater.autoDownload = false;
 //autoUpdater.logger = require("electron-log")
 //autoUpdater.logger.transports.file.level = "info"
 
-autoUpdater.on('error', (error:any) => {
+autoUpdater.on('error', (error) => {
   dialog.showErrorBox('Error: ', error == null ? "unknown" : (error.stack || error).toString());
 })
 
-autoUpdater.on('update-available', (info:any) => {
+autoUpdater.on('update-available', (info) => {
   dialog.showMessageBox({
     type: 'info',
     title: 'Found Update',
@@ -153,10 +153,10 @@ autoUpdater.on('update-available', (info:any) => {
     buttons: ['Yes', 'No']
   }).then((buttonIndex) => {
     if (buttonIndex.response === 0) {
-      autoUpdater.downloadUpdate().then((paths:any) => {log('debug', 'download array: ' + JSON.stringify(paths))});
+      autoUpdater.downloadUpdate().then((paths) => {log('debug', 'download array: ' + JSON.stringify(paths))});
     }
     else {
-      g_updater!.enabled = true;
+      g_updater.enabled = true;
       g_updater = null;
     }
   });
@@ -171,17 +171,17 @@ autoUpdater.on('update-available', (info:any) => {
 //   g_tray.setToolTip('SnapMail v' + app.getVersion() + append);
 // })
 
-autoUpdater.on('update-not-available', () => {
-  dialog.showMessageBox({
+autoUpdater.on('update-not-available', async () => {
+  await dialog.showMessageBox({
     title: 'No Update found',
     message: 'Current version is up-to-date.'
   });
-  g_updater!.enabled = true;
+  g_updater.enabled = true;
   g_updater = null;
 })
 
-autoUpdater.on('update-downloaded', () => {
-  dialog.showMessageBox({
+autoUpdater.on('update-downloaded', async () => {
+  await dialog.showMessageBox({
     title: 'Install Update',
     message: 'Update downloaded, application will terminate and perform update...'
   }).then(() => {
@@ -206,7 +206,7 @@ function checkForUpdates(menuItem: MenuItem, /*_focusedWindow, _event*/): void {
     } else {
       g_updater = menuItem;
       g_updater.enabled = false;
-      autoUpdater.checkForUpdates();
+      void autoUpdater.checkForUpdates();
     }
   }
 }
@@ -266,10 +266,10 @@ ipc.on('newCountAsync', (event, newCount) => {
   event.returnValue = true;
 });
 
-ipc.on('exitNetworkStatus', async (event) => {
+ipc.on('exitNetworkStatus', async (/*event*/) => {
   const indexUrl = await getIndexUrl() + g_appPort + '&UID=' + g_uid;
   console.log("indexUrl", indexUrl);
-  g_mainWindow?.loadURL(indexUrl)
+  await g_mainWindow?.loadURL(indexUrl);
 })
 
 
@@ -339,9 +339,9 @@ function updateAutoLaunchSetting(canAutoLaunch: boolean | undefined): void {
   }
   g_userSettings.set('canAutoLaunch', canAutoLaunch);
   if (canAutoLaunch) {
-    autoLauncher.enable();
+    void autoLauncher.enable();
   } else {
-    autoLauncher.disable();
+    void autoLauncher.disable();
   }
 }
 
@@ -356,7 +356,7 @@ function updateNotificationSetting(canNotify: boolean): void {
 
 
 /** */
-const createSplashWindow = (): BrowserWindow => {
+const createSplashWindow = async (): Promise<BrowserWindow> => {
   /** Create the browser window */
   const splashWindow = new BrowserWindow({
     height: 450,
@@ -375,25 +375,25 @@ const createSplashWindow = (): BrowserWindow => {
       enableWebSQL: false,
     },
     icon: process.platform === 'linux'? LINUX_ICON_FILE : ICON_FILEPATH,
-  })
-    /** once its ready to show, show */
+  });
+    /** once it's ready to show, show */
     splashWindow.once('ready-to-show', () => {
       log("debug", 'ready-to-show');
-      splashWindow.show()
+      splashWindow.show();
     })
   // /** Things to setup at start */
   // let { x, y } = g_userSettings.get('windowPosition');
   // splashWindow.setPosition(x, y);
   /** and load it */
   if (app.isPackaged) {
-    splashWindow.loadFile(SPLASH_FILE)
+    await splashWindow.loadFile(SPLASH_FILE);
   } else {
     /** development */
     //splashWindow.webContents.openDevTools();
-    splashWindow.loadURL(`${DEVELOPMENT_UI_URL}/splashscreen.html`)
+    await splashWindow.loadURL(`${DEVELOPMENT_UI_URL}/splashscreen.html`);
   }
   /** Done */
-  return splashWindow
+  return splashWindow;
 }
 
 
@@ -423,7 +423,7 @@ const createMainWindow = async (appPort: string): Promise<BrowserWindow> => {
   console.log({__dirname})
   let mainWindow: BrowserWindow | null = new BrowserWindow(options)
 
-  /** Things to setup at startup */
+  /** Things to set up at startup */
   const { x, y } = g_userSettings.get('windowPosition');
   mainWindow.setPosition(x, y);
 
@@ -450,9 +450,9 @@ const createMainWindow = async (appPort: string): Promise<BrowserWindow> => {
   mainWindow.webContents.on('new-window', function (event, url) {
     event.preventDefault()
     log('info', "new-window ; open: " + url)
-    shell.openExternal(url).then(_r => {});
+    void shell.openExternal(url);
   })
-  /** once its ready to show, show */
+  /** once it's ready to show, show */
   mainWindow.once('ready-to-show', () => {
     mainWindow?.show()
   })
@@ -461,14 +461,14 @@ const createMainWindow = async (appPort: string): Promise<BrowserWindow> => {
     // The event doesn't pass us the window size,
     // so we call the `getBounds` method which returns an object with
     // the height, width, and x and y coordinates.
-    const { width, height } = mainWindow!.getBounds();
+    const { width, height } = mainWindow.getBounds();
     // Now that we have them, save them using the `set` method.
     g_userSettings.set('windowBounds', { width, height });
   });
 
   /** Save position on close */
   mainWindow.on('close', async (event) => {
-    const positions = mainWindow!.getPosition();
+    const positions = mainWindow.getPosition();
     g_userSettings.set('windowPosition', { x: Math.floor(positions[0]), y: Math.floor(positions[1]) });
     if (g_canQuit) {
       log('info', 'WINDOW EVENT "close" -> canQuit')
@@ -476,7 +476,7 @@ const createMainWindow = async (appPort: string): Promise<BrowserWindow> => {
       mainWindow = null;
     } else {
       event.preventDefault();
-      mainWindow!.hide();
+      mainWindow.hide();
     }
   })
 
@@ -869,7 +869,7 @@ async function startMainWindow(splashWindow: BrowserWindow) {
     switch (state) {
       case StateSignal.IsReady:
         log('debug', "STATUS EVENT: IS READY")
-        // Its important to create the window before closing the current one
+        // It's important to create the window before closing the current one
         // otherwise this triggers the 'all-windows-closed' event
         g_mainWindow = await createMainWindow(g_appPort)
         splashWindow.close()
@@ -929,13 +929,13 @@ app.on('ready', async () => {
   g_userSettings = loadUserSettings(1920, 1080);
   /** Check menu items */
   const maybeMenu = Menu.getApplicationMenu()
-  const submenu = maybeMenu!.getMenuItemById('options').submenu;
+  const submenu = maybeMenu.getMenuItemById('options').submenu;
   const item = submenu.getMenuItemById('launch-at-startup');
   item.checked = g_userSettings.get('canAutoLaunch')
   const item2 = submenu.getMenuItemById('notify-msg');
   item2.checked = g_userSettings.get('canNotify')
   /** Show splashscreen */
-  const splashWindow = createSplashWindow()
+  const splashWindow = await createSplashWindow();
   /** init app */
   {
     const {sessionDataPath, uidList} = initApp(USER_DATA_PATH, APP_DATA_PATH, DNA_VERSION_FILENAME, UID_LIST_FILENAME);
@@ -958,7 +958,7 @@ app.on('ready', async () => {
       while (!splashWindow.isVisible()) {
         await delay(20)
       }
-      await promptUid(true, splashWindow);
+      await promptUid(true/*, splashWindow*/);
     }
     g_uid = g_uidList[0]
     g_userSettings.set('lastUid', g_uid)
@@ -1081,7 +1081,7 @@ app.on('ready', async () => {
  * when a second instance has been executed.
  * and calls app.requestSingleInstanceLock().
  */
-app.on('second-instance', (_event) => {
+app.on('second-instance', (/*_event*/) => {
   log('warn','\n\n second-instance detected !!! \n\n')
 });
 
@@ -1269,14 +1269,14 @@ async function promptFirstHandle(): Promise<string> {
     log('debug','user cancelled. Exiting');
     app.quit();
   }
-  return r!;
+  return r;
 }
 
 
 /**
  * @returns false if user cancelled
  */
-async function promptUid(canExitOnCancel: boolean, parentBrowserWindow: BrowserWindow): Promise<boolean> {
+async function promptUid(canExitOnCancel: boolean/*, parentBrowserWindow: BrowserWindow*/): Promise<boolean> {
   const r = await prompt({
     title: 'SnapMail: Join new Network',
     height: 180,
@@ -1331,7 +1331,7 @@ async function promptUid(canExitOnCancel: boolean, parentBrowserWindow: BrowserW
  * @returns false if user cancelled
  */
 async function promptUidSelect(canExitOnCancel: boolean): Promise<boolean> {
-  const selectOptions: any = {};
+  const selectOptions = {};
   const uidSet = new Set(g_uidList)
   const uniq = Array.from(uidSet.values());
   for (const uid of uniq) {
@@ -1365,7 +1365,7 @@ async function promptUidSelect(canExitOnCancel: boolean): Promise<boolean> {
  * @returns false if user cancelled
  */
 async function promptCanProxy(): Promise<boolean> {
-  const {response} = await dialog.showMessageBox(g_mainWindow!, {
+  const {response} = await dialog.showMessageBox(g_mainWindow, {
     title: `Proxy`,
     message: "Do you want to use a proxy?",
     defaultId: 0,
@@ -1414,9 +1414,9 @@ async function promptProxyUrl(canExitOnCancel: boolean): Promise<boolean> {
 /**
  *
  */
-async function showAbout() {
+function showAbout() {
   log("info", `[${RUNNER_VERSION}] DNA hash of "${g_uid}": ${g_runningDnaIdB64}\n`)
-  await dialog.showMessageBoxSync(g_mainWindow!, {
+  dialog.showMessageBoxSync(g_mainWindow, {
     //width: 900,
     title: `About ${app.getName()}`,
     message: `${app.getName()} - v${app.getVersion()}`,
@@ -1441,7 +1441,7 @@ async function showAbout() {
 async function confirmExit(): Promise<boolean> {
   const dontConfirmOnExit = g_userSettings.get("dontConfirmOnExit");
   //let r = await prompt({
-  const {response, checkboxChecked} = await dialog.showMessageBox(g_mainWindow!, {
+  const {response, checkboxChecked} = await dialog.showMessageBox(g_mainWindow, {
     //width: 800,
     title: `Confirm Exit`,
     message: "Incoming messages will not arrive until you relaunch SnapMail.\n" +
@@ -1461,7 +1461,7 @@ async function confirmExit(): Promise<boolean> {
 
   switch (response) {
     case 0: {
-      g_mainWindow!.hide();
+      g_mainWindow.hide();
       break;
     }
     case 2: {
@@ -1477,8 +1477,8 @@ async function confirmExit(): Promise<boolean> {
 /**
  *
  */
-async function promptHolochainError(browserWindow: BrowserWindow, msg: string) {
-  await dialog.showMessageBoxSync(browserWindow, {
+function promptHolochainError(browserWindow: BrowserWindow, msg: string) {
+  dialog.showMessageBoxSync(browserWindow, {
     //width: 900,
     title: `Fatal Error`,
     message: `Holochain not running`,
@@ -1498,7 +1498,7 @@ const optionsMenuTemplate: Array<MenuItemConstructorOptions> = [
     id: 'launch-at-startup',
     label: 'Launch at startup',
     type: 'checkbox',
-    click: function (menuItem, _browserWindow, _event) {
+    click: function (menuItem/*, _browserWindow, _event*/) {
       updateAutoLaunchSetting(menuItem.checked);
     },
   },
@@ -1506,7 +1506,7 @@ const optionsMenuTemplate: Array<MenuItemConstructorOptions> = [
     id: 'notify-msg',
     label: 'Allow Notifications',
     type: 'checkbox',
-    click: function (menuItem, _browserWindow, _event) {
+    click: function (menuItem/*, _browserWindow, _event*/) {
       updateNotificationSetting(menuItem.checked);
     },
   },
@@ -1521,8 +1521,8 @@ const networkMenuTemplate: Array<MenuItemConstructorOptions> = [
   {
     id: 'join-network',
     label: 'Join new Network',
-    click: async function (menuItem, browserWindow, _event) {
-      const changed = await promptUid(false, g_mainWindow!);
+    click: async function (/*menuItem, browserWindow, _event*/) {
+      const changed = await promptUid(false/*, g_mainWindow*/);
       if (changed) {
         await restart();
       }
@@ -1531,7 +1531,7 @@ const networkMenuTemplate: Array<MenuItemConstructorOptions> = [
   {
     id: 'switch-network',
     label: 'Switch Network',
-    click: async function (menuItem, _browserWindow, _event) {
+    click: async function (/*_menuItem, _browserWindow, _event*/) {
       const changed = await promptUidSelect(false);
       if (changed) {
         await restart();
@@ -1592,14 +1592,14 @@ const debugMenuTemplate: Array<MenuItemConstructorOptions> = [
   {
     label: 'Open Config Folder',
     click: function () {
-      shell.openExternal('file://' + CONFIG_PATH);
+      void shell.openExternal('file://' + CONFIG_PATH);
       //shell.openItem(CONFIG_PATH);
     },
   },
   {
     label: 'Open Log File',
     click: function () {
-      shell.openExternal('file://' + electronLogger.transports.file.file);
+      void shell.openExternal('file://' + electronLogger.transports.file.file);
       //shell.openItem(logger.transports.file.file);
     },
   },
@@ -1624,17 +1624,21 @@ const debugMenuTemplate: Array<MenuItemConstructorOptions> = [
     id: 'debug-network',
     label: 'Debug network',
     click: async function () {
-      const currentURL = g_mainWindow!.webContents.getURL();
+      if (!g_mainWindow) {
+        log('warn', "g_mainWindow is null. Aborting click handler.")
+        return;
+      }
+      const currentURL = g_mainWindow.webContents.getURL();
       const currentFilename = currentURL.substring(currentURL.lastIndexOf('/')+1);
       const networkFilename = NETWORK_URL.substring(NETWORK_URL.lastIndexOf('/')+1);
       //console.log({currentFilename})
       if (networkFilename != currentFilename) {
-        await g_mainWindow!.loadURL(NETWORK_URL);
+        await g_mainWindow.loadURL(NETWORK_URL);
         //const succeeded = pingBootstrap(g_bootstrapUrl);
       } else {
         const indexUrl = await getIndexUrl() + g_appPort + '&UID=' + g_uid;
         console.log("indexUrl", indexUrl);
-        await g_mainWindow!.loadURL(indexUrl);
+        await g_mainWindow.loadURL(indexUrl);
       }
     }
   },
@@ -1648,7 +1652,7 @@ const debugMenuTemplate: Array<MenuItemConstructorOptions> = [
     label: 'Reload window',
     accelerator: 'F5',
     click: async function () {
-      g_mainWindow!.reload();
+      g_mainWindow.reload();
     }
   },
 
@@ -1661,7 +1665,7 @@ const mainMenuTemplate: Array<MenuItemConstructorOptions> = [
     label: 'File',
     submenu: [{
         label:`Check for Update`,
-      click: function (menuItem: MenuItem, browserWindow: Electron.BrowserWindow | undefined, event: Electron.KeyboardEvent) {
+      click: function (menuItem: MenuItem/*, browserWindow: Electron.BrowserWindow | undefined, event: Electron.KeyboardEvent*/) {
           //log('info', menuItem)
           checkForUpdates(menuItem);
         }
@@ -1698,8 +1702,8 @@ const mainMenuTemplate: Array<MenuItemConstructorOptions> = [
   {
     label: 'Help', submenu: [{
       label: 'Report bug / issue',
-      click: function (menuItem, _browserWindow, _event) {
-        shell.openExternal(REPORT_BUG_URL)
+      click: function (/*menuItem, _browserWindow, _event*/) {
+        void shell.openExternal(REPORT_BUG_URL);
         //g_mainWindow.loadURL(REPORT_BUG_URL)
        }
       },
@@ -1709,7 +1713,7 @@ const mainMenuTemplate: Array<MenuItemConstructorOptions> = [
       {
       label: 'About',
       //accelerator: 'Command+A',
-      click: async function (menuItem, _browserWindow, _event) {
+      click: async function (/*_menuItem, _browserWindow, _event*/) {
         await showAbout();
       },
     },],
@@ -1721,14 +1725,14 @@ const mainMenuTemplate: Array<MenuItemConstructorOptions> = [
  *
  */
 const trayMenuTemplate: Array<MenuItemConstructorOptions> = [
-  { label: 'Tray / Untray', click: function (menuItem, _browserWindow, _event) {
-      g_mainWindow!.isVisible()? g_mainWindow!.hide() : g_mainWindow!.show();
+  { label: 'Tray / Untray', click: function (/*menuItem, _browserWindow, _event*/) {
+      g_mainWindow.isVisible()? g_mainWindow.hide() : g_mainWindow.show();
     }
   },
   //{ label: 'Settings', submenu: networkMenuTemplate },
   {
     label: 'Switch network',
-    click: async function (menuItem, _browserWindow, _event) {
+    click: async function (/*menuItem, _browserWindow, _event*/) {
       const changed = await promptUidSelect(false);
       if(changed) {
         await restart()
@@ -1737,7 +1741,7 @@ const trayMenuTemplate: Array<MenuItemConstructorOptions> = [
   },
   //{ label: 'Debug', submenu: debugMenuTemplate },
   { type: 'separator' },
-  { label: 'About', click: async function (menuItem, _browserWindow, _event) { await showAbout(); } },
+  { label: 'About', click: async function (/*menuItem, _browserWindow, _event*/) { await showAbout(); } },
   { type: 'separator' },
   { label: 'Exit', role: 'quit' }
 ];

@@ -57,7 +57,7 @@ export function initApp(
   /** -- Setup storage folder -- **/
   const sessionDataPath = path.join(userDataPath, sessionId);
   log('info', {sessionDataPath});
-  setupSessionStorage(sessionDataPath, modelZomeHash!, dnaVersionFilename)
+  setupSessionStorage(sessionDataPath, modelZomeHash, dnaVersionFilename)
 
   /** -- UID List -- **/
   let uidList: string[] = []
