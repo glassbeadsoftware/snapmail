@@ -43,21 +43,11 @@ jobs:
         run: |
           cp ./artifacts/snapmail.happ ./electron/bin
           cp ./artifacts/model_zome_hash.txt ./electron/bin
-      # install hc tool
-      #- name: Install hc tool
-      #  shell: bash
-      #  run: |
-      #    npm run ci:hc-install
       # Install nodejs dependencies
       - name: Install nodejs dependencies
         shell: bash
         run: |
           npm install
-      # Check install
-      #- name: Check install
-      #  shell: bash
-      #  run: npm run version
-      # build webapp
       - name: build webapp
         shell: bash
         run: |
