@@ -35,7 +35,7 @@ jobs:
           - windows-latest
     runs-on: ${{ matrix.os }}
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       # Add Windows certificate
       ##- name: Add Windows certificate
       ##  if: matrix.os == 'windows-latest' && startsWith(github.ref, 'refs/tags/')
@@ -48,15 +48,21 @@ jobs:
       - uses: actions/download-artifact@master
         with:
           name: all-happ-artifact
+          path: artifacts          
       # Display structure of downloaded files
       - name: Display structure of downloaded files
         run: ls
-        working-directory: ./
+        working-directory: ./artifacts
       # Dispatch artifacts
       - name: Dispatch artifacts
         run: |
-          cp ./snapmail.happ ./electron/bin
-          cp ./model_zome_hash.txt ./electron/bin
+          cp ./artifacts/snapmail.happ ./electron/bin
+          cp ./artifacts/model_zome_hash.txt ./electron/bin
+      # install hc tool
+      - name: Install hc tool
+        shell: bash
+        run: |
+          npm run ci:hc-install          
       # Install nodejs dependencies
       - name: Install nodejs dependencies
         shell: bash
@@ -71,7 +77,7 @@ jobs:
       - name: build webapp
         shell: bash
         run: |
-          npm run build:devtest
+          npm run build:webapp
       # build electron
       - name: build electron
         shell: bash
@@ -109,14 +115,14 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           gh release upload "${GITHUB_REF#refs/tags/}" "electron/out-builder/Snapmail-$SNAPMAIL_VERSION.AppImage" --clobber
-          gh release upload "${GITHUB_REF#refs/tags/}" "snapmail-web-ui.zip" --clobber
-          gh release upload "${GITHUB_REF#refs/tags/}" "snapmail-we_applet-ui.zip" --clobber          
-          gh release upload "${GITHUB_REF#refs/tags/}" "snapmail-we_applet.webhapp" --clobber            
-          gh release upload "${GITHUB_REF#refs/tags/}" "snapmail.webhapp" --clobber
-          gh release upload "${GITHUB_REF#refs/tags/}" "snapmail.happ" --clobber
-          gh release upload "${GITHUB_REF#refs/tags/}" "snapmail.dna" --clobber
-          gh release upload "${GITHUB_REF#refs/tags/}" "snapmail.wasm" --clobber
-          gh release upload "${GITHUB_REF#refs/tags/}" "snapmail_model.wasm" --clobber
+          gh release upload "${GITHUB_REF#refs/tags/}" "artifacts/snapmail-web-ui.zip" --clobber
+          gh release upload "${GITHUB_REF#refs/tags/}" "artifacts/snapmail-we_applet-ui.zip" --clobber          
+          gh release upload "${GITHUB_REF#refs/tags/}" "artifacts/snapmail-we_applet.webhapp" --clobber            
+          gh release upload "${GITHUB_REF#refs/tags/}" "artifacts/snapmail.webhapp" --clobber
+          gh release upload "${GITHUB_REF#refs/tags/}" "artifacts/snapmail.happ" --clobber
+          gh release upload "${GITHUB_REF#refs/tags/}" "artifacts/snapmail.dna" --clobber
+          gh release upload "${GITHUB_REF#refs/tags/}" "artifacts/snapmail.wasm" --clobber
+          gh release upload "${GITHUB_REF#refs/tags/}" "artifacts/snapmail_model.wasm" --clobber
       - name: upload binary (macos only)
         if: ${{ runner.os == 'macOs' }}
         env:
