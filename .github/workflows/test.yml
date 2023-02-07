@@ -61,7 +61,7 @@ jobs:
       - name: build webapp
         shell: bash
         run: |
-          npm run package
+          npm run build:webapp
       # build electron
       - name: build electron
         shell: bash
