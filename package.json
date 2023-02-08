@@ -25,6 +25,7 @@
 
     "build:devtest"       : "npm run clean:agents & npm run build:happ && bash scripts/ts-bindings.sh && npm run build:webapp",
     "devtest"             : "npm run build:devtest && npm run start",
+    "devtest:webapp"      : "npm run build:webapp && npm run start",
     "devtest:electron"    : "npm run build:devtest && DEV_MODE='dev' npm run devtest -w electron",
     "devtest:we"          : "npm run build:devtest && npm run devtest -w we-applet",
 
