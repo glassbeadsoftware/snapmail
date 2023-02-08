@@ -31,7 +31,8 @@ See [snapmail-rsm](https://github.com/glassbeadsoftware/snapmail-rsm) for holoch
 ## Releasing
 
 #### Steps required for updating version number:
-1. `./scripts/update-version-number.sh <semver>`
+1. Set version number in top-level `package.json`
+2. `npm run update-version`
 
 
 #### Steps for preparing a new release for all platforms on github:
@@ -48,24 +49,20 @@ See [snapmail-rsm](https://github.com/glassbeadsoftware/snapmail-rsm) for holoch
 ## Development
 
 #### Steps for updating holochain version:
-1. `npm run setup`
-2. Update the holochain dependencies in `snapmail-rsm`:
-    1. `cd submodules/snapmail-rsm`
-    2. update file `zomes/snapmail/Cargo.toml`
-    3. update file `sweettest/Cargo.toml`
-    4. `git commit`
-3. Update the holochain dependencies in `webapp`:
-    1. `cd webapp`
-    2. update file `package.json`
-    3. `npm install`
-4. Update file `scripts/*/install-hc-cli.sh`
-5. Update file `package.json`
+1. Check `snapmail-rsm` repo has a branch for the new holochain version.
+1. Update `hc-version` field in the top-level `package.json`.
+3. Update the holochain-related dependencies in child `package.json`:
+   4. `webcomponents`:  `lit-happ` & `holochain-client-js`
+   5. `webapp`: `lit-happ` & `holochain-client-js`
+   6. `we-applet`: `holochain-client-js`
+   6. `electron`: `@lightningrodlabs/electron-holochain`
+3. Check `npm run install:zits`: Make sure `zits` is compatible for the version of  holochain & `holochain-client-js`.
 6. `git commit`
 
 
 ### Toolchain
 
-cargo, npm, rollup, typescript, eslint
+cargo, npm, rollup, typescript, eslint, electron-builder
 
 ## Project structure
 
@@ -74,10 +71,10 @@ cargo, npm, rollup, typescript, eslint
 | `/assets/`                                 | Original media files used throughout the code base
 | `/electron/`                               | The electron app directory
 | &nbsp;&nbsp;&nbsp;&nbsp;`src/`             | The electron app source code
-| &nbsp;&nbsp;&nbsp;&nbsp;`web/`             | Final artifacts for the electron app (includes output from `ui`)
+| &nbsp;&nbsp;&nbsp;&nbsp;`web/`             | Final artifacts for the electron app (includes output from `webapp`)
 | &nbsp;&nbsp;&nbsp;&nbsp;`bin/`             | All the binaries we are dependent on and must ship with the app
 | `/scripts/`                                | Various shell scripts for building, testing, releasing
-| `/submodules/`                             | Temp folder for the code dependencies (snapmail-rsm)
+| `/submodules/`                             | Temp folder for code dependencies
 | `/we-applet/`                              | We-applet source code
 | &nbsp;&nbsp;&nbsp;&nbsp;`webhapp.workdir/` | "we-applet" webhapp work directory
 | `/webapp/`                                 | Webapp source code. Used by electron app
