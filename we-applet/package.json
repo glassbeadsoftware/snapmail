@@ -1,6 +1,6 @@
 {
   "name": "we-applet",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "scripts": {
     "tsc": "tsc",
     "build": "tsc && rollup --config rollup.config.js",
