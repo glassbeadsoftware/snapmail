@@ -58,7 +58,7 @@ See [snapmail-rsm](https://github.com/glassbeadsoftware/snapmail-rsm) for holoch
     1. `cd webapp`
     2. update file `package.json`
     3. `npm install`
-4. Update file `scripts/workflow/install-hc-tools.sh`
+4. Update file `scripts/*/install-hc-cli.sh`
 5. Update file `package.json`
 6. `git commit`
 

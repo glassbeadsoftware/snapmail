@@ -1,7 +1,8 @@
 #!/bin/bash
 
 # TOP LEVEL
-#rm -rf submodules
+rm -rf bin
+rm -rf artifacts
 rm .hc_live*
 # WEBCOMPONENTS
 rm -rf webcomponents/dist
