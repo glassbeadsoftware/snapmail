@@ -30,7 +30,6 @@
     "@ddd-qc/cell-proxy": "0.12.2",
     "@holochain/client": "0.12.0",
     "@holochain-open-dev/core-types": "^0.6.3",
-    "@polymer/polymer": "^3.0.0",
     "lit": "2.3.1",
     "@vaadin/progress-bar": "23.2.0",
     "@vaadin/grid": "23.2.0",
@@ -47,14 +46,6 @@
     "@vaadin/text-area": "23.2.0",
     "@vaadin/menu-bar": "23.2.0",
     "@vaadin/vaadin-icon": "23.2.0",
-    "browserify-zlib": "^0.2.0",
-    "cqfill": "^0.6.1",
-    "moment": "^2.24.0",
-    "moment-timezone": "^0.5.27",
-    "path-browserify": "^1.0.1",
-    "prop-types": "^15.7.2",
-    "set-blocking": "^2.0.0",
-    "stream": "^0.0.2",
-    "zlib": "^1.0.5"
+    "cqfill": "^0.6.1"
   }
 }

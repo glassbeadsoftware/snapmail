@@ -10,7 +10,6 @@ import {Button} from "@vaadin/button";
 import {Dialog} from "@vaadin/dialog";
 import {ContactGridItem, SnapmailPerspective} from "../viewModel/snapmail.perspective";
 import {greenDot, redDot, stylesTemplate, SYSTEM_GROUP_LIST, whiteDot} from "../constants";
-import {PolymerElement} from "@polymer/polymer";
 import {GridSelectionColumn} from "@vaadin/grid/vaadin-grid-selection-column";
 import {ZomeElement} from "@ddd-qc/lit-happ";
 import {SnapmailZvm} from "../viewModel/snapmail.zvm";
@@ -440,7 +439,7 @@ export class SnapmailContacts extends ZomeElement<SnapmailPerspective, SnapmailZ
       /** Check if there is a DOM generated with the previous renderer call to update its content instead of recreation */
       if (root.firstElementChild) {
         //console.log({root});
-        const vaadin = root.children[1] as PolymerElement;
+        const vaadin = root.children[1] as any; //PolymerElement;
         vaadin.autofocus = true;
         vaadin.focus();
         return;
