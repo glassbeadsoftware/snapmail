@@ -2,9 +2,6 @@ name: test-workflow x64
 
 on: workflow_dispatch
 
-env:
-  SNAPMAIL_VERSION: 0.3.1
-
 jobs:
   call-build-electron:
     uses: ./.github/workflows/build-electron.yml
@@ -12,13 +9,7 @@ jobs:
   # upload the app package for each target os
   upload-assets:
     needs: call-build-electron
-    strategy:
-      matrix:
-        os:
-          - ubuntu-latest
-          - macos-latest
-          - windows-latest
-    runs-on: ${{ matrix.os }}
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
       # Download previously uploaded artifacts
@@ -27,35 +18,15 @@ jobs:
           name: all-happ-artifact
           path: artifacts
       # Display structure of downloaded files
-      - name: Display structure of downloaded files
+      - name: Display artifacts folder
         run: ls
-        working-directory: ./artifacts
+        working-directory: artifacts
       # upload binary for each platform
       - name: upload binary (ubuntu only)
         if: ${{ runner.os == 'Linux' }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |       
-          gh release upload "workflow-test" "artifacts/Snapmail-$SNAPMAIL_VERSION.AppImage" --clobber
-          gh release upload "workflow-test" "artifacts/snapmail-webapp-ui.zip" --clobber
-          gh release upload "workflow-test" "artifacts/snapmail-we_applet-ui.zip" --clobber          
-          gh release upload "workflow-test" "artifacts/snapmail-we_applet.webhapp" --clobber            
-          gh release upload "workflow-test" "artifacts/snapmail.webhapp" --clobber
-          gh release upload "workflow-test" "artifacts/snapmail.happ" --clobber
-          gh release upload "workflow-test" "artifacts/snapmail.dna" --clobber
-          gh release upload "workflow-test" "artifacts/snapmail.wasm" --clobber
-          gh release upload "workflow-test" "artifacts/snapmail_model.wasm" --clobber
-      - name: upload binary (macos only)
-        if: ${{ runner.os == 'macOs' }}
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        working-directory: artifacts
         run: |
-          gh release upload "workflow-test" "artifacts/Snapmail-$SNAPMAIL_VERSION.dmg" --clobber
-      - name: upload binary (Windows only)
-        if: ${{ runner.os == 'Windows' }}
-        continue-on-error: true
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          gh release delete-asset "workflow-test" "Snapmail.Setup.$env:SNAPMAIL_VERSION.exe" -y
-          gh release upload "workflow-test" "artifacts/Snapmail Setup $env:SNAPMAIL_VERSION.exe" --clobber
+          rm -f *.blockmap
+          gh release upload "workflow-test" "snapmail*" --clobber
