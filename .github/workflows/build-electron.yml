@@ -95,24 +95,23 @@ jobs:
         run: ls
         working-directory: electron/out-builder
       # Move binary for each platform
-      - name: upload binary (ubuntu only)
-        if: ${{ runner.os == 'Linux' }}
+      - name: Move binary
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          cp electron/out-builder/Snapmail-$SNAPMAIL_VERSION.AppImage ./artifacts
-      - name: upload binary (mac only)
-        if: ${{ runner.os == 'macOs' }}
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          cp electron/out-builder/Snapmail-$SNAPMAIL_VERSION.dmg ./artifacts
-      - name: upload binary (Windows only)
-        if: ${{ runner.os == 'Windows' }}
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          cp "electron/out-builder/Snapmail Setup $env:SNAPMAIL_VERSION.exe" ./artifacts
+          cp electron/out-builder/Snapmail* ./artifacts
+#      - name: upload binary (mac only)
+#        if: ${{ runner.os == 'macOs' }}
+#        env:
+#          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+#        run: |
+#          cp electron/out-builder/Snapmail-$SNAPMAIL_VERSION.dmg ./artifacts
+#      - name: upload binary (Windows only)
+#        if: ${{ runner.os == 'Windows' }}
+#        env:
+#          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+#        run: |
+#          cp "electron/out-builder/Snapmail Setup $env:SNAPMAIL_VERSION.exe" ./artifacts
       # List uploaded files
       - name: List artifacts folder
         run: ls -R
