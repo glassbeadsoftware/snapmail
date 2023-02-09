@@ -36,6 +36,11 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v3
+      - name: Set NPM shell (windows-only)
+        if: ${{ runner.os == 'Windows' }}
+        shell: bash
+        run: |
+          npm config set script-shell "C:\\Program Files\\git\\bin\\bash.exe"
       # Add Windows certificate
       ##- name: Add Windows certificate
       ##  if: matrix.os == 'windows-latest' && startsWith(github.ref, 'refs/tags/')
@@ -48,7 +53,7 @@ jobs:
       - uses: actions/download-artifact@master
         with:
           name: all-happ-artifact
-          path: artifacts          
+          path: artifacts
       # Display structure of downloaded files
       - name: Display structure of downloaded files
         run: ls
@@ -57,7 +62,7 @@ jobs:
       - name: Dispatch artifacts
         run: |
           cp ./artifacts/snapmail.happ ./electron/bin
-          cp ./artifacts/model_zome_hash.txt ./electron/bin        
+          cp ./artifacts/model_zome_hash.txt ./electron/bin
       # Install nodejs dependencies
       - name: Install nodejs dependencies
         shell: bash
@@ -110,7 +115,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           gh release upload "${GITHUB_REF#refs/tags/}" "electron/out-builder/Snapmail-$SNAPMAIL_VERSION.AppImage" --clobber
-          gh release upload "${GITHUB_REF#refs/tags/}" "artifacts/snapmail-web-ui.zip" --clobber
+          gh release upload "${GITHUB_REF#refs/tags/}" "artifacts/snapmail-webapp-ui.zip" --clobber
           gh release upload "${GITHUB_REF#refs/tags/}" "artifacts/snapmail-we_applet-ui.zip" --clobber          
           gh release upload "${GITHUB_REF#refs/tags/}" "artifacts/snapmail-we_applet.webhapp" --clobber            
           gh release upload "${GITHUB_REF#refs/tags/}" "artifacts/snapmail.webhapp" --clobber

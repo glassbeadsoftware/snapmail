@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Script for downloading prebuilt "hc" binary
+# Script for downloading prebuilt submodule dependecies
 
 echo Executing \"$0\".
 

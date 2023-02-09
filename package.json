@@ -1,7 +1,11 @@
 {
   "name": "Snapmail",
   "version": "0.3.1",
-  "hc-version": "0.1.0",
+  "config": {
+    "hc_version": "0.1.0",
+    "zits_version": "1.6.1",
+    "bin": "bin"
+  },
   "private": true,
   "repository": {
     "type": "git",
@@ -16,14 +20,14 @@
   "scripts": {
     "install:submodules"  : "bash scripts/npm/install-submodules.sh",
     "install:rust"        : "bash submodules/hc-prebuilt/install-rust.sh",
-    "install:hash-zome"   : "bash submodules/hc-prebuilt/install-hash-zome.sh bin",
-    "install:hc"          : "bash submodules/hc-prebuilt/install-hc-cli.sh bin $(cat ./package.json | grep hc-version | head -1 | awk -F: '{ print $2 }' | sed 's/[\",]//g' | tr -d '[[:space:]]')",
-    "install:zits"        : "cargo install zits --version 1.6.1",
+    "install:hash-zome"   : "bash submodules/hc-prebuilt/install-hash-zome.sh $npm_package_config_bin",
+    "install:hc"          : "bash submodules/hc-prebuilt/install-hc-cli.sh $npm_package_config_bin $npm_package_config_hc_version",
+    "install:zits"        : "cargo install zits --version $npm_package_config_zits_version",
 
-    "version"             : "./bin/hc --version && holochain --version && lair-keystore --version",
-    "hash-zome"           : "bash submodules/hc-prebuilt/hash-zome.sh bin ./submodules/snapmail-rsm/target/wasm32-unknown-unknown/release/snapmail_model.wasm electron/bin/model_zome_hash.txt",
+    "version"             : "$npm_package_config_bin/hc --version && holochain --version && lair-keystore --version",
+    "hash-zome"           : "bash submodules/hc-prebuilt/hash-zome.sh $npm_package_config_bin ./submodules/snapmail-rsm/target/wasm32-unknown-unknown/release/snapmail_model.wasm electron/bin/model_zome_hash.txt",
 
-    "build:happ"          : "bash scripts/npm/dist-dna.sh && npm run hash-zome",
+    "build:happ"          : "bash scripts/npm/dist-dna.sh $npm_package_config_bin && npm run hash-zome",
     "build:webapp"        : "npm run build -w webcomponents && npm run build -w webapp",
     "build:devtest"       : "npm run clean:agents & npm run build:happ && bash scripts/ts-bindings.sh && npm run build:webapp",
 
@@ -32,18 +36,21 @@
     "devtest:electron"    : "npm run build:devtest && DEV_MODE='dev' npm run devtest -w electron",
     "devtest:we"          : "npm run build:devtest && npm run devtest -w we-applet",
 
-    "start:happ"          : "RUST_LOG=warn echo \"pass\" | ./bin/hc s --piped -f=$ADMIN_PORT generate artifacts/snapmail.happ --run=$HC_PORT -a snapmail network mdns",
-    "start:happ-proxied"  : "RUST_LOG=warn echo \"pass\" | ./bin/hc s --piped -f=$ADMIN_PORT generate artifacts/snapmail.happ --run=$HC_PORT -a snapmail network --bootstrap https://bootstrap-staging.holo.host/ quic -p=kitsune-proxy://SYVd4CF3BdJ4DS7KwLLgeU3_DbHoZ34Y-qroZ79DOs8/kitsune-quic/h/165.22.32.11/p/5779/--",
+    "start:happ"          : "RUST_LOG=warn echo \"pass\" | $npm_package_config_bin/hc s --piped -f=$ADMIN_PORT generate artifacts/snapmail.happ --run=$HC_PORT -a snapmail network mdns",
+    "start:happ-proxied"  : "RUST_LOG=warn echo \"pass\" | $npm_package_config_bin/hc s --piped -f=$ADMIN_PORT generate artifacts/snapmail.happ --run=$HC_PORT -a snapmail network --bootstrap https://bootstrap-staging.holo.host/ quic -p=kitsune-proxy://SYVd4CF3BdJ4DS7KwLLgeU3_DbHoZ34Y-qroZ79DOs8/kitsune-quic/h/165.22.32.11/p/5779/--",
     "start"               : "DEV_MODE='dev' HC_PORT=$(port) ADMIN_PORT=$(port) concurrently \"npm run start:happ-proxied\" \"sleep 8 && npm run start:ui -w webapp\"",
     "restart"             : "DEV_MODE='dev' HC_PORT=$(port) ADMIN_PORT=$(port) concurrently \"npm run restart:happ\" \"sleep 8 && npm run start:ui -w webapp\"",
-    "restart:happ"        : "RUST_LOG=warn echo \"pass\" | ./bin/hc s --piped -f=$ADMIN_PORT run $SINDEX -p=$HC_PORT",
+    "restart:happ"        : "RUST_LOG=warn echo \"pass\" | $npm_package_config_bin/hc s --piped -f=$ADMIN_PORT run $SINDEX -p=$HC_PORT",
     "network"             : "npm run clean:agents && concurrently-repeat \"npm run start\"",
 
     "dist:webhapp"        : "npm run build:devtest && npm run package -w webapp",
     "dist:we"             : "npm run build:devtest && npm run build -w we-applet && npm run package -w we-applet",
     "dist:win"            : "bash scripts/copy-binaries.sh && npm run dist:win -w electron",
 
-    "update-version"      : "bash scripts/update-version-number.sh $(cat ./package.json | grep version | head -1 | awk -F: '{ print $2 }' | sed 's/[\",]//g' | tr -d '[[:space:]]')",
+    "package:webapp"      : "rm -rf artifacts/snapmail-webapp-ui.zip && bestzip artifacts/snapmail-webapp-ui.zip webapp/dist/* && $npm_package_config_bin/hc web-app pack ./webapp/webhapp.workdir -o artifacts/snapmail.webhapp",
+    "package:we-applet"   : "rm -rf artifacts/snapmail-we_applet-ui.zip && bestzip artifacts/snapmail-we_applet-ui.zip we-applet/dist/* && $npm_package_config_bin/hc web-app pack ./we-applet/webhapp.workdir -o artifacts/snapmail-we_applet.webhapp",
+
+    "update-version"      : "bash scripts/update-version-number.sh $npm_package_version",
 
     "clean"               : "bash scripts/npm/clean.sh",
     "clean:npm"           : "bash scripts/npm/clean-npm.sh",

@@ -19,7 +19,6 @@ rm we-applet/webhapp.workdir/snapmail-we_applet.webhapp
 rm -rf webapp/dist
 rm -rf webapp/out-tsc
 rm webapp/tsconfig.tsbuildinfo
-rm webapp/snapmail-web-ui.zip
 # ELECTRON
 rm -rf electron/out-builder
 rm -rf electron/out-tsc

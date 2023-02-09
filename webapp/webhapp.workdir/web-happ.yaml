@@ -2,6 +2,6 @@
 manifest_version: "1"
 name: snapmail
 ui:
-  bundled: "../snapmail-web-ui.zip"
+  bundled: "../../artifacts/snapmail-webapp-ui.zip"
 happ_manifest:
   bundled: "../../artifacts/snapmail.happ"

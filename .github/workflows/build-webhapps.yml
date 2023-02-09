@@ -49,7 +49,7 @@ jobs:
       # Package web-happ
       - name: Package web-happ
         run: |
-          npm run package -w webapp
+          npm run package:webapp
       # build we-applet
       - name: build we-applet
         shell: bash
@@ -59,18 +59,14 @@ jobs:
       - name: Package we-applet
         shell: bash
         run: |
-          npm run package -w we-applet
+          npm run package:we-applet
       # Regroup artifacts
       - name: Regroup artifacts
         run: |
           mkdir -p artifacts
           cp electron/bin/model_zome_hash.txt ./artifacts          
           cp submodules/snapmail-rsm/target/wasm32-unknown-unknown/release/snapmail_model.wasm ./artifacts
-          cp submodules/snapmail-rsm/target/wasm32-unknown-unknown/release/snapmail.wasm ./artifacts                 
-          cp webapp/webhapp.workdir/snapmail.webhapp ./artifacts
-          cp we-applet/webhapp.workdir/snapmail-we_applet.webhapp ./artifacts
-          cp we-applet/snapmail-we_applet-ui.zip ./artifacts
-          cp webapp/snapmail-web-ui.zip ./artifacts
+          cp submodules/snapmail-rsm/target/wasm32-unknown-unknown/release/snapmail.wasm ./artifacts
       # List uploaded files
       - name: List uploaded files
         run: ls -R
