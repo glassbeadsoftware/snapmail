@@ -18,7 +18,7 @@
     "webapp"
   ],
   "scripts": {
-    "install:submodules"  : "bash scripts/npm/install-submodules.sh",
+    "install:submodules"  : "bash scripts/npm/install-submodules.sh $npm_package_config_hc_version",
     "install:rust"        : "bash submodules/hc-prebuilt/install-rust.sh",
     "install:hash-zome"   : "bash submodules/hc-prebuilt/install-hash-zome.sh $npm_package_config_bin",
     "install:hc"          : "bash submodules/hc-prebuilt/install-hc-cli.sh $npm_package_config_bin $npm_package_config_hc_version",

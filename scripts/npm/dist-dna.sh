@@ -13,6 +13,7 @@ fi
 
 # Compile the WASM
 cargo build --release --target wasm32-unknown-unknown --manifest-path submodules/snapmail-rsm/Cargo.toml
+
 # Pack DNAs
 mkdir -p artifacts
 $1/hc dna pack submodules/snapmail-rsm/workdir -o submodules/snapmail-rsm/workdir/snapmail.dna
