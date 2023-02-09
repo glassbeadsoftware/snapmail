@@ -5,136 +5,34 @@ on:
     tags:
       - v[0-9]+.*
 
-
-env:
-  SNAPMAIL_VERSION: 0.3.1
-
 jobs:
-  # the create-release would be used once we want to create a specific release based on if the commit has a tag
-  create-release:
+  call-build-electron:
+    uses: ./.github/workflows/build-electron.yml
+
+  # upload the artifacts
+  upload-assets:
+    needs: call-build-electron
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-      - uses: taiki-e/create-gh-release-action@v1
-        env:
-          # (required)
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-  # Build the dna
-  call-build-webhapps:
-    uses: ./.github/workflows/build-webhapps.yml
-
-  # upload the app package for each target os
-  upload-assets:
-    needs: call-build-webhapps
-    strategy:
-      matrix:
-        os:
-          - ubuntu-latest
-          - macos-latest
-          - windows-latest
-    runs-on: ${{ matrix.os }}
-    steps:
-      - uses: actions/checkout@v3
-      # Set NPM shell (windows-only)
-      - name: Set NPM shell (windows-only)
-        if: ${{ runner.os == 'Windows' }}
-        shell: bash
-        run: |
-          npm config set script-shell "C:\\Program Files\\git\\bin\\bash.exe"
-      # Add Windows certificate
-      ##- name: Add Windows certificate
-      ##  if: matrix.os == 'windows-latest' && startsWith(github.ref, 'refs/tags/')
-      ##  id: write_file
-      ##  uses: timheuer/base64-to-file@v1
-      ##  with:
-      ##    fileName: 'win-certificate.pfx'
-      ##    encodedString: ${{ secrets.CERTIFICATE_WINDOWS_PFX }}
       # Download previously uploaded artifacts
-      - uses: actions/download-artifact@master
+      - uses: actions/download-artifact@v3
         with:
           name: all-happ-artifact
           path: artifacts
-      # Display structure of downloaded files
-      - name: Display structure of downloaded files
+      # Display artifacts folder
+      - name: Display artifacts folder
         run: ls
-        working-directory: ./artifacts
-      # Dispatch artifacts
-      - name: Dispatch artifacts
-        run: |
-          cp ./artifacts/snapmail.happ ./electron/bin
-          cp ./artifacts/model_zome_hash.txt ./electron/bin
-      # Install nodejs dependencies
-      - name: Install nodejs dependencies
-        shell: bash
-        run: |
-          npm install
-      # list electron/bin
-      - name: list electron/bin
-        continue-on-error: true
-        run: ls
-        working-directory: electron/bin
-      # build webapp
-      - name: build webapp
-        shell: bash
-        run: |
-          npm run build:webapp
-      # build electron
-      - name: build electron
-        shell: bash
-        run: |
-          npm run build -w electron
-      # Setup sign & notarize
-      - name: Setup sign and notarize (macos only)
-        if: ${{ runner.os == 'macOs' }}
-        uses:  figleafteam/import-codesign-certs@v2
-        with:
-          p12-file-base64: ${{ secrets.HBE_APPLE_CERTIFICATE_BASE64 }}
-          p12-password: ${{ secrets.HBE_APPLE_CERTIFICATE_PASS }}
-      # Dist Electron
-      - name: Dist Electron
-        shell: bash
-        env:
-          #WIN_CSC_LINK: ${{ steps.write_file.outputs.filePath }}
-          #WIN_CSC_KEY_PASSWORD: ${{ secrets.WINDOWS_PFX_PASSWORD }}
-          APPLE_DEV_IDENTITY: ${{ secrets.APPLE_DEV_IDENTITY }}
-          APPLE_ID_EMAIL: ${{ secrets.APPLE_ID_EMAIL }}
-          APPLE_ID_PASSWORD: ${{ secrets.APPLE_ID_PASSWORD }}
-          DEBUG: electron-osx-sign*,electron-notarize*
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          npm run dist:build -w electron
-      # list out folder
-      - name: list out-builder folder
-        continue-on-error: true
-        run: ls
-        working-directory: electron/out-builder
-      # upload binary for each platform
+        working-directory: artifacts
+      # upload all artifacts
       - name: upload binary (ubuntu only)
         if: ${{ runner.os == 'Linux' }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        working-directory: artifacts
         run: |
-          gh release upload "${GITHUB_REF#refs/tags/}" "electron/out-builder/Snapmail-$SNAPMAIL_VERSION.AppImage" --clobber
-          gh release upload "${GITHUB_REF#refs/tags/}" "artifacts/snapmail-webapp-ui.zip" --clobber
-          gh release upload "${GITHUB_REF#refs/tags/}" "artifacts/snapmail-we_applet-ui.zip" --clobber          
-          gh release upload "${GITHUB_REF#refs/tags/}" "artifacts/snapmail-we_applet.webhapp" --clobber            
-          gh release upload "${GITHUB_REF#refs/tags/}" "artifacts/snapmail.webhapp" --clobber
-          gh release upload "${GITHUB_REF#refs/tags/}" "artifacts/snapmail.happ" --clobber
-          gh release upload "${GITHUB_REF#refs/tags/}" "artifacts/snapmail.dna" --clobber
-          gh release upload "${GITHUB_REF#refs/tags/}" "artifacts/snapmail.wasm" --clobber
-          gh release upload "${GITHUB_REF#refs/tags/}" "artifacts/snapmail_model.wasm" --clobber
-      - name: upload binary (macos only)
-        if: ${{ runner.os == 'macOs' }}
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          gh release upload "${GITHUB_REF#refs/tags/}" "electron/out-builder/Snapmail-$SNAPMAIL_VERSION.dmg" --clobber
-      - name: upload binary (Windows only)
-        if: ${{ runner.os == 'Windows' }}
-        continue-on-error: true
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          gh release upload "$($env:GITHUB_REF -replace "refs/tags/")" "electron/out-builder/Snapmail Setup $env:SNAPMAIL_VERSION.exe" --clobber
-          gh release upload "$($env:GITHUB_REF -replace "refs/tags/")" "electron/out-builder/latest.yml" --clobber
+          rm -f *.blockmap
+          echo snapmail*
+          gh release upload "${GITHUB_REF#refs/tags/}" snapmail* --clobber
+          echo Snapmail*
+          gh release upload "${GITHUB_REF#refs/tags/}" Snapmail* --clobber
