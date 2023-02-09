@@ -9,7 +9,7 @@
     "tsc": "tsc",
     "build": "rm -rf dist && tsc && rollup -c rollup.config.js && cd dist && cp * ../../electron/web",
     "build:watch": "run-singleton \"tsc -w --incremental --preserveWatchOutput\"",
-    "start:ui": "web-dev-server --config ./web-dev-server.config.mjs",
+    "start:ui": "web-dev-server --config ./web-dev-server.config.mjs"
   },
 
   "devDependencies": {
