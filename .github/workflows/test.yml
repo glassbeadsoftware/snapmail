@@ -6,12 +6,12 @@ env:
   SNAPMAIL_VERSION: 0.3.1
 
 jobs:
-  call-build-webhapps:
-    uses: ./.github/workflows/build-webhapps.yml
+  call-build-electron:
+    uses: ./.github/workflows/build-electron.yml
 
   # upload the app package for each target os
   upload-assets:
-    needs: call-build-webhapps
+    needs: call-build-electron
     strategy:
       matrix:
         os:
@@ -21,20 +21,6 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v3
-      # Set NPM shell (windows-only)
-      - name: Set NPM shell (windows-only)
-        if: ${{ runner.os == 'Windows' }}
-        shell: bash
-        run: |
-          npm config set script-shell "C:\\Program Files\\git\\bin\\bash.exe"
-      # Add Windows certificate
-      ##- name: Add Windows certificate
-      ##  if: matrix.os == 'windows-latest' && startsWith(github.ref, 'refs/tags/')
-      ##  id: write_file
-      ##  uses: timheuer/base64-to-file@v1
-      ##  with:
-      ##    fileName: 'win-certificate.pfx'
-      ##    encodedString: ${{ secrets.CERTIFICATE_WINDOWS_PFX }}
       # Download previously uploaded artifacts
       - uses: actions/download-artifact@v3
         with:
@@ -44,62 +30,13 @@ jobs:
       - name: Display structure of downloaded files
         run: ls
         working-directory: ./artifacts
-      # Dispatch artifacts
-      - name: Dispatch artifacts
-        run: |
-          cp ./artifacts/snapmail.happ ./electron/bin
-          cp ./artifacts/model_zome_hash.txt ./electron/bin
-      # Install nodejs dependencies
-      - name: Install nodejs dependencies
-        shell: bash
-        run: |
-          npm install
-      - name: build webapp
-        shell: bash
-        run: |
-          npm run build:webapp
-      # build electron
-      - name: build electron
-        shell: bash
-        run: |
-          npm run build -w electron
-      # Setup sign & notarize
-      - name: Setup sign and notarize (macos only)
-        if: ${{ runner.os == 'macOs' }}
-        uses:  figleafteam/import-codesign-certs@v2
-        with:
-          p12-file-base64: ${{ secrets.HBE_APPLE_CERTIFICATE_BASE64 }}
-          p12-password: ${{ secrets.HBE_APPLE_CERTIFICATE_PASS }}
-      # Dist Electron
-      - name: Dist Electron
-        shell: bash
-        env:
-          #WIN_CSC_LINK: ${{ steps.write_file.outputs.filePath }}
-          #WIN_CSC_KEY_PASSWORD: ${{ secrets.WINDOWS_PFX_PASSWORD }}
-          APPLE_DEV_IDENTITY: ${{ secrets.APPLE_DEV_IDENTITY }}
-          APPLE_ID_EMAIL: ${{ secrets.APPLE_ID_EMAIL }}
-          APPLE_ID_PASSWORD: ${{ secrets.APPLE_ID_PASSWORD }}
-          DEBUG: electron-osx-sign*,electron-notarize*
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          npm run dist:build -w electron
-      # list out folder
-      - name: list out-builder folder
-        continue-on-error: true
-        run: ls
-        working-directory: electron/out-builder
-      # list bin folder
-      - name: list bin folder
-        continue-on-error: true
-        run: ls
-        working-directory: electron/bin
       # upload binary for each platform
       - name: upload binary (ubuntu only)
         if: ${{ runner.os == 'Linux' }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |       
-          gh release upload "workflow-test" "electron/out-builder/Snapmail-$SNAPMAIL_VERSION.AppImage" --clobber
+          gh release upload "workflow-test" "artifacts/Snapmail-$SNAPMAIL_VERSION.AppImage" --clobber
           gh release upload "workflow-test" "artifacts/snapmail-webapp-ui.zip" --clobber
           gh release upload "workflow-test" "artifacts/snapmail-we_applet-ui.zip" --clobber          
           gh release upload "workflow-test" "artifacts/snapmail-we_applet.webhapp" --clobber            
@@ -113,7 +50,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          gh release upload "workflow-test" "electron/out-builder/Snapmail-$SNAPMAIL_VERSION.dmg" --clobber
+          gh release upload "workflow-test" "artifacts/Snapmail-$SNAPMAIL_VERSION.dmg" --clobber
       - name: upload binary (Windows only)
         if: ${{ runner.os == 'Windows' }}
         continue-on-error: true
@@ -121,4 +58,4 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           gh release delete-asset "workflow-test" "Snapmail.Setup.$env:SNAPMAIL_VERSION.exe" -y
-          gh release upload "workflow-test" "electron/out-builder/Snapmail Setup $env:SNAPMAIL_VERSION.exe" --clobber
+          gh release upload "workflow-test" "artifacts/Snapmail Setup $env:SNAPMAIL_VERSION.exe" --clobber
