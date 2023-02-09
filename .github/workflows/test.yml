@@ -6,7 +6,7 @@ jobs:
   call-build-electron:
     uses: ./.github/workflows/build-electron.yml
 
-  # upload the app package for each target os
+  # upload the artifacts
   upload-assets:
     needs: call-build-electron
     runs-on: ubuntu-latest
@@ -17,11 +17,11 @@ jobs:
         with:
           name: all-happ-artifact
           path: artifacts
-      # Display structure of downloaded files
+      # Display artifacts folder
       - name: Display artifacts folder
         run: ls
         working-directory: artifacts
-      # upload binary for each platform
+      # upload all artifacts
       - name: upload binary (ubuntu only)
         if: ${{ runner.os == 'Linux' }}
         env:
@@ -29,4 +29,4 @@ jobs:
         working-directory: artifacts
         run: |
           rm -f *.blockmap
-          gh release upload "workflow-test" "snapmail*" --clobber
+          gh release upload "workflow-test" snapmail* --clobber
