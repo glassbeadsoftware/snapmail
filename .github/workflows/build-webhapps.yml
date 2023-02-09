@@ -36,12 +36,7 @@ jobs:
       - name: Build happ
         shell: bash
         run: |
-          ./scripts/npm/dist-dna.sh
-      # Hash zome
-      - name: Hash zome
-        shell: bash
-        run: |
-          npm run hash-zome
+          npm run build:happ
       # Build webapp
       - name: Build webapp
         run: |
