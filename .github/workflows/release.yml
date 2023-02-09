@@ -36,6 +36,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v3
+      # Set NPM shell (windows-only)
       - name: Set NPM shell (windows-only)
         if: ${{ runner.os == 'Windows' }}
         shell: bash
