@@ -29,4 +29,7 @@ jobs:
         working-directory: artifacts
         run: |
           rm -f *.blockmap
+          echo snapmail*
           gh release upload "workflow-test" snapmail* --clobber
+          echo Snapmail*
+          gh release upload "workflow-test" Snapmail* --clobber

@@ -49,8 +49,8 @@ jobs:
         run: |
           cp ./artifacts/snapmail.happ ./electron/bin
           cp ./artifacts/model_zome_hash.txt ./electron/bin
-      # Install nodejs dependencies
-      - name: Install nodejs dependencies
+      # Install npm dependencies
+      - name: Install npm dependencies
         shell: bash
         run: |
           npm install
@@ -115,7 +115,7 @@ jobs:
       # List uploaded files
       - name: List artifacts folder
         run: ls -R
-        working-directory: ./artifacts
+        working-directory: artifacts
       # "upload" artifacts
       - uses: actions/upload-artifact@master
         with:

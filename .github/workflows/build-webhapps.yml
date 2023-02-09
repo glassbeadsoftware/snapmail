@@ -8,8 +8,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-      # Install nodejs dependencies
-      - name: Install nodejs dependencies
+      # Install npm dependencies
+      - name: Install npm dependencies
         shell: bash
         run: |
           npm install
