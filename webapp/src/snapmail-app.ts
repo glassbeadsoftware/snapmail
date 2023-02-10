@@ -38,9 +38,6 @@ export class SnapmailApp extends HappElement {
 
   static readonly HVM_DEF: HvmDef = DEFAULT_SNAPMAIL_DEF;
 
-  // constructor() {
-  //   super(HC_APP_PORT);
-  // }
 
   /** */
   constructor(appWs?: AppWebsocket, private _adminWs?: AdminWebsocket, appId?: InstalledAppId) {
@@ -66,14 +63,9 @@ export class SnapmailApp extends HappElement {
     console.log("*** Zome call authorization complete");
     /** Probe */
     await this.hvm.probeAll();
-    /** Send dnaHash to electron */
-    if (IS_ELECTRON) {
-      /*let _reply =*/ MY_ELECTRON_API.dnaHashSync(this.snapmailDvm.cell.dnaHash);
-    }
+    console.log("*** probeAll complete");
     /** Done */
     this._loaded = true;
-    console.log("happInitialized() complete");
-    //this.requestUpdate();
   }
 
 

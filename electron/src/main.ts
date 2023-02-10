@@ -62,8 +62,13 @@ import {StatusUpdates} from "@lightningrodlabs/electron-holochain/src/holochain"
 //require('fix-path')();
 
 /** Set holochain logging output level */
-process.env.WASM_LOG="WARN";
-process.env.RUST_LOG="WARN";
+if (IS_DEBUG) {
+  process.env.WASM_LOG = "DEBUG";
+  process.env.RUST_LOG = "WARN";
+} else {
+  process.env.WASM_LOG = "WARN";
+  process.env.RUST_LOG = "WARN";
+}
 
 /** Determine platform */
 let IS_LINUX = false

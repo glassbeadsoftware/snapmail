@@ -5,7 +5,6 @@
 export interface IpcRendererApi {
   send: (channel: string) => void,
   on: (channel: string, listener: (event: any, ...args: any[]) => void) => this;
-  dnaHashSync: (dnaHashB64: string) => unknown,
   newMailSync: (title: string, body: string)  => unknown,
   startingInfo: (startingHandle, dnaHash)  => string,
   newCountAsync: (newCount)  => unknown,
