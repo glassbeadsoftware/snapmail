@@ -21,9 +21,15 @@ jobs:
       - name: Display artifacts folder
         run: ls
         working-directory: artifacts
+      # Delete .exe release asset
+      - name: Delete .exe release asset
+        continue-on-error: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release delete-asset "workflow-test" Snapmail*.exe -y
       # upload all artifacts
-      - name: upload binary (ubuntu only)
-        if: ${{ runner.os == 'Linux' }}
+      - name: upload all artifacts
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         working-directory: artifacts
@@ -32,5 +38,4 @@ jobs:
           echo snapmail*
           gh release upload "workflow-test" snapmail* --clobber
           echo Snapmail*
-          gh release delete-asset "workflow-test" Snapmail*.exe -y 
           gh release upload "workflow-test" Snapmail* --clobber
