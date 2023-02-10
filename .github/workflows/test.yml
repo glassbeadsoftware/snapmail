@@ -32,4 +32,5 @@ jobs:
           echo snapmail*
           gh release upload "workflow-test" snapmail* --clobber
           echo Snapmail*
+          gh release delete-asset "manual-release" Snapmail* -y 
           gh release upload "workflow-test" Snapmail* --clobber

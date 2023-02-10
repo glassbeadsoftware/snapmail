@@ -4,9 +4,11 @@
 */.running
 */*.tsbuildinfo
 
-artifacts/
+release/
+artifacts/*
+submodules/**/*
+bin/
 
-submodules/**
 electron/out-builder/**
 electron/out-tsc/**
 electron/web/*.js
