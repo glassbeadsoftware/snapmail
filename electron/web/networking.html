@@ -36,7 +36,10 @@
 <div class="activity-message" style="margin-left:30px;" id="proxy-status"></div>
 
 <script>
-  const ipc = require('electron').ipcRenderer;
+  const MY_ELECTRON_API = window.ipcRendererApi? window.ipcRendererApi : undefined;
+  console.log("MY_ELECTRON_API = ", MY_ELECTRON_API);
+
+  //const ipc = require('electron').ipcRenderer;
   const bootstrapEl = document.getElementById('bootstrap-url')
   const bootStatusEl = document.getElementById('bootstrap-status')
 
@@ -45,12 +48,12 @@
 
   const peerCountEl = document.getElementById('peer-count')
 
-  ipc.on('networkInfoReply', (event, peerCount, networkSettings) => {
+  MY_ELECTRON_API.on('networkInfoReply', (event, peerCount, networkSettings) => {
     peerCountEl.innerHTML = peerCount
     if (networkSettings.canMdns) {
       bootstrapEl.innerHTML = "Using MDNS"
     } else {
-      ipc.send('bootstrapStatus');
+      MY_ELECTRON_API.send('bootstrapStatus');
     }
     if (networkSettings.canProxy) {
       proxyEl.innerHTML = networkSettings.proxyUrl
@@ -60,17 +63,16 @@
     }
   })
 
-  ipc.on('bootstrapStatusReply', (event, url, status) => {
+  MY_ELECTRON_API.on('bootstrapStatusReply', (event, url, status) => {
     bootstrapEl.innerHTML = url
     bootStatusEl.innerHTML = status? 'OK' : 'Not responding'
   })
-  let reply = ipc.send('networkInfo');
+  let reply = MY_ELECTRON_API.send('networkInfo');
   //console.log(reply);
 
   function exitScreen() {
-    ipc.send('exitNetworkStatus');
+    MY_ELECTRON_API.send('exitNetworkStatus');
   }
-
 
 </script>
 </body>

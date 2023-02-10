@@ -40,10 +40,10 @@ jobs:
         with:
           name: all-happ-artifact
           path: artifacts
-      # Display structure of downloaded files
-      - name: Display structure of downloaded files
+      # Display artifacts folder
+      - name: Display artifacts folder
         run: ls
-        working-directory: ./artifacts
+        working-directory: artifacts
       # Dispatch artifacts
       - name: Dispatch artifacts
         run: |
@@ -100,18 +100,6 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           cp electron/out-builder/Snapmail* ./artifacts
-#      - name: upload binary (mac only)
-#        if: ${{ runner.os == 'macOs' }}
-#        env:
-#          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-#        run: |
-#          cp electron/out-builder/Snapmail-$SNAPMAIL_VERSION.dmg ./artifacts
-#      - name: upload binary (Windows only)
-#        if: ${{ runner.os == 'Windows' }}
-#        env:
-#          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-#        run: |
-#          cp "electron/out-builder/Snapmail Setup $env:SNAPMAIL_VERSION.exe" ./artifacts
       # List uploaded files
       - name: List artifacts folder
         run: ls -R

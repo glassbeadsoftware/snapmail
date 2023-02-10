@@ -22,7 +22,7 @@ body {
 
 .splash-image-wrapper {
   background-color: #f7f5f3;
-  background-image: url('../assets/icon.png');
+  background-image: url('icon.png');
   background-repeat: no-repeat;
   background-size: contain;
   background-position: center;

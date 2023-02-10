@@ -1,6 +1,10 @@
 
-
-export interface MyElectronApi {
+/**
+ *
+ */
+export interface IpcRendererApi {
+  send: (channel: string) => void,
+  on: (channel: string, listener: (event: any, ...args: any[]) => void) => this;
   dnaHashSync: (dnaHashB64: string) => unknown,
   newMailSync: (title: string, body: string)  => unknown,
   startingInfo: (startingHandle, dnaHash)  => string,
@@ -16,7 +20,7 @@ export interface MyElectronApi {
 /** APP SETUP */
 
 export let DEV_MODE: string;
-export const MY_ELECTRON_API = 'myElectronAPI' in window? window.myElectronAPI as MyElectronApi : undefined;
+export const MY_ELECTRON_API = 'ipcRendererApi' in window? window.ipcRendererApi as IpcRendererApi : undefined;
 console.log("MY_ELECTRON_API = ", MY_ELECTRON_API);
  if (MY_ELECTRON_API) {
    DEV_MODE = MY_ELECTRON_API.DEV_MODE;

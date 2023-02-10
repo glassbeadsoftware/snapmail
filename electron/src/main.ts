@@ -43,7 +43,7 @@ import {
   BINARY_PATHS,
   RUNNER_VERSION, DEFAULT_BOOTSTRAP_URL, DEFAULT_PROXY_URL, FAVICON_PATH, getIndexUrl, getAdminPort
 } from './constants';
-import { log, electronLogger } from './logger';
+import { log } from './logger';
 import { pingBootstrap } from "./spawn";
 
 import {loadUserSettings, SettingsStore} from './userSettings'
@@ -54,13 +54,12 @@ import {loadNetworkConfig, saveNetworkConfig} from "./networkSettings";
 import MenuItem = Electron.MenuItem;
 import {StatusUpdates} from "@lightningrodlabs/electron-holochain/src/holochain";
 
-
 /**********************************************************************************************************************/
 /*  PRE-INIT
 /**********************************************************************************************************************/
 
-require('electron-context-menu')();
-require('fix-path')();
+//require('electron-context-menu')();
+//require('fix-path')();
 
 /** Set holochain logging output level */
 process.env.WASM_LOG="WARN";
@@ -216,14 +215,16 @@ function checkForUpdates(menuItem: MenuItem, /*_focusedWindow, _event*/): void {
 /*  IPC between UI and Main
 /**********************************************************************************************************************/
 
-const ipc = require('electron').ipcMain;
+import {ipcMain} from "electron";
+import * as electronLogger from "electron-log";
 
-// ipc.on('app_version', (event) => {
+
+// ipcMain.on('app_version', (event) => {
 //   event.sender.send('app_version', { version: app.getVersion() });
 // });
 
 
-ipc.on('startingInfo', async (event, startingHandle, dnaHash) => {
+ipcMain.on('startingInfo', async (event, startingHandle, dnaHash) => {
   //log('info', "startingInfo.startingHandle = " + startingHandle);
   //log('info', "startingInfo.dnaHash = " + dnaHash);
   g_startingHandle = startingHandle;
@@ -243,7 +244,7 @@ ipc.on('startingInfo', async (event, startingHandle, dnaHash) => {
  * Receive synchronous notification
  * Launch Notification if allowed
  */
-ipc.on('newMailSync', (event, title, body) => {
+ipcMain.on('newMailSync', (event, title, body) => {
   const canNotify = g_userSettings.get('canNotify');
   log('debug', "newMailSync.title = " + title);
   log('debug', "canNotify = " + canNotify);
@@ -258,7 +259,7 @@ ipc.on('newMailSync', (event, title, body) => {
  * Receive asynchronous new mail counter
  * Update sys tray title
  */
-ipc.on('newCountAsync', (event, newCount) => {
+ipcMain.on('newCountAsync', (event, newCount) => {
   const append = newCount === 0 ? '' : ' (' + newCount + ')';
   if (g_tray) {
     g_tray.setToolTip('SnapMail v' + app.getVersion() + append);
@@ -266,7 +267,7 @@ ipc.on('newCountAsync', (event, newCount) => {
   event.returnValue = true;
 });
 
-ipc.on('exitNetworkStatus', async (/*event*/) => {
+ipcMain.on('exitNetworkStatus', async (/*event*/) => {
   const indexUrl = await getIndexUrl() + g_appPort + '&UID=' + g_uid;
   console.log("indexUrl", indexUrl);
   await g_mainWindow?.loadURL(indexUrl);
@@ -274,12 +275,12 @@ ipc.on('exitNetworkStatus', async (/*event*/) => {
 
 
 /** Receive and reply to asynchronous message */
-ipc.on('bootstrapStatus', (event) => {
+ipcMain.on('bootstrapStatus', (event) => {
   const succeeded = pingBootstrap(g_networkSettings.bootstrapUrl);
   event.sender.send('bootstrapStatusReply', g_networkSettings.bootstrapUrl, succeeded);
 });
 
-ipc.on('networkInfo', async (event) => {
+ipcMain.on('networkInfo', async (event) => {
   console.log("*** RECEIVED networkInfo request")
 
   // const dump = await g_adminWs.dumpState({cell_id: g_cellId});

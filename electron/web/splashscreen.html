@@ -31,8 +31,11 @@
       </div>
     </div>
     <script>
-      const el = document.getElementById('activity')
-      require('electron').ipcRenderer.on('status', (event, message) => {
+      const el = document.getElementById('activity');
+      const ipcRenderer = require('electron').ipcRenderer;
+      //const ipcRenderer = window.ipcRendererApi? window.ipcRendererApi : undefined;
+      //console.log("Splashscreen.MY_ELECTRON_API = ", ipcRenderer);
+      ipcRenderer.on('status', (event, message) => {
         el.innerHTML = message
       })
     </script>

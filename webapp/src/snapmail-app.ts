@@ -72,12 +72,14 @@ export class SnapmailApp extends HappElement {
     }
     /** Done */
     this._loaded = true;
+    console.log("happInitialized() complete");
+    //this.requestUpdate();
   }
 
 
   /** */
   render() {
-    console.log("<snapmail-app>.render()")
+    console.log("<snapmail-app>.render()", this._loaded)
     if (!this._loaded) {
       return html`<span>Loading...</span>`;
     }

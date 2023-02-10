@@ -1,5 +1,7 @@
-export const electronLogger = require('electron-log');
-const {IS_DEBUG} = require('./constants');
+import {IS_DEBUG} from "./constants";
+import * as electronLogger from "electron-log";
+//export const electronLogger = require('electron-log');
+
 
 export function log(level:any, message:any) {
   electronLogger[level](message);
