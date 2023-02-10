@@ -16,6 +16,7 @@ export interface IpcRendererApi {
   }
 }
 
+
 /** APP SETUP */
 
 export let DEV_MODE: string;
@@ -24,7 +25,11 @@ console.log("MY_ELECTRON_API = ", MY_ELECTRON_API);
  if (MY_ELECTRON_API) {
    DEV_MODE = MY_ELECTRON_API.DEV_MODE;
  } else {
-   DEV_MODE = process.env.DEV_MODE;
+   if (typeof process === 'undefined') {
+     console.warn("DEV_MODE not defined");
+   } else {
+     DEV_MODE = process.env.DEV_MODE
+   }
 }
  console.log("DEV_MODE =", DEV_MODE)
 

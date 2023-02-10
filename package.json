@@ -47,8 +47,8 @@
     "dist:we"             : "npm run build:devtest && npm run build -w we-applet && npm run package -w we-applet",
     "dist:win"            : "bash scripts/copy-binaries.sh && npm run dist:win -w electron",
 
-    "package:webapp"      : "rm -rf artifacts/snapmail-webapp-ui.zip && bestzip artifacts/snapmail-webapp-ui.zip webapp/dist/* && $npm_package_config_bin/hc web-app pack ./webapp/webhapp.workdir -o artifacts/snapmail.webhapp",
-    "package:we-applet"   : "rm -rf artifacts/snapmail-we_applet-ui.zip && bestzip artifacts/snapmail-we_applet-ui.zip we-applet/dist/* && $npm_package_config_bin/hc web-app pack ./we-applet/webhapp.workdir -o artifacts/snapmail-we_applet.webhapp",
+    "package:webapp"      : "rm -rf artifacts/snapmail-webapp-ui.zip && cd webapp/dist && bestzip ../../artifacts/snapmail-webapp-ui.zip * && cd ../.. && $npm_package_config_bin/hc web-app pack ./webapp/webhapp.workdir -o artifacts/snapmail.webhapp",
+    "package:we-applet"   : "rm -rf artifacts/snapmail-we_applet-ui.zip cd we-applet/dist && bestzip ../../artifacts/snapmail-we_applet-ui.zip * && cd ../.. && $npm_package_config_bin/hc web-app pack ./we-applet/webhapp.workdir -o artifacts/snapmail-we_applet.webhapp",
 
     "update-version"      : "bash scripts/update-version-number.sh $npm_package_version",
 
