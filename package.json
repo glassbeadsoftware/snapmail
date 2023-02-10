@@ -43,6 +43,8 @@
     "restart:happ"        : "RUST_LOG=warn echo \"pass\" | $npm_package_config_bin/hc s --piped -f=$ADMIN_PORT run $SINDEX -p=$HC_PORT",
     "network"             : "npm run clean:agents && concurrently-repeat \"npm run start\"",
 
+    "start:launcher"      : "echo pass | hc-launch --piped -n 1 artifacts/snapmail.webhapp network mdns",
+
     "dist:webhapp"        : "npm run build:devtest && npm run package -w webapp",
     "dist:we"             : "npm run build:devtest && npm run build -w we-applet && npm run package -w we-applet",
     "dist:win"            : "bash scripts/copy-binaries.sh && npm run dist:win -w electron",
