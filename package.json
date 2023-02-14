@@ -18,6 +18,7 @@
     "webapp"
   ],
   "scripts": {
+    "postinstall"         : "mkdir -p artifacts",
     "install:submodules"  : "bash scripts/npm/install-submodules.sh $npm_package_config_hc_version",
     "install:rust"        : "bash submodules/hc-prebuilt/install-rust.sh",
     "install:hash-zome"   : "bash submodules/hc-prebuilt/install-hash-zome.sh $npm_package_config_bin",
@@ -45,8 +46,6 @@
 
     "start:launcher"      : "echo pass | hc-launch --piped -n 1 artifacts/snapmail.webhapp network mdns",
 
-    "dist:webhapp"        : "npm run build:devtest && npm run package -w webapp",
-    "dist:we"             : "npm run build:devtest && npm run build -w we-applet && npm run package -w we-applet",
     "dist:win"            : "bash scripts/copy-binaries.sh && npm run dist:win -w electron",
 
     "package:webapp"      : "rm -rf artifacts/snapmail-webapp-ui.zip & cd webapp/dist && bestzip ../../artifacts/snapmail-webapp-ui.zip * && cd ../.. && $npm_package_config_bin/hc web-app pack webapp/webhapp.workdir -o artifacts/snapmail.webhapp",

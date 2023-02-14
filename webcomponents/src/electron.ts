@@ -20,7 +20,7 @@ export interface IpcRendererApi {
 /** APP SETUP */
 
 export let DEV_MODE: string;
-export const MY_ELECTRON_API = 'ipcRendererApi' in window? window.ipcRendererApi as IpcRendererApi : undefined;
+export const MY_ELECTRON_API = 'electronBridge' in window? window.electronBridge as IpcRendererApi : undefined;
 console.log("MY_ELECTRON_API = ", MY_ELECTRON_API);
  if (MY_ELECTRON_API) {
    DEV_MODE = MY_ELECTRON_API.DEV_MODE;

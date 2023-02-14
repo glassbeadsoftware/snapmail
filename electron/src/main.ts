@@ -414,10 +414,10 @@ const createMainWindow = async (appPort: string): Promise<BrowserWindow> => {
     title: IS_DEBUG? "[DEBUG] " + title : title,
     show: false,
     backgroundColor: BACKGROUND_COLOR,
-    // use these settings so that the ui can check paths
+    /** use these settings so that the ui can check paths */
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
-      contextIsolation: true, // Use preload and MY_ELECTRON_API to use ipc
+      contextIsolation: true, // Use preload and ipcRendererApi to use ipc
       sandbox: false,
       nodeIntegration: true,
       devTools: true,

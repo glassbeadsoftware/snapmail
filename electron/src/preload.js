@@ -4,7 +4,7 @@ const DEV_MODE = process.env.DEV_MODE? process.env.DEV_MODE : 'prod';
 
 console.log("preload DEV_MODE = " + JSON.stringify(process.env.DEV_MODE));
 
-const ipcRendererApi = {
+const electronBridge = {
   send: (channel) => {ipcRenderer.send(channel)},
   on: (channel, listener) => {ipcRenderer.on(channel, listener)},
   newMailSync: (title, body) => { return ipcRenderer.sendSync('newMailSync', title, body); },
@@ -19,4 +19,4 @@ const ipcRendererApi = {
 };
 
 
-contextBridge.exposeInMainWorld('ipcRendererApi', ipcRendererApi)
+contextBridge.exposeInMainWorld('electronBridge', electronBridge)

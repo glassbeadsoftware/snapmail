@@ -12,12 +12,10 @@ import html from "@web/rollup-plugin-html";
 import copy from "rollup-plugin-copy";
 //import path from "path";
 
-const DEV_MODE = process.env.DEV_MODE || "prod";
-
 
 const DIST_FOLDER = "dist"
 console.log({processEnv_DEV_MODE: process.env.DEV_MODE})
-//console.log("Rollup: DEV_MODE =", DEV_MODE)
+
 
 export default {
   input: "index.html",

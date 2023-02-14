@@ -7,7 +7,7 @@ import {ContextProvider} from '@lit-labs/context';
 
 let HC_APP_PORT: number;
 let HC_ADMIN_PORT: number;
-export const IS_ELECTRON = (window.location.port === ""); // No HREF PORT when run by Electron
+export const IS_ELECTRON = typeof MY_ELECTRON_API !== 'undefined'
 if (IS_ELECTRON) {
   const APP_ID = 'snapmail-app'
   console.log("URL =", window.location.toString())
@@ -23,13 +23,18 @@ if (IS_ELECTRON) {
   console.log(NETWORK_ID);
   DEFAULT_SNAPMAIL_DEF.id = APP_ID + '-' + NETWORK_ID;  // override installed_app_id
 } else {
-  HC_APP_PORT = Number(process.env.HC_APP_PORT);
-  HC_ADMIN_PORT = Number(process.env.HC_ADMIN_PORT);
+  try {
+    HC_APP_PORT = Number(process.env.HC_APP_PORT);
+    HC_ADMIN_PORT = Number(process.env.HC_ADMIN_PORT);
+  } catch (e) {
+    console.log("process.env.HC_APP_PORT not defined")
+  }
 }
 
 console.log("APP_ID =", DEFAULT_SNAPMAIL_DEF.id)
 console.log("HC_APP_PORT", HC_APP_PORT);
 console.log("HC_ADMIN_PORT", HC_ADMIN_PORT);
+console.log("IS_ELECTRON", IS_ELECTRON);
 
 /** */
 export class SnapmailApp extends HappElement {
