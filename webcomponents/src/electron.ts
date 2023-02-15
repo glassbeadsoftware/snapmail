@@ -25,10 +25,10 @@ console.log("MY_ELECTRON_API = ", MY_ELECTRON_API);
  if (MY_ELECTRON_API) {
    DEV_MODE = MY_ELECTRON_API.DEV_MODE;
  } else {
-   if (typeof process === 'undefined') {
-     console.warn("DEV_MODE not defined");
-   } else {
-     DEV_MODE = process.env.DEV_MODE
+   try {
+     DEV_MODE = process.env.DEV_MODE;
+   } catch (e) {
+     console.log("DEV_MODE not defined")
    }
 }
  console.log("DEV_MODE =", DEV_MODE)

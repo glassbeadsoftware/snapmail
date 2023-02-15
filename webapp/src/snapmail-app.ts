@@ -27,7 +27,7 @@ if (IS_ELECTRON) {
     HC_APP_PORT = Number(process.env.HC_APP_PORT);
     HC_ADMIN_PORT = Number(process.env.HC_ADMIN_PORT);
   } catch (e) {
-    console.log("process.env.HC_APP_PORT not defined")
+    console.log("HC_APP_PORT not defined")
   }
 }
 
