@@ -29,13 +29,13 @@
     "hash-zome"           : "bash submodules/hc-prebuilt/hash-zome.sh $npm_package_config_bin ./submodules/snapmail-rsm/target/wasm32-unknown-unknown/release/snapmail_model.wasm electron/bin/model_zome_hash.txt",
 
     "build:happ"          : "bash scripts/npm/dist-dna.sh $npm_package_config_bin && npm run hash-zome",
-    "build:webapp"        : "npm run build -w webcomponents && npm run build -w webapp",
+    "build:webapp"        : "npm run build -w webcomponents && npm run tsc -w webapp",
     "build:devtest"       : "npm run clean:agents & npm run build:happ && bash scripts/ts-bindings.sh && npm run build:webapp",
 
     "devtest"             : "npm run build:devtest && npm run start",
     "devtest:webapp"      : "npm run build:webapp && npm run start",
-    "devtest:electron"    : "npm run build:devtest && DEV_MODE='dev' npm run devtest -w electron",
-    "devtest:we"          : "npm run build:devtest && npm run devtest -w we-applet",
+    "devtest:electron"    : "npm run build:webapp && DEV_MODE='dev' npm run devtest -w electron",
+    "devtest:we"          : "npm run build:webapp && npm run devtest -w we-applet",
 
     "start:happ"          : "RUST_LOG=warn echo \"pass\" | $npm_package_config_bin/hc s --piped -f=$ADMIN_PORT generate artifacts/snapmail.happ --run=$HC_PORT -a snapmail network mdns",
     "start:happ-proxied"  : "RUST_LOG=warn echo \"pass\" | $npm_package_config_bin/hc s --piped -f=$ADMIN_PORT generate artifacts/snapmail.happ --run=$HC_PORT -a snapmail network --bootstrap https://bootstrap-staging.holo.host/ quic -p=kitsune-proxy://SYVd4CF3BdJ4DS7KwLLgeU3_DbHoZ34Y-qroZ79DOs8/kitsune-quic/h/165.22.32.11/p/5779/--",
