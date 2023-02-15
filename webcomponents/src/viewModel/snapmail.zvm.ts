@@ -156,9 +156,10 @@ export class SnapmailZvm extends ZomeViewModel {
         this._canPing = true;
       })
       .catch((error) => {
-        console.error('Ping failed for: ' + pingedAgentB64);
-        console.error(error);
+        console.warn('Ping failed for: ' + pingedAgentB64);
+        console.warn(error);
         this.storePingResult(pingedAgentB64, false);
+        this._canPing = true;
       })
   }
 
