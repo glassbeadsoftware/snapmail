@@ -63,14 +63,12 @@
     "clean:all"           : "npm run clean:agents & npm run clean:npm & npm run clean"
   },
   "devDependencies": {
-    "@web/rollup-plugin-html": "^1.11.0",
     "@types/ws": "^8.5.3",
     "bestzip": "^2.2.0",
     "concurrently": "^6.2.1",
     "concurrently-repeat": "^0.0.1",
     "cross-env": "^7.0.3",
-    "new-port-cli": "^1.0.0",
-    "rollup-plugin-copy": "^3.4.0"
+    "new-port-cli": "^1.0.0"
   },
   "engines": {
     "npm": ">=7.0.0"

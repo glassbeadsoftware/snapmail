@@ -1,6 +1,7 @@
 {
   "name": "we-applet",
   "version": "0.3.1",
+  "private": true,
   "scripts": {
     "tsc": "tsc",
     "build": "tsc && rollup --config rollup.config.js",
@@ -8,16 +9,6 @@
     "devtest": "npm run build && cross-env HC_PORT=$(port) ADMIN_PORT=$(port) concurrently \"npm run start:happ\" \"npm run start:ui\"",
     "start:ui": "concurrently -k --names tsc,dev-server \"npm run build:watch\" \"wds --config ./web-dev-server.config.mjs\"",
     "start:happ": "RUST_LOG=warn WASM_LOG=debug  echo \"pass\" | ../bin/hc s --piped -f=$ADMIN_PORT generate ../artifacts/snapmail.happ --run=$HC_PORT -a snapmail-applet network mdns"
-  },
-  "dependencies": {
-    "@holochain/client": "0.12.0",
-    "@lightningrodlabs/we-applet": "0.2.0",
-    "@lit-labs/context": "^0.1.2",
-    "@open-wc/scoped-elements": "^2.1.1",
-    "@scoped-elements/material-web": "^0.0.19",
-    "lit": "^2.3.0",
-    "@snapmail/elements": "file:../webcomponents",
-    "snapmail": "file:../webapp"
   },
   "devDependencies": {
     "@babel/preset-env": "^7.15.0",
@@ -29,6 +20,7 @@
     "@rollup/plugin-replace": "^3.0.0",
     "@web/dev-server": "^0.1.21",
     "@web/dev-server-rollup": "^0.3.10",
+    "@web/rollup-plugin-html": "^1.11.0",
     "@web/rollup-plugin-import-meta-assets": "^1.0.7",
     "babel-plugin-template-html-minifier": "^4.1.0",
     "@joseph184/rollup-plugin-node-builtins": "^2.1.4",
@@ -38,8 +30,18 @@
     "eslint-plugin-import": "^2.26.0",
     "new-port-cli": "^1.0.0",
     "rollup": "^2.56.2",
+    "rollup-plugin-copy": "^3.4.0",
     "tslib": "^2.4.0",
     "typescript": "^4.9.0"
   },
-  "private": true
+  "dependencies": {
+    "@holochain/client": "0.12.0",
+    "@lightningrodlabs/we-applet": "0.2.0",
+    "@lit-labs/context": "^0.1.2",
+    "@open-wc/scoped-elements": "^2.1.1",
+    "@scoped-elements/material-web": "^0.0.19",
+    "lit": "^2.3.0",
+    "@snapmail/elements": "file:../webcomponents",
+    "snapmail": "file:../webapp"
+  }
 }
