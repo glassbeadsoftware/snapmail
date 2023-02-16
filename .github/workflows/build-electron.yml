@@ -48,7 +48,7 @@ jobs:
       - name: Dispatch artifacts
         run: |
           cp ./artifacts/snapmail.happ ./electron/bin
-          cp ./artifacts/model_zome_hash.txt ./electron/bin
+          cp ./artifacts/snapmail_zome_hash.txt ./electron/bin
       # Install npm dependencies
       - name: Install npm dependencies
         shell: bash

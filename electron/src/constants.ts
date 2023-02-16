@@ -62,7 +62,7 @@ export const BINARY_PATHS: PathOptions | undefined = app.isPackaged
 export const RUNNER_VERSION = getRunnerVersion(BINARY_PATHS?.holochainRunnerBinaryPath)
 
 export const DNA_VERSION_FILENAME = "dna_version.txt";
-export const MODEL_ZOME_HASH_FILEPATH = 'bin/model_zome_hash.txt';
+export const MODEL_ZOME_HASH_FILEPATH = 'bin/snapmail_zome_hash.txt';
 
 /** WEB FILES PATH */
 export const BACKGROUND_COLOR = '#fbf9f7'

@@ -26,7 +26,7 @@
     "install:zits"        : "cargo install zits --version $npm_package_config_zits_version",
 
     "version"             : "$npm_package_config_bin/hc --version && holochain --version && lair-keystore --version",
-    "hash-zome"           : "bash submodules/hc-prebuilt/hash-zome.sh $npm_package_config_bin ./submodules/snapmail-rsm/target/wasm32-unknown-unknown/release/snapmail_model.wasm electron/bin/model_zome_hash.txt",
+    "hash-zome"           : "bash submodules/hc-prebuilt/hash-zome.sh $npm_package_config_bin ./submodules/snapmail-rsm/target/wasm32-unknown-unknown/release/snapmail_model.wasm artifacts/snapmail_zome_hash.txt && cp artifacts/snapmail_zome_hash.txt electron/bin",
 
     "build:happ"          : "bash scripts/npm/dist-dna.sh $npm_package_config_bin && npm run hash-zome",
     "build:webapp"        : "npm run build -w webcomponents && npm run build -w webapp",

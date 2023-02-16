@@ -57,8 +57,7 @@ jobs:
           npm run package:we-applet
       # Regroup artifacts
       - name: Regroup artifacts
-        run: |
-          cp electron/bin/model_zome_hash.txt ./artifacts          
+        run: |        
           cp submodules/snapmail-rsm/target/wasm32-unknown-unknown/release/snapmail_model.wasm ./artifacts
           cp submodules/snapmail-rsm/target/wasm32-unknown-unknown/release/snapmail.wasm ./artifacts
       # List uploaded files

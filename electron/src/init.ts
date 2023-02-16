@@ -28,7 +28,7 @@ export function initApp(
   dnaVersionFilename: string,
   uidListFilename: string,
   ) {
-  /** Read model_zome_hash.txt in app folder */
+  /** Read snapmail_zome_hash.txt in app folder */
   const modelZomeHash = loadModelZomeHash();
   log('info', "MODEL ZOME HASH: " + modelZomeHash);
 
