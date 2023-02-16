@@ -13,7 +13,7 @@ import {greenDot, redDot, stylesTemplate, SYSTEM_GROUP_LIST, whiteDot} from "../
 import {GridSelectionColumn} from "@vaadin/grid/vaadin-grid-selection-column";
 import {ZomeElement} from "@ddd-qc/lit-happ";
 import {SnapmailZvm} from "../viewModel/snapmail.zvm";
-import {DEV_MODE} from "../electron";
+import {BUILD_MODE} from "../electron";
 import {MenuBar} from "@vaadin/menu-bar";
 import {Dictionary} from "@ddd-qc/cell-proxy";
 import {GridItemModel} from "@vaadin/grid/src/vaadin-grid";
@@ -113,7 +113,7 @@ export class SnapmailContacts extends ZomeElement<SnapmailPerspective, SnapmailZ
 
     /** Probe Handles every 10 second */
     /*let _1sec =*/ setInterval(() => {
-      // if (DEV_MODE === 'dev') {
+      // if (BUILD_MODE === 'dev') {
       //   return;
       // }
       try {
@@ -126,7 +126,7 @@ export class SnapmailContacts extends ZomeElement<SnapmailPerspective, SnapmailZ
 
     /** Ping an agent every x seconds */
     /*let _1sec =*/ setInterval(() => {
-      // if (DEV_MODE === 'dev') {
+      // if (BUILD_MODE === 'dev') {
       //   return;
       // }
       console.log(" can pingNextAgent?", this._zvm.canPing);
@@ -141,7 +141,7 @@ export class SnapmailContacts extends ZomeElement<SnapmailPerspective, SnapmailZ
 
     /** Add Refresh button in DEBUG */
     const contactsMenu = this.shadowRoot.getElementById("ContactsMenu") as MenuBar;
-    if (DEV_MODE === 'dev' && contactsMenu) {
+    if (BUILD_MODE === 'dev' && contactsMenu) {
       contactsMenu.items = [{ text: 'Refresh' }];
       contactsMenu.addEventListener('item-selected', e => {
         console.log('item-selected', JSON.stringify(e.detail.value));

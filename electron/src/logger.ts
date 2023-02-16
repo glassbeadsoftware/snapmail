@@ -1,7 +1,5 @@
-import {IS_DEBUG} from "./constants";
 import * as electronLogger from "electron-log";
-//export const electronLogger = require('electron-log');
-
+import {IS_DEV} from "./constants";
 
 export function log(level:any, message:any) {
   electronLogger[level](message);
@@ -21,11 +19,10 @@ log('info', "");
 log('info', "APP STARTED");
 log('info', "");
 
-if (IS_DEBUG) {
+if (IS_DEV) {
   electronLogger.transports.file.level = 'error'; // minimize disk writes ; Use console instead
   electronLogger.transports.console.level = 'debug';
   log('debug', "DEBUG MODE ENABLED\n");
-  // require('electron-debug')({ isEnabled: true });
 } else {
   //log('info', "DEBUG MODE DISABLED");
   electronLogger.transports.console.level = 'info';

@@ -8,7 +8,7 @@ import babel from "@rollup/plugin-babel";
 //import { terser } from "rollup-plugin-terser";
 import copy from "rollup-plugin-copy";
 
-//const DEV_MODE = process.env.DEV_MODE || "prod";
+//const BUILD_MODE = process.env.BUILD_MODE || "prod";
 
 const DIST_FOLDER = "dist"
 

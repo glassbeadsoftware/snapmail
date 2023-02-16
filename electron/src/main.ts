@@ -8,7 +8,6 @@ import {
 import prompt from 'electron-prompt';
 import AutoLaunch from 'auto-launch';
 import { autoUpdater } from 'electron-updater';
-import IS_DEV from 'electron-is-dev';
 
 /** Holochain Modules */
 
@@ -30,7 +29,6 @@ import {
   CURRENT_DIR,
   REPORT_BUG_URL,
   NETWORK_URL,
-  IS_DEBUG,
   ICON_FILEPATH,
   BACKGROUND_COLOR,
   LINUX_ICON_FILE,
@@ -40,6 +38,7 @@ import {
   APP_DATA_PATH,
   DNA_VERSION_FILENAME,
   MAIN_FILE,
+  IS_DEV,
   BINARY_PATHS,
   RUNNER_VERSION, DEFAULT_BOOTSTRAP_URL, DEFAULT_PROXY_URL, FAVICON_PATH, getIndexUrl, getAdminPort
 } from './constants';
@@ -62,7 +61,7 @@ import {StatusUpdates} from "@lightningrodlabs/electron-holochain/src/holochain"
 //require('fix-path')();
 
 /** Set holochain logging output level */
-if (IS_DEBUG) {
+if (IS_DEV) {
   process.env.WASM_LOG = "DEBUG";
   process.env.RUST_LOG = "WARN";
 } else {
@@ -195,7 +194,7 @@ autoUpdater.on('update-downloaded', async () => {
 
 /** export this to MenuItem click callback */
 function checkForUpdates(menuItem: MenuItem, /*_focusedWindow, _event*/): void {
-  if(IS_DEBUG || IS_DEV) {
+  if(IS_DEV) {
     dialog.showMessageBox({
       title: 'Check for Update failed',
       message: 'No update available in dev mode.'
@@ -222,7 +221,6 @@ function checkForUpdates(menuItem: MenuItem, /*_focusedWindow, _event*/): void {
 
 import {ipcMain} from "electron";
 import * as electronLogger from "electron-log";
-
 
 // ipcMain.on('app_version', (event) => {
 //   event.sender.send('app_version', { version: app.getVersion() });
@@ -411,7 +409,7 @@ const createMainWindow = async (appPort: string): Promise<BrowserWindow> => {
   const options: Electron.BrowserWindowConstructorOptions = {
     height,
     width,
-    title: IS_DEBUG? "[DEBUG] " + title : title,
+    title: IS_DEV? "[DEV] " + title : title,
     show: false,
     backgroundColor: BACKGROUND_COLOR,
     /** use these settings so that the ui can check paths */
@@ -437,7 +435,7 @@ const createMainWindow = async (appPort: string): Promise<BrowserWindow> => {
     mainWindow?.reload()
   })
 
-  if (IS_DEBUG) {
+  if (IS_DEV) {
     mainWindow.webContents.openDevTools();
   }
 
@@ -509,347 +507,6 @@ const createMainWindow = async (appPort: string): Promise<BrowserWindow> => {
   /** Done */
   return mainWindow
 }
-
-
-
-//
-// /** Create the main window global */
-// function createWindow(): BrowserWindow {
-//   const { width, height } = g_userSettings.get('windowBounds');
-//   let title = "Snapmail v" + app.getVersion() + " - " + g_uid
-//   let mainWindow = new BrowserWindow({
-//     width,
-//     height,
-//     title,
-//     webPreferences: {
-//       nodeIntegration: true,
-//       contextIsolation: false,
-//       devTools: true,
-//       webgl: false,
-//       enableWebSQL: false,
-//     },
-//     icon: ICON_FILEPATH,
-//     //autoHideMenuBar: true,
-//   });
-//   const { x, y } = g_userSettings.get('windowPosition');
-//   mainWindow.setPosition(x, y);
-//
-//   globalShortcut.register('f5', function() {
-//     //console.log('f5 is pressed')
-//     mainWindow.reload()
-//   })
-//
-//   if (IS_DEBUG) {
-//     mainWindow.webContents.openDevTools();
-//   }
-//
-//   /**
-//    * The BrowserWindow class extends the node.js core EventEmitter class, so we use that API
-//    * to listen to events on the BrowserWindow. The resize event is emitted when the window size changes.
-//    */
-//   mainWindow.on('resize', () => {
-//     /** The event doesn't pass us the window size,
-//      * so we call the `getBounds` method which returns an object with
-//      * the height, width, and x and y coordinates.*/
-//     const { width, height } = mainWindow.getBounds();
-//     /** Now that we have them, save them using the `set` method. */
-//     g_userSettings.set('windowBounds', { width, height });
-//   });
-//
-//   // Open <a href='' target='_blank'> with default system browser
-//   mainWindow.webContents.on('new-window', function (event, url) {
-//     event.preventDefault();
-//     shell.openExternal(url).then(_r => {});
-//   });
-//
-//   /** Open DevTools */
-//   if (IS_DEBUG) mainWindow.webContents.openDevTools();
-//
-//   /** Emitted on request to close window */
-//   mainWindow.on('close', (event) => {
-//     log('debug', '*** mainWindow "close" - ' + g_canQuit);
-//     const positions = mainWindow.getPosition();
-//     g_userSettings.set('windowPosition', { x: Math.floor(positions[0]), y: Math.floor(positions[1]) });
-//     if (g_canQuit) {
-//       mainWindow = null;
-//     } else {
-//       event.preventDefault();
-//       mainWindow.hide();
-//     }
-//   })
-//
-//   /** Emitted when the window is closed. */
-//   mainWindow.on('closed', function () {
-//     log('debug', '*** mainWindow "closed"');
-//     try {
-//       killHolochain().then(() => {
-//         log('info', '*** Holochain promise Closed');
-//       });
-//     } catch (err) {
-//       log('error', '*** Error while closing Holochain:');
-//       log('error', err);
-//     }
-//     /** Wait for kill subprocess to finish on slow machines */
-//     const start = Date.now();
-//     let diff = 0;
-//     do {
-//       diff = Date.now() - start;
-//     } while(diff < 1000);
-//     log('info', '*** Holochain Closed');
-//     /**
-//      * Dereference the window object, usually you would store windows
-//      * in an array if your app supports multi windows, this is the time
-//      * when you should delete the corresponding element.
-//      */
-//     g_mainWindow = null;
-//   });
-//
-//   //// Check for update
-//   //mainWindow.once('ready-to-show', () => {
-//   //  autoUpdater.checkForUpdatesAndNotify();
-//   //});
-//
-//   /** Done */
-//   return mainWindow;
-// }
-
-
-
-//
-// /** */
-// async function spawnHolochainProc(): Promise<ChildProcessWithoutNullStreams> {
-//   log('debug','spawnHolochainProc...');
-//   const bin = HOLOCHAIN_BIN;
-//   const args = ['-c', g_conductorConfigFilePath];
-//
-//   /** Spawn "holochain" subprocess */
-//   log('info', 'Spawning ' + bin + ' (dirname: ' + CURRENT_DIR + ') | spawnHolochainProc()');
-//   const holochain_proc = spawn(bin, args, {
-//     cwd: CURRENT_DIR,
-//     detached: false,
-//     //stdio: 'pipe',
-//     env: {
-//       ...process.env,
-//       RUST_BACKTRACE: "1",
-//     },
-//   });
-//   if (!holochain_proc) {
-//     throw new Error("Failed to spawn holochain's magic ready string from child process");
-//   }
-//   /** Handle error output */
-//   holochain_proc.stderr.on('data', (data) => log('error', '*** holochain > ' + data.toString()));
-//   /** if "holochain" exit, close the app */
-//   holochain_proc.on('exit', (code, signal) => {
-//     if (signal) {
-//       log('info', `holochain process terminated due to receipt of signal ${signal}`)
-//     } else {
-//       log('info', `holochain process terminated with exit code ${code}`)
-//     }
-//     // g_canQuit = true;
-//     if (g_canQuit) {
-//       app.quit();
-//     }
-//   });
-//   /** Wait for holochain to boot up */
-//   log('info', 'holochain <-> waiting for magic ready string');
-//   const promise: Promise<void> = await new Promise(async (resolve, reject) => {
-//     const start_time = Date.now()
-//     let total_output = ""
-//     holochain_proc.stdout.on('data', (data) => {
-//       const output = data.toString();
-//       total_output += output
-//       log('info', 'holochain: ' + output);
-//       if(output.indexOf(HC_MAGIC_READY_STRING) > -1) {
-//         const regex = /###ADMIN_PORT:([0-9]*)###/gm;
-//         const match = regex.exec(total_output);
-//         //log('debug', {match});
-//         if (match === undefined || match === null || match.length === 0) {
-//           log('warn', 'ADMIN port not found in holochain total_output:');
-//           log('warn', {total_output});
-//           return;
-//         }
-//         g_adminPort = parseInt(match[1]);
-//         //log('info', {total_output});
-//         resolve();
-//       } else {
-//         log('info', 'holochain <- waiting for magic ready string');
-//       }
-//     });
-//     while(Date.now() - start_time < 60 * 1000) {
-//       await delay(100);
-//     }
-//     reject(new Error("Failed to retrieve holochain's magic ready string from child process"))
-//   });
-//   /** Done */
-//   await promise;
-//   return holochain_proc;
-// }
-
-
-// /** * Make sure there is no outstanding holochain procs */
-// async function killHolochain(): Promise<void> {
-//   /** SIGTERM by default */
-//   let canWaitForHolochain = false;
-//   if(g_holochain_proc && g_holochain_proc.pid) {
-//     canWaitForHolochain = true;
-//     log('info', 'Killing holochain sub processes...');
-//     kill(g_holochain_proc.pid, function(err) {
-//       canWaitForHolochain = false;
-//       if(!err) {
-//         log('info', 'killed all holochain sub processes');
-//       } else {
-//         log('error', err)
-//       }
-//     });
-//   }
-//   let canWaitForKeystore = false;
-//   if(g_keystore_proc && g_keystore_proc.pid) {
-//     canWaitForKeystore = true;
-//     log('info', 'Killing lair-keystore sub processes...');
-//     kill(g_keystore_proc.pid, function(err) {
-//       canWaitForKeystore = false;
-//       if(!err) {
-//         log('info', 'killed all lair-keystore sub processes');
-//       } else {
-//         log('error', err)
-//       }
-//     });
-//   }
-//   /* Wait for the kill commands to complete */
-//   log('info', 'waiting...');
-//   const start_time = Date.now()
-//   while(canWaitForHolochain || canWaitForKeystore) {
-//     await delay(10);
-//     if (Date.now() - start_time > 5 * 1000) {
-//       log('error', 'Killing sub-processes TIMED-OUT. Aborted.');
-//       break;
-//     }
-//   }
-//   log('info', 'Killing sub-processes DONE.');
-// }
-
-
-// /**
-//  * Prepare conductor config and spawn holochain subprocess
-//  * @param canRegenerateConfig - Regenerate the conductor config before relaunching the holochain process.
-//  */
-// async function startConductorAndLoadPage(canRegenerateConfig: boolean): Promise<void> {
-//   //g_canQuit = false;
-//   await killHolochain(); // Make sure there is no outstanding Holochain & keystore procs
-//   g_lair_version = getKeystoreVersion(LAIR_KEYSTORE_BIN);
-//   g_keystore_proc = await spawnKeystore(LAIR_KEYSTORE_BIN, g_sessionStoragePath);
-//   //await sleep(2000);
-//   if (canRegenerateConfig) {
-//     generateConductorConfig(g_conductorConfigFilePath, g_sessionStoragePath, g_adminPort, g_networkSettings);
-//   }
-//   log('info', 'Launching conductor...');
-//   //g_canQuit = true;
-//
-//   let indexUrl;
-//   try {
-//     const res = pingBootstrap(g_networkSettings.bootstrapUrl)
-//     log('info', 'bootstrap result: ' + res)
-//     /** - Spawn Conductor */
-//     g_holochain_version = getHolochainVersion();
-//     // await sleep(1000); // Time buffer to make sure holochain process closed
-//     g_holochain_proc = await spawnHolochainProc();
-//     /** - Connect to Conductor and activate app */
-//     g_adminWs = await connectToAdmin(g_adminPort);
-//     const activeAppPort = await hasActivatedApp(g_adminWs);
-//     if(activeAppPort === 0) {
-//       // - Prompt for first UID
-//       if (!g_networkSettings.canMdns) {
-//           g_uid = '<my-network-access-key>';
-//           await promptUid(true, g_mainWindow);
-//       } else {
-//         addUid("local-mdns")
-//       }
-//       await installApp(g_adminWs, g_uid);
-//       // log('debug','Attaching to app at ' + g_appPort + ' ...');
-//       g_appPort = await g_adminWs.attachAppInterface({port: undefined});
-//       log('debug', {g_appPort});
-//       g_appPort = g_appPort.port;
-//       log('info','App Interface attached: ' + g_appPort);
-//     } else {
-//       g_appPort = activeAppPort;
-//       /** - Prompt for UID selection or prefered UID if multiple uid found */
-//       if (g_uid === '' && g_uidList !== undefined && g_uidList.length > 0) {
-//         const maybe_uid = g_userSettings.get('uid');
-//         if (maybe_uid !== undefined) {
-//           g_uid = maybe_uid;
-//         } else {
-//           g_uid = g_uidList[0];
-//           if(g_uidList.length > 1) {
-//             await promptUidSelect(false);
-//           }
-//         }
-//       }
-//     }
-//     indexUrl = INDEX_URL + g_appPort + '&UID=' + g_uid;
-//     log('debug', indexUrl);
-//     g_dnaHash = await getDnaHash(g_adminWs, g_uid);
-//   } catch (err) {
-//     log('error', 'Conductor setup failed:');
-//     log('error',{err});
-//     //indexUrl = INDEX_URL;
-//     await g_mainWindow.loadURL(ERROR_URL);
-//     return;
-//     //// Better to kill app if holochain not connected
-//     //app.quit();
-//   }
-//   /** -- Check username -- */
-//   try
-//   {
-//     const installed_app_id = SNAPMAIL_APP_ID + '-' + g_uid;
-//     const appWs = await connectToApp(g_appPort);
-//     const appInfo = await appWs.appInfo({ installed_app_id }, 3000);
-//     log('debug', {appInfo});
-//     if (appInfo === null) {
-//       throw new Error("happ not installed in conductor: " + installed_app_id)
-//     }
-//     g_cellId = appInfo.cell_data[0].cell_id;
-//     const username = await appWs.callZome({
-//         cap: null,
-//         cell_id: g_cellId,
-//         zome_name: "snapmail",
-//         fn_name: "get_my_handle",
-//         provenance: g_cellId[1],
-//         payload: undefined,
-//       }
-//       , 9999
-//     );
-//     log('debug', "username found: " + username);
-//     if (username === "<noname>") {
-//       const firstUsername = await promptFirstHandle(true);
-//       const result = await appWs.callZome({
-//           cap: null,
-//           cell_id: g_cellId,
-//           zome_name: "snapmail",
-//           fn_name: "set_handle",
-//           provenance: g_cellId[1],
-//           payload: firstUsername,
-//         }
-//         , 9999
-//       );
-//       log('debug', "username set: " + JSON.stringify(result));
-//     }
-//   } catch(err) {
-//     log('error', "*** Calling zome for initial username failed.");
-//     log('error', {err});
-//     await g_mainWindow.loadURL(ERROR_URL);
-//     return;
-//     //alert("Holochain failed.\n Connection to holochain might be lost.
-//     // Reload App or refresh web page to attempt reconnection");
-//   }
-//   /** -- trigger refresh once we know interfaces have booted up -- **/
-//   log('debug',"Loading index.html: " + indexUrl);
-//   try {
-//     await g_mainWindow.loadURL(indexUrl);
-//   } catch(err) {
-//     log('error', 'loadURL() failed:');
-//     log('error',{err});
-//   }
-// }
 
 
 /** */

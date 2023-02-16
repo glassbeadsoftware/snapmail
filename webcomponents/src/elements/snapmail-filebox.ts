@@ -4,7 +4,7 @@ import {GridSortColumn} from "@vaadin/grid/vaadin-grid-sort-column";
 import {HorizontalLayout} from "@vaadin/horizontal-layout";
 import {TextField, TextFieldValueChangedEvent} from "@vaadin/text-field";
 import { state, property } from "lit/decorators.js";
-import {DEV_MODE, updateTray} from "../electron";
+import {BUILD_MODE, updateTray} from "../electron";
 import {stylesTemplate} from "../constants";
 import {MailItem} from "../bindings/snapmail.types";
 import {
@@ -50,7 +50,7 @@ function filterMails(mailItems: MailGridItem[], searchValue: string) {
 export class SnapmailFilebox extends ZomeElement<SnapmailPerspective, SnapmailZvm> {
   constructor() {
     super(SnapmailZvm.DEFAULT_ZOME_NAME);
-    if (DEV_MODE === 'dev') {
+    if (BUILD_MODE === 'dev') {
       this._menuItems.push({text: 'Refresh', disabled: false});
     }
   }
@@ -128,7 +128,7 @@ export class SnapmailFilebox extends ZomeElement<SnapmailPerspective, SnapmailZv
     this.mailGridElem.shadowRoot.appendChild(stylesTemplate.content.cloneNode(true));
 
     const fileboxLayout = this.shadowRoot.getElementById('fileboxLayout') as HorizontalLayout;
-    if (DEV_MODE === 'dev') {
+    if (BUILD_MODE === 'dev') {
       fileboxLayout.style.backgroundColor = "rgba(241,154,154,0.82)";
     }
 

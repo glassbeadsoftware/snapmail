@@ -14,7 +14,6 @@ import copy from "rollup-plugin-copy";
 
 
 const DIST_FOLDER = "dist"
-console.log({processEnv_DEV_MODE: process.env.DEV_MODE})
 
 
 export default {

@@ -8,7 +8,7 @@ export interface IpcRendererApi {
   newMailSync: (title: string, body: string)  => unknown,
   startingInfo: (startingHandle, dnaHash)  => string,
   newCountAsync: (newCount)  => unknown,
-  DEV_MODE: string,
+  BUILD_MODE: string,
   versions: {
     node: string,
     chrome: string,
@@ -19,23 +19,28 @@ export interface IpcRendererApi {
 
 /** APP SETUP */
 
-export let DEV_MODE: string;
+export let BUILD_MODE: string;
 export const MY_ELECTRON_API = 'electronBridge' in window? window.electronBridge as IpcRendererApi : undefined;
-console.log("MY_ELECTRON_API = ", MY_ELECTRON_API);
+export const IS_ELECTRON = typeof MY_ELECTRON_API !== 'undefined'
  if (MY_ELECTRON_API) {
-   DEV_MODE = MY_ELECTRON_API.DEV_MODE;
+   BUILD_MODE = MY_ELECTRON_API.BUILD_MODE;
  } else {
    try {
-     DEV_MODE = process.env.DEV_MODE;
+     BUILD_MODE = process.env.BUILD_MODE;
    } catch (e) {
-     console.log("DEV_MODE not defined")
+     console.log("BUILD_MODE not defined. Defaulting to 'prod'");
+     BUILD_MODE = 'prod';
    }
 }
- console.log("DEV_MODE =", DEV_MODE)
 
+export const IS_DEV = BUILD_MODE === 'dev';
+
+console.log("BUILD_MODE =", BUILD_MODE)
+console.log("IS_ELECTRON =", IS_ELECTRON);
 
 /** Remove console.log() in PROD */
-if (DEV_MODE !== 'dev') {
+if (BUILD_MODE === 'prod') {
+  console.log("console.log() disabled");
   console.log = () => {};
 }
 

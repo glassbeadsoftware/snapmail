@@ -11,20 +11,20 @@
 
     <script type="module">
       console.log("we-applet demo setup()");
-      console.log("setup()", process.env.HC_APP_PORT, process.env.HC_ADMIN_PORT, process.env.DEV_MODE)
+      console.log("process.env =", process.env.HC_APP_PORT, process.env.HC_ADMIN_PORT, process.env.BUILD_MODE)
 
       import { AppWebsocket, AdminWebsocket } from "@holochain/client";
       import Applet from "../dist";
-      
+
       const container = document.getElementById("container");
 
       async function setup() {
         const appWs = await AppWebsocket.connect(`ws://localhost:${process.env.HC_APP_PORT}`);
         const adminWs = await AdminWebsocket.connect(`ws://localhost:${process.env.HC_ADMIN_PORT}`);
-        
+
         const apps = await adminWs.listApps({});
         console.log("setup() apps", apps);
-        
+
         const appInfo = await appWs.appInfo({ installed_app_id: "snapmail-applet" });
         console.log("setup() appInfo", appInfo);
 

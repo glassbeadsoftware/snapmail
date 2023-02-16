@@ -1,13 +1,12 @@
 import { html } from "lit";
 import { state } from "lit/decorators.js";
 import {AdminWebsocket, AppWebsocket, InstalledAppId} from "@holochain/client";
-import {DEFAULT_SNAPMAIL_DEF, MY_ELECTRON_API, SnapmailDvm, SnapmailPage} from "@snapmail/elements";
+import {DEFAULT_SNAPMAIL_DEF, IS_ELECTRON, SnapmailDvm, SnapmailPage} from "@snapmail/elements";
 import {HvmDef, HappElement, cellContext} from "@ddd-qc/lit-happ";
 import {ContextProvider} from '@lit-labs/context';
 
 let HC_APP_PORT: number;
 let HC_ADMIN_PORT: number;
-export const IS_ELECTRON = typeof MY_ELECTRON_API !== 'undefined'
 if (IS_ELECTRON) {
   const APP_ID = 'snapmail-app'
   console.log("URL =", window.location.toString())
@@ -31,7 +30,7 @@ if (IS_ELECTRON) {
   }
 }
 
-console.log("APP_ID =", DEFAULT_SNAPMAIL_DEF.id)
+console.log("HAPP_ID =", DEFAULT_SNAPMAIL_DEF.id)
 console.log("HC_APP_PORT", HC_APP_PORT);
 console.log("HC_ADMIN_PORT", HC_ADMIN_PORT);
 console.log("IS_ELECTRON", IS_ELECTRON);

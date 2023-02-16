@@ -35,7 +35,7 @@ import {
 import {SnapmailFilebox} from "./snapmail-filebox";
 import {SnapmailAttView} from "./snapmail-att-view";
 import {SnapmailMailView} from "./snapmail-mail-view";
-import {DEV_MODE, MY_ELECTRON_API} from "../electron";
+import {BUILD_MODE, MY_ELECTRON_API} from "../electron";
 import '@vaadin/vaadin-icon';
 import '@vaadin/vaadin-lumo-styles';
 import {SnapmailDvm} from "../viewModel/snapmail.dvm";
@@ -194,13 +194,12 @@ export class SnapmailPage extends DnaElement<unknown, SnapmailDvm> {
 
     /** -- Change title color in debug -- */
     const titleLayout = this.shadowRoot.getElementById('titleLayout') as HorizontalLayout;
-    if (DEV_MODE === 'dev') {
+    if (BUILD_MODE === 'dev') {
       titleLayout.style.backgroundColor = "#ec8383d1";
     }
-    //const IS_ELECTRON = (window.location.port === ""); // No HREF PORT when run by Electron
     if (MY_ELECTRON_API || this.noTitle) {
       titleLayout.style.display = "none";
-      // if (DEV_MODE === 'dev') {
+      // if (BUILD_MODE === 'dev') {
       //   /** -- Update Title with DNA ID */
       //   const rootTitle = document.getElementById('rootTitle') as HTMLTitleElement;
       //   console.assert(rootTitle);

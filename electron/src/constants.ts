@@ -3,9 +3,11 @@ import { app } from 'electron';
 import {getRunnerVersion, PathOptions} from "@lightningrodlabs/electron-holochain"
 
 console.log({__dirname})
+console.log("electron IS_PACKAGED", app.isPackaged);
 
 /** DEBUGGING */
-export const IS_DEBUG = process.env.DEV_MODE ? (process.env.DEV_MODE.trim() === 'dev') : false;
+export const IS_PACKAGED = app.isPackaged;
+export const IS_DEV = process.env.BUILD_MODE? process.env.BUILD_MODE == 'dev' : false;
 export const DEVELOPMENT_UI_URL = path.join(__dirname, '../web')
 
 /** MISC */
@@ -24,19 +26,14 @@ export const CONFIG_PATH = path.join(app.getPath('appData'), 'Snapmail');
 export const UID_LIST_FILENAME = 'uid-list.txt';
 export const NETWORK_SETTINGS_FILENAME = 'network-preferences.json';
 export const CURRENT_DIR = path.join(__dirname, '..');
-//const DIST_DIR = IS_DEBUG? "ui_dbg" : "ui";
 export const DIST_DIR = "web";
 export const FAVICON_PATH = `/web/favicon.png`;
 
 
-export const DNA_PATH = app.isPackaged
+export const DNA_PATH = IS_PACKAGED
   ? path.join(app.getAppPath(), '../app/bin/snapmail.happ')
   : path.join(app.getAppPath(), 'bin/snapmail.happ')
 
-
-// export const APP_DATA_PATH = IS_DEBUG
-//   ? path.join(__dirname, '../../.dev-app-data')
-//   : path.join(app.getPath('appData'), 'Snapmail')
 
 /*
   app.getPath('appData') =

@@ -6,10 +6,10 @@
   "typings": "./dist/index.d.ts",
   "scripts": {
     "lint": "eslint --ext .ts .",
-    "tsc": "rm -rf dist && mkdir dist && cp index.html dist && cp ../assets/favicon.ico dist && tsc",
-    "build": "rm -rf dist && tsc && rollup -c rollup.config.js && cd dist && cp * ../../electron/web",
+    "build": "rm -rf dist &&  tsc",
+    "dist": "rm -rf dist && tsc && rollup -c rollup.config.js && cd dist && cp * ../../electron/web",
     "build:watch": "run-singleton \"tsc -w --incremental --preserveWatchOutput\"",
-    "start:ui": "web-dev-server --config ./web-dev-server.config.mjs"
+    "start:ui": "cp index.html dist && cp ../assets/favicon.ico dist && web-dev-server --config ./web-dev-server.config.mjs"
   },
 
   "devDependencies": {

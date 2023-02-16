@@ -3,7 +3,7 @@
 import {ActionHashB64, AgentPubKey, encodeHashToBase64} from "@holochain/client";
 
 import {MailItem} from "./bindings/snapmail.types";
-import {DEV_MODE} from "./electron";
+import {BUILD_MODE} from "./electron";
 import {UsernameMap} from "./viewModel/snapmail.perspective";
 
 const checkMarkEmoji = String.fromCodePoint(0x2714); //FE0F
@@ -250,7 +250,7 @@ export function into_mailText(usernameMap: UsernameMap, mailItem: MailItem): str
   }
 
   /** Debug info */
-  if (DEV_MODE === 'dev') {
+  if (BUILD_MODE === 'dev') {
     intext += '\n\nDEBUG INFO';
     intext += '\nState: ' + JSON.stringify(mailItem.state);
     intext += '\nActionHash: ' + encodeHashToBase64(mailItem.ah);

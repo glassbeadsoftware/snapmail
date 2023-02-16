@@ -1,8 +1,8 @@
 const { contextBridge, ipcRenderer } = require('electron')
 
-const DEV_MODE = process.env.DEV_MODE? process.env.DEV_MODE : 'prod';
+const BUILD_MODE = process.env.BUILD_MODE? process.env.BUILD_MODE : 'prod';
 
-console.log("preload DEV_MODE = " + JSON.stringify(process.env.DEV_MODE));
+console.log("preload BUILD_MODE = " + JSON.stringify(process.env.BUILD_MODE));
 
 const electronBridge = {
   send: (channel) => {ipcRenderer.send(channel)},
@@ -10,7 +10,7 @@ const electronBridge = {
   newMailSync: (title, body) => { return ipcRenderer.sendSync('newMailSync', title, body); },
   startingInfo: (startingHandle, dnaHash) => { return ipcRenderer.sendSync('startingInfo', startingHandle, dnaHash); },
   newCountAsync: (newCount) => { return ipcRenderer.send('newCountAsync', newCount); },
-  DEV_MODE,
+  BUILD_MODE,
   versions: {
     node: process.versions.node,
     chrome: process.versions.chrome,
