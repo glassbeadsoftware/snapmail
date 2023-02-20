@@ -45,12 +45,17 @@ export class SnapmailZvm extends ZomeViewModel {
   }
 
 
-  /** */
-  async probeAll() {
+  async initializePerspectiveOnline(): Promise<void> {
     await this.probeHandles();
     await this.zomeProxy.checkAckInbox();
     await this.zomeProxy.checkMailInbox();
     await this.probeMails();
+  }
+
+
+  /** */
+  probeAllInner() {
+    /* await */ this.initializePerspectiveOnline();
   }
 
 
