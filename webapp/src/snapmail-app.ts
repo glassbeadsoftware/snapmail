@@ -53,8 +53,8 @@ export class SnapmailApp extends HappElement {
 
 
   /** */
-  async happInitialized() {
-    console.log("happInitialized()...", this.hvm.appId, this.snapmailDvm.cell.dnaHash);
+  async hvmConstructed() {
+    console.log("hvmConstructed()...", this.hvm.appId, this.snapmailDvm.cell.dnaHash);
     /** Provide Cell Context */
     //console.log({cell: this.snapmailDvm.cell});
     new ContextProvider(this, cellContext, this.snapmailDvm.cell);
@@ -65,10 +65,18 @@ export class SnapmailApp extends HappElement {
     //console.log({ adminWs });
     await this.hvm.authorizeAllZomeCalls(this._adminWs);
     console.log("*** Zome call authorization complete");
-    /** Probe */
+  }
+
+
+  /** */
+  //async perspectiveInitializedOffline(): Promise<void> {}
+
+
+  /** */
+  async perspectiveInitializedOnline(): Promise<void> {
+    console.log("<snapmail-app>.perspectiveInitializedOnline()");
     await this.hvm.probeAll();
     console.log("*** probeAll complete");
-    /** Done */
     this._loaded = true;
   }
 
