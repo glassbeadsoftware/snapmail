@@ -221,6 +221,7 @@ function checkForUpdates(menuItem: MenuItem, /*_focusedWindow, _event*/): void {
 
 import {ipcMain} from "electron";
 import * as electronLogger from "electron-log";
+import * as os from "os";
 
 // ipcMain.on('app_version', (event) => {
 //   event.sender.send('app_version', { version: app.getVersion() });
@@ -919,7 +920,7 @@ async function promptFirstHandle(): Promise<string> {
     alwaysOnTop: true,
     label: 'Username:',
     icon: CURRENT_DIR + FAVICON_PATH,
-    value: "<noname>",
+    value: os.userInfo().username,
     inputAttrs: {
       required: 'true',
       minlength: "3",
