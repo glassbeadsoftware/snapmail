@@ -29,13 +29,13 @@
     "hash-zome"           : "bash submodules/hc-prebuilt/hash-zome.sh $npm_package_config_bin ./submodules/snapmail-rsm/target/wasm32-unknown-unknown/release/snapmail_model.wasm artifacts/snapmail_zome_hash.txt && cp artifacts/snapmail_zome_hash.txt electron/bin",
 
     "build:happ"          : "bash scripts/npm/dist-dna.sh $npm_package_config_bin && npm run hash-zome",
-    "build:webapp"        : "npm run clean:agents & npm run build:happ && bash scripts/ts-bindings.sh && npm run build:webapp",
+    "build:webapp"        : "npm run clean:agents & bash scripts/ts-bindings.sh && npm run build:webapp",
     "dist:webapp"         : "npm run build -w webcomponents && npm run dist -w webapp",
 
 
-    "devtest"             : "npm run build:webapp && npm run start",
-    "devtest:we"          : "npm run dist:webapp && BUILD_MODE='dev' npm run devtest -w we-applet",
-    "devtest:electron"    : "npm run dist:webapp && npm run devtest -w electron",
+    "devtest"             : "npm run build:happ && npm run build:webapp && npm run start",
+    "devtest:we"          : "npm run build:happ && npm run dist:webapp && BUILD_MODE='dev' npm run devtest -w we-applet",
+    "devtest:electron"    : "npm run build:happ && npm run dist:webapp && npm run devtest -w electron",
 
     "prodtest"            : "npm run dist -w webapp && HC_PORT=$(port) ADMIN_PORT=$(port) concurrently \"npm run start:happ-proxied\" \"sleep 8 && npm run start:ui -w webapp\"",
     "prodtest:we"         : "npm run dist -w webapp && npm run devtest -w we-applet",
