@@ -57,6 +57,8 @@
 
     "update-version"      : "bash scripts/update-version-number.sh $npm_package_version",
 
+    "dl-test-release"     : "rm -rf release & mkdir -p release & gh release download workflow-test -D release -R glassbeadsoftware/snapmail",
+
     "clean"               : "bash scripts/npm/clean.sh",
     "clean:npm"           : "bash scripts/npm/clean-npm.sh",
     "clean:agents"        : "rm -rf .hc*",
