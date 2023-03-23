@@ -18,6 +18,13 @@ jobs:
           # a GitHub package registry.
           githubToken: ${{ github.token }}
 
+          install: |
+            apt-get update -q -y
+            apt-get install -q -y git
+            apt-get install -q -y npm
+            apt-get install -q -y cargo
+            apt-get install -q -y wget
+
           #
           run: |
             npm install
