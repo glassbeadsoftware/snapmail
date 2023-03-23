@@ -1,0 +1,28 @@
+name: Build arm64
+
+on: workflow_dispatch
+
+jobs:
+  build-webhapps:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: uraimo/run-on-arch-action@v2
+        name: Run commands
+        id: runcmd
+        with:
+          arch: aarch64
+          distro: ubuntu18.04
+
+          # Not required, but speeds up builds by storing container images in
+          # a GitHub package registry.
+          githubToken: ${{ github.token }}
+
+          #
+          run: |
+            npm install
+            npm run install:submodules
+            npm run install:rust
+            npm run install:hc
+            npm run install:hash-zome
+            npm run build:happ            
