@@ -4,10 +4,10 @@ on: workflow_dispatch
 
 jobs:
   build-webhapps:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-18.04
     steps:
       - uses: actions/checkout@v3
-      - uses: uraimo/run-on-arch-action@v2
+      - uses: uraimo/run-on-arch-action@v2.5.0
         name: Run commands
         id: runcmd
         with:
