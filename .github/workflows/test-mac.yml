@@ -1,0 +1,48 @@
+name: test-workflow x64 MacOS
+
+on: workflow_dispatch
+
+jobs:
+  call-build-electron:
+    uses: ./.github/workflows/build-electron.yml
+
+  # upload the artifacts
+  upload-assets:
+    needs: call-build-electron
+    runs-on: macos-11
+    steps:
+      - uses: actions/checkout@v3
+      # Download previously uploaded artifacts
+      - uses: actions/download-artifact@v3
+        with:
+          name: all-happ-artifact
+          path: artifacts
+      - name: Setup sign and notarize (macos only)
+        continue-on-error: true
+        uses:  figleafteam/import-codesign-certs@v2
+        with:
+          p12-file-base64: ${{ secrets.HBE_APPLE_CERTIFICATE_BASE64 }}
+          p12-password: ${{ secrets.HBE_APPLE_CERTIFICATE_PASS }}
+      # Display artifacts folder
+      - name: Display artifacts folder
+        run: ls
+        working-directory: artifacts
+      # Delete .exe release asset
+      - name: Delete .exe release asset
+        continue-on-error: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        working-directory: artifacts
+        run: |
+          gh release delete-asset "workflow-test" Snapmail*.exe -y
+      # upload all artifacts
+      - name: upload all artifacts
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        working-directory: artifacts
+        run: |
+          rm -f *.blockmap
+          echo snapmail*
+          gh release upload "workflow-test" snapmail* --clobber
+          echo Snapmail*
+          gh release upload "workflow-test" Snapmail* --clobber
