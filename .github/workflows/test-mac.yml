@@ -1,8 +1,0 @@
-name: test-workflow x64 MacOS
-
-on: workflow_dispatch
-
-jobs:
-  call-mac:
-    uses: ./.github/workflows/env-mac.yml
-    secrets: inherit

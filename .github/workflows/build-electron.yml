@@ -93,8 +93,6 @@ jobs:
           DEBUG: electron-osx-sign*,electron-notarize*
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          echo APPLE_ID_EMAIL $APPLE_ID_EMAIL
-          echo APPLE_ID_EMAIL2 ${{ secrets.APPLE_ID_EMAIL }}
           npm run dist:build -w electron
       # list out folder
       - name: list out-builder folder
