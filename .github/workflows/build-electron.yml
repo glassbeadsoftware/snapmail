@@ -110,12 +110,13 @@ jobs:
       # Sign Windows certificate
       - name: Sign Windows certificate
         if: ${{ runner.os == 'Windows' }}
-        continue-on-error: true
+        continue-on-error: false
         shell: bash
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         working-directory: artifacts
         run: |
+          echo exe filename: $(ls|grep *.exe)
           AzureSignTool sign -kvu "${{ secrets.AZURE_KEY_VAULT_URI }}" -kvi "${{ secrets.AZURE_CLIENT_ID }}" -kvt "${{ secrets.AZURE_TENANT_ID }}" -kvs "${{ secrets.AZURE_CLIENT_SECRET }}" -kvc ${{ secrets.AZURE_CERT_NAME }} -tr http://timestamp.digicert.com -v "Snapmail Setup 0.3.1.exe"
       # "upload" artifacts
       - uses: actions/upload-artifact@master
