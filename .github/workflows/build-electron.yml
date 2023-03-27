@@ -68,12 +68,12 @@ jobs:
         run: |
           npm run build -w electron
       # Setup sign & notarize
-#      - name: Setup sign and notarize (macos only)
-#        if: ${{ runner.os == 'macOs' }}
-#        uses:  figleafteam/import-codesign-certs@v2
-#        with:
-#          p12-file-base64: ${{ secrets.HBE_APPLE_CERTIFICATE_BASE64 }}
-#          p12-password: ${{ secrets.HBE_APPLE_CERTIFICATE_PASS }}
+      - name: Setup sign and notarize (macos only)
+        if: ${{ runner.os == 'macOs' }}
+        uses:  figleafteam/import-codesign-certs@v2
+        with:
+          p12-file-base64: ${{ secrets.HBE_APPLE_CERTIFICATE_BASE64 }}
+          p12-password: ${{ secrets.HBE_APPLE_CERTIFICATE_PASS }}
       # Dist Electron
       - name: Dist Electron
         shell: bash
@@ -106,6 +106,13 @@ jobs:
       - name: Sign Windows certificate
         if: ${{ runner.os == 'Windows' }}
         shell: bash
+        env:
+          AZURE_KEY_VAULT_URI : ${{ secrets.AZURE_KEY_VAULT_URI }}
+          AZURE_CLIENT_ID : ${{ secrets.AZURE_CLIENT_ID }}
+          AZURE_TENANT_ID : ${{ secrets.AZURE_TENANT_ID }}
+          AZURE_CLIENT_SECRET : ${{ secrets.AZURE_CLIENT_SECRET }}
+          AZURE_CERT_NAME : ${{ secrets.AZURE_CERT_NAME }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           AzureSignTool sign -kvu "${{ secrets.AZURE_KEY_VAULT_URI }}" -kvi "${{ secrets.AZURE_CLIENT_ID }}" -kvt "${{ secrets.AZURE_TENANT_ID }}"-kvs "${{ secrets.AZURE_CLIENT_SECRET }}" -kvc ${{ secrets.AZURE_CERT_NAME }} -tr http://timestamp.digicert.com -v Snapmail*.exe
       # "upload" artifacts
