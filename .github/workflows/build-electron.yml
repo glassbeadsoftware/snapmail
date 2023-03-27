@@ -32,6 +32,11 @@ jobs:
         shell: bash
         run: |
           dotnet tool install --global AzureSignTool
+      # Download submodules
+      - name: Download submodules
+        shell: bash
+        run: |
+          npm run install:submodules
       # Download previously uploaded artifacts
       - uses: actions/download-artifact@master
         with:
