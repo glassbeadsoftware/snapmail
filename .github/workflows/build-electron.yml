@@ -73,7 +73,7 @@ jobs:
         uses:  figleafteam/import-codesign-certs@v2
         with:
           p12-file-base64: ${{ secrets.HBE_APPLE_CERTIFICATE_BASE64 }}
-          p12-password: 'totopatate'
+          p12-password: ${{ secrets.HBE_APPLE_CERTIFICATE_PASS }}
       # Dist Electron
       - name: Dist Electron
         shell: bash
@@ -86,7 +86,7 @@ jobs:
           DEBUG: electron-osx-sign*,electron-notarize*
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          npm run dist:build -w electron
+          npm run dist:electron
       # list out folder
       - name: list out-builder folder
         continue-on-error: true
@@ -108,15 +108,9 @@ jobs:
         continue-on-error: true
         shell: bash
         env:
-          AZURE_KEY_VAULT_URI : ${{ secrets.AZURE_KEY_VAULT_URI }}
-          AZURE_CLIENT_ID : ${{ secrets.AZURE_CLIENT_ID }}
-          AZURE_TENANT_ID : ${{ secrets.AZURE_TENANT_ID }}
-          AZURE_CLIENT_SECRET : ${{ secrets.AZURE_CLIENT_SECRET }}
-          AZURE_CERT_NAME : ${{ secrets.AZURE_CERT_NAME }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          echo AZURE_KEY_VAULT_URI "$env:AZURE_KEY_VAULT_URI"
-          AzureSignTool sign -kvu "$AZURE_KEY_VAULT_URI" -kvi "${{ secrets.AZURE_CLIENT_ID }}" -kvt "${{ secrets.AZURE_TENANT_ID }}"-kvs "${{ secrets.AZURE_CLIENT_SECRET }}" -kvc ${{ secrets.AZURE_CERT_NAME }} -tr http://timestamp.digicert.com -v Snapmail*.exe
+          AzureSignTool sign -kvu "${{ secrets.AZURE_KEY_VAULT_URI }}" -kvi "${{ secrets.AZURE_CLIENT_ID }}" -kvt "${{ secrets.AZURE_TENANT_ID }}"-kvs "${{ secrets.AZURE_CLIENT_SECRET }}" -kvc ${{ secrets.AZURE_CERT_NAME }} -tr http://timestamp.digicert.com -v Snapmail*.exe
       # "upload" artifacts
       - uses: actions/upload-artifact@master
         with:

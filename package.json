@@ -50,7 +50,7 @@
 
     "start:launcher"      : "echo pass | hc-launch --piped -n 1 artifacts/snapmail.webhapp network mdns",
 
-    "dist:win"            : "bash scripts/copy-binaries.sh && npm run dist:win -w electron",
+    "dist:electron"       : "bash submodules/hc-prebuilt/copy-binaries.sh electron/bin && npm run dist:build -w electron",
 
     "package:webapp"      : "rm -rf artifacts/snapmail-webapp-ui.zip & cd webapp/dist && bestzip ../../artifacts/snapmail-webapp-ui.zip * && cd ../.. && $npm_package_config_bin/hc web-app pack webapp/webhapp.workdir -o artifacts/snapmail.webhapp",
     "package:we-applet"   : "rm -rf artifacts/snapmail-we_applet-ui.zip & cd we-applet/dist && bestzip ../../artifacts/snapmail-we_applet-ui.zip * && cd ../.. && $npm_package_config_bin/hc web-app pack we-applet/webhapp.workdir -o artifacts/snapmail-we_applet.webhapp",

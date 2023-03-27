@@ -16,7 +16,8 @@
   "scripts": {
     "postinstall": "electron-builder install-app-deps",
     "lint": "eslint --ext .ts src",
-    "build": "cd .. && bash scripts/copy-binaries.sh && cd electron && tsc",
+    "import-webapp": "cp -v -r ../webapp/dist/* web",
+    "build": "npm run import-webapp && tsc",
     "devtest": "npm run build && WASM_LOG=debug RUST_BACKTRACE=1 RUST_LOG=debug BUILD_MODE='dev' ELECTRON_DEBUG_NOTIFICATIONS=true ELECTRON_DEFAULT_ERROR_MODE=true ELECTRON_ENABLE_LOGGING=true ELECTRON_ENABLE_STACK_DUMPING=true electron . default --disable-gpu --disable-software-rasterizer",
     "prodtest": "npm run build && WASM_LOG=debug RUST_BACKTRACE=1 RUST_LOG=debug ELECTRON_ENABLE_STACK_DUMPING=true electron . default --disable-gpu --disable-software-rasterizer",
     "electron-dev": "tsc && WASM_LOG=debug RUST_BACKTRACE=1 RUST_LOG=debug BUILD_MODE='dev' && electron . dev --no-sandbox",
