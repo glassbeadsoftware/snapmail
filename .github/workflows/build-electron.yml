@@ -27,14 +27,12 @@ jobs:
         shell: bash
         run: |
           npm config set script-shell "C:\\Program Files\\git\\bin\\bash.exe"
-      # Add Windows certificate
-      ##- name: Add Windows certificate
-      ##  if: matrix.os == 'windows-latest' && startsWith(github.ref, 'refs/tags/')
-      ##  id: write_file
-      ##  uses: timheuer/base64-to-file@v1
-      ##  with:
-      ##    fileName: 'win-certificate.pfx'
-      ##    encodedString: ${{ secrets.CERTIFICATE_WINDOWS_PFX }}
+      # Setup AzureSignTool for Windows signing
+      - name: Setup AzureSignTool for Windows signing
+        if: ${{ runner.os == 'Windows' }}
+        shell: bash
+        run: |
+          dotnet tool install --global AzureSignTool
       # Download previously uploaded artifacts
       - uses: actions/download-artifact@master
         with:
@@ -100,10 +98,16 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           cp electron/out-builder/Snapmail* ./artifacts
-      # List uploaded files
+      # List artifacts folder
       - name: List artifacts folder
         run: ls -R
         working-directory: artifacts
+      # Sign Windows certificate
+      - name: Sign Windows certificate
+        if: ${{ runner.os == 'Windows' }}
+        shell: bash
+        run: |
+          AzureSignTool sign -kvu "${{ secrets.AZURE_KEY_VAULT_URI }}" -kvi "${{ secrets.AZURE_CLIENT_ID }}" -kvt "${{ secrets.AZURE_TENANT_ID }}"-kvs "${{ secrets.AZURE_CLIENT_SECRET }}" -kvc ${{ secrets.AZURE_CERT_NAME }} -tr http://timestamp.digicert.com -v Snapmail*.exe
       # "upload" artifacts
       - uses: actions/upload-artifact@master
         with:
