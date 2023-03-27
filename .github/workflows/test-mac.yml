@@ -3,29 +3,7 @@ name: test-workflow x64 MacOS
 on: workflow_dispatch
 
 jobs:
-  # upload the artifacts
-  upload-assets:
-    runs-on: macos-11
-    steps:
-      - uses: actions/checkout@v3
-      # echo
-      - name: echo
-        continue-on-error: true
-        shell: bash
-        env:
-          #WIN_CSC_LINK: ${{ steps.write_file.outputs.filePath }}
-          #WIN_CSC_KEY_PASSWORD: ${{ secrets.WINDOWS_PFX_PASSWORD }}
-          APPLE_DEV_IDENTITY: ${{ secrets.APPLE_DEV_IDENTITY }}
-          APPLE_ID_EMAIL: ${{ secrets.APPLE_ID_EMAIL }}
-          APPLE_ID_PASSWORD: ${{ secrets.APPLE_ID_PASSWORD }}
-          DEBUG: electron-osx-sign*,electron-notarize*
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          echo APPLE_ID_EMAIL $APPLE_ID_EMAIL
-          echo APPLE_ID_EMAIL2 ${{ secrets.APPLE_ID_EMAIL }}
-      - name: Setup sign and notarize (macos only)
-        continue-on-error: true
-        uses:  figleafteam/import-codesign-certs@v2
-        with:
-          p12-file-base64: ${{ secrets.HBE_APPLE_CERTIFICATE_BASE64 }}
-          p12-password: ${{ secrets.HBE_APPLE_CERTIFICATE_PASS }}
+  call-mac:
+    uses: ./.github/workflows/env-mac.yml
+    env:
+      APPLE_DEV_IDENTITY: ${{ secrets.APPLE_DEV_IDENTITY }}
