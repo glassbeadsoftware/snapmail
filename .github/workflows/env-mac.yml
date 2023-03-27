@@ -2,6 +2,9 @@ name: env-mac
 
 on:
   workflow_call:
+    #secrets:
+     # APPLE_ID_EMAIL:
+      #  required: true
 
 jobs:
   check-mac:

@@ -5,5 +5,4 @@ on: workflow_dispatch
 jobs:
   call-mac:
     uses: ./.github/workflows/env-mac.yml
-    with:
-      APPLE_DEV_IDENTITY: ${{ secrets.APPLE_DEV_IDENTITY }}
+    secrets: inherit

@@ -2,7 +2,13 @@ name: build-electron
 
 on:
   workflow_call:
-
+    inputs:
+      config-path:
+        required: true
+        type: string
+    secrets:
+      envPAT:
+        required: true
 
 jobs:
   # Build the happ
