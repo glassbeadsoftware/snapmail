@@ -2,6 +2,11 @@ name: build-electron
 
 on:
   workflow_call:
+    inputs:
+      must_sign:
+        required: false
+        type: boolean
+        default: false
 
 jobs:
   # Build the happ
@@ -28,7 +33,7 @@ jobs:
           npm config set script-shell "C:\\Program Files\\git\\bin\\bash.exe"
       # Setup AzureSignTool for Windows signing
       - name: Setup AzureSignTool for Windows signing
-        if: ${{ runner.os == 'Windows' }}
+        if: ${{ runner.os == 'Windows' && inputs.must_sign }}
         shell: bash
         run: |
           dotnet tool install --global AzureSignTool
@@ -73,8 +78,7 @@ jobs:
           npm run build -w electron
       # Setup sign & notarize # HBE_APPLE_CERTIFICATE_PASS
       - name: Setup sign and notarize (macos only)
-        if: ${{ runner.os == 'macOs' }}
-        continue-on-error: true
+        if: ${{ runner.os == 'macOs' && inputs.must_sign }}
         uses:  figleafteam/import-codesign-certs@v2
         with:
           p12-file-base64: ${{ secrets.HBE_APPLE_CERTIFICATE_BASE64 }}
@@ -109,8 +113,7 @@ jobs:
         working-directory: artifacts
       # Sign Windows certificate
       - name: Sign Windows certificate
-        if: ${{ runner.os == 'Windows' }}
-        continue-on-error: false
+        if: ${{ runner.os == 'Windows' && inputs.must_sign }}
         shell: bash
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

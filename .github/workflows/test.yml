@@ -1,11 +1,19 @@
 name: test-workflow x64
 
-on: workflow_dispatch
+on:
+  workflow_dispatch:
+    inputs:
+      must_sign:
+        required: false
+        type: boolean
+        default: false
 
 jobs:
   call-build-electron:
     uses: ./.github/workflows/build-electron.yml
     secrets: inherit
+    with:
+      must_sign: ${{ inputs.must_sign }}
 
   # upload the artifacts
   upload-assets:

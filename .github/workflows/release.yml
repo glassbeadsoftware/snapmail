@@ -9,6 +9,8 @@ jobs:
   call-build-electron:
     uses: ./.github/workflows/build-electron.yml
     secrets: inherit
+    with:
+      must_sign: true
 
   # upload the artifacts
   upload-assets:
