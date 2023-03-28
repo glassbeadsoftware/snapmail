@@ -40,7 +40,11 @@ jobs:
       # Build webapp
       - name: Build webapp
         run: |
-          npm run dist:webapp
+          npm run build:webapp
+      # Dist webapp
+      - name: Dist webapp
+        run: |
+          npm run dist -w webapp
       # Package web-happ
       - name: Package web-happ
         run: |

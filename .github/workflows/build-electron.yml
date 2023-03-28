@@ -70,7 +70,11 @@ jobs:
       - name: build webapp
         shell: bash
         run: |
-          npm run dist:webapp
+          npm run build:webapp
+      # Dist webapp
+      - name: Dist webapp
+        run: |
+          npm run dist -w webapp
       # build electron
       - name: build electron
         shell: bash
