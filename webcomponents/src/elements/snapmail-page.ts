@@ -1,6 +1,15 @@
 import {DnaElement} from "@ddd-qc/lit-happ";
 import {SnapmailPerspective} from "../viewModel/snapmail.perspective";
 import {css, html} from "lit";
+import {
+  ActionHash,
+  ActionHashB64,
+  AgentPubKey, AgentPubKeyB64, AppSignal,
+  decodeHashFromBase64,
+  encodeHashToBase64,
+  EntryHash
+} from "@holochain/client";
+
 import {Icon} from "@vaadin/vaadin-icon";
 import {ProgressBar} from "@vaadin/progress-bar";
 import {Button} from "@vaadin/button";
@@ -11,14 +20,9 @@ import {Dialog} from "@vaadin/dialog";
 import {VerticalLayout} from "@vaadin/vertical-layout";
 import {HorizontalLayout} from "@vaadin/horizontal-layout";
 import {SplitLayout} from "@vaadin/split-layout";
-import {
-  ActionHash,
-  ActionHashB64,
-  AgentPubKey, AgentPubKeyB64, AppSignal,
-  decodeHashFromBase64,
-  encodeHashToBase64,
-  EntryHash
-} from "@holochain/client";
+import '@vaadin/vaadin-icon';
+import '@vaadin/vaadin-lumo-styles';
+
 import {customDateString, into_mailText, MailGridItem} from "../mail";
 import {property, state} from "lit/decorators.js";
 import {SnapmailMailWrite} from "./snapmail-mail-write";
@@ -36,8 +40,7 @@ import {SnapmailFilebox} from "./snapmail-filebox";
 import {SnapmailAttView} from "./snapmail-att-view";
 import {SnapmailMailView} from "./snapmail-mail-view";
 import {BUILD_MODE, MY_ELECTRON_API} from "../electron";
-import '@vaadin/vaadin-icon';
-import '@vaadin/vaadin-lumo-styles';
+
 import {SnapmailDvm} from "../viewModel/snapmail.dvm";
 
 /**
