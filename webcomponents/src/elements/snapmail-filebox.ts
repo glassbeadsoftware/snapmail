@@ -17,11 +17,12 @@ import {MenuBarItem, MenuBarItemSelectedEvent} from "@vaadin/menu-bar";
 import {HAPP_BUILD_MODE, ZomeElement} from "@ddd-qc/lit-happ";
 import {SnapmailPerspective} from "../viewModel/snapmail.perspective";
 import {SnapmailZvm} from "../viewModel/snapmail.zvm";
-import '@vaadin/icon';
-import '@vaadin/vaadin-lumo-styles';
+
 import {Select, SelectChangeEvent} from "@vaadin/select";
 import {GridItemModel} from "@vaadin/grid/src/vaadin-grid";
 
+//import '@vaadin/icon';
+//import '@vaadin/vaadin-lumo-styles';
 
 /** */
 function filterMails(mailItems: MailGridItem[], searchValue: string) {

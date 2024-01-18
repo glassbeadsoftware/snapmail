@@ -38,7 +38,9 @@ import {SnapmailPerspective} from "../viewModel/snapmail.perspective";
 import {SnapmailDvm} from "../viewModel/snapmail.dvm";
 
 //import '@vaadin/icon';
-import '@vaadin/vaadin-lumo-styles';
+//import '@vaadin/vaadin-lumo-styles';
+
+import '@vaadin/icon/theme/lumo/vaadin-icon.js';
 
 import '@vaadin/icon/theme/lumo/vaadin-icon.js';
 import '@vaadin/button/theme/lumo/vaadin-button.js';
@@ -586,7 +588,7 @@ export class SnapmailPage extends DnaElement<unknown, SnapmailDvm> {
 
     return html`
       <!-- Loading Spinner -->
-      <vaadin-progress-bar indeterminate value="0" id="loadingBar" ></vaadin-progress-bar>
+      <vaadin-progress-bar id="loadingBar" indeterminate value="0"></vaadin-progress-bar>
       <!-- Notifications -->
       <vaadin-notification duration="4000" theme="contrast" position="bottom-center" id="notifyMail"></vaadin-notification>
       <vaadin-notification duration="4000" position="bottom-center" id="notifyAck"></vaadin-notification>
@@ -686,16 +688,9 @@ export class SnapmailPage extends DnaElement<unknown, SnapmailDvm> {
           </vaadin-vertical-layout>
             
         </vaadin-split-layout>
-          
+        
       </vaadin-vertical-layout>          
     `;
   }
 
-
-  /** */
-  static get styles() {
-    return [
-      css`
-    `];
-  }
 }
