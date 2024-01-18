@@ -214,12 +214,4 @@ export class SnapmailAttView extends ZomeElement<SnapmailPerspective, SnapmailZv
     `];
   }
 
-
-  // /** */
-  // static get scopedElements() {
-  //   return {
-  //     'vaadin-grid':Grid,
-  //     'vaadin-grid-column':GridColumn,
-  //   }
-  // }
 }

@@ -7,8 +7,6 @@ import {HvmDef, HappElement, cellContext} from "@ddd-qc/lit-happ";
 import {AppletView} from "@lightningrodlabs/we-applet";
 
 
-//import "./snapmail-page"
-
 const SNAPMAIL_DEFAULT_COORDINATOR_ZOME_NAME = "snapmail"
 
 let HC_APP_PORT: number;

@@ -424,18 +424,4 @@ export class SnapmailFilebox extends ZomeElement<SnapmailPerspective, SnapmailZv
     `];
   }
 
-
-  // /** */
-  // static get scopedElements() {
-  //   return {
-  //     "vaadin-icon": Icon,
-  //     'vaadin-select': Select,
-  //     'vaadin-grid':Grid,
-  //     'vaadin-grid-column':GridColumn,
-  //     'vaadin-grid-sort-column':GridSortColumn,
-  //     'vaadin-horizontal-layout': HorizontalLayout,
-  //     'vaadin-text-field':TextField,
-  //     'vaadin-menu-bar': MenuBar,
-  //   }
-  // }
 }

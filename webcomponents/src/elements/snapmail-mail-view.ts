@@ -43,11 +43,4 @@ export class SnapmailMailView extends ScopedElementsMixin(LitElement) {
     `];
   }
 
-
-  // /** */
-  // static get scopedElements() {
-  //   return {
-  //     'vaadin-text-area':TextArea,
-  //   }
-  // }
 }

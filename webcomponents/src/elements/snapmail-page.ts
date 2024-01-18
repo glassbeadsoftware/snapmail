@@ -38,20 +38,30 @@ import {SnapmailPerspective} from "../viewModel/snapmail.perspective";
 import {SnapmailDvm} from "../viewModel/snapmail.dvm";
 
 //import '@vaadin/icon';
-//import '@vaadin/vaadin-lumo-styles';
+import '@vaadin/vaadin-lumo-styles';
 
-// import '@vaadin/icon/theme/lumo/vaadin-icon.js';
-// import '@vaadin/grid/theme/lumo/vaadin-grid.js';
-// import '@vaadin/grid/theme/lumo/vaadin-grid-selection-column.js';
-// import '@vaadin/progress-bar/theme/lumo/vaadin-progress-bar.js';
-// import '@vaadin/button/theme/lumo/vaadin-button.js';
-// import '@vaadin/menu-bar/theme/lumo/vaadin-menu-bar.js';
-// import '@vaadin/text-field/theme/lumo/vaadin-text-field.js';
-// import '@vaadin/notification/theme/lumo/vaadin-notification.js';
-// import '@vaadin/dialog/theme/lumo/vaadin-dialog.js';
-// import '@vaadin/vertical-layout/theme/lumo/vaadin-vertical-layout.js';
-// import '@vaadin/horizontal-layout/theme/lumo/vaadin-horizontal-layout.js';
-// import '@vaadin/split-layout/theme/lumo/vaadin-split-layout.js';
+import '@vaadin/icon/theme/lumo/vaadin-icon.js';
+import '@vaadin/button/theme/lumo/vaadin-button.js';
+import '@vaadin/combo-box/theme/lumo/vaadin-combo-box.js';
+import '@vaadin/dialog/theme/lumo/vaadin-dialog.js';
+import '@vaadin/grid/theme/lumo/vaadin-grid.js';
+import '@vaadin/grid/theme/lumo/vaadin-grid-column.js';
+import '@vaadin/grid/theme/lumo/vaadin-grid-filter.js';
+import '@vaadin/grid/theme/lumo/vaadin-grid-filter-column.js';
+import '@vaadin/grid/theme/lumo/vaadin-grid-selection-column.js';
+import '@vaadin/grid/theme/lumo/vaadin-grid-sort-column.js';
+import '@vaadin/grid/theme/lumo/vaadin-grid-sorter.js';
+import '@vaadin/grid/theme/lumo/vaadin-grid-tree-toggle.js';
+import '@vaadin/menu-bar/theme/lumo/vaadin-menu-bar.js';
+import '@vaadin/progress-bar/theme/lumo/vaadin-progress-bar.js';
+import '@vaadin/text-field/theme/lumo/vaadin-text-field.js';
+import '@vaadin/text-area/theme/lumo/vaadin-text-area.js';
+import '@vaadin/notification/theme/lumo/vaadin-notification.js';
+import '@vaadin/select/theme/lumo/vaadin-select.js';
+import '@vaadin/split-layout/theme/lumo/vaadin-split-layout.js';
+import '@vaadin/vertical-layout/theme/lumo/vaadin-vertical-layout.js';
+import '@vaadin/horizontal-layout/theme/lumo/vaadin-horizontal-layout.js';
+import '@vaadin/upload/theme/lumo/vaadin-upload.js';
 
 
 /** */
@@ -184,9 +194,7 @@ export class SnapmailPage extends DnaElement<unknown, SnapmailDvm> {
   /** After first render only */
   async firstUpdated() {
     console.log("<snapmail-page> firstUpdated()");
-
     this.initNotification();
-
     void customElements.whenDefined('vaadin-button').then(() => {
       this.handleInputElem.addEventListener("keyup", (event) => {
         if (event.key == "Enter") {
@@ -194,7 +202,6 @@ export class SnapmailPage extends DnaElement<unknown, SnapmailDvm> {
         }
       });
     });
-
     /** Probe */
     try {
       this._myHandle = await this._dvm.snapmailZvm.getMyHandle();
@@ -204,8 +211,6 @@ export class SnapmailPage extends DnaElement<unknown, SnapmailDvm> {
       console.error({ error })
       alert("Failed to connect to holochain. Conductor service might not be up and running.");
     }
-
-
     /** -- Change title color in debug -- */
     const titleLayout = this.shadowRoot.getElementById('titleLayout') as HorizontalLayout;
     if (HAPP_BUILD_MODE == 'Debug') {
@@ -693,25 +698,4 @@ export class SnapmailPage extends DnaElement<unknown, SnapmailDvm> {
       css`
     `];
   }
-
-  // /** */
-  // static get scopedElements() {
-  //   return {
-  //     "snapmail-att-view": SnapmailAttView,
-  //     "snapmail-mail-view": SnapmailMailView,
-  //     "snapmail-mail-write": SnapmailMailWrite,
-  //     "snapmail-filebox": SnapmailFilebox,
-  //     "snapmail-contacts": SnapmailContacts,
-  //     "vaadin-icon": Icon,
-  //     "vaadin-progress-bar": ProgressBar,
-  //     'vaadin-button':Button,
-  //     'vaadin-menu-bar':MenuBar,
-  //     'vaadin-text-field':TextField,
-  //     'vaadin-notification': Notification,
-  //     'vaadin-dialog':Dialog,
-  //     'vaadin-vertical-layout': VerticalLayout,
-  //     'vaadin-horizontal-layout': HorizontalLayout,
-  //     'vaadin-split-layout': SplitLayout,
-  //   };
-  // }
 }

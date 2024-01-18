@@ -2,6 +2,7 @@ import {css, html, PropertyValues} from "lit";
 import { state, property, customElement } from "lit/decorators.js";
 import {Grid, GridEventContext} from "@vaadin/grid";
 import {ComboBox, ComboBoxChangeEvent} from "@vaadin/combo-box";
+import {ComboBoxLitRenderer} from "@vaadin/combo-box/lit";
 import {TextField, TextFieldValueChangedEvent} from "@vaadin/text-field";
 import {Button} from "@vaadin/button";
 import {Dialog} from "@vaadin/dialog";
@@ -656,21 +657,4 @@ export class SnapmailContacts extends ZomeElement<SnapmailPerspective, SnapmailZ
     `];
   }
 
-
-  // /** */
-  // static get scopedElements() {
-  //   return {
-  //     'vaadin-menu-bar':MenuBar,
-  //     'vaadin-button':Button,
-  //     'vaadin-combo-box':ComboBox,
-  //     'vaadin-dialog':Dialog,
-  //     "vaadin-icon": Icon,
-  //     'vaadin-text-field':TextField,
-  //     'vaadin-grid':Grid,
-  //     'vaadin-grid-column':GridColumn,
-  //     'vaadin-grid-selection-column': GridSelectionColumn,
-  //     'vaadin-vertical-layout': VerticalLayout,
-  //     'vaadin-horizontal-layout': HorizontalLayout,
-  //   }
-  // }
 }

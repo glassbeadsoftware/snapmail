@@ -24,21 +24,24 @@
     "npm-run-all": "^4.1.5"
   },
   "dependencies": {
-    "@vaadin/progress-bar": "24.2.3",
-    "@vaadin/grid": "24.2.3",
-    "@vaadin/split-layout": "24.2.3",
+    "@vaadin/button": "24.2.3",
     "@vaadin/combo-box": "24.2.3",
-    "@vaadin/select": "24.2.3",
-    "@vaadin/upload": "24.2.3",
     "@vaadin/dialog": "24.2.3",
+    "@vaadin/icon": "24.2.3",
+    "@vaadin/input-container": "24.2.3",
+    "@vaadin/grid": "24.2.3",
+    "@vaadin/list-box": "24.2.3",
+    "@vaadin/menu-bar": "24.2.3",
+    "@vaadin/multi-select-combo-box": "24.2.3",
     "@vaadin/notification": "24.2.3",
+    "@vaadin/progress-bar": "24.2.3",
+    "@vaadin/select": "24.2.3",
+    "@vaadin/split-layout": "24.2.3",
     "@vaadin/horizontal-layout": "24.2.3",
     "@vaadin/vertical-layout": "24.2.3",
-    "@vaadin/button": "24.2.3",
     "@vaadin/text-field": "24.2.3",
     "@vaadin/text-area": "24.2.3",
-    "@vaadin/menu-bar": "24.2.3",
-    "@vaadin/icon": "24.2.3",
+    "@vaadin/upload": "24.2.3",
     "cqfill": "^0.6.1"
   }
 }

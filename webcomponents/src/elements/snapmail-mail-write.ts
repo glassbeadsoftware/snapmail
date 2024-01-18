@@ -113,14 +113,4 @@ export class SnapmailMailWrite extends ScopedElementsMixin(LitElement) {
     `];
   }
 
-
-  // /** */
-  // static get scopedElements() {
-  //   return {
-  //     'vaadin-vertical-layout': VerticalLayout,
-  //     'vaadin-text-field':TextField,
-  //     'vaadin-text-area':TextArea,
-  //     'vaadin-upload': Upload,
-  //   }
-  // }
 }
