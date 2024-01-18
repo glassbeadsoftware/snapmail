@@ -1,9 +1,9 @@
 {
   "name": "Snapmail",
-  "version": "0.3.1",
+  "version": "0.4.0",
   "config": {
-    "hc_version": "0.1.0",
-    "zits_version": "1.6.1",
+    "hc_version": "0.2.4",
+    "zits_version": "1.11.0",
     "bin": "bin"
   },
   "private": true,
@@ -12,7 +12,6 @@
     "url": "https://github.com/glassbeadsoftware/snapmail.git"
   },
   "workspaces": [
-    "electron",
     "we-applet",
     "webcomponents",
     "webapp"
@@ -33,20 +32,28 @@
     "build:webapp"        : "npm run build -w webcomponents && npm run build -w webapp",
 
     "prepare-devtest"     : "npm run clean:agents && npm run build:happ && bash scripts/ts-bindings.sh && npm run build:webapp",
-    "devtest"             : "npm run prepare-devtest && npm run start",
-    "devtest:we"          : "npm run prepare-devtest && npm run dist -w webapp && BUILD_MODE='dev' npm run devtest -w we-applet",
+    "devtest"             : "npm run prepare-devtest && npm run start:mem",
+    "devtest:we"          : "npm run prepare-devtest && npm run dist -w webapp && HAPP_BUILD_MODE='Debug' npm run devtest -w we-applet",
     "devtest:electron"    : "npm run prepare-devtest && npm run devtest -w electron",
 
-    "prodtest"            : "npm run clean:agents && npm run dist -w webapp && HC_PORT=$(port) ADMIN_PORT=$(port) concurrently \"npm run start:happ-proxied\" \"sleep 8 && npm run start:ui -w webapp\"",
+    "prodtest"            : "npm run clean:agents && npm run dist -w webapp && HC_PORT=$(port) ADMIN_PORT=$(port) concurrently \"npm run new-sandbox:local\" \"sleep 8 && npm run start:ui -w webapp\"",
     "prodtest:we"         : "npm run clean:agents && npm run dist -w webapp && npm run devtest -w we-applet",
     "prodtest:electron"   : "npm run clean:agents && npm run build -w webcomponents && npm run dist -w webapp && npm run prodtest -w electron",
 
-    "start:happ"          : "RUST_LOG=warn echo \"pass\" | $npm_package_config_bin/hc s --piped -f=$ADMIN_PORT generate artifacts/snapmail.happ --run=$HC_PORT -a snapmail network mdns",
-    "start:happ-proxied"  : "RUST_LOG=warn echo \"pass\" | $npm_package_config_bin/hc s --piped -f=$ADMIN_PORT generate artifacts/snapmail.happ --run=$HC_PORT -a snapmail network --bootstrap https://bootstrap-staging.holo.host/ quic -p=kitsune-proxy://SYVd4CF3BdJ4DS7KwLLgeU3_DbHoZ34Y-qroZ79DOs8/kitsune-quic/h/165.22.32.11/p/5779/--",
-    "start"               : "BUILD_MODE='dev' HC_PORT=$(port) ADMIN_PORT=$(port) concurrently \"npm run start:happ-proxied\" \"sleep 8 && npm run start:ui -w webapp\"",
-    "restart"             : "BUILD_MODE='dev' HC_PORT=$(port) ADMIN_PORT=$(port) concurrently \"npm run restart:happ\" \"sleep 8 && npm run start:ui -w webapp\"",
+    "new-sandbox:mem"     : "RUST_LOG=warn echo \"pass\" | $npm_package_config_bin/hc s --piped -f=$ADMIN_PORT generate artifacts/snapmail.happ --run=$HC_PORT -a snapmail network mem",
+    "new-sandbox:local"   : "RUST_LOG=warn echo \"pass\" | $npm_package_config_bin/hc s --piped -f=$ADMIN_PORT generate artifacts/snapmail.happ --run=$HC_PORT -a snapmail network --bootstrap http://127.0.0.1:$BOOT_PORT webrtc ws://127.0.0.1:$SIGNAL_PORT",
+
+    "start:mem"           : "cross-env HC_PORT=$(port) ADMIN_PORT=$(port) HAPP_BUILD_MODE='Debug' concurrently \"npm run build:watch -w webcomponents\" \"npm run new-sandbox:mem\" \"sleep 7 && npm run start:ui -w webapp\"",
+    "start:local"         : "cross-env HC_PORT=$(port) ADMIN_PORT=$(port) HAPP_BUILD_MODE='Debug' concurrently \"npm run build:watch -w webcomponents\" \"npm run new-sandbox:local\" \"sleep 7 && npm run start:ui -w webapp\"",
+
+
+    "serve"              : "cross-env BOOT_PORT=$(cat .hc_bootenv) SIGNAL_PORT=$(cat .hc_signalenv) npm run serve:run",
+    "serve:run"          : "hc run-local-services --bootstrap-port $BOOT_PORT --signal-port $SIGNAL_PORT",
+    "serve:save"         : "echo SIGNAL_PORT=$SIGNAL_PORT && echo $SIGNAL_PORT > .hc_signalenv && echo $BOOT_PORT > .hc_bootenv && echo BOOT_PORT=$BOOT_PORT",
+
+    "restart"             : "HAPP_BUILD_MODE='Debug' HC_PORT=$(port) ADMIN_PORT=$(port) concurrently \"npm run restart:happ\" \"sleep 8 && npm run start:ui -w webapp\"",
     "restart:happ"        : "RUST_LOG=warn echo \"pass\" | $npm_package_config_bin/hc s --piped -f=$ADMIN_PORT run $SINDEX -p=$HC_PORT",
-    "network"             : "npm run clean:agents && concurrently-repeat \"npm run start\"",
+    "network"             : "npm run clean:agents && concurrently-repeat \"npm run start:local\"",
 
     "start:launcher"      : "echo pass | hc-launch --piped -n 1 artifacts/snapmail.webhapp network mdns",
 
@@ -70,7 +77,21 @@
     "concurrently": "^6.2.1",
     "concurrently-repeat": "^0.0.1",
     "cross-env": "^7.0.3",
-    "new-port-cli": "^1.0.0"
+    "new-port-cli": "^1.0.0",
+    "tslib": "^2.4.0",
+    "@lit/localize-tools": "^0.6.3",
+    "typescript": "~5.2.0"
+  },
+  "dependencies": {
+    "@holochain/client": "=0.16.7",
+    "@ddd-qc/cell-proxy": "=0.20.8",
+    "@ddd-qc/lit-happ": "=0.20.8",
+    "@ddd-qc/we-utils": "=0.21.1",
+    "@lightningrodlabs/we-applet": "0.13.0",
+    "@holochain-open-dev/core-types": "0.7.0",
+    "@lit/context": "1.0.1",
+    "@lit/localize": "0.12.1",
+    "lit": "3.0.2"
   },
   "engines": {
     "npm": ">=7.0.0"

@@ -9,6 +9,7 @@ WasmHash,
 EntryHash,
 ActionHash,
 AnyDhtHash,
+ExternalHash,
 KitsuneAgent,
 KitsuneSpace,
 HoloHashB64,
@@ -23,13 +24,15 @@ Signature,
 CellId,
 DnaProperties,
 RoleName,
+InstalledCell,
 Timestamp,
 Duration,
 HoloHashed,
 NetworkInfo,
-FetchQueueInfo,
+FetchPoolInfo,
 /** hdk/action.ts */
 SignedActionHashed,
+RegisterAgentActivity,
 ActionHashed,
 ActionType,
 Action,
@@ -47,10 +50,12 @@ Create,
 /** hdk/capabilities.ts */
 CapSecret,
 CapClaim,
+GrantedFunctionsType,
+GrantedFunctions,
 ZomeCallCapGrant,
+CapAccessType,
 CapAccess,
 CapGrant,
-GrantedFunctionsType,
 ///** hdk/countersigning.ts */
 //CounterSigningSessionData,
 //PreflightRequest,
@@ -76,8 +81,19 @@ Entry,
 /** hdk/record.ts */
 Record as HcRecord,
 RecordEntry as HcRecordEntry,
+/** hdk/link.ts */
+AnyLinkableHash,
+ZomeIndex,
+LinkType,
+LinkTag,
+RateWeight,
+RateBucketId,
+RateUnits,
+Link,
 /** api/admin/types.ts */
 InstalledAppInfoStatus,
+DeactivationReason,
+DisabledAppReason,
 StemCell,
 ProvisionedCell,
 ClonedCell,
@@ -109,6 +125,8 @@ ZomeLocation,
 import {
 /** Common */
 DhtOpHashB64,
+//DnaHashB64, (duplicate)
+//AnyDhtHashB64, (duplicate)
 DhtOpHash,
 /** DnaFile */
 DnaFile,
@@ -308,6 +326,15 @@ export type SnapmailEntry =
 /** List of all Link kinds handled by this Zome */
 export type LinkKind =
   | {Members: null} | {AckInbox: null} | {MailInbox: null} | {Handle: null} | {Pending: null} | {Pendings: null} | {EncKey: null};
+export enum LinkKindType {
+	Members = 'Members',
+	AckInbox = 'AckInbox',
+	MailInbox = 'MailInbox',
+	Handle = 'Handle',
+	Pending = 'Pending',
+	Pendings = 'Pendings',
+	EncKey = 'EncKey',
+}
 
 /** Entry for a received Acknowledgement Receipt */
 export interface DeliveryConfirmation {
@@ -336,14 +363,33 @@ export interface InMail {
 /** Possible states of an InMail entry */
 export type InMailState =
   | {Unacknowledged: null} | {AckUnsent: null} | {AckPending: null} | {AckDelivered: null} | {Deleted: null};
+export enum InMailStateType {
+	Unacknowledged = 'Unacknowledged',
+	AckUnsent = 'AckUnsent',
+	AckPending = 'AckPending',
+	AckDelivered = 'AckDelivered',
+	Deleted = 'Deleted',
+}
 
 /** State of a single delivery of a mail or ack to a unique recipient */
 export type DeliveryState =
   | {Unsent: null} | {Pending: null} | {Delivered: null};
+export enum DeliveryStateType {
+	Unsent = 'Unsent',
+	Pending = 'Pending',
+	Delivered = 'Delivered',
+}
 
 /** Possible states of an OutMail entry */
 export type OutMailState =
   | {Unsent: null} | {AllSent: null} | {AllReceived: null} | {AllAcknowledged: null} | {Deleted: null};
+export enum OutMailStateType {
+	Unsent = 'Unsent',
+	AllSent = 'AllSent',
+	AllReceived = 'AllReceived',
+	AllAcknowledged = 'AllAcknowledged',
+	Deleted = 'Deleted',
+}
 
 export enum MailStateType {
 	In = 'In',
@@ -369,6 +415,11 @@ export interface MailItem {
 
 export type RecipientKind =
   | {TO: null} | {CC: null} | {BCC: null};
+export enum RecipientKindType {
+	To = 'To',
+	Cc = 'Cc',
+	Bcc = 'Bcc',
+}
 
 /**
  * Core content of all *Mail Entries

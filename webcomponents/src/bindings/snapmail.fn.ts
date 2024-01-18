@@ -5,7 +5,9 @@ import {ZomeName, FunctionName} from '@holochain/client';
 
 /** Array of all zome function names in "snapmail" */
 export const snapmailFunctionNames: FunctionName[] = [
-	"entry_defs",
+	"entry_defs", 
+	"get_zome_info", 
+	"get_dna_info",
 	"init_caps",
 
 
@@ -53,7 +55,7 @@ export const snapmailFunctionNames: FunctionName[] = [
 
 /** Generate tuple array of function names with given zomeName */
 export function generateSnapmailZomeFunctionsArray(zomeName: ZomeName): [ZomeName, FunctionName][] {
-   let fns: [ZomeName, FunctionName][] = [];
+   const fns: [ZomeName, FunctionName][] = [];
    for (const fn of snapmailFunctionNames) {
       fns.push([zomeName, fn]);
    }

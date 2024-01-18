@@ -1,10 +1,9 @@
 import {css, html, PropertyValues} from "lit";
-import {Grid, GridActiveItemChangedEvent, GridColumn} from "@vaadin/grid";
-import {GridSortColumn} from "@vaadin/grid/vaadin-grid-sort-column";
+import {Grid, GridActiveItemChangedEvent} from "@vaadin/grid";
 import {HorizontalLayout} from "@vaadin/horizontal-layout";
 import {TextField, TextFieldValueChangedEvent} from "@vaadin/text-field";
-import { state, property } from "lit/decorators.js";
-import {BUILD_MODE, updateTray} from "../electron";
+import { state, property, customElement } from "lit/decorators.js";
+import {updateTray} from "../electron";
 import {stylesTemplate} from "../constants";
 import {MailItem} from "../bindings/snapmail.types";
 import {
@@ -14,12 +13,11 @@ import {
   is_OutMail, isMailDeleted, MailGridItem,
   systemFolders
 } from "../mail";
-import {MenuBar, MenuBarItem, MenuBarItemSelectedEvent} from "@vaadin/menu-bar";
-import {ZomeElement} from "@ddd-qc/lit-happ";
+import {MenuBarItem, MenuBarItemSelectedEvent} from "@vaadin/menu-bar";
+import {HAPP_BUILD_MODE, ZomeElement} from "@ddd-qc/lit-happ";
 import {SnapmailPerspective} from "../viewModel/snapmail.perspective";
 import {SnapmailZvm} from "../viewModel/snapmail.zvm";
-import {Icon} from "@vaadin/vaadin-icon";
-import '@vaadin/vaadin-icon';
+import '@vaadin/icon';
 import '@vaadin/vaadin-lumo-styles';
 import {Select, SelectChangeEvent} from "@vaadin/select";
 import {GridItemModel} from "@vaadin/grid/src/vaadin-grid";
@@ -44,13 +42,12 @@ function filterMails(mailItems: MailGridItem[], searchValue: string) {
 }
 
 
-/**
- *
- */
+/** */
+@customElement("snapmail-filebox")
 export class SnapmailFilebox extends ZomeElement<SnapmailPerspective, SnapmailZvm> {
   constructor() {
     super(SnapmailZvm.DEFAULT_ZOME_NAME);
-    if (BUILD_MODE === 'dev') {
+    if (HAPP_BUILD_MODE == 'Debug') {
       this._menuItems.push({text: 'Refresh', disabled: false});
     }
   }
@@ -128,7 +125,7 @@ export class SnapmailFilebox extends ZomeElement<SnapmailPerspective, SnapmailZv
     this.mailGridElem.shadowRoot.appendChild(stylesTemplate.content.cloneNode(true));
 
     const fileboxLayout = this.shadowRoot.getElementById('fileboxLayout') as HorizontalLayout;
-    if (BUILD_MODE === 'dev') {
+    if (HAPP_BUILD_MODE == 'Debug') {
       fileboxLayout.style.backgroundColor = "rgba(241,154,154,0.82)";
     }
 
@@ -428,17 +425,17 @@ export class SnapmailFilebox extends ZomeElement<SnapmailPerspective, SnapmailZv
   }
 
 
-  /** */
-  static get scopedElements() {
-    return {
-      "vaadin-icon": Icon,
-      'vaadin-select': Select,
-      'vaadin-grid':Grid,
-      'vaadin-grid-column':GridColumn,
-      'vaadin-grid-sort-column':GridSortColumn,
-      'vaadin-horizontal-layout': HorizontalLayout,
-      'vaadin-text-field':TextField,
-      'vaadin-menu-bar': MenuBar,
-    }
-  }
+  // /** */
+  // static get scopedElements() {
+  //   return {
+  //     "vaadin-icon": Icon,
+  //     'vaadin-select': Select,
+  //     'vaadin-grid':Grid,
+  //     'vaadin-grid-column':GridColumn,
+  //     'vaadin-grid-sort-column':GridSortColumn,
+  //     'vaadin-horizontal-layout': HorizontalLayout,
+  //     'vaadin-text-field':TextField,
+  //     'vaadin-menu-bar': MenuBar,
+  //   }
+  // }
 }

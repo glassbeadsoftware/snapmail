@@ -1,6 +1,5 @@
-import {DnaElement} from "@ddd-qc/lit-happ";
-import {SnapmailPerspective} from "../viewModel/snapmail.perspective";
 import {css, html} from "lit";
+import {property, state, customElement} from "lit/decorators.js";
 import {
   ActionHash,
   ActionHashB64,
@@ -10,21 +9,17 @@ import {
   EntryHash
 } from "@holochain/client";
 
-import {Icon} from "@vaadin/vaadin-icon";
 import {ProgressBar} from "@vaadin/progress-bar";
 import {Button} from "@vaadin/button";
 import {MenuBar, MenuBarItem, MenuBarItemSelectedEvent} from "@vaadin/menu-bar";
 import {TextField} from "@vaadin/text-field";
 import {Notification} from "@vaadin/notification";
-import {Dialog} from "@vaadin/dialog";
 import {VerticalLayout} from "@vaadin/vertical-layout";
 import {HorizontalLayout} from "@vaadin/horizontal-layout";
-import {SplitLayout} from "@vaadin/split-layout";
-import '@vaadin/vaadin-icon';
-import '@vaadin/vaadin-lumo-styles';
+
 
 import {customDateString, into_mailText, MailGridItem} from "../mail";
-import {property, state} from "lit/decorators.js";
+
 import {SnapmailMailWrite} from "./snapmail-mail-write";
 import {SnapmailContacts} from "./snapmail-contacts";
 import {arrayBufferToBase64, splitFile} from "../utils";
@@ -37,18 +32,34 @@ import {
   SignalProtocolType
 } from "../bindings/snapmail.types";
 import {SnapmailFilebox} from "./snapmail-filebox";
-import {SnapmailAttView} from "./snapmail-att-view";
-import {SnapmailMailView} from "./snapmail-mail-view";
 import {BUILD_MODE, MY_ELECTRON_API} from "../electron";
-
+import {DnaElement, HAPP_BUILD_MODE} from "@ddd-qc/lit-happ";
+import {SnapmailPerspective} from "../viewModel/snapmail.perspective";
 import {SnapmailDvm} from "../viewModel/snapmail.dvm";
 
-/**
- *
- */
+//import '@vaadin/icon';
+//import '@vaadin/vaadin-lumo-styles';
+
+// import '@vaadin/icon/theme/lumo/vaadin-icon.js';
+// import '@vaadin/grid/theme/lumo/vaadin-grid.js';
+// import '@vaadin/grid/theme/lumo/vaadin-grid-selection-column.js';
+// import '@vaadin/progress-bar/theme/lumo/vaadin-progress-bar.js';
+// import '@vaadin/button/theme/lumo/vaadin-button.js';
+// import '@vaadin/menu-bar/theme/lumo/vaadin-menu-bar.js';
+// import '@vaadin/text-field/theme/lumo/vaadin-text-field.js';
+// import '@vaadin/notification/theme/lumo/vaadin-notification.js';
+// import '@vaadin/dialog/theme/lumo/vaadin-dialog.js';
+// import '@vaadin/vertical-layout/theme/lumo/vaadin-vertical-layout.js';
+// import '@vaadin/horizontal-layout/theme/lumo/vaadin-horizontal-layout.js';
+// import '@vaadin/split-layout/theme/lumo/vaadin-split-layout.js';
+
+
+/** */
+@customElement("snapmail-page")
 export class SnapmailPage extends DnaElement<unknown, SnapmailDvm> {
   constructor() {
     super(SnapmailDvm.DEFAULT_BASE_ROLE_NAME);
+    console.log("<snapmail-page> ctor")
   }
 
 
@@ -197,7 +208,7 @@ export class SnapmailPage extends DnaElement<unknown, SnapmailDvm> {
 
     /** -- Change title color in debug -- */
     const titleLayout = this.shadowRoot.getElementById('titleLayout') as HorizontalLayout;
-    if (BUILD_MODE === 'dev') {
+    if (HAPP_BUILD_MODE == 'Debug') {
       titleLayout.style.backgroundColor = "#ec8383d1";
     }
     if (MY_ELECTRON_API || this.noTitle) {
@@ -683,24 +694,24 @@ export class SnapmailPage extends DnaElement<unknown, SnapmailDvm> {
     `];
   }
 
-  /** */
-  static get scopedElements() {
-    return {
-      "snapmail-att-view": SnapmailAttView,
-      "snapmail-mail-view": SnapmailMailView,
-      "snapmail-mail-write": SnapmailMailWrite,
-      "snapmail-filebox": SnapmailFilebox,
-      "snapmail-contacts": SnapmailContacts,
-      "vaadin-icon": Icon,
-      "vaadin-progress-bar": ProgressBar,
-      'vaadin-button':Button,
-      'vaadin-menu-bar':MenuBar,
-      'vaadin-text-field':TextField,
-      'vaadin-notification': Notification,
-      'vaadin-dialog':Dialog,
-      'vaadin-vertical-layout': VerticalLayout,
-      'vaadin-horizontal-layout': HorizontalLayout,
-      'vaadin-split-layout': SplitLayout,
-    };
-  }
+  // /** */
+  // static get scopedElements() {
+  //   return {
+  //     "snapmail-att-view": SnapmailAttView,
+  //     "snapmail-mail-view": SnapmailMailView,
+  //     "snapmail-mail-write": SnapmailMailWrite,
+  //     "snapmail-filebox": SnapmailFilebox,
+  //     "snapmail-contacts": SnapmailContacts,
+  //     "vaadin-icon": Icon,
+  //     "vaadin-progress-bar": ProgressBar,
+  //     'vaadin-button':Button,
+  //     'vaadin-menu-bar':MenuBar,
+  //     'vaadin-text-field':TextField,
+  //     'vaadin-notification': Notification,
+  //     'vaadin-dialog':Dialog,
+  //     'vaadin-vertical-layout': VerticalLayout,
+  //     'vaadin-horizontal-layout': HorizontalLayout,
+  //     'vaadin-split-layout': SplitLayout,
+  //   };
+  // }
 }

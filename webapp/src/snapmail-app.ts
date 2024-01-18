@@ -1,12 +1,19 @@
 import { html } from "lit";
-import { state } from "lit/decorators.js";
+import { state, customElement } from "lit/decorators.js";
+import {ContextProvider} from '@lit/context';
 import {AdminWebsocket, AppWebsocket, InstalledAppId} from "@holochain/client";
-import {DEFAULT_SNAPMAIL_DEF, IS_ELECTRON, SnapmailDvm, SnapmailPage} from "@snapmail/elements";
+import {DEFAULT_SNAPMAIL_DEF, IS_ELECTRON, SnapmailDvm} from "@snapmail/elements";
 import {HvmDef, HappElement, cellContext} from "@ddd-qc/lit-happ";
-import {ContextProvider} from '@lit-labs/context';
+import {AppletView} from "@lightningrodlabs/we-applet";
+
+
+//import "./snapmail-page"
+
+const SNAPMAIL_DEFAULT_COORDINATOR_ZOME_NAME = "snapmail"
 
 let HC_APP_PORT: number;
 let HC_ADMIN_PORT: number;
+
 if (IS_ELECTRON) {
   const APP_ID = 'snapmail-app'
   console.log("URL =", window.location.toString())
@@ -30,41 +37,70 @@ if (IS_ELECTRON) {
   }
 }
 
-console.log("HAPP_ID =", DEFAULT_SNAPMAIL_DEF.id)
-console.log("HC_APP_PORT", HC_APP_PORT);
-console.log("HC_ADMIN_PORT", HC_ADMIN_PORT);
-console.log("IS_ELECTRON", IS_ELECTRON);
+//console.log("      HAPP_ID =", DEFAULT_SNAPMAIL_DEF.id)
+console.log("  HC_APP_PORT =", HC_APP_PORT);
+console.log("HC_ADMIN_PORT =", HC_ADMIN_PORT);
+//console.log("  IS_ELECTRON =", IS_ELECTRON);
+
 
 /** */
+@customElement("snapmail-app")
 export class SnapmailApp extends HappElement {
 
-  @state() private _loaded = false;
+  /** */
+  constructor(appWs?: AppWebsocket, private _adminWs?: AdminWebsocket, private _canAuthorizeZfns?: boolean, readonly appId?: InstalledAppId, public appletView?: AppletView) {
+    super(appWs? appWs : HC_APP_PORT, appId);
+    console.log("<snapmail-app> ctor");
+    if (_canAuthorizeZfns == undefined) {
+      this._canAuthorizeZfns = true;
+    }
+  }
+
 
   static readonly HVM_DEF: HvmDef = DEFAULT_SNAPMAIL_DEF;
 
+  @state() private _loaded = false;
+  @state() private _hasHolochainFailed = true;
 
-  /** */
-  constructor(appWs?: AppWebsocket, private _adminWs?: AdminWebsocket, appId?: InstalledAppId) {
-    super(appWs? appWs : HC_APP_PORT, appId);
-  }
 
   get snapmailDvm(): SnapmailDvm { return this.hvm.getDvm(SnapmailDvm.DEFAULT_BASE_ROLE_NAME)! as SnapmailDvm }
 
 
+  /** -- Methods -- */
 
   /** */
   async hvmConstructed() {
-    console.log("hvmConstructed()...", this.hvm.appId, this.snapmailDvm.cell.dnaHash);
+    console.log("hvmConstructed()", this._adminWs, this._canAuthorizeZfns)
+
+    /** Authorize all zome calls */
+    if (!this._adminWs && this._canAuthorizeZfns) {
+      this._adminWs = await AdminWebsocket.connect(new URL(`ws://localhost:${HC_ADMIN_PORT}`));
+      console.log("hvmConstructed() connect() called", this._adminWs);
+    }
+    if (this._adminWs && this._canAuthorizeZfns) {
+      await this.hvm.authorizeAllZomeCalls(this._adminWs);
+      console.log("*** Zome call authorization complete");
+    } else {
+      if (!this._canAuthorizeZfns) {
+        console.warn("No adminWebsocket provided (Zome call authorization done)")
+      } else {
+        console.log("Zome call authorization done externally")
+      }
+    }
+
+    /** Probe EntryDefs */
+    const allAppEntryTypes = await this.snapmailDvm.fetchAllEntryDefs();
+    console.log("happInitialized(), allAppEntryTypes", allAppEntryTypes);
+    console.log(`${SNAPMAIL_DEFAULT_COORDINATOR_ZOME_NAME} entries`, allAppEntryTypes[SNAPMAIL_DEFAULT_COORDINATOR_ZOME_NAME]);
+    if (allAppEntryTypes[SNAPMAIL_DEFAULT_COORDINATOR_ZOME_NAME].length == 0) {
+      console.warn(`No entries found for ${SNAPMAIL_DEFAULT_COORDINATOR_ZOME_NAME}`);
+    } else {
+      this._hasHolochainFailed = false;
+    }
+
     /** Provide Cell Context */
     //console.log({cell: this.snapmailDvm.cell});
     new ContextProvider(this, cellContext, this.snapmailDvm.cell);
-    /** Authorize all zome calls */
-    if (!this._adminWs) {
-      this._adminWs = await AdminWebsocket.connect(`ws://localhost:${HC_ADMIN_PORT}`);
-    }
-    //console.log({ adminWs });
-    await this.hvm.authorizeAllZomeCalls(this._adminWs);
-    console.log("*** Zome call authorization complete");
   }
 
 
@@ -82,21 +118,30 @@ export class SnapmailApp extends HappElement {
 
 
   /** */
+  shouldUpdate(): boolean {
+    const canUpdate = super.shouldUpdate();
+    console.log("<snapmail-app>.shouldUpdate()", canUpdate/*, this._offlinePerspectiveloaded*/);
+    /** Wait for offlinePerspective */
+    return canUpdate /*&& this._offlinePerspectiveloaded*/;
+  }
+
+
+  /** */
   render() {
     console.log("<snapmail-app>.render()", this._loaded)
     if (!this._loaded) {
       return html`<span>Loading...</span>`;
     }
-    return html`
-        <snapmail-page .noTitle="${IS_ELECTRON}"></snapmail-page>
-    `;
+    if(this._hasHolochainFailed) {
+      return html`<div style="width: auto; height: auto; font-size: 4rem;">
+        ${"Failed to connect to Holochain Conductor and/or \"Snapmail\" cell."};
+      </div>
+      `;
+    }
+
+    /** render page */
+    return html`<snapmail-page .noTitle="${IS_ELECTRON}"></snapmail-page>`;
+    //return html`<h1>HI MOM</h1>`;
   }
 
-
-  /** */
-  static get scopedElements() {
-    return {
-      "snapmail-page": SnapmailPage,
-    };
-  }
 }

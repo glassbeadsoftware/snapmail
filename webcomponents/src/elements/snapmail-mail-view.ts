@@ -1,15 +1,13 @@
 import {css, html, LitElement} from "lit";
-import { state, property } from "lit/decorators.js";
+import { state, property, customElement } from "lit/decorators.js";
 import {ScopedElementsMixin} from "@open-wc/scoped-elements";
-import {TextArea} from "@vaadin/text-area";
 import {MailItem} from "../bindings/snapmail.types";
 import {into_mailText} from "../mail";
 import {UsernameMap} from "../viewModel/snapmail.perspective";
 
 
-/**
- *
- */
+/** */
+@customElement("snapmail-mail-view")
 export class SnapmailMailView extends ScopedElementsMixin(LitElement) {
 
   @property({type: Object})
@@ -46,10 +44,10 @@ export class SnapmailMailView extends ScopedElementsMixin(LitElement) {
   }
 
 
-  /** */
-  static get scopedElements() {
-    return {
-      'vaadin-text-area':TextArea,
-    }
-  }
+  // /** */
+  // static get scopedElements() {
+  //   return {
+  //     'vaadin-text-area':TextArea,
+  //   }
+  // }
 }

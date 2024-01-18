@@ -1,6 +1,6 @@
 import {css, html, PropertyValues} from "lit";
 import {Grid, GridActiveItemChangedEvent, GridColumn} from "@vaadin/grid";
-import { state, property } from "lit/decorators.js";
+import { state, property,customElement } from "lit/decorators.js";
 import {FileManifest, FindManifestOutput, Mail, MailItem} from "../bindings/snapmail.types";
 import {SnapmailPerspective} from "../viewModel/snapmail.perspective";
 import {base64ToArrayBuffer} from "../utils";
@@ -11,9 +11,8 @@ import {SnapmailZvm} from "../viewModel/snapmail.zvm";
 import {GridItemModel} from "@vaadin/grid/src/vaadin-grid";
 
 
-/**
- *
- */
+/** */
+@customElement("snapmail-att-view")
 export class SnapmailAttView extends ZomeElement<SnapmailPerspective, SnapmailZvm> {
   constructor() {
     super(SnapmailZvm.DEFAULT_ZOME_NAME);
@@ -216,11 +215,11 @@ export class SnapmailAttView extends ZomeElement<SnapmailPerspective, SnapmailZv
   }
 
 
-  /** */
-  static get scopedElements() {
-    return {
-      'vaadin-grid':Grid,
-      'vaadin-grid-column':GridColumn,
-    }
-  }
+  // /** */
+  // static get scopedElements() {
+  //   return {
+  //     'vaadin-grid':Grid,
+  //     'vaadin-grid-column':GridColumn,
+  //   }
+  // }
 }

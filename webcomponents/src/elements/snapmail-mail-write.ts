@@ -1,16 +1,14 @@
 import {css, html, LitElement} from "lit";
-import { state, property } from "lit/decorators.js";
+import { state, property, customElement } from "lit/decorators.js";
 import {ScopedElementsMixin} from "@open-wc/scoped-elements";
 import {TextArea} from "@vaadin/text-area";
 import {TextField} from "@vaadin/text-field";
-import {VerticalLayout} from "@vaadin/vertical-layout";
 import {Upload, UploadBeforeEvent, UploadFileRejectEvent} from "@vaadin/upload";
 import {UploadFile} from "@vaadin/upload/src/vaadin-upload";
 
 
-/**
- *
- */
+/** */
+@customElement("snapmail-mail-write")
 export class SnapmailMailWrite extends ScopedElementsMixin(LitElement) {
 
   @property()
@@ -116,13 +114,13 @@ export class SnapmailMailWrite extends ScopedElementsMixin(LitElement) {
   }
 
 
-  /** */
-  static get scopedElements() {
-    return {
-      'vaadin-vertical-layout': VerticalLayout,
-      'vaadin-text-field':TextField,
-      'vaadin-text-area':TextArea,
-      'vaadin-upload': Upload,
-    }
-  }
+  // /** */
+  // static get scopedElements() {
+  //   return {
+  //     'vaadin-vertical-layout': VerticalLayout,
+  //     'vaadin-text-field':TextField,
+  //     'vaadin-text-area':TextArea,
+  //     'vaadin-upload': Upload,
+  //   }
+  // }
 }

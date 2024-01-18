@@ -1,17 +1,14 @@
 import {css, html, PropertyValues} from "lit";
-import { state, property } from "lit/decorators.js";
-import {Grid, GridColumn, GridEventContext} from "@vaadin/grid";
-import {VerticalLayout} from "@vaadin/vertical-layout";
-import {HorizontalLayout} from "@vaadin/horizontal-layout";
+import { state, property, customElement } from "lit/decorators.js";
+import {Grid, GridEventContext} from "@vaadin/grid";
 import {ComboBox, ComboBoxChangeEvent} from "@vaadin/combo-box";
 import {TextField, TextFieldValueChangedEvent} from "@vaadin/text-field";
-import {Icon} from "@vaadin/vaadin-icon";
 import {Button} from "@vaadin/button";
 import {Dialog} from "@vaadin/dialog";
 import {ContactGridItem, SnapmailPerspective} from "../viewModel/snapmail.perspective";
 import {greenDot, redDot, stylesTemplate, SYSTEM_GROUP_LIST, whiteDot} from "../constants";
 import {GridSelectionColumn} from "@vaadin/grid/vaadin-grid-selection-column";
-import {ZomeElement} from "@ddd-qc/lit-happ";
+import {HAPP_BUILD_MODE, ZomeElement} from "@ddd-qc/lit-happ";
 import {SnapmailZvm} from "../viewModel/snapmail.zvm";
 import {BUILD_MODE} from "../electron";
 import {MenuBar} from "@vaadin/menu-bar";
@@ -35,9 +32,8 @@ function ids_to_items(ids: string[], items: ContactGridItem[]): ContactGridItem[
 }
 
 
-/**
- *
- */
+/** */
+@customElement("snapmail-contacts")
 export class SnapmailContacts extends ZomeElement<SnapmailPerspective, SnapmailZvm> {
   constructor() {
     super(SnapmailZvm.DEFAULT_ZOME_NAME);
@@ -141,7 +137,7 @@ export class SnapmailContacts extends ZomeElement<SnapmailPerspective, SnapmailZ
 
     /** Add Refresh button in DEBUG */
     const contactsMenu = this.shadowRoot.getElementById("ContactsMenu") as MenuBar;
-    if (BUILD_MODE === 'dev' && contactsMenu) {
+    if (HAPP_BUILD_MODE == 'Debug' && contactsMenu) {
       contactsMenu.items = [{ text: 'Refresh' }];
       contactsMenu.addEventListener('item-selected', e => {
         console.log('item-selected', JSON.stringify(e.detail.value));
@@ -661,20 +657,20 @@ export class SnapmailContacts extends ZomeElement<SnapmailPerspective, SnapmailZ
   }
 
 
-  /** */
-  static get scopedElements() {
-    return {
-      'vaadin-menu-bar':MenuBar,
-      'vaadin-button':Button,
-      'vaadin-combo-box':ComboBox,
-      'vaadin-dialog':Dialog,
-      "vaadin-icon": Icon,
-      'vaadin-text-field':TextField,
-      'vaadin-grid':Grid,
-      'vaadin-grid-column':GridColumn,
-      'vaadin-grid-selection-column': GridSelectionColumn,
-      'vaadin-vertical-layout': VerticalLayout,
-      'vaadin-horizontal-layout': HorizontalLayout,
-    }
-  }
+  // /** */
+  // static get scopedElements() {
+  //   return {
+  //     'vaadin-menu-bar':MenuBar,
+  //     'vaadin-button':Button,
+  //     'vaadin-combo-box':ComboBox,
+  //     'vaadin-dialog':Dialog,
+  //     "vaadin-icon": Icon,
+  //     'vaadin-text-field':TextField,
+  //     'vaadin-grid':Grid,
+  //     'vaadin-grid-column':GridColumn,
+  //     'vaadin-grid-selection-column': GridSelectionColumn,
+  //     'vaadin-vertical-layout': VerticalLayout,
+  //     'vaadin-horizontal-layout': HorizontalLayout,
+  //   }
+  // }
 }

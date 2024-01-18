@@ -1,15 +1,16 @@
 {
   "name": "snapmail",
-  "version": "0.3.1",
+  "version": "0.4.0",
   "main": "./dist/index.js",
   "module": "./dist/index.js",
   "typings": "./dist/index.d.ts",
   "scripts": {
     "lint": "eslint --ext .ts .",
     "build": "rm -rf dist &&  tsc",
-    "dist": "rollup -c rollup.config.js",
-    "build:watch": "run-singleton \"tsc -w --incremental --preserveWatchOutput\"",
-    "start:ui": "cp index.html dist && cp ../assets/favicon.ico dist && web-dev-server --config ./web-dev-server.config.mjs"
+    "build:watch": "tsc -w --incremental --preserveWatchOutput",
+    "dist": "npm run build && rollup -c rollup.config.js",
+    "start:ui-new": "concurrently --names tsc,dev-server \"npm run build:watch\" \"web-dev-server --config ./web-dev-server.config.mjs\"",
+    "start:ui": "concurrently --names tsc,dev-server \"npm run build:watch\" \"web-dev-server --config ./web-dev-server.config.mjs\""
   },
 
   "devDependencies": {
@@ -34,20 +35,12 @@
     "rollup-plugin-workbox": "^6.2.0",
     "rollup-plugin-copy": "^3.4.0",
     "run-singleton-cli": "^0.0.5",
-    "tslib": "^2.4.0",
-    "typescript": "^4.9.0",
     "@typescript-eslint/eslint-plugin": "^5.39.0",
     "@typescript-eslint/parser": "^5.39.0",
     "eslint": "^8.24.0",
     "eslint-plugin-import": "^2.26.0"
   },
   "dependencies": {
-    "@ddd-qc/lit-happ": "0.14.2",
-    "@ddd-qc/cell-proxy": "0.14.2",
-    "@holochain/client": "0.12.0",
-    "@holochain-open-dev/core-types": "0.6.3",
-    "@snapmail/elements": "file:../webcomponents",
-    "@open-wc/scoped-elements": "^2.1.1",
-    "lit": "2.3.1"
+    "@snapmail/elements": "file:../webcomponents"
   }
 }
