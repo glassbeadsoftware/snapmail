@@ -37,12 +37,10 @@ import {DnaElement, HAPP_BUILD_MODE} from "@ddd-qc/lit-happ";
 import {SnapmailPerspective} from "../viewModel/snapmail.perspective";
 import {SnapmailDvm} from "../viewModel/snapmail.dvm";
 
-//import '@vaadin/icon';
-//import '@vaadin/vaadin-lumo-styles';
-
+import '@vaadin/vaadin-lumo-styles';
+import '@vaadin/icons';
 import '@vaadin/icon/theme/lumo/vaadin-icon.js';
 
-import '@vaadin/icon/theme/lumo/vaadin-icon.js';
 import '@vaadin/button/theme/lumo/vaadin-button.js';
 import '@vaadin/combo-box/theme/lumo/vaadin-combo-box.js';
 import '@vaadin/dialog/theme/lumo/vaadin-dialog.js';

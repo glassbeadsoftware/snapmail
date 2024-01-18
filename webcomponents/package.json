@@ -28,6 +28,7 @@
     "@vaadin/combo-box": "24.3.3",
     "@vaadin/dialog": "24.3.3",
     "@vaadin/icon": "24.3.3",
+    "@vaadin/icons": "24.3.3",
     "@vaadin/input-container": "24.3.3",
     "@vaadin/grid": "24.3.3",
     "@vaadin/list-box": "24.3.3",
