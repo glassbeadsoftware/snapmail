@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, viewport-fit=cover"
+    />
+    <meta name="Description" content="Snapmail we-applet" />
+    <base href="." />
+    <title>Snapmail we-applet</title>
+  </head>
+
+  <body style="background-color: white;margin:0px 3px 0px 5px;height:100vh">
+    <script type="module">
+      console.log("Snapmail we-applet index.html START");
+      window.IN_WE = true;
+    </script>
+    <!-- main script -->
+    <script type="module">
+      import setupApplet from "./out-tsc";
+      console.log("Imported setupApplet");
+      const happElem = await setupApplet();
+      console.log("setupApplet() result", happElem);
+      document.body.append(happElem);
+    </script>
+  </body>
+</html>

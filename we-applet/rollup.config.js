@@ -7,6 +7,7 @@ import babel from "@rollup/plugin-babel";
 //import { importMetaAssets } from "@web/rollup-plugin-import-meta-assets";
 //import { terser } from "rollup-plugin-terser";
 import copy from "rollup-plugin-copy";
+import html from "@web/rollup-plugin-html";
 
 //const BUILD_MODE = process.env.BUILD_MODE || "prod";
 
@@ -14,11 +15,14 @@ const DIST_FOLDER = "dist"
 
 
 export default {
-  input: "out-tsc/index.js",
+  input: "index.html",
   output: {
+    entryFileNames: "index.js",
+    //chunkFileNames: "[hash].js",
+    assetFileNames: "assets[extname]",
     format: "es",
     dir: DIST_FOLDER,
-    sourcemap: false
+    //sourcemap: false
   },
   watch: {
     clearScreen: false,
@@ -26,15 +30,19 @@ export default {
   external: [],
 
   plugins: [
+    /** Enable using HTML as rollup entrypoint */
+    html({
+      //minify: true,
+      //injectServiceWorker: true,
+      //serviceWorkerPath: "dist/sw.js",
+    }),
     /** Resolve bare module imports */
     nodeResolve({
       browser: true,
       preferBuiltins: false,
     }),
-    typescript({ experimentalDecorators: true, outDir: DIST_FOLDER }),
-    copy({
-      targets: [{ src: "../assets/favicon.ico", dest: DIST_FOLDER }, { src: "../assets/favicon.ico", dest: "demo"} ],
-    }),
+    //typescript({ experimentalDecorators: true, outDir: DIST_FOLDER }),
+    builtins(),
     /** Minify JS */
     //terser(),
     /** Bundle assets references via import.meta.url */
@@ -79,7 +87,11 @@ export default {
         ],
       ],
     }),
-    builtins(),
     commonjs({}),
+    copy({
+      targets: [
+        { src: "../assets/favicon.ico", dest: DIST_FOLDER },
+      ],
+    }),
   ],
 };

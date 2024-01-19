@@ -4,6 +4,7 @@ import {Dictionary} from "@ddd-qc/cell-proxy";
 
 export type UsernameMap = Dictionary<string>;
 
+
 /** */
 export interface SnapmailPerspective {
   /* Map of (agentIdB64 -> username) */
@@ -33,41 +34,43 @@ export function defaultPerspective(): SnapmailPerspective {
 }
 
 
-export interface InMailState {
-  Unacknowledged?: null,
-  AckUnsent?: null,
-  AckPending?: null,
-  AckDelivered?: null,
-  Deleted?: null,
-}
-
-
-export interface DeliveryState {
-  Unsent?: null,
-  Pending?: null,
-  Delivered?: null,
-}
-
-
-export interface OutMailState {
-  Unsent?: null,
-  AllSent?: null,
-  AllReceived?: null,
-  AllAcknowledged?: null,
-  Deleted?: null,
-}
-
-
-//export type MailState = OutMailState | InMailState
-export interface MailState {
-  In?: InMailState,
-  Out?: OutMailState,
-}
-
-
 export interface ContactGridItem {
   status: string,
   username: string,
   recipientType: string,
   agentIdB64: AgentPubKeyB64,
 }
+
+
+
+// export interface InMailStateMat {
+//   Unacknowledged?: null,
+//   AckUnsent?: null,
+//   AckPending?: null,
+//   AckDelivered?: null,
+//   Deleted?: null,
+// }
+
+
+// export interface DeliveryStateMat {
+//   Unsent?: null,
+//   Pending?: null,
+//   Delivered?: null,
+// }
+//
+//
+// export interface OutMailStateMat {
+//   Unsent?: null,
+//   AllSent?: null,
+//   AllReceived?: null,
+//   AllAcknowledged?: null,
+//   Deleted?: null,
+// }
+
+
+// //export type MailState = OutMailState | InMailState
+// export interface MailStateMat {
+//   In?: InMailStateMat,
+//   Out?: OutMailStateMat,
+// }
+

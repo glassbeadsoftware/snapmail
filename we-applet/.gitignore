@@ -4,3 +4,8 @@ node_modules
 *.tsbuildinfo
 *.happ
 *.dna
+*.zip
+target
+assets/
+*.webhapp
+*.hc

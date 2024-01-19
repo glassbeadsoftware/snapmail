@@ -258,7 +258,11 @@ export interface ReceivedAck {
   for_mail: ActionHash
 }
 
-export const ZOME_NAME = "snapmail";
+export const SNAPMAIL_DEFAULT_INTEGRITY_ZOME_NAME = "snapmail_model";
+
+export const SNAPMAIL_DEFAULT_COORDINATOR_ZOME_NAME = "snapmail";
+
+export const SNAPMAIL_DEFAULT_ROLE_NAME = "rSnapmail";
 
 export const DIRECT_SEND_TIMEOUT_MS = 1000;
 

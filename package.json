@@ -4,7 +4,8 @@
   "config": {
     "hc_version": "0.2.4",
     "zits_version": "1.11.0",
-    "bin": "bin"
+    "bin": "bin",
+    "we_test_folder": "../we-main"
   },
   "private": true,
   "repository": {
@@ -37,8 +38,10 @@
     "devtest:electron"    : "npm run prepare-devtest && npm run devtest -w electron",
 
     "prodtest"            : "npm run clean:agents && npm run dist -w webapp && HC_PORT=$(port) ADMIN_PORT=$(port) concurrently \"npm run new-sandbox:local\" \"sleep 8 && npm run start:ui -w webapp\"",
-    "prodtest:we"         : "npm run clean:agents && npm run dist -w webapp && npm run devtest -w we-applet",
     "prodtest:electron"   : "npm run clean:agents && npm run build -w webcomponents && npm run dist -w webapp && npm run prodtest -w electron",
+
+    "prodtest:we"          : "npm run dist:we && cross-env BOOT_PORT=$(port) SIGNAL_PORT=$(port) concurrently \"npm run serve:run\" \"cross-env AGENT_NUM=1 npm run prodtest:we-launch\"",
+    "prodtest:we-launch"   : "/c/Users/damien/AppData/Local/Programs/org.lightningrodlabs.we-electron-alpha/lightningrodlabs-we \"-b http://127.0.0.1:$BOOT_PORT\" \"-s ws://127.0.0.1:$SIGNAL_PORT\" --dev-config we.prodtest.config.json --agent-num $AGENT_NUM",
 
     "new-sandbox:mem"     : "RUST_LOG=warn echo \"pass\" | $npm_package_config_bin/hc s --piped -f=$ADMIN_PORT generate artifacts/snapmail.happ --run=$HC_PORT -a snapmail network mem",
     "new-sandbox:local"   : "RUST_LOG=warn echo \"pass\" | $npm_package_config_bin/hc s --piped -f=$ADMIN_PORT generate artifacts/snapmail.happ --run=$HC_PORT -a snapmail network --bootstrap http://127.0.0.1:$BOOT_PORT webrtc ws://127.0.0.1:$SIGNAL_PORT",
@@ -57,10 +60,13 @@
 
     "start:launcher"      : "echo pass | hc-launch --piped -n 1 artifacts/snapmail.webhapp network mdns",
 
+    "dist:we"              : "npm run dist -w we-applet && npm run package:we && npm run cp:we",
+    "package:we"          : "rm -rf artifacts/snapmail-we_applet-ui.zip & cd we-applet/dist && bestzip ../../artifacts/snapmail-we_applet-ui.zip * && cd ../.. && $npm_package_config_bin/hc web-app pack we-applet/webhapp.workdir -o artifacts/snapmail-we_applet.webhapp",
+    "cp:we"                : "cp artifacts/snapmail-we_applet.webhapp $npm_package_config_we_test_folder/testing-applets",
+
     "dist:electron"       : "bash submodules/hc-prebuilt/copy-binaries.sh electron/bin && npm run dist:build -w electron",
 
     "package:webapp"      : "rm -rf artifacts/snapmail-webapp-ui.zip & cd webapp/dist && bestzip ../../artifacts/snapmail-webapp-ui.zip * && cd ../.. && $npm_package_config_bin/hc web-app pack webapp/webhapp.workdir -o artifacts/snapmail.webhapp",
-    "package:we-applet"   : "rm -rf artifacts/snapmail-we_applet-ui.zip & cd we-applet/dist && bestzip ../../artifacts/snapmail-we_applet-ui.zip * && cd ../.. && $npm_package_config_bin/hc web-app pack we-applet/webhapp.workdir -o artifacts/snapmail-we_applet.webhapp",
 
     "update-version"      : "bash scripts/update-version-number.sh $npm_package_version",
 

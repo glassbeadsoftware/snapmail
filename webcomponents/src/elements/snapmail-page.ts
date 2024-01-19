@@ -33,7 +33,7 @@ import {
 } from "../bindings/snapmail.types";
 import {SnapmailFilebox} from "./snapmail-filebox";
 import {BUILD_MODE, MY_ELECTRON_API} from "../electron";
-import {DnaElement, HAPP_BUILD_MODE} from "@ddd-qc/lit-happ";
+import {DnaElement, HAPP_BUILD_MODE, HAPP_ENV, HappEnvType} from "@ddd-qc/lit-happ";
 import {SnapmailPerspective} from "../viewModel/snapmail.perspective";
 import {SnapmailDvm} from "../viewModel/snapmail.dvm";
 
@@ -104,7 +104,6 @@ export class SnapmailPage extends DnaElement<unknown, SnapmailDvm> {
     return this.shadowRoot.getElementById("myHandleInput") as TextField;
   }
 
-
   get actionMenuElem() : MenuBar {
     return this.shadowRoot.getElementById("ActionBar") as MenuBar;
   }
@@ -127,7 +126,6 @@ export class SnapmailPage extends DnaElement<unknown, SnapmailDvm> {
 
 
   /** -- Methods -- */
-
 
   /** */
   handleSignal(signalwrapper: AppSignal) {
@@ -216,7 +214,7 @@ export class SnapmailPage extends DnaElement<unknown, SnapmailDvm> {
     if (HAPP_BUILD_MODE == 'Debug') {
       titleLayout.style.backgroundColor = "#ec8383d1";
     }
-    if (MY_ELECTRON_API || this.noTitle) {
+    if (MY_ELECTRON_API || this.noTitle || (HAPP_BUILD_MODE != 'Debug' && HAPP_ENV == HappEnvType.We)) {
       titleLayout.style.display = "none";
       // if (BUILD_MODE === 'dev') {
       //   /** -- Update Title with DNA ID */
@@ -584,6 +582,7 @@ export class SnapmailPage extends DnaElement<unknown, SnapmailDvm> {
   render() {
     console.log("<snapmail-page>.render()", this._myHandle, this._actionMenuItems, this.actionMenuElem? this.actionMenuElem.items : "<none>");
 
+    /** */
     return html`
       <!-- Loading Spinner -->
       <vaadin-progress-bar id="loadingBar" indeterminate value="0"></vaadin-progress-bar>
@@ -595,16 +594,16 @@ export class SnapmailPage extends DnaElement<unknown, SnapmailDvm> {
       <!-- MAIN VERTICAL LAYOUT -->
       <vaadin-vertical-layout theme="spacing-s" style="flex:1; display:none; height:100%; gap:0;" id="mainPage">
 
-        <!-- TITLE BAR -->
+        <!-- TITLE BAR: Can be hidden in firstUpdated() -->
         <vaadin-horizontal-layout id="titleLayout" theme="spacing-xs" style="background-color:beige; width:100%;">
           <abbr title="dna" id="titleAbbr">
-              <img src="favicon.ico" width="32" height="32" alt="favicon" style="padding-left: 5px;padding-top: 5px;"/>
+            <img src="favicon.ico" width="32" height="32" alt="favicon" style="padding-left: 5px;padding-top: 5px;"/>
           </abbr>
           <span id="snapTitle" style="text-align: center; font-size: larger; padding: 10px 0px 10px 5px;">SnapMail</span>
           <span id="networkIdDisplay" style="text-align: center; font-size: small; padding: 15px 2px 0px 5px;"></span>
           <!--        <span style="text-align: center; font-size: larger; padding: 10px 10px 10px 5px;"> - </span>-->
         </vaadin-horizontal-layout>
-
+        
         <!-- Vertical split between filebox&Inmail and the rest -->
         <vaadin-split-layout orientation="vertical" style="width:100%; height:100%; margin-top:0px;">
             

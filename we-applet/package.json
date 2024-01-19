@@ -3,12 +3,18 @@
   "version": "0.4.0",
   "private": true,
   "scripts": {
-    "tsc": "tsc",
-    "build": "tsc && rollup --config rollup.config.js",
+    "build": "tsc",
     "build:watch": "tsc -w --preserveWatchOutput",
-    "devtest": "npm run build && cross-env HC_PORT=$(port) ADMIN_PORT=$(port) concurrently \"npm run start:happ\" \"npm run start:ui\"",
+    "dist": "rm -rf dist && tsc && rollup --config rollup.config.js",
+    "devtest": "npm run dist && cross-env HC_PORT=$(port) ADMIN_PORT=$(port) HAPP_BUILD_MODE='Debug' concurrently \"npm run start:happ\" \"npm run start:ui\"",
+    "start:happ": "RUST_LOG=warn WASM_LOG=debug  echo \"pass\" | ../bin/hc s --piped -f=$ADMIN_PORT generate ../artifacts/snapmail.happ --run=$HC_PORT -a snapmail-applet network mem",
+    "start:happ:local" :  "RUST_LOG=warn WASM_LOG=debug echo \"pass\" | ../hc s --piped -f=$ADMIN_PORT generate ../artifacts/snapmail.happ --run=$APP_PORT -a snapmail-applet network --bootstrap http://127.0.0.1:$BOOT_PORT webrtc ws://127.0.0.1:$SIGNAL_PORT",
+
+    "start:local" :  "cross-env HC_PORT=$(port) ADMIN_PORT=$(port) HAPP_BUILD_MODE='Debug' concurrently \"npm run start:happ:local\" \"npm run start:ui\"",
     "start:ui": "concurrently -k --names tsc,dev-server \"npm run build:watch\" \"wds --config ./web-dev-server.config.mjs\"",
-    "start:happ": "RUST_LOG=warn WASM_LOG=debug  echo \"pass\" | ../bin/hc s --piped -f=$ADMIN_PORT generate ../artifacts/snapmail.happ --run=$HC_PORT -a snapmail-applet network mdns"
+
+    "serve:run"        : "hc run-local-services --bootstrap-port $BOOT_PORT --signal-port $SIGNAL_PORT",
+    "network:local2"   : "npm run dist && cross-env BOOT_PORT=$(port) SIGNAL_PORT=$(port) concurrently \"npm run serve:run\" \"npm run start:local\" \"sleep 1 && npm run start:local\""
   },
   "devDependencies": {
     "@babel/preset-env": "^7.15.0",
@@ -33,7 +39,6 @@
     "rollup-plugin-copy": "^3.4.0"
   },
   "dependencies": {
-    "@scoped-elements/material-web": "^0.0.19",
     "@snapmail/elements": "file:../webcomponents",
     "snapmail": "file:../webapp"
   }

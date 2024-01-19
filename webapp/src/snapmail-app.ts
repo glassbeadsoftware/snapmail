@@ -2,9 +2,9 @@ import { html } from "lit";
 import { state, customElement } from "lit/decorators.js";
 import {ContextProvider} from '@lit/context';
 import {AdminWebsocket, AppWebsocket, InstalledAppId} from "@holochain/client";
-import {DEFAULT_SNAPMAIL_DEF, IS_ELECTRON, SnapmailDvm} from "@snapmail/elements";
+import {DEFAULT_SNAPMAIL_DEF, IS_ELECTRON, SnapmailDvm, weClientContext} from "@snapmail/elements";
 import {HvmDef, HappElement, cellContext} from "@ddd-qc/lit-happ";
-import {AppletView} from "@lightningrodlabs/we-applet";
+import {AppletHash, AppletView, WeServices} from "@lightningrodlabs/we-applet";
 
 
 const SNAPMAIL_DEFAULT_COORDINATOR_ZOME_NAME = "snapmail"
@@ -46,11 +46,22 @@ console.log("HC_ADMIN_PORT =", HC_ADMIN_PORT);
 export class SnapmailApp extends HappElement {
 
   /** */
-  constructor(appWs?: AppWebsocket, private _adminWs?: AdminWebsocket, private _canAuthorizeZfns?: boolean, readonly appId?: InstalledAppId, public appletView?: AppletView) {
+  constructor(appWs?: AppWebsocket,
+              private _adminWs?: AdminWebsocket,
+              private _canAuthorizeZfns?: boolean,
+              readonly appId?: InstalledAppId,
+              public appletView?: AppletView,
+              private _weServices?: WeServices,
+              private _appletHash?: AppletHash,
+  ) {
     super(appWs? appWs : HC_APP_PORT, appId);
     console.log("<snapmail-app> ctor");
     if (_canAuthorizeZfns == undefined) {
       this._canAuthorizeZfns = true;
+    }
+    if (_weServices) {
+      console.log(`\t\tProviding context "${weClientContext}" | in host `, _weServices, this);
+      new ContextProvider(this, weClientContext, _weServices);
     }
   }
 
