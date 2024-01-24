@@ -76,6 +76,9 @@ export class SnapmailPage extends DnaElement<unknown, SnapmailDvm> {
   @property()
   noTitle = false;
 
+  @property()
+  startingNickname?: string;
+
   @state() private _myHandle = '<unknown>';
   @state() private _canHideHandleInput = true;
   private _replyOf?: ActionHashB64;
@@ -203,6 +206,11 @@ export class SnapmailPage extends DnaElement<unknown, SnapmailDvm> {
     /** Probe */
     try {
       this._myHandle = await this._dvm.snapmailZvm.getMyHandle();
+      console.log("<snapmail-page> firstUpdated()", this._myHandle, this.startingNickname);
+      if ((this._myHandle == "<unknown>"  || this._myHandle == "<noname>") && this.startingNickname) {
+        this._myHandle = this.startingNickname;
+        await this,this._dvm.snapmailZvm.setHandle(this.startingNickname);
+      }
       await this._dvm.probeAll();
     } catch(error: unknown) {
       console.error('probeAll() FAILED');

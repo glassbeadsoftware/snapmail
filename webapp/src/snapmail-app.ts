@@ -53,6 +53,7 @@ export class SnapmailApp extends HappElement {
               public appletView?: AppletView,
               private _weServices?: WeServices,
               private _appletHash?: AppletHash,
+              private _startingNickname?: string,
   ) {
     super(appWs? appWs : HC_APP_PORT, appId);
     console.log("<snapmail-app> ctor");
@@ -148,8 +149,12 @@ export class SnapmailApp extends HappElement {
       `;
     }
 
+    if (this._weServices) {
+
+    }
+
     /** render page */
-    return html`<snapmail-page .noTitle="${IS_ELECTRON}"></snapmail-page>`;
+    return html`<snapmail-page .noTitle="${IS_ELECTRON}" .startingNickname=${this._startingNickname}></snapmail-page>`;
     //return html`<h1>HI MOM</h1>`;
   }
 
