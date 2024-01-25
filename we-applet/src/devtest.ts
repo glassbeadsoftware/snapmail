@@ -67,8 +67,8 @@ function createInMailRenderInfo(eh: EntryHash, context: ViewFileContext): Attach
     entryInfo.roleName = SNAPMAIL_DEFAULT_ROLE_NAME;
     entryInfo.integrityZomeName = SNAPMAIL_DEFAULT_INTEGRITY_ZOME_NAME;
     entryInfo.entryType = snake(SnapmailEntryType.InMail);
-    entryInfo.hrl[1] = eh;
-    entryInfo.context = context;
+    entryInfo.hrlWithContext.hrl[1] = eh;
+    entryInfo.hrlWithContext.context = context;
 
     return entryInfo;
 }

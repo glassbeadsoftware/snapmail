@@ -9,6 +9,7 @@ import {
     SnapmailEntryType,
     GetMailOutput, SnapmailProxy, SNAPMAIL_DEFAULT_ROLE_NAME, SNAPMAIL_DEFAULT_INTEGRITY_ZOME_NAME
 } from "@snapmail/elements";
+import {HrlWithContext} from "@lightningrodlabs/we-applet/dist/types";
 
 
 /** */
@@ -17,9 +18,9 @@ export async function getAttachableInfo(
     roleName: RoleName,
     integrityZomeName: ZomeName,
     entryType: string,
-    hrl: Hrl,
+    hrlc: HrlWithContext,
 ): Promise<AttachableInfo | undefined> {
-    console.log("Snapmail/we-applet/getEntryInfo():", roleName, integrityZomeName, hrl);
+    console.log("Snapmail/we-applet/getEntryInfo():", roleName, integrityZomeName, hrlc);
     if (roleName != SNAPMAIL_DEFAULT_ROLE_NAME) {
         throw new Error(`Snapmail/we-applet/getEntryInfo(): Unknown role name '${roleName}'.`);
     }
@@ -34,16 +35,16 @@ export async function getAttachableInfo(
     switch (pEntryType) {
         case SnapmailEntryType.InMail:
         case SnapmailEntryType.OutMail:
-            console.log("Snapmail/we-applet/getEntryInfo(): mail info", hrl);
+            console.log("Snapmail/we-applet/getEntryInfo(): mail info", hrlc);
             const cellProxy = await asCellProxy(
                 appletClient,
-                undefined, // hrl[0],
+                undefined, // hrlc.hrl[0],
                 mainAppInfo.installed_app_id,
                 SnapmailDvm.DEFAULT_BASE_ROLE_NAME);
             console.log("Snapmail/we-applet/getEntryInfo(): cellProxy", cellProxy);
             const proxy/*: SnapmailProxy */ = new SnapmailProxy(cellProxy);
-            console.log("Snapmail/we-applet/getEntryInfo(): getFile()", encodeHashToBase64(hrl[1]), proxy);
-            const mailOutput: GetMailOutput = await proxy.getMail(hrl[1]);
+            console.log("Snapmail/we-applet/getEntryInfo(): getFile()", encodeHashToBase64(hrlc.hrl[1]), proxy);
+            const mailOutput: GetMailOutput = await proxy.getMail(hrlc.hrl[1]);
             if (mailOutput == null) {
                 return undefined;
             }
