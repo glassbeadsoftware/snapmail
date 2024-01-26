@@ -242,21 +242,23 @@ export interface CommitPendingMailInput {
 /** Listing all Holochain Path used in this DNA */
 export const Directory = "directory";
 
+/**  */
+export interface SnapmailSignal {
+  from: AgentPubKey
+  kind: string
+  payload: SignalProtocol
+}
+
 export enum SignalProtocolType {
 	ReceivedMail = 'ReceivedMail',
 	ReceivedAck = 'ReceivedAck',
 	ReceivedFile = 'ReceivedFile',
 }
 export type SignalProtocolVariantReceivedMail = {ReceivedMail: MailItem}
-export type SignalProtocolVariantReceivedAck = {ReceivedAck: ReceivedAck}
+export type SignalProtocolVariantReceivedAck = {ReceivedAck: ActionHash}
 export type SignalProtocolVariantReceivedFile = {ReceivedFile: FileManifest}
 export type SignalProtocol = 
  | SignalProtocolVariantReceivedMail | SignalProtocolVariantReceivedAck | SignalProtocolVariantReceivedFile;
-
-export interface ReceivedAck {
-  from: AgentPubKey
-  for_mail: ActionHash
-}
 
 export const SNAPMAIL_DEFAULT_INTEGRITY_ZOME_NAME = "snapmail_model";
 

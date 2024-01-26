@@ -56,7 +56,7 @@ export class SnapmailApp extends HappElement {
               private _startingNickname?: string,
   ) {
     super(appWs? appWs : HC_APP_PORT, appId);
-    console.log("<snapmail-app> ctor");
+    console.log("<snapmail-app> ctor", appId, appWs);
     if (_canAuthorizeZfns == undefined) {
       this._canAuthorizeZfns = true;
     }

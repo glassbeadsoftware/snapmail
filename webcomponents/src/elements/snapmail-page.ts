@@ -1,5 +1,6 @@
 import {css, html} from "lit";
 import {property, state, customElement} from "lit/decorators.js";
+import {consume} from "@lit/context";
 import {
   ActionHash,
   ActionHashB64,
@@ -26,16 +27,24 @@ import {arrayBufferToBase64, splitFile} from "../utils";
 import {
   FileManifest,
   MailItem,
-  ReceivedAck,
   SendMailInput,
   SignalProtocol,
-  SignalProtocolType
+  SignalProtocolType,
+  SignalProtocolVariantReceivedAck,
+  SignalProtocolVariantReceivedFile,
+  SignalProtocolVariantReceivedMail,
+  SnapmailSignal
 } from "../bindings/snapmail.types";
 import {SnapmailFilebox} from "./snapmail-filebox";
 import {BUILD_MODE, MY_ELECTRON_API} from "../electron";
 import {DnaElement, HAPP_BUILD_MODE, HAPP_ENV, HappEnvType} from "@ddd-qc/lit-happ";
 import {SnapmailPerspective} from "../viewModel/snapmail.perspective";
 import {SnapmailDvm} from "../viewModel/snapmail.dvm";
+
+import {wrapPathInSvg} from "@ddd-qc/we-utils";
+import {WeNotification, WeServices} from "@lightningrodlabs/we-applet";
+import {weClientContext} from "../contexts";
+import {mdiAlertOctagonOutline, mdiAlertOutline, mdiCheckCircleOutline, mdiInformationOutline, mdiCog} from "@mdi/js";
 
 import '@vaadin/vaadin-lumo-styles';
 import '@vaadin/icons';
@@ -64,6 +73,7 @@ import '@vaadin/horizontal-layout/theme/lumo/vaadin-horizontal-layout.js';
 import '@vaadin/upload/theme/lumo/vaadin-upload.js';
 
 
+
 /** */
 @customElement("snapmail-page")
 export class SnapmailPage extends DnaElement<unknown, SnapmailDvm> {
@@ -72,6 +82,8 @@ export class SnapmailPage extends DnaElement<unknown, SnapmailDvm> {
     console.log("<snapmail-page> ctor")
   }
 
+  @consume({ context: weClientContext, subscribe: true })
+  weServices!: WeServices;
 
   @property()
   noTitle = false;
@@ -130,64 +142,74 @@ export class SnapmailPage extends DnaElement<unknown, SnapmailDvm> {
 
   /** -- Methods -- */
 
+
   /** */
   handleSignal(signalwrapper: AppSignal) {
     console.log('<snapmail-page>.Received signal:', signalwrapper);
+    const signal: SnapmailSignal = signalwrapper.payload as SnapmailSignal;
 
-    const payload: SignalProtocol = signalwrapper.payload as SignalProtocol;
+    /** store ping */
+    const sender = encodeHashToBase64(signal.from)
+    this._dvm.snapmailZvm.storePingResult(sender, true);
+    const senderName = this.zPerspective.usernameMap[sender] || 'unknown user';
 
-    /** Handle 'ReceivedMail' signal */
-    if (SignalProtocolType.ReceivedMail in payload) {
-      const item: MailItem = payload.ReceivedMail;
-      console.log("received_mail:", item);
-      const notification = this.shadowRoot.getElementById('notifyMail') as Notification;
-      notification.open();
+    /** Handle */
+    let popupNotif: Notification;
+    let title;
+    let body = "";
 
-      const mail = payload.ReceivedMail;
-      const pingedAgentB64 = encodeHashToBase64(mail.author);
-      this._dvm.snapmailZvm.storePingResult(pingedAgentB64, true);
+    switch(signal.kind) {
+      case SignalProtocolType.ReceivedMail:
+        const mailItem: MailItem = (signal.payload as SignalProtocolVariantReceivedMail).ReceivedMail;
+        console.log("received_mail:", mailItem);
+        popupNotif = this.shadowRoot.getElementById('notifyMail') as Notification;
+        title = 'New Mail received from ' + senderName;
+        body = mailItem.mail.subject;
+      break;
 
-      if (MY_ELECTRON_API) {
-        //console.log("handleSignal for ELECTRON");
-        console.log({mail});
-        const author_name = this.zPerspective.usernameMap[encodeHashToBase64(mail.author)] || 'unknown user';
 
-        /** ELECTRON NOTIFICATION */
-        const NOTIFICATION_TITLE = 'New mail received from ' + author_name;
-        const NOTIFICATION_BODY = payload.ReceivedMail.mail.subject;
-        //const CLICK_MESSAGE = 'Notification clicked';
-
-        // - Do Notification directly from web UI
-        //new Notification(NOTIFICATION_TITLE, { body: NOTIFICATION_BODY })
-        //  .onclick = () => console.log(CLICK_MESSAGE)
-
-        /* Notify Electron main */
-        const reply: unknown = MY_ELECTRON_API.newMailSync(NOTIFICATION_TITLE, NOTIFICATION_BODY)
-        console.log({reply});
-      }
-      //this._dvm.snapmailZvm.probeMails();
-      return;
-    }
-
-    /** Handle 'ReceivedAck' signal */
-    if (SignalProtocolType.ReceivedAck in payload) {
-      const item: ReceivedAck = payload.ReceivedAck;
-      console.log("received_ack:", item);
-      const pingedAgentB64 = encodeHashToBase64(item.from);
-      this._dvm.snapmailZvm.storePingResult(pingedAgentB64, true);
-      const notification = this.shadowRoot.getElementById('notifyAck') as Notification;
-      notification.open();
-      void this._dvm.snapmailZvm.probeMails();
-      return;
-    }
+      case SignalProtocolType.ReceivedAck:
+        const forMailAh: ActionHashB64 = encodeHashToBase64((signal.payload as SignalProtocolVariantReceivedAck).ReceivedAck);
+        console.log("received_ack:", forMailAh);
+        title = 'New Ack received from ' + senderName;
+        popupNotif = this.shadowRoot.getElementById('notifyAck') as Notification;
+        void this._dvm.snapmailZvm.probeMails();
+      break;
 
     /** Handle 'ReceivedFile' signal */
-    if (SignalProtocolType.ReceivedFile in payload) {
-      const item: FileManifest = payload.ReceivedFile;
+    case SignalProtocolType.ReceivedFile:
+      const item: FileManifest = (signal.payload as SignalProtocolVariantReceivedFile).ReceivedFile;
+      title = 'New File received from ' + senderName;
+      body = item.filename;
       console.log("received_file:", item);
-      const notification = this.shadowRoot.getElementById('notifyFile') as Notification;
-      notification.open();
-      return
+      popupNotif = this.shadowRoot.getElementById('notifyFile') as Notification;
+
+      break;
+    default:
+      console.error("Unknown SnapmailSignal kind:", signal.kind);
+      return;
+      break;
+    }
+    /** */
+    popupNotif.open();
+    /** */
+    if (this.weServices) {
+      const myNotif: WeNotification = {
+        title,
+        body,
+        notification_type: signal.kind,
+        icon_src: wrapPathInSvg(mdiInformationOutline),
+        urgency: 'high',
+        timestamp: Date.now(),
+      }
+      this.weServices.notifyWe([myNotif]);
+    }
+    /** electron */
+    if (MY_ELECTRON_API) {
+      //console.log("handleSignal for ELECTRON");
+      /* Notify Electron main */
+      const reply: unknown = MY_ELECTRON_API.newMailSync(title, body)
+      console.log({reply});
     }
   }
 
@@ -195,7 +217,9 @@ export class SnapmailPage extends DnaElement<unknown, SnapmailDvm> {
   /** After first render only */
   async firstUpdated() {
     console.log("<snapmail-page> firstUpdated()");
-    this.initNotification();
+    /** setup notificationHandler */
+    this._dvm.setSignalHandler((s :AppSignal) => {this.handleSignal(s)});
+    /** */
     void customElements.whenDefined('vaadin-button').then(() => {
       this.handleInputElem.addEventListener("keyup", (event) => {
         if (event.key == "Enter") {
@@ -254,56 +278,6 @@ export class SnapmailPage extends DnaElement<unknown, SnapmailDvm> {
     if (!this._canHideHandleInput) {
       this.handleInputElem.focus();
     }
-  }
-
-
-  /** */
-  initNotification() {
-    /** -- Mail  */
-    const notificationMail = this.shadowRoot.getElementById('notifyMail') as Notification;
-    notificationMail.renderer = (root) => {
-      /** Check if there is a content generated with the previous renderer call not to recreate it. */
-      if (root.firstElementChild) {
-        return;
-      }
-      const container = window.document.createElement('div');
-      const boldText = window.document.createElement('b');
-      boldText.textContent = 'New Mail Received';
-      container.appendChild(boldText);
-      root.appendChild(container);
-    };
-    /** -- Ack */
-    let notification = this.shadowRoot.getElementById('notifyAck') as Notification;
-    notification.renderer = (root) => {
-      /** Check if there is a content generated with the previous renderer call not to recreate it. */
-      if (root.firstElementChild) {
-        return;
-      }
-      const container = window.document.createElement('div');
-      const boldText = window.document.createElement('b');
-      boldText.textContent = 'Notice: ';
-      const plainText = window.document.createTextNode('Acknowledgement Received');
-      container.appendChild(boldText);
-      container.appendChild(plainText);
-      root.appendChild(container);
-    };
-    /** -- File  */
-    notification = this.shadowRoot.getElementById('notifyFile') as Notification;
-    notification.renderer = (root) => {
-      /** Check if there is a content generated with the previous renderer call not to recreate it. */
-      if (root.firstElementChild) {
-        return;
-      }
-      const container = window.document.createElement('div');
-      const boldText = window.document.createElement('b');
-      boldText.textContent = 'Notice: ';
-      const plainText = window.document.createTextNode('File Received');
-      container.appendChild(boldText);
-      container.appendChild(plainText);
-      root.appendChild(container);
-    };
-
-    this._dvm.setSignalHandler((s :AppSignal) => {this.handleSignal(s)});
   }
 
 
@@ -595,9 +569,9 @@ export class SnapmailPage extends DnaElement<unknown, SnapmailDvm> {
       <!-- Loading Spinner -->
       <vaadin-progress-bar id="loadingBar" indeterminate value="0"></vaadin-progress-bar>
       <!-- Notifications -->
-      <vaadin-notification duration="4000" theme="contrast" position="bottom-center" id="notifyMail"></vaadin-notification>
-      <vaadin-notification duration="4000" position="bottom-center" id="notifyAck"></vaadin-notification>
-      <vaadin-notification duration="4000" position="bottom-center" id="notifyFile"></vaadin-notification>
+      <vaadin-notification id="notifyMail" duration="4000" position="bottom-center" theme="contrast"><b>New Mail Received</b></vaadin-notification>
+      <vaadin-notification id="notifyAck"  duration="4000" position="bottom-center"><div><b>Notice: </b>Acknowledgement Received</div></vaadin-notification>
+      <vaadin-notification id="notifyFile" duration="4000" position="bottom-center"><div><b>Notice: </b>File Received</div></vaadin-notification>
       
       <!-- MAIN VERTICAL LAYOUT -->
       <vaadin-vertical-layout theme="spacing-s" style="flex:1; display:none; height:100%; gap:0;" id="mainPage">

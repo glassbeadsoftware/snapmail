@@ -33,10 +33,10 @@ export const IS_ELECTRON = typeof MY_ELECTRON_API !== 'undefined'
    }
 }
 
-export const IS_DEV = BUILD_MODE === 'dev';
+//export const IS_DEV = BUILD_MODE === 'dev';
 
-console.log("BUILD_MODE =", BUILD_MODE)
-console.log("IS_ELECTRON =", IS_ELECTRON);
+console.log("   BUILD_MODE =", BUILD_MODE)
+console.log("  IS_ELECTRON =", IS_ELECTRON);
 
 // /** Remove console.log() in PROD */
 // if (BUILD_MODE === 'prod') {
