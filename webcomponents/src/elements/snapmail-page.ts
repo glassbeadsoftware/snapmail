@@ -156,19 +156,20 @@ export class SnapmailPage extends DnaElement<unknown, SnapmailDvm> {
     /** Handle */
     let title;
     let body = "";
-
+    let urgency: "high" | "medium" | "low" = "high";
     switch(signal.kind) {
       case SignalProtocolType.ReceivedMail:
         const mailItem: MailItem = (signal.payload as SignalProtocolVariantReceivedMail).ReceivedMail;
         console.log("received_mail:", mailItem);
         title = 'New Mail received from ' + senderName;
         body = mailItem.mail.subject;
+        /*await*/ this._dvm.snapmailZvm.probeMails();
       break;
       case SignalProtocolType.ReceivedAck:
         const forMailAh: ActionHashB64 = encodeHashToBase64((signal.payload as SignalProtocolVariantReceivedAck).ReceivedAck);
         console.log("received_ack:", forMailAh);
         title = 'New Ack received from ' + senderName;
-        void this._dvm.snapmailZvm.probeMails();
+        urgency = 'low';
       break;
       case SignalProtocolType.ReceivedFile:
         const item: FileManifest = (signal.payload as SignalProtocolVariantReceivedFile).ReceivedFile;
@@ -185,7 +186,7 @@ export class SnapmailPage extends DnaElement<unknown, SnapmailDvm> {
     const notification = Notification.show(html`${title}`, {
       position: 'bottom-center',
       duration: 3000,
-      theme: 'contrast',
+      theme: urgency == "high"? 'contrast' : '',
     });
     /** */
     if (this.weServices) {
@@ -194,7 +195,7 @@ export class SnapmailPage extends DnaElement<unknown, SnapmailDvm> {
         body,
         notification_type: signal.kind,
         icon_src: wrapPathInSvg(mdiInformationOutline),
-        urgency: 'high',
+        urgency,
         timestamp: Date.now(),
       }
       this.weServices.notifyWe([myNotif]);
