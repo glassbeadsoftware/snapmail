@@ -37,7 +37,7 @@ import {
 } from "../bindings/snapmail.types";
 import {SnapmailFilebox} from "./snapmail-filebox";
 import {BUILD_MODE, MY_ELECTRON_API} from "../electron";
-import {DnaElement, HAPP_BUILD_MODE, HAPP_ENV, HappEnvType} from "@ddd-qc/lit-happ";
+import {DnaElement, HAPP_BUILD_MODE, HAPP_ENV, HappBuildModeType, HappEnvType} from "@ddd-qc/lit-happ";
 import {SnapmailPerspective} from "../viewModel/snapmail.perspective";
 import {SnapmailDvm} from "../viewModel/snapmail.dvm";
 
@@ -147,23 +147,23 @@ export class SnapmailPage extends DnaElement<unknown, SnapmailDvm> {
   handleSignal(signalwrapper: AppSignal) {
     console.log('<snapmail-page>.Received signal:', signalwrapper);
     const signal: SnapmailSignal = signalwrapper.payload as SnapmailSignal;
+    const sender = encodeHashToBase64(signal.from);
+    const canPopup = sender != this.cell.agentPubKey || HAPP_BUILD_MODE == HappBuildModeType.Debug;
 
     /** store ping */
-    const sender = encodeHashToBase64(signal.from)
     this._dvm.snapmailZvm.storePingResult(sender, true);
     const senderName = this.zPerspective.usernameMap[sender] || 'unknown user';
-
-    /** Handle */
-    let title;
+    /** Form notification */
+    let title: string;
     let body = "";
     let urgency: "high" | "medium" | "low" = "high";
     switch(signal.kind) {
       case SignalProtocolType.ReceivedMail:
         const mailItem: MailItem = (signal.payload as SignalProtocolVariantReceivedMail).ReceivedMail;
         console.log("received_mail:", mailItem);
-        title = 'New Mail received from ' + senderName;
+        title = 'New Mail received from ' + this.zPerspective.usernameMap[encodeHashToBase64(mailItem.author)];
         body = mailItem.mail.subject;
-        /*await*/ this._dvm.snapmailZvm.probeMails();
+        ///*await*/ this._dvm.snapmailZvm.probeMails();
       break;
       case SignalProtocolType.ReceivedAck:
         const forMailAh: ActionHashB64 = encodeHashToBase64((signal.payload as SignalProtocolVariantReceivedAck).ReceivedAck);
@@ -182,12 +182,21 @@ export class SnapmailPage extends DnaElement<unknown, SnapmailDvm> {
       return;
       break;
     }
-    /** */
-    const notification = Notification.show(html`${title}`, {
-      position: 'bottom-center',
-      duration: 3000,
-      theme: urgency == "high"? 'contrast' : '',
-    });
+    if (canPopup) {
+      /** in-app */
+      const _notification = Notification.show(html`${title}`, {
+        position: 'bottom-center',
+        duration: 3000,
+        theme: urgency == "high" ? 'contrast' : '',
+      });
+      /** electron */
+      if (MY_ELECTRON_API) {
+        //console.log("handleSignal for ELECTRON");
+        /* Notify Electron main */
+        const reply: unknown = MY_ELECTRON_API.newMailSync(title, body)
+        console.log({reply});
+      }
+    }
     /** */
     if (this.weServices) {
       const myNotif: WeNotification = {
@@ -199,13 +208,6 @@ export class SnapmailPage extends DnaElement<unknown, SnapmailDvm> {
         timestamp: Date.now(),
       }
       this.weServices.notifyWe([myNotif]);
-    }
-    /** electron */
-    if (MY_ELECTRON_API) {
-      //console.log("handleSignal for ELECTRON");
-      /* Notify Electron main */
-      const reply: unknown = MY_ELECTRON_API.newMailSync(title, body)
-      console.log({reply});
     }
   }
 
@@ -239,10 +241,10 @@ export class SnapmailPage extends DnaElement<unknown, SnapmailDvm> {
     }
     /** -- Change title color in debug -- */
     const titleLayout = this.shadowRoot.getElementById('titleLayout') as HorizontalLayout;
-    if (HAPP_BUILD_MODE == 'Debug') {
+    if (HAPP_BUILD_MODE == HappBuildModeType.Debug) {
       titleLayout.style.backgroundColor = "#ec8383d1";
     }
-    if (MY_ELECTRON_API || this.noTitle || (HAPP_BUILD_MODE != 'Debug' && HAPP_ENV == HappEnvType.We)) {
+    if (MY_ELECTRON_API || this.noTitle || (HAPP_BUILD_MODE != HappBuildModeType.Debug && HAPP_ENV == HappEnvType.We)) {
       titleLayout.style.display = "none";
       // if (BUILD_MODE === 'dev') {
       //   /** -- Update Title with DNA ID */

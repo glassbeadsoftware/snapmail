@@ -9,7 +9,7 @@ import {Dialog} from "@vaadin/dialog";
 import {ContactGridItem, SnapmailPerspective} from "../viewModel/snapmail.perspective";
 import {greenDot, redDot, stylesTemplate, SYSTEM_GROUP_LIST, whiteDot} from "../constants";
 import {GridSelectionColumn} from "@vaadin/grid/vaadin-grid-selection-column";
-import {HAPP_BUILD_MODE, ZomeElement} from "@ddd-qc/lit-happ";
+import {HAPP_BUILD_MODE, HappBuildModeType, ZomeElement} from "@ddd-qc/lit-happ";
 import {SnapmailZvm} from "../viewModel/snapmail.zvm";
 import {BUILD_MODE} from "../electron";
 import {MenuBar} from "@vaadin/menu-bar";
@@ -138,7 +138,7 @@ export class SnapmailContacts extends ZomeElement<SnapmailPerspective, SnapmailZ
 
     /** Add Refresh button in DEBUG */
     const contactsMenu = this.shadowRoot.getElementById("ContactsMenu") as MenuBar;
-    if (HAPP_BUILD_MODE == 'Debug' && contactsMenu) {
+    if (HAPP_BUILD_MODE == HappBuildModeType.Debug && contactsMenu) {
       contactsMenu.items = [{ text: 'Refresh' }];
       contactsMenu.addEventListener('item-selected', e => {
         console.log('item-selected', JSON.stringify(e.detail.value));

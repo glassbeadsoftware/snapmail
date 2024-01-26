@@ -7,7 +7,7 @@ console.log("electron IS_PACKAGED", app.isPackaged);
 
 /** DEBUGGING */
 export const IS_PACKAGED = app.isPackaged;
-export const IS_DEV = process.env.HAPP_BUILD_MODE? process.env.HAPP_BUILD_MODE == 'Debug' : false;
+export const IS_DEV = process.env.HAPP_BUILD_MODE? process.env.HAPP_BUILD_MODE == HappBuildModeType.Debug : false;
 export const DEVELOPMENT_UI_URL = path.join(__dirname, '../web')
 
 /** MISC */
@@ -94,7 +94,7 @@ export async function getAdminPort(): Promise<number> {
 
 
 import net, {AddressInfo} from "net"
-import {HAPP_BUILD_MODE} from "@ddd-qc/lit-happ";
+import {HAPP_BUILD_MODE, HappBuildModeType} from "@ddd-qc/lit-happ";
 
 async function getPortFree() {
   return new Promise( res => {

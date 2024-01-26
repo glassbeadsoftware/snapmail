@@ -36,7 +36,7 @@ export default /** @type {import('@web/dev-server').DevServerConfig} */ ({
     replace({
       preventAssignment: true,
       //'process.env.ENV': JSON.stringify(process.env.ENV),
-      'process.env.HAPP_BUILD_MODE': JSON.stringify(HAPP_BUILD_MODE),
+      'process.env.HAPP_BUILD_MODE': HAPP_BUILD_MODE,
       'process.env.HAPP_ENV': JSON.stringify("Devtest"),
       'process.env.HC_APP_PORT': JSON.stringify(process.env.HC_PORT || 8888),
       'process.env.HC_ADMIN_PORT': JSON.stringify(process.env.ADMIN_PORT || 8889),

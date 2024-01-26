@@ -2,7 +2,7 @@ import {css, html, PropertyValues} from "lit";
 import {Grid, GridActiveItemChangedEvent} from "@vaadin/grid";
 import {HorizontalLayout} from "@vaadin/horizontal-layout";
 import {TextField, TextFieldValueChangedEvent} from "@vaadin/text-field";
-import { state, property, customElement } from "lit/decorators.js";
+import {customElement, state} from "lit/decorators.js";
 import {updateTray} from "../electron";
 import {stylesTemplate} from "../constants";
 import {MailItem} from "../bindings/snapmail.types";
@@ -10,11 +10,13 @@ import {
   determineMailCssClass,
   hasMailBeenOpened,
   into_gridItem,
-  is_OutMail, isMailDeleted, MailGridItem,
+  is_OutMail,
+  isMailDeleted,
+  MailGridItem,
   systemFolders
 } from "../mail";
 import {MenuBarItem, MenuBarItemSelectedEvent} from "@vaadin/menu-bar";
-import {HAPP_BUILD_MODE, ZomeElement} from "@ddd-qc/lit-happ";
+import {HAPP_BUILD_MODE, HappBuildModeType, ZomeElement} from "@ddd-qc/lit-happ";
 import {SnapmailPerspective} from "../viewModel/snapmail.perspective";
 import {SnapmailZvm} from "../viewModel/snapmail.zvm";
 
@@ -48,7 +50,7 @@ function filterMails(mailItems: MailGridItem[], searchValue: string) {
 export class SnapmailFilebox extends ZomeElement<SnapmailPerspective, SnapmailZvm> {
   constructor() {
     super(SnapmailZvm.DEFAULT_ZOME_NAME);
-    if (HAPP_BUILD_MODE == 'Debug') {
+    if (HAPP_BUILD_MODE == HappBuildModeType.Debug) {
       this._menuItems.push({text: 'Refresh', disabled: false});
     }
   }
@@ -126,7 +128,7 @@ export class SnapmailFilebox extends ZomeElement<SnapmailPerspective, SnapmailZv
     this.mailGridElem.shadowRoot.appendChild(stylesTemplate.content.cloneNode(true));
 
     const fileboxLayout = this.shadowRoot.getElementById('fileboxLayout') as HorizontalLayout;
-    if (HAPP_BUILD_MODE == 'Debug') {
+    if (HAPP_BUILD_MODE == HappBuildModeType.Debug) {
       fileboxLayout.style.backgroundColor = "rgba(241,154,154,0.82)";
     }
 

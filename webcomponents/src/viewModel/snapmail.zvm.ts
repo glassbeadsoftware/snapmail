@@ -10,8 +10,8 @@ import {ZomeViewModel} from "@ddd-qc/lit-happ";
 import {SnapmailProxy} from "../bindings/snapmail.proxy";
 import {defaultPerspective, SnapmailPerspective} from "./snapmail.perspective";
 import {
-  FileManifest, FindManifestOutput,
-  SendMailInput, SignalProtocol, SignalProtocolType
+  FileManifest, FindManifestOutput, MailItem,
+  SendMailInput, SignalProtocol, SignalProtocolType, SnapmailSignal
 } from "../bindings/snapmail.types";
 import {AppSignal} from "@holochain/client/lib/api/app/types";
 import {determineMailCssClass, is_OutMail, isMailDeleted} from "../mail";
@@ -45,31 +45,55 @@ export class SnapmailZvm extends ZomeViewModel {
   }
 
 
+
+  /** */
   async initializePerspectiveOnline(): Promise<void> {
+    await this.probeAllInnerAsync();
+
+  }
+
+  /** */
+  async probeAllInnerAsync(): Promise<void> {
     await this.probeHandles();
     await this.zomeProxy.checkAckInbox();
-    await this.zomeProxy.checkMailInbox();
+    const newInMails = await this.zomeProxy.checkMailInbox();
     await this.probeMails();
+    /** Send notification for each new inMail */
+    console.log("probeAllInnerAsync()", newInMails.length);
+    const fakeAppSignal = {
+      cell_id: this.cell.id,
+      zome_name: this._zomeProxy.zomeName,
+      payload: null,
+    };
+    for (const new_mail_ah of newInMails) {
+      const mailAh = encodeHashToBase64(new_mail_ah);
+      const mailItem = this._perspective.mailMap[mailAh];
+      if (!mailItem) {
+        console.warn("New InMail not found in perspective");
+        continue;
+      }
+      const signal: SnapmailSignal = {
+        kind: SignalProtocolType.ReceivedMail,
+        from: decodeHashFromBase64(this.cell.agentPubKey), // Set author to self so it doesn't process a popup
+        payload: {ReceivedMail: mailItem}
+      }
+      fakeAppSignal.payload = signal;
+      this._dvmParent.signalHandler(fakeAppSignal);
+    }
   }
 
 
   /** */
   probeAllInner() {
-    /* await */ this.initializePerspectiveOnline();
+    /* await */ this.probeAllInnerAsync();
   }
 
 
   /** */
   readonly signalHandler: AppSignalCb = (appSignal: AppSignal) => {
     console.log('snapmail.zvm.signalHandler():', appSignal);
-    const payload: SignalProtocol = appSignal.payload as SignalProtocol;
-    /** Handle 'ReceivedMail' signal */
-    if (SignalProtocolType.ReceivedMail in payload) {
-      //const mailItem: MailItem = payload.ReceivedMail;
-      //this._perspective.mailMap[encodeHashToBase64(mailItem.ah)] = mailItem;
-      //this.notifySubscribers();
-      void this.probeMails();
-    }
+    //const signal: SnapmailSignal = appSignal.payload as SnapmailSignal;
+    /*await */ this.probeMails();
   }
 
 
