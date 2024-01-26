@@ -154,7 +154,6 @@ export class SnapmailPage extends DnaElement<unknown, SnapmailDvm> {
     const senderName = this.zPerspective.usernameMap[sender] || 'unknown user';
 
     /** Handle */
-    let popupNotif: Notification;
     let title;
     let body = "";
 
@@ -162,28 +161,20 @@ export class SnapmailPage extends DnaElement<unknown, SnapmailDvm> {
       case SignalProtocolType.ReceivedMail:
         const mailItem: MailItem = (signal.payload as SignalProtocolVariantReceivedMail).ReceivedMail;
         console.log("received_mail:", mailItem);
-        popupNotif = this.shadowRoot.getElementById('notifyMail') as Notification;
         title = 'New Mail received from ' + senderName;
         body = mailItem.mail.subject;
       break;
-
-
       case SignalProtocolType.ReceivedAck:
         const forMailAh: ActionHashB64 = encodeHashToBase64((signal.payload as SignalProtocolVariantReceivedAck).ReceivedAck);
         console.log("received_ack:", forMailAh);
         title = 'New Ack received from ' + senderName;
-        popupNotif = this.shadowRoot.getElementById('notifyAck') as Notification;
         void this._dvm.snapmailZvm.probeMails();
       break;
-
-    /** Handle 'ReceivedFile' signal */
-    case SignalProtocolType.ReceivedFile:
-      const item: FileManifest = (signal.payload as SignalProtocolVariantReceivedFile).ReceivedFile;
-      title = 'New File received from ' + senderName;
-      body = item.filename;
-      console.log("received_file:", item);
-      popupNotif = this.shadowRoot.getElementById('notifyFile') as Notification;
-
+      case SignalProtocolType.ReceivedFile:
+        const item: FileManifest = (signal.payload as SignalProtocolVariantReceivedFile).ReceivedFile;
+        title = 'New File received from ' + senderName;
+        body = item.filename;
+        console.log("received_file:", item);
       break;
     default:
       console.error("Unknown SnapmailSignal kind:", signal.kind);
@@ -191,7 +182,11 @@ export class SnapmailPage extends DnaElement<unknown, SnapmailDvm> {
       break;
     }
     /** */
-    popupNotif.open();
+    const notification = Notification.show(html`${title}`, {
+      position: 'bottom-center',
+      duration: 3000,
+      theme: 'contrast',
+    });
     /** */
     if (this.weServices) {
       const myNotif: WeNotification = {
@@ -568,10 +563,6 @@ export class SnapmailPage extends DnaElement<unknown, SnapmailDvm> {
     return html`
       <!-- Loading Spinner -->
       <vaadin-progress-bar id="loadingBar" indeterminate value="0"></vaadin-progress-bar>
-      <!-- Notifications -->
-      <vaadin-notification id="notifyMail" duration="4000" position="bottom-center" theme="contrast"><b>New Mail Received</b></vaadin-notification>
-      <vaadin-notification id="notifyAck"  duration="4000" position="bottom-center"><div><b>Notice: </b>Acknowledgement Received</div></vaadin-notification>
-      <vaadin-notification id="notifyFile" duration="4000" position="bottom-center"><div><b>Notice: </b>File Received</div></vaadin-notification>
       
       <!-- MAIN VERTICAL LAYOUT -->
       <vaadin-vertical-layout theme="spacing-s" style="flex:1; display:none; height:100%; gap:0;" id="mainPage">
