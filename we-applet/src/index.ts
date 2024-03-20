@@ -6,6 +6,8 @@ import {getAttachableInfo} from "./appletServices/getAttachableInfo";
 import {search} from "./appletServices/search";
 import {createSnapmailApplet} from "./createSnapmailApplet";
 import {SnapmailEntryType} from "@snapmail/elements";
+import {AppAgentClient, RoleName, ZomeName} from "@holochain/client";
+import {HrlWithContext} from "@lightningrodlabs/we-applet/dist/types";
 
 
 
@@ -38,14 +40,27 @@ export async function setupSnapmailApplet() {
 /** */
 async function setupSnapmailsMainView() {
   const appletServices: AppletServices = {
-    attachmentTypes: async (_appletClient) => ({}),
+    creatables: {},
     getAttachableInfo,
     blockTypes,
     search,
+    bindAsset,
   };
 
   return setup(appletServices, createSnapmailApplet, devtestNames);
 }
 
+/** */
+export async function bindAsset(
+  appletClient: AppAgentClient,
+  srcWal: HrlWithContext,
+  dstWal: HrlWithContext,
+  dstRoleName: RoleName,
+  dstIntegrityZomeName: ZomeName,
+  dstEntryType: string,
+): Promise<void> {
 
+}
+
+///
 export default setupSnapmailApplet;

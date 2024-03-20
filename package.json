@@ -2,10 +2,10 @@
   "name": "Snapmail",
   "version": "0.4.0",
   "config": {
-    "hc_version": "0.2.4",
-    "zits_version": "1.12.0",
+    "hc_version": "0.3.0-beta-dev.40",
+    "zits_version": "1.13.0",
     "bin": "bin",
-    "we_test_folder": "../we-electron"
+    "we_test_folder": "../we"
   },
   "private": true,
   "repository": {
@@ -90,12 +90,12 @@
     "typescript": "~5.2.0"
   },
   "dependencies": {
-    "@holochain/client": "=0.16.7",
-    "@ddd-qc/cell-proxy": "=0.20.8",
-    "@ddd-qc/lit-happ": "=0.20.8",
-    "@ddd-qc/profiles-dvm": "=0.20.7",
-    "@ddd-qc/we-utils": "=0.21.2",
-    "@lightningrodlabs/we-applet": "0.14.0",
+    "@holochain/client": "^0.17.0-dev.3",
+    "@ddd-qc/cell-proxy": "=0.23.0",
+    "@ddd-qc/lit-happ": "=0.23.0",
+    "@ddd-qc/profiles-dvm": "=0.23.0",
+    "@ddd-qc/we-utils": "=0.23.0",
+    "@lightningrodlabs/we-applet": "0.15.0",
     "@holochain-open-dev/core-types": "0.7.0",
     "@lit/context": "1.0.1",
     "@lit/localize": "0.12.1",
