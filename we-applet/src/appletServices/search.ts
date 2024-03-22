@@ -4,7 +4,7 @@ import {
     decodeHashFromBase64,
     encodeHashToBase64,
 } from "@holochain/client";
-import {AppletHash, HrlWithContext} from "@lightningrodlabs/we-applet/dist/types";
+import {AppletHash, WAL} from "@lightningrodlabs/we-applet/dist/types";
 import {WeServices} from "@lightningrodlabs/we-applet/dist/api";
 import {asCellProxy} from "@ddd-qc/we-utils";
 import {MailItem, SNAPMAIL_DEFAULT_ROLE_NAME, SnapmailProxy} from "@snapmail/elements";
@@ -23,7 +23,7 @@ export async function search(
     appletHash: AppletHash,
     weServices: WeServices,
     searchFilter: string,
-): Promise<Array<HrlWithContext>> {
+): Promise<Array<WAL>> {
     console.log("Snapmail/we-applet/search():", searchFilter);
     const searchLC = searchFilter.toLowerCase();
 
@@ -43,8 +43,8 @@ export async function search(
     const matching: MailItem[] = mails.filter((mail) => mail.mail.subject.toLowerCase().includes(searchLC));
 
 
-    /** Transform results into HrlWithContext */
-    const results: Array<HrlWithContext> = matching
+    /** Transform results into WAL */
+    const results: Array<WAL> = matching
         .map((mail) => { return {
             hrl: [dnaHash, mail.ah],
             context: {author: encodeHashToBase64(mail.author), mail} as SnapmailSearchContext,

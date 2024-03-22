@@ -2,12 +2,12 @@ import {DevTestNames, setup} from "@ddd-qc/we-utils";
 import {AppletServices} from "@lightningrodlabs/we-applet";
 import {blockTypes} from "./appletServices/blockTypes";
 import {devtestNames, setupSnapmailEntryView} from "./devtest";
-import {getAttachableInfo} from "./appletServices/getAttachableInfo";
+import {getAssetInfo} from "./appletServices/getAssetInfo";
 import {search} from "./appletServices/search";
 import {createSnapmailApplet} from "./createSnapmailApplet";
 import {SnapmailEntryType} from "@snapmail/elements";
 import {AppAgentClient, RoleName, ZomeName} from "@holochain/client";
-import {HrlWithContext} from "@lightningrodlabs/we-applet/dist/types";
+import {WAL} from "@lightningrodlabs/we-applet/dist/types";
 
 
 
@@ -41,7 +41,7 @@ export async function setupSnapmailApplet() {
 async function setupSnapmailsMainView() {
   const appletServices: AppletServices = {
     creatables: {},
-    getAttachableInfo,
+    getAssetInfo,
     blockTypes,
     search,
     bindAsset,
@@ -53,8 +53,8 @@ async function setupSnapmailsMainView() {
 /** */
 export async function bindAsset(
   appletClient: AppAgentClient,
-  srcWal: HrlWithContext,
-  dstWal: HrlWithContext,
+  srcWal: WAL,
+  dstWal: WAL,
   dstRoleName: RoleName,
   dstIntegrityZomeName: ZomeName,
   dstEntryType: string,

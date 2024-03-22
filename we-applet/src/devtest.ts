@@ -3,7 +3,7 @@ import {
     DevTestNames,
     AppletViewInfo,
     setupDevtest,
-    AttachableViewInfo
+    AssetViewInfo
 } from "@ddd-qc/we-utils";
 import {EntryHash, fakeActionHash} from "@holochain/client";
 import {emptyEntryAppletView} from "@ddd-qc/we-utils/dist/mocks/renderInfoMock";
@@ -62,13 +62,13 @@ export async function setupSnapmailEntryView() {
 
 
 /** */
-function createInMailRenderInfo(eh: EntryHash, context: ViewFileContext): AttachableViewInfo {
-    const entryInfo = emptyEntryAppletView as AttachableViewInfo;
+function createInMailRenderInfo(eh: EntryHash, context: ViewFileContext): AssetViewInfo {
+    const entryInfo = emptyEntryAppletView as AssetViewInfo;
     entryInfo.roleName = SNAPMAIL_DEFAULT_ROLE_NAME;
     entryInfo.integrityZomeName = SNAPMAIL_DEFAULT_INTEGRITY_ZOME_NAME;
     entryInfo.entryType = snake(SnapmailEntryType.InMail);
-    entryInfo.hrlWithContext.hrl[1] = eh;
-    entryInfo.hrlWithContext.context = context;
+    entryInfo.wal.hrl[1] = eh;
+    entryInfo.wal.context = context;
 
     return entryInfo;
 }

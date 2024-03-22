@@ -42,7 +42,7 @@ import {SnapmailPerspective} from "../viewModel/snapmail.perspective";
 import {SnapmailDvm} from "../viewModel/snapmail.dvm";
 
 import {wrapPathInSvg} from "@ddd-qc/we-utils";
-import {WeNotification, WeServices} from "@lightningrodlabs/we-applet";
+import {FrameNotification, WeServices} from "@lightningrodlabs/we-applet";
 import {weClientContext} from "../contexts";
 import {mdiAlertOctagonOutline, mdiAlertOutline, mdiCheckCircleOutline, mdiInformationOutline, mdiCog} from "@mdi/js";
 
@@ -199,7 +199,7 @@ export class SnapmailPage extends DnaElement<unknown, SnapmailDvm> {
     }
     /** */
     if (this.weServices) {
-      const myNotif: WeNotification = {
+      const myNotif: FrameNotification = {
         title,
         body,
         notification_type: signal.kind,
@@ -207,7 +207,7 @@ export class SnapmailPage extends DnaElement<unknown, SnapmailDvm> {
         urgency,
         timestamp: Date.now(),
       }
-      this.weServices.notifyWe([myNotif]);
+      this.weServices.notifyFrame([myNotif]);
     }
   }
 
