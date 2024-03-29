@@ -10,7 +10,7 @@ import {ZomeViewModel} from "@ddd-qc/lit-happ";
 import {SnapmailProxy} from "../bindings/snapmail.proxy";
 import {defaultPerspective, SnapmailPerspective} from "./snapmail.perspective";
 import {
-  FileManifest, FindManifestOutput,
+  FileManifest,
   SendMailInput, SignalProtocolType, SnapmailSignal
 } from "../bindings/snapmail.types";
 import {AppSignal} from "@holochain/client/lib/api/app/types";
@@ -223,6 +223,7 @@ export class SnapmailZvm extends ZomeViewModel {
 
   async sendMail(input: SendMailInput): Promise<ActionHash> {
     const ah = await this.zomeProxy.sendMail(input);
+    await this.zomeProxy.testEncryption(input.to[0]);
     //await this.probeMails();
     return ah;
   }
@@ -252,7 +253,7 @@ export class SnapmailZvm extends ZomeViewModel {
     }
 
 
-    async findManifest(contentHash: string): Promise<FindManifestOutput> {
+    async findManifest(contentHash: string): Promise<FileManifest | null> {
       return this.zomeProxy.findManifest(contentHash);
     }
 

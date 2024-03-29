@@ -1,7 +1,7 @@
 import {css, html, PropertyValues} from "lit";
 import {Grid, GridActiveItemChangedEvent, GridColumn} from "@vaadin/grid";
 import { state, property,customElement } from "lit/decorators.js";
-import {FileManifest, FindManifestOutput, Mail, MailItem} from "../bindings/snapmail.types";
+import {FileManifest, Mail, MailItem} from "../bindings/snapmail.types";
 import {SnapmailPerspective} from "../viewModel/snapmail.perspective";
 import {base64ToArrayBuffer} from "../utils";
 import {redStopEmoji, hourGlassEmoji, stylesTemplate, greenCheckEmoji} from "../constants";
@@ -55,7 +55,7 @@ export class SnapmailAttView extends ZomeElement<SnapmailPerspective, SnapmailZv
 
   /** Return manifest with added content field */
   async fetchFile(contentHash: string): Promise<FileManifest | null> {
-    let manifest: FindManifestOutput;
+    let manifest: FileManifest | null;
     try {
       manifest = await this._zvm.findManifest(contentHash);
     } catch(e) {

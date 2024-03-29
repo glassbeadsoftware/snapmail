@@ -188,10 +188,6 @@ export interface AckMessage {
   ack_signature: Signature
 }
 
-export type FindManifestOutput = FileManifest | null;
-
-export type ZomeManifestVec = FileManifest[];
-
 export interface GetMissingAttachmentsInput {
   from: AgentPubKey
   inmail_ah: ActionHash

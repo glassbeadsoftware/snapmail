@@ -8,11 +8,8 @@ export const snapmailFunctionNames: FunctionName[] = [
 	"entry_defs", 
 	"get_zome_info", 
 	"get_dna_info",
-	"init_caps",
 
 
-
-	"receive_dm",
 	"find_manifest",
 	"get_all_manifests",
 	"get_chunk",
@@ -23,7 +20,6 @@ export const snapmailFunctionNames: FunctionName[] = [
 	"write_manifest",
 	"get_enc_key",
 	"get_my_enc_key",
-	"test_encryption",
 	"find_agent",
 	"get_all_handles",
 	"get_handle",
@@ -34,7 +30,6 @@ export const snapmailFunctionNames: FunctionName[] = [
 	"set_handle",
 	"acknowledge_mail",
 	"commit_pending_ack",
-	"commit_confirmation",
 	"check_ack_inbox",
 	"check_mail_inbox",
 	"delete_mail",
@@ -48,9 +43,8 @@ export const snapmailFunctionNames: FunctionName[] = [
 	"request_acks",
 	"resend_outacks",
 	"resend_outmails",
-	"commit_inmail",
-	"commit_pending_mail",
 	"send_mail",
+	"test_encryption",
 ];
 
 
