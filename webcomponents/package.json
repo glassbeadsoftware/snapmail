@@ -43,6 +43,7 @@
     "@vaadin/text-field": "24.3.3",
     "@vaadin/text-area": "24.3.3",
     "@vaadin/upload": "24.3.3",
+    "@msgpack/msgpack": "^2.7.2",
     "cqfill": "^0.6.1"
   }
 }

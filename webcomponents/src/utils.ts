@@ -1,10 +1,3 @@
-import {CHUNK_MAX_SIZE} from "./bindings/snapmail.types";
-
-/** Sleep via timeout promise */
-export function delay(ms: number) {
-  return new Promise(resolve => setTimeout(resolve, ms));
-}
-
 
 /** */
 export function arrayBufferToBase64(buffer: ArrayBuffer): string {
@@ -54,10 +47,10 @@ function chunkSubstr(str: string, size: number): Array<string> {
 
 
 /** */
-export async function splitFile(full_data_string: string) {
+export async function splitFile(full_data_string: string, chunkMaxSize: number) {
   const hash = await sha256(full_data_string);
   console.log('file hash: ' + hash)
-  const chunks = chunkSubstr(full_data_string, CHUNK_MAX_SIZE);
+  const chunks = chunkSubstr(full_data_string, chunkMaxSize);
   return {
     dataHash: hash,
     numChunks: chunks.length,

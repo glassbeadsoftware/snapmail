@@ -240,9 +240,6 @@ export interface CommitPendingMailInput {
   destination: AgentPubKey
 }
 
-/** Listing all Holochain Path used in this DNA */
-export const Directory = "directory";
-
 /**  */
 export interface SnapmailSignal {
   from: AgentPubKey
@@ -267,13 +264,12 @@ export const SNAPMAIL_DEFAULT_COORDINATOR_ZOME_NAME = "snapmail";
 
 export const SNAPMAIL_DEFAULT_ROLE_NAME = "rSnapmail";
 
+/** ANCHORS */
+export const DIRECTORY_ANCHOR = "directory";
+
 export const DIRECT_SEND_TIMEOUT_MS = 1000;
 
 export const DIRECT_SEND_CHUNK_TIMEOUT_MS = 10000;
-
-export const CHUNK_MAX_SIZE = 200 * 1024;
-
-export const FILE_MAX_SIZE = 10 * 1024 * 1024;
 
 /** PSEUDO CONDITIONAL COMPILATION FOR DEBUGGING / TESTING */
 export const CAN_DM = true;
@@ -301,46 +297,6 @@ export interface FileManifest {
 /** Entry representing the username of an Agent */
 export interface Handle {
   username: string
-}
-
-export enum SnapmailEntryType {
-	PubEncKey = 'PubEncKey',
-	Handle = 'Handle',
-	InMail = 'InMail',
-	OutMail = 'OutMail',
-	OutAck = 'OutAck',
-	InAck = 'InAck',
-	PendingMail = 'PendingMail',
-	PendingAck = 'PendingAck',
-	DeliveryConfirmation = 'DeliveryConfirmation',
-	FileChunk = 'FileChunk',
-	FileManifest = 'FileManifest',
-}
-export type SnapmailEntryVariantPubEncKey = {PubEncKey: PubEncKey}
-export type SnapmailEntryVariantHandle = {Handle: Handle}
-export type SnapmailEntryVariantInMail = {InMail: InMail}
-export type SnapmailEntryVariantOutMail = {OutMail: OutMail}
-export type SnapmailEntryVariantOutAck = {OutAck: OutAck}
-export type SnapmailEntryVariantInAck = {InAck: InAck}
-export type SnapmailEntryVariantPendingMail = {PendingMail: PendingMail}
-export type SnapmailEntryVariantPendingAck = {PendingAck: PendingAck}
-export type SnapmailEntryVariantDeliveryConfirmation = {DeliveryConfirmation: DeliveryConfirmation}
-export type SnapmailEntryVariantFileChunk = {FileChunk: FileChunk}
-export type SnapmailEntryVariantFileManifest = {FileManifest: FileManifest}
-export type SnapmailEntry = 
- | SnapmailEntryVariantPubEncKey | SnapmailEntryVariantHandle | SnapmailEntryVariantInMail | SnapmailEntryVariantOutMail | SnapmailEntryVariantOutAck | SnapmailEntryVariantInAck | SnapmailEntryVariantPendingMail | SnapmailEntryVariantPendingAck | SnapmailEntryVariantDeliveryConfirmation | SnapmailEntryVariantFileChunk | SnapmailEntryVariantFileManifest;
-
-/** List of all Link kinds handled by this Zome */
-export type LinkKind =
-  | {Members: null} | {AckInbox: null} | {MailInbox: null} | {Handle: null} | {Pending: null} | {Pendings: null} | {EncKey: null};
-export enum LinkKindType {
-	Members = 'Members',
-	AckInbox = 'AckInbox',
-	MailInbox = 'MailInbox',
-	Handle = 'Handle',
-	Pending = 'Pending',
-	Pendings = 'Pendings',
-	EncKey = 'EncKey',
 }
 
 /** Entry for a received Acknowledgement Receipt */
@@ -483,4 +439,51 @@ export interface PendingMail {
 /** Entry representing the Public Encryption Key of an Agent */
 export interface PubEncKey {
   value: Uint8Array
+}
+
+export enum SnapmailEntryType {
+	PubEncKey = 'PubEncKey',
+	Handle = 'Handle',
+	InMail = 'InMail',
+	OutMail = 'OutMail',
+	OutAck = 'OutAck',
+	InAck = 'InAck',
+	PendingMail = 'PendingMail',
+	PendingAck = 'PendingAck',
+	DeliveryConfirmation = 'DeliveryConfirmation',
+	FileChunk = 'FileChunk',
+	FileManifest = 'FileManifest',
+}
+export type SnapmailEntryVariantPubEncKey = {PubEncKey: PubEncKey}
+export type SnapmailEntryVariantHandle = {Handle: Handle}
+export type SnapmailEntryVariantInMail = {InMail: InMail}
+export type SnapmailEntryVariantOutMail = {OutMail: OutMail}
+export type SnapmailEntryVariantOutAck = {OutAck: OutAck}
+export type SnapmailEntryVariantInAck = {InAck: InAck}
+export type SnapmailEntryVariantPendingMail = {PendingMail: PendingMail}
+export type SnapmailEntryVariantPendingAck = {PendingAck: PendingAck}
+export type SnapmailEntryVariantDeliveryConfirmation = {DeliveryConfirmation: DeliveryConfirmation}
+export type SnapmailEntryVariantFileChunk = {FileChunk: FileChunk}
+export type SnapmailEntryVariantFileManifest = {FileManifest: FileManifest}
+export type SnapmailEntry = 
+ | SnapmailEntryVariantPubEncKey | SnapmailEntryVariantHandle | SnapmailEntryVariantInMail | SnapmailEntryVariantOutMail | SnapmailEntryVariantOutAck | SnapmailEntryVariantInAck | SnapmailEntryVariantPendingMail | SnapmailEntryVariantPendingAck | SnapmailEntryVariantDeliveryConfirmation | SnapmailEntryVariantFileChunk | SnapmailEntryVariantFileManifest;
+
+export type SnapmailLink =
+  | {Members: null} | {AckInbox: null} | {MailInbox: null} | {Handle: null} | {Pending: null} | {Pendings: null} | {EncKey: null};
+export enum SnapmailLinkType {
+	Members = 'Members',
+	AckInbox = 'AckInbox',
+	MailInbox = 'MailInbox',
+	Handle = 'Handle',
+	Pending = 'Pending',
+	Pendings = 'Pendings',
+	EncKey = 'EncKey',
+}
+
+/** Dna properties */
+export interface SnapmailProperties {
+  minHandleLength: number
+  maxHandleLength: number
+  maxChunkSize: number
+  maxFileSize: number
 }

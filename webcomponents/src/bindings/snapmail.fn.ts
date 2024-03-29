@@ -50,7 +50,8 @@ export const snapmailFunctionNames: FunctionName[] = [
 	"resend_outmails",
 	"commit_inmail",
 	"commit_pending_mail",
-	"send_mail",];
+	"send_mail",
+];
 
 
 /** Generate tuple array of function names with given zomeName */

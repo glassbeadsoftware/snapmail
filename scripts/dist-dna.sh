@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 
-# Script for copying holochain-runner binary to electron bin folder (used for distributing electron app)
+# Script for building & packing the dna and copying the output to the appropriate folders
 
 echo Executing \"$0\".
 

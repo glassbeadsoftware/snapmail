@@ -478,7 +478,7 @@ export class SnapmailPage extends DnaElement<unknown, SnapmailDvm> {
       const contentB64 = arrayBufferToBase64(content);
 
       const filetype = ""
-      const splitObj = await splitFile(contentB64);
+      const splitObj = await splitFile(contentB64, this._dvm.dnaProperties.maxChunkSize);
       console.log({splitObj})
 
 

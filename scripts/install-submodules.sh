@@ -2,7 +2,7 @@
 
 set -e
 
-# Script for downloading prebuilt submodule dependecies
+# Script for downloading submodule dependencies
 
 echo Executing \"$0\".
 
@@ -26,7 +26,7 @@ mkdir submodules
 
 cd submodules
 echo \* Download latest DNA source code
-git clone -b hc-$hcversion https://github.com/glassbeadsoftware/snapmail-rsm
+git clone -b hc-$hcversion --depth 1 https://github.com/glassbeadsoftware/snapmail-rsm
 
 echo \* Download latest install scripts
 git clone --depth 1 https://github.com/ddd-mtl/hc-prebuilt

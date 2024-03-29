@@ -2,7 +2,8 @@ import { DnaViewModel, ZvmDef } from "@ddd-qc/lit-happ";
 import {AppSignalCb} from "@holochain/client";
 import {SnapmailZvm} from "./snapmail.zvm";
 import {AppSignal} from "@holochain/client/lib/api/app/types";
-
+import {SnapmailProperties} from "../bindings/snapmail.types";
+import { decode } from "@msgpack/msgpack";
 
 /**
  * TODO: Make a "passthrough" DVM generator in dna-client based on ZVM_DEFS
@@ -44,4 +45,11 @@ export class SnapmailDvm extends DnaViewModel {
     this._hostHandler = cb;
   }
 
+  /** */
+  get dnaProperties(): SnapmailProperties {
+    console.log('dnaProperties() dnaModifiers', this.cell.dnaModifiers);
+    const properties = decode(this.cell.dnaModifiers.properties as Uint8Array) as SnapmailProperties;
+    console.log('dnaProperties() properties', properties);
+    return properties;
+  }
 }

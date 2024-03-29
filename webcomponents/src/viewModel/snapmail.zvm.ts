@@ -10,8 +10,8 @@ import {ZomeViewModel} from "@ddd-qc/lit-happ";
 import {SnapmailProxy} from "../bindings/snapmail.proxy";
 import {defaultPerspective, SnapmailPerspective} from "./snapmail.perspective";
 import {
-  FileManifest, FindManifestOutput, MailItem,
-  SendMailInput, SignalProtocol, SignalProtocolType, SnapmailSignal
+  FileManifest, FindManifestOutput,
+  SendMailInput, SignalProtocolType, SnapmailSignal
 } from "../bindings/snapmail.types";
 import {AppSignal} from "@holochain/client/lib/api/app/types";
 import {determineMailCssClass, is_OutMail, isMailDeleted} from "../mail";
@@ -45,12 +45,11 @@ export class SnapmailZvm extends ZomeViewModel {
   }
 
 
-
   /** */
   async initializePerspectiveOnline(): Promise<void> {
     await this.probeAllInnerAsync();
-
   }
+
 
   /** */
   async probeAllInnerAsync(): Promise<void> {
