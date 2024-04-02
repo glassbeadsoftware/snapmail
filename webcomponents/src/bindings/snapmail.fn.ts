@@ -18,8 +18,6 @@ export const snapmailFunctionNames: FunctionName[] = [
 	"get_missing_chunks",
 	"write_chunk",
 	"write_manifest",
-	"get_enc_key",
-	"get_my_enc_key",
 	"find_agent",
 	"get_all_handles",
 	"get_handle",

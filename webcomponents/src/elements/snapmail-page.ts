@@ -36,7 +36,7 @@ import {
   SnapmailSignal
 } from "../bindings/snapmail.types";
 import {SnapmailFilebox} from "./snapmail-filebox";
-import {BUILD_MODE, MY_ELECTRON_API} from "../electron";
+import {MY_ELECTRON_API} from "../electron";
 import {DnaElement, HAPP_BUILD_MODE, HAPP_ENV, HappBuildModeType, HappEnvType} from "@ddd-qc/lit-happ";
 import {SnapmailPerspective} from "../viewModel/snapmail.perspective";
 import {SnapmailDvm} from "../viewModel/snapmail.dvm";
@@ -246,7 +246,7 @@ export class SnapmailPage extends DnaElement<unknown, SnapmailDvm> {
     }
     if (MY_ELECTRON_API || this.noTitle || (HAPP_BUILD_MODE != HappBuildModeType.Debug && HAPP_ENV == HappEnvType.We)) {
       titleLayout.style.display = "none";
-      // if (BUILD_MODE === 'dev') {
+      // if (HAPP_BUILD_MODE === HappBuildModeType.Debug) {
       //   /** -- Update Title with DNA ID */
       //   const rootTitle = document.getElementById('rootTitle') as HTMLTitleElement;
       //   console.assert(rootTitle);
@@ -359,6 +359,18 @@ export class SnapmailPage extends DnaElement<unknown, SnapmailDvm> {
 
   /** */
   onFileboxMenuItemSelected(menuItemName: string) {
+    /** -- Handle DEBUG options -- */
+    if (menuItemName === 'Refresh') {
+      //console.log('Refresh called');
+      void this._dvm.probeAll();
+    }
+    if (menuItemName === 'Ping') {
+      this._dvm.snapmailZvm.pingNextAgent();
+    }
+    if (menuItemName === 'Dump') {
+      this._dvm.dumpLogs();
+    }
+    /** */
     if (!this._currentMailItem) {
       console.log("onFileboxMenuItemSelected() no mail selected");
       return;
@@ -431,12 +443,6 @@ export class SnapmailPage extends DnaElement<unknown, SnapmailDvm> {
         fwd += '> ' + line + '\n';
       }
       this.mailWriteElem.content = fwd;
-    }
-
-    /** -- Handle 'Refresh' -- */
-    if (menuItemName === 'Refresh') {
-      //console.log('Refresh called');
-      void this._dvm.probeAll();
     }
   }
 

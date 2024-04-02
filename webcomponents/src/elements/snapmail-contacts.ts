@@ -11,7 +11,6 @@ import {greenDot, redDot, stylesTemplate, SYSTEM_GROUP_LIST, whiteDot} from "../
 import {GridSelectionColumn} from "@vaadin/grid/vaadin-grid-selection-column";
 import {HAPP_BUILD_MODE, HappBuildModeType, ZomeElement} from "@ddd-qc/lit-happ";
 import {SnapmailZvm} from "../viewModel/snapmail.zvm";
-import {BUILD_MODE} from "../electron";
 import {MenuBar} from "@vaadin/menu-bar";
 import {Dictionary} from "@ddd-qc/cell-proxy";
 import {GridItemModel} from "@vaadin/grid/src/vaadin-grid";
@@ -110,9 +109,9 @@ export class SnapmailContacts extends ZomeElement<SnapmailPerspective, SnapmailZ
 
     /** Probe Handles every 10 second */
     /*let _1sec =*/ setInterval(() => {
-      // if (BUILD_MODE === 'dev') {
-      //   return;
-      // }
+      if (HAPP_BUILD_MODE === HappBuildModeType.Debug) {
+        return;
+      }
       try {
           void this._zvm.probeHandles();
       } catch(e) {
@@ -123,9 +122,9 @@ export class SnapmailContacts extends ZomeElement<SnapmailPerspective, SnapmailZ
 
     /** Ping an agent every x seconds */
     /*let _1sec =*/ setInterval(() => {
-      // if (BUILD_MODE === 'dev') {
-      //   return;
-      // }
+      if (HAPP_BUILD_MODE === HappBuildModeType.Debug) {
+        return;
+      }
       console.log(" can pingNextAgent?", this._zvm.canPing);
       try {
         if (this._zvm.canPing) {

@@ -190,14 +190,6 @@ export class SnapmailProxy extends ZomeProxy {
     return this.call('write_manifest', input);
   }
 
-  async getEncKey(from: AgentPubKey): Promise<Uint8Array> {
-    return this.call('get_enc_key', from);
-  }
-
-  async getMyEncKey(): Promise<Uint8Array> {
-    return this.call('get_my_enc_key', null);
-  }
-
   async findAgent(handle: string): Promise<AgentPubKey[]> {
     return this.call('find_agent', handle);
   }

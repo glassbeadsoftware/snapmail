@@ -52,6 +52,8 @@ export class SnapmailFilebox extends ZomeElement<SnapmailPerspective, SnapmailZv
     super(SnapmailZvm.DEFAULT_ZOME_NAME);
     if (HAPP_BUILD_MODE == HappBuildModeType.Debug) {
       this._menuItems.push({text: 'Refresh', disabled: false});
+      this._menuItems.push({text: 'Ping', disabled: false});
+      this._menuItems.push({text: 'Dump', disabled: false});
     }
   }
 

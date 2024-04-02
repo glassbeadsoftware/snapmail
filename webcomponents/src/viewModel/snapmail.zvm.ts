@@ -223,7 +223,7 @@ export class SnapmailZvm extends ZomeViewModel {
 
   async sendMail(input: SendMailInput): Promise<ActionHash> {
     const ah = await this.zomeProxy.sendMail(input);
-    await this.zomeProxy.testEncryption(input.to[0]);
+    //await this.zomeProxy.testEncryption(input.to[0]);
     //await this.probeMails();
     return ah;
   }
