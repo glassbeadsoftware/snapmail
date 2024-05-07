@@ -6,7 +6,7 @@ import {
   encodeHashToBase64,
   EntryHash
 } from '@holochain/client';
-import {ZomeViewModel} from "@ddd-qc/lit-happ";
+import {delay, ZomeViewModel} from "@ddd-qc/lit-happ";
 import {SnapmailProxy} from "../bindings/snapmail.proxy";
 import {defaultPerspective, SnapmailPerspective} from "./snapmail.perspective";
 import {
@@ -58,7 +58,7 @@ export class SnapmailZvm extends ZomeViewModel {
     const newInMails = await this.zomeProxy.checkMailInbox();
     await this.probeMails();
     /** Send notification for each new inMail */
-    console.log("probeAllInnerAsync()", newInMails.length);
+    console.log("SnapmailZvm.probeAllInnerAsync()", newInMails.length);
     const fakeAppSignal = {
       cell_id: this.cell.id,
       zome_name: this._zomeProxy.zomeName,
@@ -90,7 +90,7 @@ export class SnapmailZvm extends ZomeViewModel {
 
   /** */
   readonly signalHandler: AppSignalCb = (appSignal: AppSignal) => {
-    console.log('snapmail.zvm.signalHandler():', appSignal);
+    console.log('snapmailZvm.signalHandler():', appSignal);
     //const signal: SnapmailSignal = appSignal.payload as SnapmailSignal;
     /*await */ this.probeMails();
   }
@@ -99,7 +99,7 @@ export class SnapmailZvm extends ZomeViewModel {
   /** */
   async probeHandles() {
     const handleItems = await this.zomeProxy.getAllHandles();
-    console.log("probeHandles()", handleItems);
+    console.log("snapmailZvm.probeHandles()", handleItems);
     this._perspective.usernameMap = {};
     for(const handleItem of handleItems) {
       /* TODO: exclude self from list when in prod? */
@@ -107,7 +107,7 @@ export class SnapmailZvm extends ZomeViewModel {
       //console.log('' + handleItem.name + ': ' + agentIdB64);
       this._perspective.usernameMap[agentId] = handleItem.username;
       if(this._perspective.pingMap[agentId] === undefined) {
-        console.log("  ADDING TO pingMap: ", agentId);
+        console.log("snapmailZvm - ADDING TO pingMap: ", agentId);
         this._perspective.pingMap[agentId] = 0;
         this._perspective.responseMap[agentId] = false;
       }
@@ -156,7 +156,7 @@ export class SnapmailZvm extends ZomeViewModel {
 
   /** Ping oldest pinged agent */
   pingNextAgent(): void {
-    console.log("   pingNextAgent() pingMap", this.perspective.pingMap);
+    console.log("snapmailZvm.pingNextAgent() pingMap", this.perspective.pingMap);
     //console.log({responseMap: this.perspective.responseMap});
     /* Skip if empty map */
     if (Object.keys(this.perspective.pingMap).length === 0) {

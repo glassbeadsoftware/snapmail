@@ -11,12 +11,8 @@ import {SnapmailApp} from "snapmail";
 import {destructureCloneId, ExternalAppProxy} from "@ddd-qc/cell-proxy";
 import {
   HCL,
-  HappElement,
-  HvmDef,
-  DvmDef,
-  DnaViewModel, snake, pascal,
 } from "@ddd-qc/lit-happ";
-import {ProfilesDvm, ProfilesProxy} from "@ddd-qc/profiles-dvm";
+import {ProfilesProxy} from "@ddd-qc/profiles-dvm";
 import {Profile as ProfileMat} from "@ddd-qc/profiles-dvm/dist/bindings/profiles.types";
 import {decode} from "@msgpack/msgpack";
 

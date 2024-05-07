@@ -215,6 +215,8 @@ export class SnapmailPage extends DnaElement<unknown, SnapmailDvm> {
   /** After first render only */
   async firstUpdated() {
     console.log("<snapmail-page> firstUpdated()");
+    this._dvm.dumpLogs();
+
     /** setup notificationHandler */
     this._dvm.setSignalHandler((s :AppSignal) => {this.handleSignal(s)});
     /** */

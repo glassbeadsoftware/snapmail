@@ -3,7 +3,7 @@ import { state, customElement } from "lit/decorators.js";
 import {ContextProvider} from '@lit/context';
 import {AdminWebsocket, AppWebsocket, InstalledAppId} from "@holochain/client";
 import {DEFAULT_SNAPMAIL_DEF, IS_ELECTRON, SnapmailDvm, weClientContext} from "@snapmail/elements";
-import {HvmDef, HappElement, cellContext} from "@ddd-qc/lit-happ";
+import {HvmDef, HappElement, cellContext, delay} from "@ddd-qc/lit-happ";
 import {AppletHash, AppletView, WeServices} from "@lightningrodlabs/we-applet";
 
 
@@ -14,30 +14,30 @@ let HC_ADMIN_PORT: number;
 
 if (IS_ELECTRON) {
   const APP_ID = 'snapmail-app'
-  console.log("URL =", window.location.toString())
+  console.log("[snapmail] URL =", window.location.toString())
   const searchParams = new URLSearchParams(window.location.search);
   const urlPort = searchParams.get("APP");
   if(!urlPort) {
-    console.error("Missing APP value in URL", window.location.search)
+    console.error("[snapmail] Missing APP value in URL", window.location.search)
   }
   HC_APP_PORT = Number(urlPort);
   const urlAdminPort = searchParams.get("ADMIN");
   HC_ADMIN_PORT = Number(urlAdminPort);
   const NETWORK_ID = searchParams.get("UID");
-  console.log(NETWORK_ID);
+  console.log("[snapmail]", NETWORK_ID);
   DEFAULT_SNAPMAIL_DEF.id = APP_ID + '-' + NETWORK_ID;  // override installed_app_id
 } else {
   try {
     HC_APP_PORT = Number(process.env.HC_APP_PORT);
     HC_ADMIN_PORT = Number(process.env.HC_ADMIN_PORT);
   } catch (e) {
-    console.log("HC_APP_PORT not defined")
+    console.log("[snapmail] HC_APP_PORT not defined")
   }
 }
 
 //console.log("      HAPP_ID =", DEFAULT_SNAPMAIL_DEF.id)
-console.log("  HC_APP_PORT =", HC_APP_PORT);
-console.log("HC_ADMIN_PORT =", HC_ADMIN_PORT);
+console.log("[snapmail]   HC_APP_PORT =", HC_APP_PORT);
+console.log("[snapmail] HC_ADMIN_PORT =", HC_ADMIN_PORT);
 //console.log("  IS_ELECTRON =", IS_ELECTRON);
 
 
@@ -80,30 +80,29 @@ export class SnapmailApp extends HappElement {
 
   /** */
   async hvmConstructed() {
-    console.log("hvmConstructed()", this._adminWs, this._canAuthorizeZfns)
+    console.log("<snapmail-app>.hvmConstructed()", this._adminWs, this._canAuthorizeZfns)
 
     /** Authorize all zome calls */
     if (!this._adminWs && this._canAuthorizeZfns) {
       this._adminWs = await AdminWebsocket.connect({url:new URL(`ws://localhost:${HC_ADMIN_PORT}`)});
-      console.log("hvmConstructed() connect() called", this._adminWs);
+      console.log("<snapmail-app>.hvmConstructed() connect() called", this._adminWs);
     }
     if (this._adminWs && this._canAuthorizeZfns) {
       await this.hvm.authorizeAllZomeCalls(this._adminWs);
-      console.log("*** Zome call authorization complete");
+      console.log("<snapmail-app> Zome call authorization complete");
     } else {
       if (!this._canAuthorizeZfns) {
-        console.warn("No adminWebsocket provided (Zome call authorization done)")
+        console.warn("<snapmail-app> No adminWebsocket provided (Zome call authorization done)")
       } else {
-        console.log("Zome call authorization done externally")
+        console.log("<snapmail-app> Zome call authorization done externally")
       }
     }
-
     /** Probe EntryDefs */
     const allAppEntryTypes = await this.snapmailDvm.fetchAllEntryDefs();
-    console.log("happInitialized(), allAppEntryTypes", allAppEntryTypes);
-    console.log(`${SNAPMAIL_DEFAULT_COORDINATOR_ZOME_NAME} entries`, allAppEntryTypes[SNAPMAIL_DEFAULT_COORDINATOR_ZOME_NAME]);
+    console.log("<snapmail-app>.hvmConstructed(), allAppEntryTypes", allAppEntryTypes);
+    console.log(`<snapmail-app> ${SNAPMAIL_DEFAULT_COORDINATOR_ZOME_NAME} entries`, allAppEntryTypes[SNAPMAIL_DEFAULT_COORDINATOR_ZOME_NAME]);
     if (allAppEntryTypes[SNAPMAIL_DEFAULT_COORDINATOR_ZOME_NAME].length == 0) {
-      console.warn(`No entries found for ${SNAPMAIL_DEFAULT_COORDINATOR_ZOME_NAME}`);
+      console.warn(`<snapmail-app> No entries found for ${SNAPMAIL_DEFAULT_COORDINATOR_ZOME_NAME}`);
     } else {
       this._hasHolochainFailed = false;
     }
@@ -122,7 +121,7 @@ export class SnapmailApp extends HappElement {
   async perspectiveInitializedOnline(): Promise<void> {
     console.log("<snapmail-app>.perspectiveInitializedOnline()");
     await this.hvm.probeAll();
-    console.log("*** probeAll complete");
+    console.log("<snapmail-app>.perspectiveInitializedOnline() complete");
     this._loaded = true;
   }
 

@@ -125,7 +125,7 @@ export class SnapmailContacts extends ZomeElement<SnapmailPerspective, SnapmailZ
       if (HAPP_BUILD_MODE === HappBuildModeType.Debug) {
         return;
       }
-      console.log(" can pingNextAgent?", this._zvm.canPing);
+      //console.log(" can pingNextAgent?", this._zvm.canPing);
       try {
         if (this._zvm.canPing) {
           this._zvm.pingNextAgent();

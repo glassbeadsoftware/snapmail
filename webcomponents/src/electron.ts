@@ -1,3 +1,4 @@
+import {HAPP_BUILD_MODE, HappBuildModeType} from "@ddd-qc/lit-happ";
 
 /**
  *
@@ -18,7 +19,7 @@ export interface IpcRendererApi {
 
 
 /** APP SETUP */
-
+// FIXME: use HAPP_BUILD_MODE instead
 export let BUILD_MODE: string;
 export const MY_ELECTRON_API = 'electronBridge' in window? window.electronBridge as IpcRendererApi : undefined;
 export const IS_ELECTRON = typeof MY_ELECTRON_API !== 'undefined'
@@ -28,21 +29,22 @@ export const IS_ELECTRON = typeof MY_ELECTRON_API !== 'undefined'
    try {
      BUILD_MODE = process.env.BUILD_MODE;
    } catch (e) {
-     console.log("BUILD_MODE not defined. Defaulting to 'prod'");
-     BUILD_MODE = 'prod';
+     console.log("[snapmail] BUILD_MODE not defined. Defaulting to " + HappBuildModeType.Retail);
+     BUILD_MODE = HappBuildModeType.Retail;
    }
 }
 
-//export const IS_DEV = BUILD_MODE === 'dev';
 
-console.log("   BUILD_MODE =", BUILD_MODE)
-console.log("  IS_ELECTRON =", IS_ELECTRON);
+console.log("[snapmail] HAPP_BUILD_MODE =", HAPP_BUILD_MODE)
+console.log("[snapmail]     IS_ELECTRON =", IS_ELECTRON);
 
-// /** Remove console.log() in PROD */
-// if (HAPP_BUILD_MODE === 'prod') {
-//   console.log("console.log() disabled");
-//   console.log = () => {};
-// }
+/** Remove console.log() in Retail */
+if (HAPP_BUILD_MODE === HappBuildModeType.Retail) {
+  //console.log("console.log() disabled");
+  //console.log = () => {};
+  console.log("[snapmail] console.log() changed into console.debug()");
+  console.log = console.debug
+}
 
 
 /** */
