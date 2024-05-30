@@ -2,7 +2,7 @@
 
 import {ActionHashB64, AgentPubKey, encodeHashToBase64} from "@holochain/client";
 
-import {MailItem} from "./bindings/snapmail.types";
+import {InMailStateType, MailItem, OutMailStateType} from "./bindings/snapmail.types";
 import {UsernameMap} from "./viewModel/snapmail.perspective";
 import {HAPP_BUILD_MODE, HappBuildModeType} from "@ddd-qc/lit-happ";
 
@@ -177,10 +177,10 @@ function determineFromLine(usernameMap: UsernameMap, mailItem: MailItem): string
 export function determineMailStatus(mailItem: MailItem): string {
   //console.log('determineMailStatus()', encodeHashToBase64(mailItem.ah));
   const state = mailItem.state;
-  // console.log("determineMailStatus() state", mailItem.state);
+  console.log("determineMailStatus() state", mailItem.state);
   if ("Out" in state) {
-    const outMailState = state.Out;
-    if ('Unsent' in outMailState) return suspensionPoints;
+    const outMailState = state.Out as OutMailStateType; // FIXME: hackish
+    if ('Unsent' === outMailState) return suspensionPoints;
     if ('AllSent' in outMailState) return suspensionPoints;
     if ('AllReceived' in outMailState) return checkMarkEmoji;
     if ('AllAcknowledged' in outMailState) return checkMarkEmoji;

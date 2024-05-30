@@ -42,7 +42,7 @@ import {SnapmailPerspective} from "../viewModel/snapmail.perspective";
 import {SnapmailDvm} from "../viewModel/snapmail.dvm";
 
 import {wrapPathInSvg} from "@ddd-qc/we-utils";
-import {FrameNotification, WeServices} from "@lightningrodlabs/we-applet";
+import {FrameNotification, WeaveServices} from "@lightningrodlabs/we-applet";
 import {weClientContext} from "../contexts";
 import {mdiAlertOctagonOutline, mdiAlertOutline, mdiCheckCircleOutline, mdiInformationOutline, mdiCog} from "@mdi/js";
 
@@ -83,7 +83,7 @@ export class SnapmailPage extends DnaElement<unknown, SnapmailDvm> {
   }
 
   @consume({ context: weClientContext, subscribe: true })
-  weServices!: WeServices;
+  weServices!: WeaveServices;
 
   @property()
   noTitle = false;
@@ -233,7 +233,7 @@ export class SnapmailPage extends DnaElement<unknown, SnapmailDvm> {
       console.log("<snapmail-page> firstUpdated()", this._myHandle, this.startingNickname);
       if ((this._myHandle == "<unknown>"  || this._myHandle == "<noname>") && this.startingNickname) {
         this._myHandle = this.startingNickname;
-        await this,this._dvm.snapmailZvm.setHandle(this.startingNickname);
+        await this._dvm.snapmailZvm.setHandle(this.startingNickname);
       }
       await this._dvm.probeAll();
     } catch(error: unknown) {

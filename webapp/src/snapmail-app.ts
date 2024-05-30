@@ -4,7 +4,7 @@ import {ContextProvider} from '@lit/context';
 import {AdminWebsocket, AppWebsocket, InstalledAppId} from "@holochain/client";
 import {DEFAULT_SNAPMAIL_DEF, IS_ELECTRON, SnapmailDvm, weClientContext} from "@snapmail/elements";
 import {HvmDef, HappElement, cellContext, delay} from "@ddd-qc/lit-happ";
-import {AppletHash, AppletView, WeServices} from "@lightningrodlabs/we-applet";
+import {AppletHash, AppletView, WeaveServices} from "@lightningrodlabs/we-applet";
 
 
 const SNAPMAIL_DEFAULT_COORDINATOR_ZOME_NAME = "snapmail"
@@ -51,12 +51,12 @@ export class SnapmailApp extends HappElement {
               private _canAuthorizeZfns?: boolean,
               readonly appId?: InstalledAppId,
               public appletView?: AppletView,
-              private _weServices?: WeServices,
+              private _weServices?: WeaveServices,
               private _appletHash?: AppletHash,
               private _startingNickname?: string,
   ) {
-    super(appWs? appWs : HC_APP_PORT, appId);
-    console.log("<snapmail-app> ctor", appId, appWs);
+    super(appWs? appWs : HC_APP_PORT, appId, _adminWs? undefined : new URL(`ws://localhost:${HC_ADMIN_PORT}`));
+    console.log("<snapmail-app> ctor", appId, appWs, _adminWs);
     if (_canAuthorizeZfns == undefined) {
       this._canAuthorizeZfns = true;
     }
@@ -82,21 +82,22 @@ export class SnapmailApp extends HappElement {
   async hvmConstructed() {
     console.log("<snapmail-app>.hvmConstructed()", this._adminWs, this._canAuthorizeZfns)
 
-    /** Authorize all zome calls */
-    if (!this._adminWs && this._canAuthorizeZfns) {
-      this._adminWs = await AdminWebsocket.connect({url:new URL(`ws://localhost:${HC_ADMIN_PORT}`)});
-      console.log("<snapmail-app>.hvmConstructed() connect() called", this._adminWs);
-    }
-    if (this._adminWs && this._canAuthorizeZfns) {
-      await this.hvm.authorizeAllZomeCalls(this._adminWs);
-      console.log("<snapmail-app> Zome call authorization complete");
-    } else {
-      if (!this._canAuthorizeZfns) {
-        console.warn("<snapmail-app> No adminWebsocket provided (Zome call authorization done)")
-      } else {
-        console.log("<snapmail-app> Zome call authorization done externally")
-      }
-    }
+    // /** Authorize all zome calls */
+    // if (!this._adminWs && this._canAuthorizeZfns) {
+    //   this._adminWs = await AdminWebsocket.connect({url:new URL(`ws://localhost:${HC_ADMIN_PORT}`)});
+    //   console.log("<snapmail-app>.hvmConstructed() connect() called", this._adminWs);
+    // }
+    // if (this._adminWs && this._canAuthorizeZfns) {
+    //   await this.hvm.authorizeAllZomeCalls(this._adminWs);
+    //   console.log("<snapmail-app> Zome call authorization complete");
+    // } else {
+    //   if (!this._canAuthorizeZfns) {
+    //     console.warn("<snapmail-app> No adminWebsocket provided (Zome call authorization done)")
+    //   } else {
+    //     console.log("<snapmail-app> Zome call authorization done externally")
+    //   }
+    // }
+
     /** Probe EntryDefs */
     const allAppEntryTypes = await this.snapmailDvm.fetchAllEntryDefs();
     console.log("<snapmail-app>.hvmConstructed(), allAppEntryTypes", allAppEntryTypes);

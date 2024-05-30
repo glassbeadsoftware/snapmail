@@ -2,10 +2,9 @@
   "name": "Snapmail",
   "version": "0.4.0",
   "config": {
-    "hc_version": "0.3.0-beta-dev.40",
-    "zits_version": "1.13.0",
-    "bin": "bin",
-    "we_test_folder": "../we"
+    "hc_version": "0.4.0-dev.4",
+    "zits_version": "1.14.0",
+    "bin": "bin"
   },
   "private": true,
   "repository": {
@@ -69,9 +68,8 @@
 
     "start:launcher"      : "echo pass | hc-launch --piped -n 1 artifacts/snapmail.webhapp network mem",
 
-    "dist:we"             : "npm run dist -w we-applet && npm run package:we && npm run cp:we",
+    "dist:we"             : "npm run dist -w we-applet && npm run package:we",
     "package:we"          : "rm -rf artifacts/snapmail-we_applet-ui.zip & cd we-applet/dist && bestzip ../../artifacts/snapmail-we_applet-ui.zip * && cd ../.. && $npm_package_config_bin/hc web-app pack we-applet/webhapp.workdir -o artifacts/snapmail-we_applet.webhapp",
-    "cp:we"               : "cp artifacts/snapmail-we_applet.webhapp $npm_package_config_we_test_folder/testing-applets",
 
     "dist:electron"       : "bash submodules/hc-prebuilt/copy-binaries.sh electron/bin && npm run dist:build -w electron",
 
@@ -98,13 +96,13 @@
     "typescript": "~5.2.0"
   },
   "dependencies": {
-    "@holochain/client": "^0.17.0-dev.3",
-    "@ddd-qc/cell-proxy": "=0.23.0",
-    "@ddd-qc/lit-happ": "=0.23.0",
-    "@ddd-qc/profiles-dvm": "=0.23.1",
-    "@ddd-qc/we-utils": "=0.23.1",
-    "@lightningrodlabs/we-applet": "0.16.0",
+    "@ddd-qc/cell-proxy": "=0.24.0",
+    "@ddd-qc/lit-happ": "=0.24.0",
+    "@ddd-qc/profiles-dvm": "=0.24.0",
+    "@ddd-qc/we-utils": "=0.24.0",
+    "@lightningrodlabs/we-applet": "=0.17.0-dev.2",
     "@holochain-open-dev/core-types": "0.7.0",
+    "@holochain/client": "^0.18.0-dev.1",
     "@lit/context": "1.0.1",
     "@lit/localize": "0.12.1",
     "lit": "3.0.2"
