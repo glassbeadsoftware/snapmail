@@ -64,9 +64,11 @@ export async function setupSnapmailEntryView() {
 /** */
 function createInMailRenderInfo(eh: EntryHash, context: ViewFileContext): AssetViewInfo {
     const entryInfo = emptyEntryAppletView as AssetViewInfo;
-    entryInfo.roleName = SNAPMAIL_DEFAULT_ROLE_NAME;
-    entryInfo.integrityZomeName = SNAPMAIL_DEFAULT_INTEGRITY_ZOME_NAME;
-    entryInfo.entryType = snake(SnapmailEntryType.InMail);
+    entryInfo.recordInfo = {
+        roleName: SNAPMAIL_DEFAULT_ROLE_NAME,
+        integrityZomeName: SNAPMAIL_DEFAULT_INTEGRITY_ZOME_NAME,
+        entryType: snake(SnapmailEntryType.InMail),
+    }
     entryInfo.wal.hrl[1] = eh;
     entryInfo.wal.context = context;
 

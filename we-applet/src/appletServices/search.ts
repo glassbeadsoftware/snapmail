@@ -1,11 +1,10 @@
 import {
-    AgentPubKeyB64,
-    AppAgentClient,
+    AgentPubKeyB64, AppClient,
     decodeHashFromBase64,
     encodeHashToBase64,
 } from "@holochain/client";
 import {AppletHash, WAL} from "@lightningrodlabs/we-applet/dist/types";
-import {WeServices} from "@lightningrodlabs/we-applet/dist/api";
+import {WeaveServices} from "@lightningrodlabs/we-applet/dist/api";
 import {asCellProxy} from "@ddd-qc/we-utils";
 import {MailItem, SNAPMAIL_DEFAULT_ROLE_NAME, SnapmailProxy} from "@snapmail/elements";
 
@@ -19,9 +18,9 @@ export interface SnapmailSearchContext {
 
 /** Return EntryHashs of Manifests whose name match the search filter */
 export async function search(
-    appletClient: AppAgentClient,
+    appletClient: AppClient,
     appletHash: AppletHash,
-    weServices: WeServices,
+    weServices: WeaveServices,
     searchFilter: string,
 ): Promise<Array<WAL>> {
     console.log("Snapmail/we-applet/search():", searchFilter);

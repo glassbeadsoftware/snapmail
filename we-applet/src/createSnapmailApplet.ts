@@ -1,10 +1,10 @@
 import {
-  AppAgentWebsocket, decodeHashFromBase64, encodeHashToBase64,
+  decodeHashFromBase64, encodeHashToBase64, AppWebsocket,
 } from "@holochain/client";
 //import { msg } from "@lit/localize";
 import {
   RenderInfo,
-  WeServices,
+  WeaveServices,
 } from "@lightningrodlabs/we-applet";
 import {AppletViewInfo, ProfilesApi} from "@ddd-qc/we-utils";
 import {SnapmailApp} from "snapmail";
@@ -25,7 +25,7 @@ export interface ViewFileContext {
 /** */
 export async function createSnapmailApplet(
   renderInfo: RenderInfo,
-  weServices: WeServices,
+  weServices: WeaveServices,
 ): Promise<SnapmailApp> {
 
   if (renderInfo.type =="cross-applet-view") {
@@ -33,9 +33,9 @@ export async function createSnapmailApplet(
   }
 
   const appletViewInfo = renderInfo as unknown as AppletViewInfo;
-  const mainAppAgentWs = appletViewInfo.appletClient as AppAgentWebsocket;
+  const mainAppAgentWs = appletViewInfo.appletClient as AppWebsocket;
 
-  const mainAppWs = mainAppAgentWs.appWebsocket;
+  const mainAppWs = mainAppAgentWs.client;
 
   console.log("createSnapmailApplet() client", appletViewInfo.appletClient);
   console.log("createSnapmailApplet() thisAppletId", appletViewInfo.appletHash);
@@ -49,7 +49,7 @@ export async function createSnapmailApplet(
 
   /** Create SnapmailApp */
   const app = new SnapmailApp(
-      mainAppWs,
+    mainAppAgentWs,
       undefined,
       false,
       mainAppInfo.installed_app_id,
@@ -69,8 +69,8 @@ async function grabMyProfile(appletViewInfo: AppletViewInfo): Promise<ProfileMat
   const mainAppInfo = await appletViewInfo.appletClient.appInfo();
 
   /** Determine profilesAppInfo */
-  const mainAppAgentWs = appletViewInfo.appletClient as AppAgentWebsocket;
-  const mainAppWs = mainAppAgentWs.appWebsocket;
+  const mainAppAgentWs = appletViewInfo.appletClient as AppWebsocket;
+  //const mainAppWs = mainAppAgentWs.appWebsocket;
   let profilesAppInfo = await profilesClient.client.appInfo();
   console.log("createThreadsApplet() mainAppInfo", mainAppInfo);
   console.log("createThreadsApplet() profilesAppInfo", profilesAppInfo, profilesClient.roleName);
