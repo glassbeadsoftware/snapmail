@@ -2,7 +2,7 @@
 
 import {ActionHashB64, AgentPubKey, encodeHashToBase64} from "@holochain/client";
 
-import {InMailStateType, MailItem, OutMailStateType} from "./bindings/snapmail.types";
+import {InMailStateType, MailItem, MailStateVariantIn, OutMailStateType} from "./bindings/snapmail.types";
 import {UsernameMap} from "./viewModel/snapmail.perspective";
 import {HAPP_BUILD_MODE, HappBuildModeType} from "@ddd-qc/lit-happ";
 
@@ -50,14 +50,14 @@ export const systemFolders = {
 export function isMailDeleted(mailItem: MailItem): boolean {
   //console.log({isMailDeleted_mail: mailItem})
   if ("In" in mailItem.state) {
-    const inState = mailItem.state.In;
+    const inState = mailItem.state.In as unknown as InMailStateType;
     //console.log({inState})
-    return 'Deleted' in inState;
+    return InMailStateType.Deleted === inState;
   }
   if ("Out" in mailItem.state) {
-    const outState = mailItem.state.Out;
+    const outState = mailItem.state.Out as unknown as OutMailStateType;
     //console.log({outState})
-    return 'Deleted' in outState;
+    return OutMailStateType.Deleted === outState;
   }
   console.error('isMailDeleted() Invalid mailItem object', mailItem)
   return false;
@@ -85,8 +85,8 @@ export function hasMailBeenOpened(mailItem: MailItem) {
     return true;
   }
   if ("In" in mailItem.state) {
-    const inState = mailItem.state.In;
-    return !('Unacknowledged' in inState);
+    const inState = mailItem.state.In as unknown as InMailStateType;
+    return !(InMailStateType.Unacknowledged == inState);
   }
   console.error('hasMailBeenOpened() Invalid mailItem object')
   return false;
@@ -96,22 +96,22 @@ export function hasMailBeenOpened(mailItem: MailItem) {
 /** Return mailItem class */
 export function determineMailCssClass(mailItem: MailItem): string {
   if ("Out" in mailItem.state) {
-    const outMailState = mailItem.state.Out;
-    if ('Unsent' in outMailState) return ''; // 'pending';
-    if ('AllSent' in outMailState) return ''; // 'partially';
-    if ('AllReceived' in outMailState) return '';
-    if ('AllAcknowledged' in outMailState) return ''; // 'received';
-    if ('Deleted' in outMailState) return 'deleted';
-    return outMailState === "Deleted" ? 'deleted' : '';
+    const outMailState = mailItem.state.Out as unknown as OutMailStateType;
+    if (OutMailStateType.Unsent === outMailState) return ''; // 'pending';
+    if (OutMailStateType.AllSent === outMailState) return ''; // 'partially';
+    if (OutMailStateType.AllReceived === outMailState) return '';
+    if (OutMailStateType.AllAcknowledged === outMailState) return ''; // 'received';
+    if (OutMailStateType.Deleted === outMailState) return 'deleted';
+    return outMailState === OutMailStateType.Deleted ? 'deleted' : '';
   }
 
   if ("In" in mailItem.state) {
-    const inState = mailItem.state.In;
-    if ('Unacknowledged' in inState) return 'newmail';
-    if ('AckUnsent' in inState) return ''; //'pending';
-    if ('AckPending' in inState) return ''; // 'partially';
-    if ('AckDelivered' in inState) return ''; // 'received';
-    if ('Deleted' in inState) return 'deleted';
+    const inState = mailItem.state.In  as unknown as InMailStateType
+    if (InMailStateType.Unacknowledged === inState) return 'newmail';
+    if (InMailStateType.AckUnsent === inState) return ''; //'pending';
+    if (InMailStateType.AckPending === inState) return ''; // 'partially';
+    if (InMailStateType.AckDelivered === inState) return ''; // 'received';
+    if (InMailStateType.Deleted === inState) return 'deleted';
   }
   console.error('determineMailCssClass() Invalid mailItem object', mailItem);
 }
@@ -179,12 +179,12 @@ export function determineMailStatus(mailItem: MailItem): string {
   const state = mailItem.state;
   console.log("determineMailStatus() state", mailItem.state);
   if ("Out" in state) {
-    const outMailState = state.Out as OutMailStateType; // FIXME: hackish
+    const outMailState = state.Out as unknown as OutMailStateType; // FIXME: hackish
     if ('Unsent' === outMailState) return suspensionPoints;
-    if ('AllSent' in outMailState) return suspensionPoints;
-    if ('AllReceived' in outMailState) return checkMarkEmoji;
-    if ('AllAcknowledged' in outMailState) return checkMarkEmoji;
-    if ('Deleted' in outMailState) return '';
+    if ('AllSent' === outMailState) return suspensionPoints;
+    if ('AllReceived' === outMailState) return checkMarkEmoji;
+    if ('AllAcknowledged' === outMailState) return checkMarkEmoji;
+    if ('Deleted' === outMailState) return '';
   } else {
     if ("In" in state) {
       if (mailItem.reply) {
