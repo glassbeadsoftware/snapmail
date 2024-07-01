@@ -3,7 +3,7 @@ import { state, property, customElement } from "lit/decorators.js";
 import {ScopedElementsMixin} from "@open-wc/scoped-elements";
 import {MailItem} from "../bindings/snapmail.types";
 import {into_mailText} from "../mail";
-import {Dictionary} from "@ddd-qc/cell-proxy";
+import {AgentIdMap} from "@ddd-qc/cell-proxy";
 
 
 /** */
@@ -14,7 +14,7 @@ export class SnapmailMailView extends ScopedElementsMixin(LitElement) {
   inMailItem: MailItem;
 
   @property({type: Object})
-  usernameMap: Dictionary<string>;
+  usernameMap: AgentIdMap<string>;
 
   /** */
   render() {

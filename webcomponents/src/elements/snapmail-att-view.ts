@@ -6,7 +6,7 @@ import {SnapmailPerspective} from "../viewModel/snapmail.perspective";
 import {base64ToArrayBuffer} from "../utils";
 import {redStopEmoji, hourGlassEmoji, stylesTemplate, greenCheckEmoji} from "../constants";
 import {AttGridItem} from "../mail";
-import {ZomeElement} from "@ddd-qc/lit-happ";
+import {ZomeElement, EntryId, AgentId} from "@ddd-qc/lit-happ";
 import {SnapmailZvm} from "../viewModel/snapmail.zvm";
 import {GridItemModel} from "@vaadin/grid/src/vaadin-grid";
 
@@ -64,7 +64,7 @@ export class SnapmailAttView extends ZomeElement<SnapmailPerspective, SnapmailZv
     const chunks = [];
     for (const chunkAddress of manifest.chunks) {
       try {
-        const chunk = await this._zvm.getChunk(chunkAddress);
+        const chunk = await this._zvm.getChunk(new EntryId(chunkAddress));
         chunks.push(chunk);
       } catch (e) {
         return null;
@@ -183,7 +183,7 @@ export class SnapmailAttView extends ZomeElement<SnapmailPerspective, SnapmailZv
     if (changedProperties.has('inMailItem')) {
       const missingCount = await this.fillAttachmentGrid(this.inMailItem.mail);
       if (missingCount > 0) {
-        await this._zvm.getMissingAttachments(this.inMailItem.author, this.inMailItem.ah);
+        await this._zvm.getMissingAttachments(new AgentId(this.inMailItem.author), this.inMailItem.ah);
       }
     }
   }

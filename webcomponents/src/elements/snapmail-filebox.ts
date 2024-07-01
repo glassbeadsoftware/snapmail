@@ -200,7 +200,7 @@ export class SnapmailFilebox extends ZomeElement<SnapmailPerspective, SnapmailZv
 
     const selectedBox: string = this.folderElem.value//.codePointAt(0);
 
-    const mailItems: MailItem[] = Object.values(this.perspective.mailMap);
+    const mailItems: MailItem[] = new Uint8Array(this.perspective.mailMap.values());
     for (const mailItem of mailItems) {
       //console.log({mailItem})
       const isDeleted = isMailDeleted(mailItem);
@@ -343,7 +343,7 @@ export class SnapmailFilebox extends ZomeElement<SnapmailPerspective, SnapmailZv
     /** Handle mails from perspective */
     if (changedProperties.has('perspective')) {
       const allMailGridItem: MailGridItem[] = [];
-      for (const mailItem of Object.values(this.perspective.mailMap)) {
+      for (const mailItem of this.perspective.mailMap.values()) {
         allMailGridItem.push(into_gridItem(this.perspective.usernameMap, mailItem));
       }
       //console.log("   <snapmail-filebox>.willUpdate() this._allMailItems", this._allMailGridItems, allMailGridItem);

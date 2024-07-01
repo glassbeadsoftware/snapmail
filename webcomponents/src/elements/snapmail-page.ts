@@ -1,15 +1,7 @@
 import {css, html} from "lit";
 import {property, state, customElement} from "lit/decorators.js";
 import {consume} from "@lit/context";
-import {
-  ActionHash,
-  ActionHashB64,
-  AgentPubKey, AgentPubKeyB64, AppSignal,
-  decodeHashFromBase64,
-  encodeHashToBase64,
-  EntryHash
-} from "@holochain/client";
-
+import {AppSignal} from "@holochain/client";
 import {ProgressBar} from "@vaadin/progress-bar";
 import {Button} from "@vaadin/button";
 import {MenuBar, MenuBarItem, MenuBarItemSelectedEvent} from "@vaadin/menu-bar";
@@ -17,7 +9,6 @@ import {TextField} from "@vaadin/text-field";
 import {Notification} from "@vaadin/notification";
 import {VerticalLayout} from "@vaadin/vertical-layout";
 import {HorizontalLayout} from "@vaadin/horizontal-layout";
-
 
 import {customDateString, into_mailText, MailGridItem} from "../mail";
 
@@ -28,7 +19,6 @@ import {
   FileManifest,
   MailItem,
   SendMailInput,
-  SignalProtocol,
   SignalProtocolType,
   SignalProtocolVariantReceivedAck,
   SignalProtocolVariantReceivedFile,
@@ -37,7 +27,7 @@ import {
 } from "../bindings/snapmail.types";
 import {SnapmailFilebox} from "./snapmail-filebox";
 import {MY_ELECTRON_API} from "../electron";
-import {DnaElement, HAPP_BUILD_MODE, HAPP_ENV, HappBuildModeType, HappEnvType} from "@ddd-qc/lit-happ";
+import {DnaElement, HAPP_BUILD_MODE, HAPP_ENV, HappBuildModeType, HappEnvType, ActionId, AgentId, EntryId} from "@ddd-qc/lit-happ";
 import {SnapmailPerspective} from "../viewModel/snapmail.perspective";
 import {SnapmailDvm} from "../viewModel/snapmail.dvm";
 
@@ -93,7 +83,7 @@ export class SnapmailPage extends DnaElement<unknown, SnapmailDvm> {
 
   @state() private _myHandle = '<unknown>';
   @state() private _canHideHandleInput = true;
-  private _replyOf?: ActionHashB64;
+  private _replyOf?: ActionId;
   @state() private _currentMailItem?: MailItem;
 
 
@@ -147,12 +137,12 @@ export class SnapmailPage extends DnaElement<unknown, SnapmailDvm> {
   handleSignal(signalwrapper: AppSignal) {
     console.log('<snapmail-page>.Received signal:', signalwrapper);
     const signal: SnapmailSignal = signalwrapper.payload as SnapmailSignal;
-    const sender = encodeHashToBase64(signal.from);
-    const canPopup = sender != this.cell.agentPubKey || HAPP_BUILD_MODE == HappBuildModeType.Debug;
+    const sender = new AgentId(signal.from);
+    const canPopup = sender.b64 != this.cell.agentId.b64 || HAPP_BUILD_MODE == HappBuildModeType.Debug;
 
     /** store ping */
     this._dvm.snapmailZvm.storePingResult(sender, true);
-    const senderName = this.zPerspective.usernameMap[sender] || 'unknown user';
+    const senderName = this.zPerspective.usernameMap.get(sender) || 'unknown user';
     /** Form notification */
     let title: string;
     let body = "";
@@ -161,12 +151,12 @@ export class SnapmailPage extends DnaElement<unknown, SnapmailDvm> {
       case SignalProtocolType.ReceivedMail:
         const mailItem: MailItem = (signal.payload as SignalProtocolVariantReceivedMail).ReceivedMail;
         console.log("received_mail:", mailItem);
-        title = 'New Mail received from ' + this.zPerspective.usernameMap[encodeHashToBase64(mailItem.author)];
+        title = 'New Mail received from ' + this.zPerspective.usernameMap.get(mailItem.author);
         body = mailItem.mail.subject;
         ///*await*/ this._dvm.snapmailZvm.probeMails();
       break;
       case SignalProtocolType.ReceivedAck:
-        const forMailAh: ActionHashB64 = encodeHashToBase64((signal.payload as SignalProtocolVariantReceivedAck).ReceivedAck);
+        const forMailAh = new ActionId((signal.payload as SignalProtocolVariantReceivedAck).ReceivedAck);
         console.log("received_ack:", forMailAh);
         title = 'New Ack received from ' + senderName;
         urgency = 'low';
@@ -215,7 +205,7 @@ export class SnapmailPage extends DnaElement<unknown, SnapmailDvm> {
   /** After first render only */
   async firstUpdated() {
     console.log("<snapmail-page> firstUpdated()");
-    this._dvm.dumpLogs();
+    this._dvm.dumpCallLogs();
 
     /** setup notificationHandler */
     this._dvm.setSignalHandler((s :AppSignal) => {this.handleSignal(s)});
@@ -258,9 +248,9 @@ export class SnapmailPage extends DnaElement<unknown, SnapmailDvm> {
     }
     /** -- Update Abbr -- */
     const handleAbbr: HTMLElement = this.shadowRoot.getElementById('handleAbbr');
-    handleAbbr.title = "agentId: " + this.cell.agentPubKey;
+    handleAbbr.title = "agentId: " + this.cell.agentId;
     const titleAbbr: HTMLElement = this.shadowRoot.getElementById('titleAbbr');
-    titleAbbr.title = this.cell.dnaHash;
+    titleAbbr.title = this.cell.dnaId.b64;
     /** -- Loading Done -- */
     const loadingBar = this.shadowRoot.getElementById('loadingBar') as ProgressBar;
     loadingBar.style.display = "none";
@@ -289,8 +279,8 @@ export class SnapmailPage extends DnaElement<unknown, SnapmailDvm> {
     console.log("Calling getMyHandle() for ELECTRON");
     const startingHandle = await this._dvm.snapmailZvm.getMyHandle();
     console.log("getMyHandle() returned: " + startingHandle);
-    console.log("startingInfo sending dnaHash =", this.cell.dnaHash);
-    const reply = MY_ELECTRON_API.startingInfo(startingHandle, decodeHashFromBase64(this.cell.dnaHash))
+    console.log("startingInfo sending dnaHash =", this.cell.dnaId);
+    const reply = MY_ELECTRON_API.startingInfo(startingHandle, this.cell.dnaId.hash)
     console.log("startingInfo reply =", reply);
     if (reply != "<noname>") {
       await this.setUsername(reply);
@@ -344,9 +334,9 @@ export class SnapmailPage extends DnaElement<unknown, SnapmailDvm> {
 
 
   /** */
-  selectContact(candidate: AgentPubKeyB64, count: number) {
+  selectContact(candidate: AgentId, count: number) {
     for(const contactItem of this.contactsElem.allContacts) {
-      if(contactItem.agentIdB64 !== candidate) {
+      if(contactItem.agentId.b64 !== candidate.b64) {
         continue;
       }
       for (let i = 0; i < count; i++) {
@@ -370,7 +360,7 @@ export class SnapmailPage extends DnaElement<unknown, SnapmailDvm> {
       this._dvm.snapmailZvm.pingNextAgent();
     }
     if (menuItemName === 'Dump') {
-      this._dvm.dumpLogs();
+      this._dvm.dumpCallLogs();
     }
     /** */
     if (!this._currentMailItem) {
@@ -390,43 +380,42 @@ export class SnapmailPage extends DnaElement<unknown, SnapmailDvm> {
       a.click();
     }
 
+    const currentMailAh = new ActionId(this._currentMailItem.ah);
     /* -- Handle 'Trash' -- */
     if (menuItemName === 'Trash') {
       this._replyOf = undefined;
-      void this._dvm.snapmailZvm.deleteMail(encodeHashToBase64(this._currentMailItem.ah))
+
+      void this._dvm.snapmailZvm.deleteMail(currentMailAh)
         .then((/*maybeAh: ActionHash | null*/) => this._dvm.snapmailZvm.probeMails()) // On delete, refresh filebox
       this.fileboxElem.resetSelection();
     }
     /* -- Handle 'Reply to sender' -- */
     if (menuItemName === 'Reply to sender') {
       this.mailWriteElem.subject = 'Re: ' + this._currentMailItem.mail.subject;
-      this._replyOf = encodeHashToBase64(this._currentMailItem.ah);
+      this._replyOf = currentMailAh;
       console.log("this._replyOf set to", this._replyOf);
       this.contactsElem.resetSelection();
-      this.selectContact(encodeHashToBase64(this._currentMailItem.author), 1)
+      this.selectContact(this._currentMailItem.author, 1)
       this.disableSendButton(this.contactsElem.selectedContacts.length == 0);
     }
 
     /* -- Handle 'Reply to All' -- */
     if (menuItemName === 'Reply to all') {
-      this._replyOf = encodeHashToBase64(this._currentMailItem.ah);
+      this._replyOf = currentMailAh;
       this.mailWriteElem.subject = 'Re: ' + this._currentMailItem.mail.subject;
       this.contactsElem.resetSelection();
       /* TO */
-      for (const agentId of this._currentMailItem.mail.to) {
-        //const to_username = this.zPerspective.usernameMap.get(encodeHashToBase64(agentId));
-        this.selectContact(encodeHashToBase64(agentId), 1);
+      for (const agentHash of this._currentMailItem.mail.to) {
+        this.selectContact(new AgentId(agentHash), 1);
       }
       /* CC */
-      for (const agentId of this._currentMailItem.mail.cc) {
-        //const cc_username = this.zPerspective.usernameMap.get(encodeHashToBase64(agentId));
-        this.selectContact(encodeHashToBase64(agentId), 2);
+      for (const agentHash of this._currentMailItem.mail.cc) {
+        this.selectContact(new AgentId(agentHash), 2);
       }
       /* BCC */
       if (this._currentMailItem.bcc) {
-        for (const agentId of this._currentMailItem.bcc) {
-          //const bcc_username = this.zPerspective.usernameMap.get(encodeHashToBase64(agentId));
-          this.selectContact(encodeHashToBase64(agentId), 3);
+        for (const agentHash of this._currentMailItem.bcc) {
+          this.selectContact(new AgentId(agentHash), 3);
         }
       }
       /* Done */
@@ -437,7 +426,7 @@ export class SnapmailPage extends DnaElement<unknown, SnapmailDvm> {
       this.mailWriteElem.subject = 'Fwd: ' + this._currentMailItem.mail.subject;
       let fwd = '\n\n';
       fwd += '> ' + 'Mail from: '
-        + this.zPerspective.usernameMap[encodeHashToBase64(this._currentMailItem.author)]
+        + this.zPerspective.usernameMap.get(this._currentMailItem.author)
         + ' at ' + customDateString(this._currentMailItem.date)
         + '\n';
       const arrayOfLines = this._currentMailItem.mail.payload.match(/[^\r\n]+/g);
@@ -474,7 +463,7 @@ export class SnapmailPage extends DnaElement<unknown, SnapmailDvm> {
   async sendAction(): Promise<void> {
     /** Submit each attachment */
     const files = this.mailWriteElem.files;
-    const filesToSend: ActionHash[] = [];
+    const filesToSend: ActionId[] = [];
     for (const file of files) {
       // /** Causes stack error on big files */
       // if (!base64regex.test(file.content)) {
@@ -491,7 +480,7 @@ export class SnapmailPage extends DnaElement<unknown, SnapmailDvm> {
 
 
       /** Submit each chunk */
-      const chunksToSend: EntryHash[] = [];
+      const chunksToSend: EntryId[] = [];
       for (let i = 0; i < splitObj.numChunks; ++i) {
         const eh = await this._dvm.snapmailZvm.writeChunk(splitObj.dataHash, i, splitObj.chunks[i]);
         chunksToSend.push(eh);
@@ -507,13 +496,13 @@ export class SnapmailPage extends DnaElement<unknown, SnapmailDvm> {
       return;
     }
 
-    const toList: AgentPubKey[] = [];
-    const ccList: AgentPubKey[] = [];
-    const bccList: AgentPubKey[] = [];
+    const toList: AgentId[] = [];
+    const ccList: AgentId[] = [];
+    const bccList: AgentId[] = [];
     /* Get recipients from contactGrid */
     for (const contactItem of selection) {
-      console.log('recipient: ', contactItem.agentIdB64);
-      const agentId = decodeHashFromBase64(contactItem.agentIdB64);
+      console.log('recipient: ', contactItem.agentId);
+      const agentId = contactItem.agentId;
       switch (contactItem.recipientType) {
         case '': break;
         case 'to': toList.push(agentId); break;
@@ -527,7 +516,7 @@ export class SnapmailPage extends DnaElement<unknown, SnapmailDvm> {
     const mail: SendMailInput = {
       subject: this.mailWriteElem.getSubject()? this.mailWriteElem.getSubject(): "",
       payload: this.mailWriteElem.getContent()? this.mailWriteElem.getContent(): "",
-      reply_of: this._replyOf? decodeHashFromBase64(this._replyOf) : undefined,
+      reply_of: this._replyOf? this._replyOf.hash : undefined,
       to: toList, cc: ccList, bcc: bccList,
       manifest_address_list: filesToSend,
     };
@@ -600,11 +589,11 @@ export class SnapmailPage extends DnaElement<unknown, SnapmailDvm> {
             ></snapmail-filebox>
             <vaadin-horizontal-layout theme="spacing-xs" style="min-height:120px; height:50%; width:100%; margin-top: 4px; flex: 1 1 100px">
               <snapmail-mail-view style="width:70%;height:100%;"
-                                  .inMailItem="${this._currentMailItem}" 
-                                  .usernameMap="${this.zPerspective.usernameMap}"
+                                  .inMailItem=${this._currentMailItem}"
+                                  .usernameMap=${this.zPerspective.usernameMap}
               ></snapmail-mail-view>
               <snapmail-att-view style="width:30%;height:100%;display:flex;" 
-                                 .inMailItem="${this._currentMailItem}"
+                                 .inMailItem=${this._currentMailItem}
               ></snapmail-att-view>
             </vaadin-horizontal-layout>
           </vaadin-split-layout>
@@ -619,7 +608,7 @@ export class SnapmailPage extends DnaElement<unknown, SnapmailDvm> {
               ></snapmail-mail-write>
               <snapmail-contacts id="snapmailContacts"
                                  style="min-width: 20px; width: 35%;"
-                                 @contact-selected="${(e: CustomEvent<string[]>) => {this.disableSendButton(e.detail.length == 0)}}"></snapmail-contacts>
+                                 @contact-selected="${(e: CustomEvent<AgentId[]>) => {this.disableSendButton(e.detail.length == 0)}}"></snapmail-contacts>
             </vaadin-split-layout>
     
             <!-- ACTION MENU BAR -->

@@ -1,10 +1,8 @@
 /** Functions for manipulating mailItems */
 
-import {ActionHashB64, AgentPubKey, encodeHashToBase64} from "@holochain/client";
-
 import {InMailState, MailItem, OutMailState} from "./bindings/snapmail.types";
-import {HAPP_BUILD_MODE, HappBuildModeType} from "@ddd-qc/lit-happ";
-import {Dictionary} from "@ddd-qc/cell-proxy";
+import {HAPP_BUILD_MODE, HappBuildModeType, ActionId, AgentId, dec64, enc64} from "@ddd-qc/lit-happ";
+import {AgentIdMap, Dictionary} from "@ddd-qc/cell-proxy";
 
 const checkMarkEmoji = String.fromCodePoint(0x2714); //FE0F
 const suspensionPoints = String.fromCodePoint(0x2026);
@@ -13,7 +11,7 @@ export const paperClipEmoji = String.fromCodePoint(0x1F4CE)
 
 
 export interface MailGridItem {
-  id: ActionHashB64,
+  id: ActionId,
   username: string,
   subject: string,
   date: string,
@@ -134,7 +132,7 @@ export function customDateString(unixTimestamp: number): string {
 
 
 /** */
-function vecToUsernames(usernameMap: Dictionary<string>, agentVec: AgentPubKey[]): string {
+function vecToUsernames(usernameMap: AgentIdMap<string>, agentVec: AgentId[]): string {
   let line = '';
   for (const item of agentVec) {
     if (line.length > 0) {
@@ -147,18 +145,17 @@ function vecToUsernames(usernameMap: Dictionary<string>, agentVec: AgentPubKey[]
 
 
 /** */
-function getUsername(usernameMap: Dictionary<string>, agentHash: Uint8Array): string {
-  const authorId = encodeHashToBase64(agentHash);
-  let username = usernameMap[authorId]
+function getUsername(usernameMap: AgentIdMap<string>, agentId: AgentId): string {
+  let username = usernameMap.get(agentId);
   if (username === undefined) {
-    username = "<" + authorId.substring(0, 8) + "...>";
+    username = "<" + agentId.short + "...>";
   }
   return username;
 }
 
 
 /** Determine which Username to display (recipient or author) */
-function determineFromLine(usernameMap: Dictionary<string>, mailItem: MailItem): string {
+function determineFromLine(usernameMap: AgentIdMap<string>, mailItem: MailItem): string {
   /* Outmail special case */
   if (is_OutMail(mailItem)) {
     if (mailItem.mail.to.length > 0) {
@@ -199,7 +196,7 @@ export function determineMailStatus(mailItem: MailItem): string {
 
 
 /** */
-export function into_gridItem(usernameMap: Dictionary<string>, mailItem: MailItem): MailGridItem {
+export function into_gridItem(usernameMap: AgentIdMap<string>, mailItem: MailItem): MailGridItem {
   /* username */
   // console.log('into_gridItem: ' + encodeHashToBase64(mailItem.author) + ' username: ' + username);
   const username = determineFromLine(usernameMap, mailItem);
@@ -211,7 +208,7 @@ export function into_gridItem(usernameMap: Dictionary<string>, mailItem: MailIte
   const status = determineMailStatus(mailItem);
   // Done
   const item: MailGridItem = {
-    id: encodeHashToBase64(mailItem.ah),
+    id: new ActionId(mailItem.ah),
     username: username,
     subject: mailItem.mail.subject == "" ? "<no subject>" : mailItem.mail.subject,
     date: dateStr,
@@ -225,13 +222,13 @@ export function into_gridItem(usernameMap: Dictionary<string>, mailItem: MailIte
 
 
 /** */
-export function into_mailText(usernameMap: Dictionary<string>, mailItem: MailItem): string {
+export function into_mailText(usernameMap: AgentIdMap<string>, mailItem: MailItem): string {
   const subject = mailItem.mail.subject == "" ? "<no subject>" : mailItem.mail.subject;
   const content = mailItem.mail.payload == "" ? "<no content>" : mailItem.mail.payload;
 
   let intext = 'Subject: ' + subject + '\n\n'
     + content + '\n\n'
-    + 'Mail from: ' + usernameMap[encodeHashToBase64(mailItem.author)] + ' at ' + customDateString(mailItem.date);
+    + 'Mail from: ' + usernameMap[mailItem.author] + ' at ' + customDateString(mailItem.date);
 
   const to_line = vecToUsernames(usernameMap, mailItem.mail.to);
 

@@ -9,7 +9,7 @@ import {Dialog} from "@vaadin/dialog";
 import {ContactGridItem, SnapmailPerspective} from "../viewModel/snapmail.perspective";
 import {greenDot, redDot, stylesTemplate, SYSTEM_GROUP_LIST, whiteDot} from "../constants";
 import {GridSelectionColumn} from "@vaadin/grid/vaadin-grid-selection-column";
-import {HAPP_BUILD_MODE, HappBuildModeType, ZomeElement} from "@ddd-qc/lit-happ";
+import {HAPP_BUILD_MODE, HappBuildModeType, ZomeElement, AgentId, EntryId, ActionId, DnaId} from "@ddd-qc/lit-happ";
 import {SnapmailZvm} from "../viewModel/snapmail.zvm";
 import {MenuBar} from "@vaadin/menu-bar";
 import {Dictionary} from "@ddd-qc/cell-proxy";
@@ -17,12 +17,12 @@ import {GridItemModel} from "@vaadin/grid/src/vaadin-grid";
 
 
 /** Find and collect grid items that have the given agentIds */
-function ids_to_items(ids: string[], items: ContactGridItem[]): ContactGridItem[] {
+function ids_to_items(ids: AgentId[], items: ContactGridItem[]): ContactGridItem[] {
   const subGroup: ContactGridItem[] = [];
   for (const id of ids) {
     for (const item of items) {
       //const itemStr = htos(item.agentId);
-      if (item.agentIdB64 === id) {
+      if (item.agentId.b64 === id.b64) {
         subGroup.push(item);
         break;
       }
@@ -40,15 +40,15 @@ export class SnapmailContacts extends ZomeElement<SnapmailPerspective, SnapmailZ
   }
 
 
-  /** groupname -> agentIdB64[]  */
-  private _groupMap: Map<string, string[]> = new Map();
+  /** groupname -> agentId[]  */
+  private _groupMap: Map<string, AgentId[]> = new Map();
 
 
   /** ContactGridItem lists */
   @state() private _allContactItems: Dictionary<ContactGridItem> = {};
   @state() private _selectedItems: ContactGridItem[] = [];
   @state() private _shownItems: ContactGridItem[] = [];
-  @state() private _selectedContactIdB64s: string[] = [];
+  @state() private _selectedContactIds: AgentId[] = [];
 
   @state() private _currentGroup = SYSTEM_GROUP_LIST[0];
 
@@ -78,7 +78,7 @@ export class SnapmailContacts extends ZomeElement<SnapmailPerspective, SnapmailZ
   /** */
   resetSelection() {
     this._selectedItems = [];
-    this._selectedContactIdB64s = [];
+    this._selectedContactIds = [];
     this.updateContacts(false);
   }
 
@@ -103,9 +103,9 @@ export class SnapmailContacts extends ZomeElement<SnapmailPerspective, SnapmailZ
 
     this.contactGridElem.shadowRoot.appendChild(stylesTemplate.content.cloneNode(true));
 
-    this.loadGroupList(this.cell.dnaHash);
+    this.loadGroupList(this.cell.dnaId);
 
-    this._zvm.storePingResult(this.cell.agentPubKey, true);
+    this._zvm.storePingResult(this.cell.agentId, true);
 
     /** Probe Handles every 10 second */
     /*let _1sec =*/ setInterval(() => {
@@ -161,8 +161,8 @@ export class SnapmailContacts extends ZomeElement<SnapmailPerspective, SnapmailZ
   /** Regenerate _selectedItems */
   updateSelection(): void {
     const selection: ContactGridItem[] = [];
-    for (const selectedContactId of this._selectedContactIdB64s) {
-      const contactItem: ContactGridItem = this.allContacts.find((item) => item.agentIdB64 === selectedContactId);
+    for (const selectedContactId of this._selectedContactIds) {
+      const contactItem: ContactGridItem = this.allContacts.find((item) => item.agentId.b64 === selectedContactId.b64);
       console.assert(contactItem);
       selection.push(contactItem);
     }
@@ -174,17 +174,17 @@ export class SnapmailContacts extends ZomeElement<SnapmailPerspective, SnapmailZ
   updateContacts(canKeepSelection: boolean): void {
     console.log('   updateContacts()', canKeepSelection)
     /* Stash currently selected items (by hash) */
-    const prevSelected: string[] = [];
+    const prevSelected: AgentId[] = [];
     const recipientTypeMap: Dictionary<string> = {};
     if (canKeepSelection) {
-      for (const selectedContactId of this._selectedContactIdB64s) {
-        const contactItem: ContactGridItem = this.allContacts.find((item) => item.agentIdB64 === selectedContactId);
+      for (const selectedContactId of this._selectedContactIds) {
+        const contactItem: ContactGridItem = this.allContacts.find((item) => item.agentId.b64 === selectedContactId.b64);
         console.assert(contactItem);
-        prevSelected.push(contactItem.agentIdB64);
-        recipientTypeMap[contactItem.agentIdB64] = contactItem.recipientType;
+        prevSelected.push(contactItem.agentId);
+        recipientTypeMap[contactItem.agentId.b64] = contactItem.recipientType;
       }
     } else {
-      this._selectedContactIdB64s = []
+      this._selectedContactIds = []
     }
     //console.log({recipientTypeMap});
 
@@ -192,27 +192,27 @@ export class SnapmailContacts extends ZomeElement<SnapmailPerspective, SnapmailZ
     const selected: ContactGridItem[] = [];
     //const allItems: ContactGridItem[] = [];
     this._allContactItems = {};
-    for (const [agentIdB64, username] of Object.entries(this.perspective.usernameMap)) {
+    for (const [agentId, username] of this.perspective.usernameMap.entries()) {
       //console.log('' + agentIdB64 + ' => ' + username)
       let status = whiteDot
-      if (this.perspective.pingMap[agentIdB64]) {
-        status = this.perspective.responseMap[agentIdB64]? greenDot : redDot
+      if (this.perspective.pingMap.get(agentId)) {
+        status = this.perspective.responseMap.get(agentId)? greenDot : redDot
       }
       //const status = blueDot
       const item: ContactGridItem = {
         username,
-        agentIdB64,
+        agentId,
         recipientType: '',
         status,
       };
       /** Retrieve stashed selectedItems */
-      if (canKeepSelection && prevSelected.includes(agentIdB64)) {
+      if (canKeepSelection && prevSelected.includes(agentId)) {
         console.log("keep selected: " + item.username);
-        item.recipientType = recipientTypeMap[agentIdB64];
+        item.recipientType = recipientTypeMap[agentId.b64];
         selected.push(item);
       }
       //allItems.push(item);
-      this._allContactItems[item.agentIdB64] = item;
+      this._allContactItems[item.agentId.b64] = item;
     }
     this._selectedItems = selected;
 
@@ -269,7 +269,7 @@ export class SnapmailContacts extends ZomeElement<SnapmailPerspective, SnapmailZ
     switch(contactItem.recipientType) {
       case '': {
         nextType = 'to';
-        this._selectedContactIdB64s.push(contactItem.agentIdB64)
+        this._selectedContactIds.push(contactItem.agentId)
       } break;
       case 'to': nextType = 'cc'; break;
       case 'cc': nextType = 'bcc'; break;
@@ -277,9 +277,9 @@ export class SnapmailContacts extends ZomeElement<SnapmailPerspective, SnapmailZ
         nextType = '';
         /** Remove item from selected list */
           //if (selectedItems.length > 0) {
-        const index = this._selectedContactIdB64s.indexOf(contactItem.agentIdB64)
+        const index = this._selectedContactIds.indexOf(contactItem.agentId)
         if (index > -1) {
-          this._selectedContactIdB64s.splice(index, 1);
+          this._selectedContactIds.splice(index, 1);
         }
         //}
         break;
@@ -303,8 +303,8 @@ export class SnapmailContacts extends ZomeElement<SnapmailPerspective, SnapmailZ
     // }
     /** Form selectedItems */
     const selected: ContactGridItem[] = []
-    for (const idB64 of this._selectedContactIdB64s) {
-      const item = this.allContacts.find((item) => item.agentIdB64 === idB64);
+    for (const agentId of this._selectedContactIds) {
+      const item = this.allContacts.find((item) => item.agentId.b64 === agentId.b64);
       selected.push(item)
     }
     this._selectedItems = selected;
@@ -329,12 +329,12 @@ export class SnapmailContacts extends ZomeElement<SnapmailPerspective, SnapmailZ
     // console.assert(index > -1)
     console.log({click_before_SelectedItems: this.contactGridElem.selectedItems})
 
-    this.toggleContact(this._allContactItems[eventContext.item.agentIdB64]);
+    this.toggleContact(this._allContactItems[eventContext.item.agentId.b64]);
     this.updateShownItems(false);
 
     //console.log({click_after_SelectedItems: this.contactGridElem.selectedItems})
     this.dispatchEvent(new CustomEvent<string[]>('contact-selected',
-      { detail: this._selectedContactIdB64s, bubbles: true, composed: true }));
+      { detail: this._selectedContactIds, bubbles: true, composed: true }));
 
   }
 
@@ -352,21 +352,23 @@ export class SnapmailContacts extends ZomeElement<SnapmailPerspective, SnapmailZ
     this._currentGroup = groupName;
     this.updateShownItems(false);
     /** Store _groupMap in localStore */
-    const entries = Array.from(this._groupMap.entries());
-    console.log("Storing groups",  entries)
-    window.localStorage[this.cell.dnaHash] = JSON.stringify(entries);
+    // const entries = Array.from(this._groupMap.entries());
+    // console.log("Storing groups",  entries)
+    // window.localStorage[this.cell.dnaId.b64] = JSON.stringify(entries);
+    window.localStorage[this.cell.dnaId.b64] = JSON.stringify(this._groupMap);
   }
 
 
   /** */
-  loadGroupList(dnaId: string) {
+  loadGroupList(dnaId: DnaId) {
     try {
-      const json: unknown = window.localStorage[dnaId];
+      const json: unknown = window.localStorage[dnaId.b64];
       if (typeof json !== 'string') { throw Error("Stored localStorage is not of type string")}
-      const entries = JSON.parse(json) as [string, string[]][];
-      this._groupMap = new Map(entries);
+      // const entries = JSON.parse(json) as [string, string[]][];
+      // this._groupMap = new Map(entries);
+      this._groupMap = JSON.parse(json) as Map<string, AgentId[]>;
     } catch(err: unknown) {
-      if (!dnaId || dnaId === '') {
+      if (!dnaId) {
         console.warn("localStorage parse failed. No contact groups will be loaded. DnaId =", dnaId);
         console.warn(err);
       }
@@ -534,9 +536,9 @@ export class SnapmailContacts extends ZomeElement<SnapmailPerspective, SnapmailZ
 
         /** OnClick OK save agentIds of selected items for the group */
         okButton.addEventListener('click', () => {
-          const ids: string[] = [];
+          const ids: AgentId[] = [];
           for (const item of grid.selectedItems) {
-            ids.push(item.agentIdB64);
+            ids.push(item.agentId);
           }
           this._groupMap.set(this._currentGroup, ids);
           grid.selectedItems = [];
