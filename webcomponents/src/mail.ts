@@ -2,9 +2,9 @@
 
 import {ActionHashB64, AgentPubKey, encodeHashToBase64} from "@holochain/client";
 
-import {InMailStateType, MailItem, MailStateVariantIn, OutMailStateType} from "./bindings/snapmail.types";
-import {UsernameMap} from "./viewModel/snapmail.perspective";
+import {InMailState, MailItem, OutMailState} from "./bindings/snapmail.types";
 import {HAPP_BUILD_MODE, HappBuildModeType} from "@ddd-qc/lit-happ";
+import {Dictionary} from "@ddd-qc/cell-proxy";
 
 const checkMarkEmoji = String.fromCodePoint(0x2714); //FE0F
 const suspensionPoints = String.fromCodePoint(0x2026);
@@ -50,14 +50,14 @@ export const systemFolders = {
 export function isMailDeleted(mailItem: MailItem): boolean {
   //console.log({isMailDeleted_mail: mailItem})
   if ("In" in mailItem.state) {
-    const inState = mailItem.state.In as unknown as InMailStateType;
+    const inState = mailItem.state.In as unknown as InMailState;
     //console.log({inState})
-    return InMailStateType.Deleted === inState;
+    return InMailState.Deleted === inState;
   }
   if ("Out" in mailItem.state) {
-    const outState = mailItem.state.Out as unknown as OutMailStateType;
+    const outState = mailItem.state.Out as unknown as OutMailState;
     //console.log({outState})
-    return OutMailStateType.Deleted === outState;
+    return OutMailState.Deleted === outState;
   }
   console.error('isMailDeleted() Invalid mailItem object', mailItem)
   return false;
@@ -85,8 +85,8 @@ export function hasMailBeenOpened(mailItem: MailItem) {
     return true;
   }
   if ("In" in mailItem.state) {
-    const inState = mailItem.state.In as unknown as InMailStateType;
-    return !(InMailStateType.Unacknowledged == inState);
+    const inState = mailItem.state.In as unknown as InMailState;
+    return !(InMailState.Unacknowledged == inState);
   }
   console.error('hasMailBeenOpened() Invalid mailItem object')
   return false;
@@ -96,22 +96,22 @@ export function hasMailBeenOpened(mailItem: MailItem) {
 /** Return mailItem class */
 export function determineMailCssClass(mailItem: MailItem): string {
   if ("Out" in mailItem.state) {
-    const outMailState = mailItem.state.Out as unknown as OutMailStateType;
-    if (OutMailStateType.Unsent === outMailState) return ''; // 'pending';
-    if (OutMailStateType.AllSent === outMailState) return ''; // 'partially';
-    if (OutMailStateType.AllReceived === outMailState) return '';
-    if (OutMailStateType.AllAcknowledged === outMailState) return ''; // 'received';
-    if (OutMailStateType.Deleted === outMailState) return 'deleted';
-    return outMailState === OutMailStateType.Deleted ? 'deleted' : '';
+    const outMailState = mailItem.state.Out as unknown as OutMailState;
+    if (OutMailState.Unsent === outMailState) return ''; // 'pending';
+    if (OutMailState.AllSent === outMailState) return ''; // 'partially';
+    if (OutMailState.AllReceived === outMailState) return '';
+    if (OutMailState.AllAcknowledged === outMailState) return ''; // 'received';
+    if (OutMailState.Deleted === outMailState) return 'deleted';
+    return outMailState === OutMailState.Deleted ? 'deleted' : '';
   }
 
   if ("In" in mailItem.state) {
-    const inState = mailItem.state.In  as unknown as InMailStateType
-    if (InMailStateType.Unacknowledged === inState) return 'newmail';
-    if (InMailStateType.AckUnsent === inState) return ''; //'pending';
-    if (InMailStateType.AckPending === inState) return ''; // 'partially';
-    if (InMailStateType.AckDelivered === inState) return ''; // 'received';
-    if (InMailStateType.Deleted === inState) return 'deleted';
+    const inState = mailItem.state.In  as unknown as InMailState;
+    if (InMailState.Unacknowledged === inState) return 'newmail';
+    if (InMailState.AckUnsent === inState) return ''; //'pending';
+    if (InMailState.AckPending === inState) return ''; // 'partially';
+    if (InMailState.AckDelivered === inState) return ''; // 'received';
+    if (InMailState.Deleted === inState) return 'deleted';
   }
   console.error('determineMailCssClass() Invalid mailItem object', mailItem);
 }
@@ -134,7 +134,7 @@ export function customDateString(unixTimestamp: number): string {
 
 
 /** */
-function vecToUsernames(usernameMap: UsernameMap, agentVec: AgentPubKey[]): string {
+function vecToUsernames(usernameMap: Dictionary<string>, agentVec: AgentPubKey[]): string {
   let line = '';
   for (const item of agentVec) {
     if (line.length > 0) {
@@ -147,7 +147,7 @@ function vecToUsernames(usernameMap: UsernameMap, agentVec: AgentPubKey[]): stri
 
 
 /** */
-function getUsername(usernameMap: UsernameMap, agentHash: Uint8Array): string {
+function getUsername(usernameMap: Dictionary<string>, agentHash: Uint8Array): string {
   const authorId = encodeHashToBase64(agentHash);
   let username = usernameMap[authorId]
   if (username === undefined) {
@@ -158,7 +158,7 @@ function getUsername(usernameMap: UsernameMap, agentHash: Uint8Array): string {
 
 
 /** Determine which Username to display (recipient or author) */
-function determineFromLine(usernameMap: UsernameMap, mailItem: MailItem): string {
+function determineFromLine(usernameMap: Dictionary<string>, mailItem: MailItem): string {
   /* Outmail special case */
   if (is_OutMail(mailItem)) {
     if (mailItem.mail.to.length > 0) {
@@ -179,7 +179,7 @@ export function determineMailStatus(mailItem: MailItem): string {
   const state = mailItem.state;
   console.log("determineMailStatus() state", mailItem.state);
   if ("Out" in state) {
-    const outMailState = state.Out as unknown as OutMailStateType; // FIXME: hackish
+    const outMailState = state.Out as unknown as OutMailState; // FIXME: hackish
     if ('Unsent' === outMailState) return suspensionPoints;
     if ('AllSent' === outMailState) return suspensionPoints;
     if ('AllReceived' === outMailState) return checkMarkEmoji;
@@ -199,7 +199,7 @@ export function determineMailStatus(mailItem: MailItem): string {
 
 
 /** */
-export function into_gridItem(usernameMap: UsernameMap, mailItem: MailItem): MailGridItem {
+export function into_gridItem(usernameMap: Dictionary<string>, mailItem: MailItem): MailGridItem {
   /* username */
   // console.log('into_gridItem: ' + encodeHashToBase64(mailItem.author) + ' username: ' + username);
   const username = determineFromLine(usernameMap, mailItem);
@@ -225,7 +225,7 @@ export function into_gridItem(usernameMap: UsernameMap, mailItem: MailItem): Mai
 
 
 /** */
-export function into_mailText(usernameMap: UsernameMap, mailItem: MailItem): string {
+export function into_mailText(usernameMap: Dictionary<string>, mailItem: MailItem): string {
   const subject = mailItem.mail.subject == "" ? "<no subject>" : mailItem.mail.subject;
   const content = mailItem.mail.payload == "" ? "<no content>" : mailItem.mail.payload;
 

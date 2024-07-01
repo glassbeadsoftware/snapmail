@@ -51,7 +51,6 @@ export async function createSnapmailApplet(
   const app = new SnapmailApp(
     mainAppAgentWs,
       undefined,
-      false,
       mainAppInfo.installed_app_id,
       appletViewInfo.view,
       weServices,

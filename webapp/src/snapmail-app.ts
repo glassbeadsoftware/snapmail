@@ -48,18 +48,21 @@ export class SnapmailApp extends HappElement {
   /** */
   constructor(appWs?: AppWebsocket,
               private _adminWs?: AdminWebsocket,
-              private _canAuthorizeZfns?: boolean,
               readonly appId?: InstalledAppId,
               public appletView?: AppletView,
               private _weServices?: WeaveServices,
               private _appletHash?: AppletHash,
               private _startingNickname?: string,
   ) {
-    super(appWs? appWs : HC_APP_PORT, appId, _adminWs? undefined : new URL(`ws://localhost:${HC_ADMIN_PORT}`));
+    /** Figure out arguments for super() */
+    const adminUrl = _adminWs
+      ? undefined
+      : HC_ADMIN_PORT
+        ? new URL(`ws://localhost:${HC_ADMIN_PORT}`)
+        : undefined;
+    /** */
+    super(appWs? appWs : HC_APP_PORT, appId, adminUrl);
     console.log("<snapmail-app> ctor", appId, appWs, _adminWs);
-    if (_canAuthorizeZfns == undefined) {
-      this._canAuthorizeZfns = true;
-    }
     if (_weServices) {
       console.log(`\t\tProviding context "${weClientContext}" | in host `, _weServices, this);
       new ContextProvider(this, weClientContext, _weServices);
@@ -80,7 +83,7 @@ export class SnapmailApp extends HappElement {
 
   /** */
   async hvmConstructed() {
-    console.log("<snapmail-app>.hvmConstructed()", this._adminWs, this._canAuthorizeZfns)
+    console.log("<snapmail-app>.hvmConstructed()", this._adminWs)
 
     // /** Authorize all zome calls */
     // if (!this._adminWs && this._canAuthorizeZfns) {

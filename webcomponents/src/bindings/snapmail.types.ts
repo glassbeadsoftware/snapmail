@@ -320,9 +320,7 @@ export interface InMail {
 }
 
 /** Possible states of an InMail entry */
-export type InMailState =
-  | {Unacknowledged: null} | {AckUnsent: null} | {AckPending: null} | {AckDelivered: null} | {Deleted: null};
-export enum InMailStateType {
+export enum InMailState {
 	Unacknowledged = 'Unacknowledged',
 	AckUnsent = 'AckUnsent',
 	AckPending = 'AckPending',
@@ -331,18 +329,14 @@ export enum InMailStateType {
 }
 
 /** State of a single delivery of a mail or ack to a unique recipient */
-export type DeliveryState =
-  | {Unsent: null} | {Pending: null} | {Delivered: null};
-export enum DeliveryStateType {
+export enum DeliveryState {
 	Unsent = 'Unsent',
 	Pending = 'Pending',
 	Delivered = 'Delivered',
 }
 
 /** Possible states of an OutMail entry */
-export type OutMailState =
-  | {Unsent: null} | {AllSent: null} | {AllReceived: null} | {AllAcknowledged: null} | {Deleted: null};
-export enum OutMailStateType {
+export enum OutMailState {
 	Unsent = 'Unsent',
 	AllSent = 'AllSent',
 	AllReceived = 'AllReceived',
@@ -372,9 +366,7 @@ export interface MailItem {
   status?: string
 }
 
-export type RecipientKind =
-  | {TO: null} | {CC: null} | {BCC: null};
-export enum RecipientKindType {
+export enum RecipientKind {
 	To = 'To',
 	Cc = 'Cc',
 	Bcc = 'Bcc',
@@ -464,9 +456,7 @@ export type SnapmailEntryVariantFileManifest = {FileManifest: FileManifest}
 export type SnapmailEntry = 
  | SnapmailEntryVariantPubEncKey | SnapmailEntryVariantHandle | SnapmailEntryVariantInMail | SnapmailEntryVariantOutMail | SnapmailEntryVariantOutAck | SnapmailEntryVariantInAck | SnapmailEntryVariantPendingMail | SnapmailEntryVariantPendingAck | SnapmailEntryVariantDeliveryConfirmation | SnapmailEntryVariantFileChunk | SnapmailEntryVariantFileManifest;
 
-export type SnapmailLink =
-  | {Members: null} | {AckInbox: null} | {MailInbox: null} | {Handle: null} | {Pending: null} | {Pendings: null} | {EncKey: null};
-export enum SnapmailLinkType {
+export enum SnapmailLink {
 	Members = 'Members',
 	AckInbox = 'AckInbox',
 	MailInbox = 'MailInbox',
