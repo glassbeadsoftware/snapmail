@@ -6,7 +6,7 @@ import {SnapmailPerspective} from "../viewModel/snapmail.perspective";
 import {base64ToArrayBuffer} from "../utils";
 import {redStopEmoji, hourGlassEmoji, stylesTemplate, greenCheckEmoji} from "../constants";
 import {AttGridItem} from "../mail";
-import {ZomeElement, EntryId, AgentId} from "@ddd-qc/lit-happ";
+import {ZomeElement, EntryId, AgentId, ActionId} from "@ddd-qc/lit-happ";
 import {SnapmailZvm} from "../viewModel/snapmail.zvm";
 import {GridItemModel} from "@vaadin/grid/src/vaadin-grid";
 
@@ -90,7 +90,7 @@ export class SnapmailAttView extends ZomeElement<SnapmailPerspective, SnapmailZv
       /** Check if attachment is available in local source-chain */
       let hasDownloadedAttachment = false;
       try {
-        /*const fileManifest =*/ await this._zvm.getManifest(attachmentInfo.manifest_eh);
+        /*const fileManifest =*/ await this._zvm.getManifest(new EntryId(attachmentInfo.manifest_eh));
         hasDownloadedAttachment = true;
       } catch (_e) {
         // TODO error message?
@@ -183,7 +183,7 @@ export class SnapmailAttView extends ZomeElement<SnapmailPerspective, SnapmailZv
     if (changedProperties.has('inMailItem')) {
       const missingCount = await this.fillAttachmentGrid(this.inMailItem.mail);
       if (missingCount > 0) {
-        await this._zvm.getMissingAttachments(new AgentId(this.inMailItem.author), this.inMailItem.ah);
+        await this._zvm.getMissingAttachments(new AgentId(this.inMailItem.author), new ActionId(this.inMailItem.ah));
       }
     }
   }

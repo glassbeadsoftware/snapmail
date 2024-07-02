@@ -333,7 +333,7 @@ export class SnapmailContacts extends ZomeElement<SnapmailPerspective, SnapmailZ
     this.updateShownItems(false);
 
     //console.log({click_after_SelectedItems: this.contactGridElem.selectedItems})
-    this.dispatchEvent(new CustomEvent<string[]>('contact-selected',
+    this.dispatchEvent(new CustomEvent<AgentId[]>('contact-selected',
       { detail: this._selectedContactIds, bubbles: true, composed: true }));
 
   }

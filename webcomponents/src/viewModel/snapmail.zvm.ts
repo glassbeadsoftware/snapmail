@@ -1,10 +1,10 @@
 import {AppSignalCb} from '@holochain/client';
-import {delay, ZomeViewModel, AgentIdMap, ActionIdMap, AgentId, ActionId, EntryId} from "@ddd-qc/lit-happ";
+import {delay, ZomeViewModel, AgentIdMap, ActionIdMap, AgentId, ActionId, EntryId, AnyDhtId} from "@ddd-qc/lit-happ";
 import {SnapmailProxy} from "../bindings/snapmail.proxy";
 import {createNewPerspective, SnapmailPerspective} from "./snapmail.perspective";
 import {
   FileManifest,
-  SendMailInput, SignalProtocolType, SnapmailSignal
+  SendMailInput, SignalProtocolType, SnapmailSignal, WriteManifestInput
 } from "../bindings/snapmail.types";
 import {AppSignal} from "@holochain/client/lib/api/app/types";
 import {determineMailCssClass, is_OutMail, isMailDeleted} from "../mail";
@@ -141,7 +141,7 @@ export class SnapmailZvm extends ZomeViewModel {
     const mailItems = await this.zomeProxy.getAllMails();
     this._perspective.mailMap = new ActionIdMap();
     for (const mailItem of mailItems) {
-      this._perspective.mailMap.set(mailItem.ah, mailItem);
+      this._perspective.mailMap.set(new ActionId(mailItem.ah), mailItem);
     }
     this.notifySubscribers();
   }
@@ -157,7 +157,7 @@ export class SnapmailZvm extends ZomeViewModel {
     }
     this._canPing = false;
     /* Sort pingMap by value to get oldest pinged agent */
-    const sortedPings = this._perspective.pingMap.entries()
+    const sortedPings = Array.from(this._perspective.pingMap.entries())
       .sort((a, b) => a[1] - b[1]);
     //console.log("   sortedPings:", sortedPings);
     /* Ping first agent in sorted list */
@@ -199,7 +199,7 @@ export class SnapmailZvm extends ZomeViewModel {
   /** -- -- */
 
   async pingAgent(destination: AgentId): Promise<boolean> {
-    return this.zomeProxy.pingAgent(destination);
+    return this.zomeProxy.pingAgent(destination.hash);
   }
 
 
@@ -260,10 +260,10 @@ export class SnapmailZvm extends ZomeViewModel {
     filetype: string,
     orig_filesize: number,
     chunks: EntryId[]): Promise<ActionId> {
-    const params = {
+    const params: WriteManifestInput = {
       data_hash: dataHash,
       filename, filetype, orig_filesize,
-      chunks
+      chunks: chunks.map(id => id.hash)
     }
     const ah = await this.zomeProxy.writeManifest(params);
     return new ActionId(ah);

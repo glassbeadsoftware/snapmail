@@ -151,7 +151,7 @@ export class SnapmailPage extends DnaElement<unknown, SnapmailDvm> {
       case SignalProtocolType.ReceivedMail:
         const mailItem: MailItem = (signal.payload as SignalProtocolVariantReceivedMail).ReceivedMail;
         console.log("received_mail:", mailItem);
-        title = 'New Mail received from ' + this.zPerspective.usernameMap.get(mailItem.author);
+        title = 'New Mail received from ' + this.zPerspective.usernameMap.get(new AgentId(mailItem.author));
         body = mailItem.mail.subject;
         ///*await*/ this._dvm.snapmailZvm.probeMails();
       break;
@@ -381,6 +381,7 @@ export class SnapmailPage extends DnaElement<unknown, SnapmailDvm> {
     }
 
     const currentMailAh = new ActionId(this._currentMailItem.ah);
+    const currentMailAuthor = new AgentId(this._currentMailItem.author);
     /* -- Handle 'Trash' -- */
     if (menuItemName === 'Trash') {
       this._replyOf = undefined;
@@ -395,7 +396,7 @@ export class SnapmailPage extends DnaElement<unknown, SnapmailDvm> {
       this._replyOf = currentMailAh;
       console.log("this._replyOf set to", this._replyOf);
       this.contactsElem.resetSelection();
-      this.selectContact(this._currentMailItem.author, 1)
+      this.selectContact(currentMailAuthor, 1)
       this.disableSendButton(this.contactsElem.selectedContacts.length == 0);
     }
 
@@ -426,7 +427,7 @@ export class SnapmailPage extends DnaElement<unknown, SnapmailDvm> {
       this.mailWriteElem.subject = 'Fwd: ' + this._currentMailItem.mail.subject;
       let fwd = '\n\n';
       fwd += '> ' + 'Mail from: '
-        + this.zPerspective.usernameMap.get(this._currentMailItem.author)
+        + this.zPerspective.usernameMap.get(currentMailAuthor)
         + ' at ' + customDateString(this._currentMailItem.date)
         + '\n';
       const arrayOfLines = this._currentMailItem.mail.payload.match(/[^\r\n]+/g);
@@ -517,8 +518,10 @@ export class SnapmailPage extends DnaElement<unknown, SnapmailDvm> {
       subject: this.mailWriteElem.getSubject()? this.mailWriteElem.getSubject(): "",
       payload: this.mailWriteElem.getContent()? this.mailWriteElem.getContent(): "",
       reply_of: this._replyOf? this._replyOf.hash : undefined,
-      to: toList, cc: ccList, bcc: bccList,
-      manifest_address_list: filesToSend,
+      to: toList.map(id => id.hash),
+      cc: ccList.map(id => id.hash),
+      bcc: bccList.map(id => id.hash),
+      manifest_address_list: filesToSend.map(id => id.hash),
     };
     console.log('sending mail:', mail);
     /* Send Mail */

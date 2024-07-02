@@ -159,14 +159,14 @@ function determineFromLine(usernameMap: AgentIdMap<string>, mailItem: MailItem):
   /* Outmail special case */
   if (is_OutMail(mailItem)) {
     if (mailItem.mail.to.length > 0) {
-      return 'To: ' + vecToUsernames(usernameMap, mailItem.mail.to)
+      return 'To: ' + vecToUsernames(usernameMap, mailItem.mail.to.map(hash => new AgentId(hash)))
     } else if (mailItem.mail.cc.length > 0) {
-      return 'To: ' + vecToUsernames(usernameMap, mailItem.mail.cc)
+      return 'To: ' + vecToUsernames(usernameMap, mailItem.mail.cc.map(hash => new AgentId(hash)))
     } else if (mailItem.bcc && mailItem.bcc.length > 0) {
-      return 'To: ' + vecToUsernames(usernameMap, mailItem.bcc)
+      return 'To: ' + vecToUsernames(usernameMap, mailItem.bcc.map(hash => new AgentId(hash)))
     }
   }
-  return getUsername(usernameMap, mailItem.author);
+  return getUsername(usernameMap, new AgentId(mailItem.author));
 }
 
 
@@ -228,15 +228,15 @@ export function into_mailText(usernameMap: AgentIdMap<string>, mailItem: MailIte
 
   let intext = 'Subject: ' + subject + '\n\n'
     + content + '\n\n'
-    + 'Mail from: ' + usernameMap[mailItem.author] + ' at ' + customDateString(mailItem.date);
+    + 'Mail from: ' + usernameMap.get(new AgentId(mailItem.author)) + ' at ' + customDateString(mailItem.date);
 
-  const to_line = vecToUsernames(usernameMap, mailItem.mail.to);
+  const to_line = vecToUsernames(usernameMap, mailItem.mail.to.map(hash => new AgentId(hash)));
 
   const can_cc = mailItem.mail.cc.length > 0;
-  const cc_line = vecToUsernames(usernameMap, mailItem.mail.cc);
+  const cc_line = vecToUsernames(usernameMap, mailItem.mail.cc.map(hash => new AgentId(hash)));
 
   const can_bcc = mailItem.bcc.length > 0;
-  const bcc_line = vecToUsernames(usernameMap, mailItem.bcc);
+  const bcc_line = vecToUsernames(usernameMap, mailItem.bcc.map(hash => new AgentId(hash)));
 
   intext += '\nTo: ' + to_line;
   if (can_cc) {
@@ -250,7 +250,7 @@ export function into_mailText(usernameMap: AgentIdMap<string>, mailItem: MailIte
   if (HAPP_BUILD_MODE == HappBuildModeType.Debug) {
     intext += '\n\nDEBUG INFO';
     intext += '\nState: ' + JSON.stringify(mailItem.state);
-    intext += '\nActionHash: ' + encodeHashToBase64(mailItem.ah);
+    intext += '\nActionHash: ' + enc64(mailItem.ah);
     intext += '\nReply: ' + JSON.stringify(mailItem.reply);
     intext += '\nstatus: ' + JSON.stringify(mailItem.status);
     intext += '\nFiles: ' + mailItem.mail.attachments.length;

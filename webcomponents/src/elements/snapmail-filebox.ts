@@ -200,7 +200,7 @@ export class SnapmailFilebox extends ZomeElement<SnapmailPerspective, SnapmailZv
 
     const selectedBox: string = this.folderElem.value//.codePointAt(0);
 
-    const mailItems: MailItem[] = new Uint8Array(this.perspective.mailMap.values());
+    const mailItems: MailItem[] = Array.from(this.perspective.mailMap.values());
     for (const mailItem of mailItems) {
       //console.log({mailItem})
       const isDeleted = isMailDeleted(mailItem);
