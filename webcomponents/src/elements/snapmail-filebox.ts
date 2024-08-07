@@ -22,6 +22,7 @@ import {SnapmailZvm} from "../viewModel/snapmail.zvm";
 
 import {Select, SelectChangeEvent} from "@vaadin/select";
 import {GridItemModel} from "@vaadin/grid/src/vaadin-grid";
+import {ActionHashB64} from "@holochain/client";
 
 //import '@vaadin/icon';
 //import '@vaadin/vaadin-lumo-styles';
@@ -183,10 +184,10 @@ export class SnapmailFilebox extends ZomeElement<SnapmailPerspective, SnapmailZv
   fillMailGrid() {
     console.log("  fillMailGrid()")
     /** Get currently selected hashs */
-    const prevSelected = [];
+    const prevSelected: ActionHashB64[] = [];
     if (this.mailGridElem.selectedItems) {
       for (const mailItem of this.mailGridElem.selectedItems) {
-        prevSelected.push(mailItem.id);
+        prevSelected.push(mailItem.id.b64);
       }
     }
 
@@ -233,7 +234,7 @@ export class SnapmailFilebox extends ZomeElement<SnapmailPerspective, SnapmailZv
       const gridItem = into_gridItem(this.perspective.usernameMap, mailItem);
       // console.log('gridItem.id = ' + gridItem.id);
       items.push(gridItem);
-      if (prevSelected.includes(gridItem.id)) {
+      if (prevSelected.includes(gridItem.id.b64)) {
         selected.push(gridItem);
       }
     }

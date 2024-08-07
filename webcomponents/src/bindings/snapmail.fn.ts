@@ -8,8 +8,6 @@ export const snapmailFunctionNames: FunctionName[] = [
 	"entry_defs", 
 	"get_zome_info", 
 	"get_dna_info",
-
-
 	"find_manifest",
 	"get_all_manifests",
 	"get_chunk",

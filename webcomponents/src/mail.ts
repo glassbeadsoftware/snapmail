@@ -2,7 +2,7 @@
 
 import {InMailState, MailItem, OutMailState} from "./bindings/snapmail.types";
 import {HAPP_BUILD_MODE, HappBuildModeType, ActionId, AgentId, dec64, enc64} from "@ddd-qc/lit-happ";
-import {AgentIdMap, Dictionary} from "@ddd-qc/cell-proxy";
+import {AgentIdMap} from "@ddd-qc/cell-proxy";
 
 const checkMarkEmoji = String.fromCodePoint(0x2714); //FE0F
 const suspensionPoints = String.fromCodePoint(0x2026);

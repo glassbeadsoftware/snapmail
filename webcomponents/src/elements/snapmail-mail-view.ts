@@ -18,7 +18,7 @@ export class SnapmailMailView extends ScopedElementsMixin(LitElement) {
 
   /** */
   render() {
-    console.log("<snapmail-mail-view>.render()", this.inMailItem);
+    console.log("<snapmail-mail-view>.render()", this.inMailItem, this.usernameMap);
 
     let mailText = '<no mail selected>';
     if (this.inMailItem && this.usernameMap) {

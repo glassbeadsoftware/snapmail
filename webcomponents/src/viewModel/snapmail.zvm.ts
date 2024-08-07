@@ -1,5 +1,5 @@
 import {AppSignalCb} from '@holochain/client';
-import {delay, ZomeViewModel, AgentIdMap, ActionIdMap, AgentId, ActionId, EntryId, AnyDhtId} from "@ddd-qc/lit-happ";
+import {delay, ZomeViewModel, AgentIdMap, ActionIdMap, AgentId, ActionId, EntryId, DhtId} from "@ddd-qc/lit-happ";
 import {SnapmailProxy} from "../bindings/snapmail.proxy";
 import {createNewPerspective, SnapmailPerspective} from "./snapmail.perspective";
 import {
@@ -52,8 +52,8 @@ export class SnapmailZvm extends ZomeViewModel {
     await this.probeMails();
     /** Send notification for each new inMail */
     console.log("SnapmailZvm.probeAllInnerAsync()", newInMails.length);
-    const fakeAppSignal = {
-      cell_id: this.cell.id,
+    const fakeAppSignal: AppSignal = {
+      cell_id: this.cell.address.intoId(),
       zome_name: this._zomeProxy.zomeName,
       payload: null,
     };
@@ -66,7 +66,7 @@ export class SnapmailZvm extends ZomeViewModel {
       }
       const signal: SnapmailSignal = {
         kind: SignalProtocolType.ReceivedMail,
-        from: this.cell.agentId.hash, // Set author to self so it doesn't process a popup
+        from: this.cell.address.agentId.hash, // Set author to self so it doesn't process a popup
         payload: {ReceivedMail: mailItem}
       }
       fakeAppSignal.payload = signal;
@@ -163,7 +163,7 @@ export class SnapmailZvm extends ZomeViewModel {
     /* Ping first agent in sorted list */
     const pingedAgentId = sortedPings.entries().next()[0];
     //console.log("pinging: ", pingedAgentB64);
-    if (pingedAgentId.b64 === this.cell.agentId.b64) {
+    if (pingedAgentId.equals(this.cell.address.agentId)) {
       //console.log("pinging self");
       this.storePingResult(pingedAgentId, true);
       this._canPing = true;
@@ -240,7 +240,7 @@ export class SnapmailZvm extends ZomeViewModel {
     }
 
 
-    async getManifest(manifestAddress: AnyDhtId): Promise<FileManifest> {
+    async getManifest(manifestAddress: DhtId): Promise<FileManifest> {
       return this.zomeProxy.getManifest(manifestAddress.hash);
     }
 

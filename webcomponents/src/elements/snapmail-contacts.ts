@@ -103,9 +103,9 @@ export class SnapmailContacts extends ZomeElement<SnapmailPerspective, SnapmailZ
 
     this.contactGridElem.shadowRoot.appendChild(stylesTemplate.content.cloneNode(true));
 
-    this.loadGroupList(this.cell.dnaId);
+    this.loadGroupList(this.cell.address.dnaId);
 
-    this._zvm.storePingResult(this.cell.agentId, true);
+    this._zvm.storePingResult(this.cell.address.agentId, true);
 
     /** Probe Handles every 10 second */
     /*let _1sec =*/ setInterval(() => {
@@ -206,7 +206,8 @@ export class SnapmailContacts extends ZomeElement<SnapmailPerspective, SnapmailZ
         status,
       };
       /** Retrieve stashed selectedItems */
-      if (canKeepSelection && prevSelected.includes(agentId)) {
+      const prevSelectedB64 = prevSelected.map((id) => id.b64);
+      if (canKeepSelection && prevSelectedB64.includes(agentId.b64)) {
         console.log("keep selected: " + item.username);
         item.recipientType = recipientTypeMap[agentId.b64];
         selected.push(item);
@@ -222,7 +223,7 @@ export class SnapmailContacts extends ZomeElement<SnapmailPerspective, SnapmailZ
       return obj1.username < obj2.username? -1 : 1;
     });
 
-    //console.log('updateContacts() - END', this._allContactItems)
+    console.log('updateContacts() - END', this._selectedItems)
   }
 
 
@@ -355,7 +356,7 @@ export class SnapmailContacts extends ZomeElement<SnapmailPerspective, SnapmailZ
     // const entries = Array.from(this._groupMap.entries());
     // console.log("Storing groups",  entries)
     // window.localStorage[this.cell.dnaId.b64] = JSON.stringify(entries);
-    window.localStorage[this.cell.dnaId.b64] = JSON.stringify(this._groupMap);
+    window.localStorage[this.cell.address.dnaId.b64] = JSON.stringify(this._groupMap);
   }
 
 

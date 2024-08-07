@@ -138,7 +138,7 @@ export class SnapmailPage extends DnaElement<unknown, SnapmailDvm> {
     console.log('<snapmail-page>.Received signal:', signalwrapper);
     const signal: SnapmailSignal = signalwrapper.payload as SnapmailSignal;
     const sender = new AgentId(signal.from);
-    const canPopup = sender.b64 != this.cell.agentId.b64 || HAPP_BUILD_MODE == HappBuildModeType.Debug;
+    const canPopup = sender.b64 != this.cell.address.agentId.b64 || HAPP_BUILD_MODE == HappBuildModeType.Debug;
 
     /** store ping */
     this._dvm.snapmailZvm.storePingResult(sender, true);
@@ -248,9 +248,9 @@ export class SnapmailPage extends DnaElement<unknown, SnapmailDvm> {
     }
     /** -- Update Abbr -- */
     const handleAbbr: HTMLElement = this.shadowRoot.getElementById('handleAbbr');
-    handleAbbr.title = "agentId: " + this.cell.agentId;
+    handleAbbr.title = "agentId: " + this.cell.address.agentId.b64;
     const titleAbbr: HTMLElement = this.shadowRoot.getElementById('titleAbbr');
-    titleAbbr.title = this.cell.dnaId.b64;
+    titleAbbr.title = this.cell.address.dnaId.b64;
     /** -- Loading Done -- */
     const loadingBar = this.shadowRoot.getElementById('loadingBar') as ProgressBar;
     loadingBar.style.display = "none";
@@ -279,8 +279,8 @@ export class SnapmailPage extends DnaElement<unknown, SnapmailDvm> {
     console.log("Calling getMyHandle() for ELECTRON");
     const startingHandle = await this._dvm.snapmailZvm.getMyHandle();
     console.log("getMyHandle() returned: " + startingHandle);
-    console.log("startingInfo sending dnaHash =", this.cell.dnaId);
-    const reply = MY_ELECTRON_API.startingInfo(startingHandle, this.cell.dnaId.hash)
+    console.log("startingInfo sending dnaHash =", this.cell.address.dnaId.short);
+    const reply = MY_ELECTRON_API.startingInfo(startingHandle, this.cell.address.dnaId.hash)
     console.log("startingInfo reply =", reply);
     if (reply != "<noname>") {
       await this.setUsername(reply);
@@ -394,9 +394,9 @@ export class SnapmailPage extends DnaElement<unknown, SnapmailDvm> {
     if (menuItemName === 'Reply to sender') {
       this.mailWriteElem.subject = 'Re: ' + this._currentMailItem.mail.subject;
       this._replyOf = currentMailAh;
-      console.log("this._replyOf set to", this._replyOf);
+      console.log("this._replyOf set to", this._replyOf.print());
       this.contactsElem.resetSelection();
-      this.selectContact(currentMailAuthor, 1)
+      this.selectContact(currentMailAuthor, 1);
       this.disableSendButton(this.contactsElem.selectedContacts.length == 0);
     }
 
@@ -592,7 +592,7 @@ export class SnapmailPage extends DnaElement<unknown, SnapmailDvm> {
             ></snapmail-filebox>
             <vaadin-horizontal-layout theme="spacing-xs" style="min-height:120px; height:50%; width:100%; margin-top: 4px; flex: 1 1 100px">
               <snapmail-mail-view style="width:70%;height:100%;"
-                                  .inMailItem=${this._currentMailItem}"
+                                  .inMailItem=${this._currentMailItem}
                                   .usernameMap=${this.zPerspective.usernameMap}
               ></snapmail-mail-view>
               <snapmail-att-view style="width:30%;height:100%;display:flex;" 
@@ -618,7 +618,7 @@ export class SnapmailPage extends DnaElement<unknown, SnapmailDvm> {
             <div style="width:100%; display:flex;justify-content: flex-end">
                 <vaadin-menu-bar id="ActionBar" theme="primary"
                                  style="height:40px; margin-top:5px; margin-bottom:10px;"
-                                 .items="${this._actionMenuItems}"
+                                 .items=${this._actionMenuItems}
                                  @item-selected="${(e:MenuBarItemSelectedEvent) => {this.onActionMenuSelected(e.detail.value.text)}}"
                 >
                 </vaadin-menu-bar>

@@ -102,18 +102,28 @@ export class SnapmailApp extends HappElement {
     // }
 
     /** Probe EntryDefs */
-    const allAppEntryTypes = await this.snapmailDvm.fetchAllEntryDefs();
-    console.log("<snapmail-app>.hvmConstructed(), allAppEntryTypes", allAppEntryTypes);
-    console.log(`<snapmail-app> ${SNAPMAIL_DEFAULT_COORDINATOR_ZOME_NAME} entries`, allAppEntryTypes[SNAPMAIL_DEFAULT_COORDINATOR_ZOME_NAME]);
-    if (allAppEntryTypes[SNAPMAIL_DEFAULT_COORDINATOR_ZOME_NAME].length == 0) {
-      console.warn(`<snapmail-app> No entries found for ${SNAPMAIL_DEFAULT_COORDINATOR_ZOME_NAME}`);
-    } else {
-      this._hasHolochainFailed = false;
-    }
+    this._hasHolochainFailed = !(await this.attemptEntryDefs(5, 1000));
+
 
     /** Provide Cell Context */
     //console.log({cell: this.snapmailDvm.cell});
     new ContextProvider(this, cellContext, this.snapmailDvm.cell);
+  }
+
+
+  private async attemptEntryDefs(attempts: number, delayMs: number): Promise<boolean> {
+    while(attempts > 0) {
+      attempts -= 1;
+      const allAppEntryTypes = await this.snapmailDvm.fetchAllEntryDefs();
+      if (Object.values(allAppEntryTypes[SNAPMAIL_DEFAULT_COORDINATOR_ZOME_NAME]).length == 0) {
+        console.warn(`No entries found for ${SNAPMAIL_DEFAULT_COORDINATOR_ZOME_NAME}`);
+        await delay(delayMs);
+      } else {
+        // console.log("allAppEntryTypes", allAppEntryTypes)
+        return true;
+      }
+    }
+    return false;
   }
 
 

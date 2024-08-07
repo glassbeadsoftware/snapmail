@@ -3,14 +3,14 @@
 import {
 WebsocketConnectionOptions,
 /** types.ts */
-HoloHash,
-AgentPubKey,
-DnaHash,
-WasmHash,
-EntryHash,
-ActionHash,
-AnyDhtHash,
-ExternalHash,
+//HoloHash,
+//AgentPubKey,
+//DnaHash,
+//WasmHash,
+//EntryHash,
+//ActionHash,
+//AnyDhtHash,
+//ExternalHash,
 KitsuneAgent,
 KitsuneSpace,
 HoloHashB64,
@@ -123,6 +123,17 @@ NetworkSeed,
 ZomeLocation,
    } from '@holochain/client';
 
+
+/// Simple Hashes
+type AgentArray = Uint8Array;
+type DnaArray = Uint8Array;
+type WasmArray = Uint8Array;
+type EntryArray = Uint8Array;
+type ActionArray = Uint8Array;
+type AnyDhtArray = Uint8Array;
+type AnyLinkableArray = Uint8Array;
+type ExternalArray = Uint8Array;
+
 import {
 /** Common */
 DhtOpHashB64,
@@ -148,7 +159,7 @@ ValidationReceipt,
 export const REMOTE_ENDPOINT = "receive_dm";
 
 export interface DmPacket {
-  from: AgentPubKey
+  from: AgentArray
   dm: DirectMessageProtocol
 }
 
@@ -170,8 +181,8 @@ export type DirectMessageProtocolVariantMail = {Mail: MailMessage}
 export type DirectMessageProtocolVariantAck = {Ack: AckMessage}
 export type DirectMessageProtocolVariantChunk = {Chunk: FileChunk}
 export type DirectMessageProtocolVariantFileManifest = {FileManifest: FileManifest}
-export type DirectMessageProtocolVariantRequestChunk = {RequestChunk: EntryHash}
-export type DirectMessageProtocolVariantRequestManifest = {RequestManifest: EntryHash}
+export type DirectMessageProtocolVariantRequestChunk = {RequestChunk: EntryArray}
+export type DirectMessageProtocolVariantRequestManifest = {RequestManifest: EntryArray}
 export type DirectMessageProtocolVariantUnknownEntry = {UnknownEntry: null}
 export type DirectMessageProtocolVariantPing = {Ping: null}
 export type DirectMessageProtocol = 
@@ -179,23 +190,23 @@ export type DirectMessageProtocol =
 
 export interface MailMessage {
   mail: Mail
-  outmail_eh: EntryHash
+  outmail_eh: EntryArray
   mail_signature: Signature
 }
 
 export interface AckMessage {
-  outmail_eh: EntryHash
+  outmail_eh: EntryArray
   ack_signature: Signature
 }
 
 export interface GetMissingAttachmentsInput {
-  from: AgentPubKey
-  inmail_ah: ActionHash
+  from: AgentArray
+  inmail_ah: ActionArray
 }
 
 export interface GetMissingChunksInput {
-  from: AgentPubKey
-  manifest_eh: EntryHash
+  from: AgentArray
+  manifest_eh: EntryArray
 }
 
 export interface WriteManifestInput {
@@ -203,19 +214,19 @@ export interface WriteManifestInput {
   filename: string
   filetype: string
   orig_filesize: number
-  chunks: EntryHash[]
+  chunks: EntryArray[]
 }
 
 export interface HandleItem {
   username: string
-  agent_pub_key: AgentPubKey
-  handle_eh: EntryHash
+  agent_pub_key: AgentArray
+  handle_eh: EntryArray
 }
 
 export interface CommitPendingAckInput {
-  outack_eh: EntryHash
-  outmail_eh: EntryHash
-  original_sender: AgentPubKey
+  outack_eh: EntryArray
+  outmail_eh: EntryArray
+  original_sender: AgentArray
 }
 
 export type GetMailOutput = InMail | OutMail | null;
@@ -223,22 +234,22 @@ export type GetMailOutput = InMail | OutMail | null;
 export interface SendMailInput {
   subject: string
   payload: string
-  reply_of?: ActionHash
-  to: AgentPubKey[]
-  cc: AgentPubKey[]
-  bcc: AgentPubKey[]
-  manifest_address_list: ActionHash[]
+  reply_of?: ActionArray
+  to: AgentArray[]
+  cc: AgentArray[]
+  bcc: AgentArray[]
+  manifest_address_list: ActionArray[]
 }
 
 export interface CommitPendingMailInput {
   mail: PendingMail
-  outmail_eh: EntryHash
-  destination: AgentPubKey
+  outmail_eh: EntryArray
+  destination: AgentArray
 }
 
 /**  */
 export interface SnapmailSignal {
-  from: AgentPubKey
+  from: AgentArray
   kind: string
   payload: SignalProtocol
 }
@@ -249,7 +260,7 @@ export enum SignalProtocolType {
 	ReceivedFile = 'ReceivedFile',
 }
 export type SignalProtocolVariantReceivedMail = {ReceivedMail: MailItem}
-export type SignalProtocolVariantReceivedAck = {ReceivedAck: ActionHash}
+export type SignalProtocolVariantReceivedAck = {ReceivedAck: ActionArray}
 export type SignalProtocolVariantReceivedFile = {ReceivedFile: FileManifest}
 export type SignalProtocol = 
  | SignalProtocolVariantReceivedMail | SignalProtocolVariantReceivedAck | SignalProtocolVariantReceivedFile;
@@ -286,7 +297,7 @@ export interface FileManifest {
   filename: string
   filetype: string
   orig_filesize: number
-  chunks: EntryHash[]
+  chunks: EntryArray[]
   content?: string
 }
 
@@ -298,14 +309,14 @@ export interface Handle {
 /** Entry for a received Acknowledgement Receipt */
 export interface DeliveryConfirmation {
   /** EntryHash to OutMail or OutAck on same chain */
-  package_eh: EntryHash
-  recipient: AgentPubKey
+  package_eh: EntryArray
+  recipient: AgentArray
 }
 
 /** Entry for a received Acknowledgement Receipt */
 export interface InAck {
-  outmail_eh: EntryHash
-  from: AgentPubKey
+  outmail_eh: EntryArray
+  from: AgentArray
   /** Signed outmail_eh */
   from_signature: Signature
 }
@@ -314,8 +325,8 @@ export interface InAck {
 export interface InMail {
   mail: Mail
   date_received: number
-  outmail_eh: EntryHash
-  from: AgentPubKey
+  outmail_eh: EntryArray
+  from: AgentArray
   from_signature: Signature
 }
 
@@ -354,15 +365,15 @@ export type MailState =
  | MailStateVariantIn | MailStateVariantOut;
 
 export interface MailItem {
-  ah: ActionHash
-  author: AgentPubKey
+  ah: ActionArray
+  author: AgentArray
   mail: Mail
   state: MailState
-  bcc: AgentPubKey[]
+  bcc: AgentArray[]
   date: number
   /** UI Things */
-  reply?: ActionHash
-  reply_of?: ActionHash
+  reply?: ActionArray
+  reply_of?: ActionArray
   status?: string
 }
 
@@ -380,14 +391,14 @@ export interface Mail {
   date_sent: number
   subject: string
   payload: string
-  to: AgentPubKey[]
-  cc: AgentPubKey[]
+  to: AgentArray[]
+  cc: AgentArray[]
   attachments: AttachmentInfo[]
 }
 
 /** Metadata for a mail attachment */
 export interface AttachmentInfo {
-  manifest_eh: EntryHash
+  manifest_eh: EntryArray
   data_hash: string
   filename: string
   filetype: string
@@ -396,19 +407,19 @@ export interface AttachmentInfo {
 
 /** Entry for an Acknowledgement Receipt of a Mail authored by this agent */
 export interface OutAck {
-  inmail_eh: EntryHash
+  inmail_eh: EntryArray
 }
 
 /** Entry representing an authored mail. It is private. */
 export interface OutMail {
   mail: Mail
-  reply_of?: ActionHash
-  bcc: AgentPubKey[]
+  reply_of?: ActionArray
+  bcc: AgentArray[]
 }
 
 /** Entry representing an AcknowledgmentReceipt on the DHT waiting to be received */
 export interface PendingAck {
-  outmail_eh: EntryHash
+  outmail_eh: EntryArray
   /** Signed outmail_eh */
   from_signature: Signature
 }
@@ -420,7 +431,7 @@ export interface PendingAck {
  */
 export interface PendingMail {
   encrypted_mail: unknown
-  outmail_eh: EntryHash
+  outmail_eh: EntryArray
   from_signature: Signature
 }
 
@@ -455,16 +466,6 @@ export type SnapmailEntryVariantFileChunk = {FileChunk: FileChunk}
 export type SnapmailEntryVariantFileManifest = {FileManifest: FileManifest}
 export type SnapmailEntry = 
  | SnapmailEntryVariantPubEncKey | SnapmailEntryVariantHandle | SnapmailEntryVariantInMail | SnapmailEntryVariantOutMail | SnapmailEntryVariantOutAck | SnapmailEntryVariantInAck | SnapmailEntryVariantPendingMail | SnapmailEntryVariantPendingAck | SnapmailEntryVariantDeliveryConfirmation | SnapmailEntryVariantFileChunk | SnapmailEntryVariantFileManifest;
-
-export enum SnapmailLink {
-	Members = 'Members',
-	AckInbox = 'AckInbox',
-	MailInbox = 'MailInbox',
-	Handle = 'Handle',
-	Pending = 'Pending',
-	Pendings = 'Pendings',
-	EncKey = 'EncKey',
-}
 
 /** Dna properties */
 export interface SnapmailProperties {
