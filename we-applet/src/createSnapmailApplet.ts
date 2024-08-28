@@ -99,7 +99,7 @@ async function grabMyProfile(appletViewInfo: AppletViewInfo): Promise<ProfileMat
   // await this.setupWeProfilesDvm(profilesDvm as ProfilesDvm, encodeHashToBase64(profilesAppInfo.agent_pub_key));
   // const maybeMyProfile = await profilesDvm.profilesZvm.probeProfile(profilesDvm.cell.agentPubKey);
 
-  const rec = await profilesCellProxy.getAgentProfile(decodeHashFromBase64(profilesCellProxy.cell.agentPubKey));
+  const rec = await profilesCellProxy.getAgentProfile(profilesCellProxy.cell.address.agentId.hash);
   if (!rec) {
     console.log("grabMyProfile() no Profile found")
     return undefined;

@@ -152,7 +152,7 @@ export class SnapmailZvm extends ZomeViewModel {
     console.log("snapmailZvm.pingNextAgent() pingMap", this._perspective.pingMap);
     //console.log({responseMap: this._perspective.responseMap});
     /* Skip if empty map */
-    if (Array.from(this._perspective.pingMap.keys()).length === 0) {
+    if (this._perspective.pingMap.size === 0) {
       return;
     }
     this._canPing = false;
@@ -161,7 +161,7 @@ export class SnapmailZvm extends ZomeViewModel {
       .sort((a, b) => a[1] - b[1]);
     //console.log("   sortedPings:", sortedPings);
     /* Ping first agent in sorted list */
-    const pingedAgentId = sortedPings.entries().next()[0];
+    const [pingedAgentId, _ts] = sortedPings[0];
     //console.log("pinging: ", pingedAgentB64);
     if (pingedAgentId.equals(this.cell.address.agentId)) {
       //console.log("pinging self");
@@ -176,7 +176,7 @@ export class SnapmailZvm extends ZomeViewModel {
         this._canPing = true;
       })
       .catch((error) => {
-        console.warn('Ping failed for: ' + pingedAgentId);
+        console.warn('Ping failed for: ' + pingedAgentId.b64);
         console.warn(error);
         this.storePingResult(pingedAgentId, false);
         this._canPing = true;

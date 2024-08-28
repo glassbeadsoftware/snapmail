@@ -5,8 +5,9 @@ import {
 } from "@holochain/client";
 import {AppletHash, WAL} from "@lightningrodlabs/we-applet/dist/types";
 import {WeaveServices} from "@lightningrodlabs/we-applet/dist/api";
-import {asCellProxy} from "@ddd-qc/we-utils";
+import {asCellProxy, intoHrl} from "@ddd-qc/we-utils";
 import {MailItem, SNAPMAIL_DEFAULT_ROLE_NAME, SnapmailProxy} from "@snapmail/elements";
+import {ActionId} from "@ddd-qc/cell-proxy";
 
 
 /** */
@@ -35,7 +36,6 @@ export async function search(
         SNAPMAIL_DEFAULT_ROLE_NAME);
     console.log("Snapmail/we-applet/search(): cellProxy", cellProxy);
     const proxy/*: SnapmailProxy */ = new SnapmailProxy(cellProxy);
-    const dnaHash = decodeHashFromBase64(proxy.cell.dnaHash);
 
     /** Search Private InMail */
     const mails: MailItem[] = await proxy.getAllMails();
@@ -45,7 +45,7 @@ export async function search(
     /** Transform results into WAL */
     const results: Array<WAL> = matching
         .map((mail) => { return {
-            hrl: [dnaHash, mail.ah],
+            hrl: intoHrl(proxy.cell.address.dnaId, new ActionId(mail.ah)),
             context: {author: encodeHashToBase64(mail.author), mail} as SnapmailSearchContext,
         }})
 
