@@ -1,15 +1,14 @@
 
 import {asCellProxy, wrapPathInSvg} from "@ddd-qc/we-utils";
-import {AppClient, encodeHashToBase64, RoleName, ZomeName} from "@holochain/client";
+import {AppClient, encodeHashToBase64} from "@holochain/client";
 import {pascal} from "@ddd-qc/cell-proxy";
 import {mdiFileOutline, mdiEmailOutline} from "@mdi/js";
-import {Hrl, AssetInfo, RecordInfo} from "@lightningrodlabs/we-applet";
+import {AssetInfo, RecordInfo, WAL} from "@theweave/api";
 import {
     SnapmailDvm,
     SnapmailEntryType,
     GetMailOutput, SnapmailProxy, SNAPMAIL_DEFAULT_ROLE_NAME, SNAPMAIL_DEFAULT_INTEGRITY_ZOME_NAME
 } from "@snapmail/elements";
-import {WAL} from "@lightningrodlabs/we-applet/dist/types";
 
 
 /** */

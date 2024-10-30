@@ -1,4 +1,4 @@
-// eagerly import theme styles so as we can override them
+///* eagerly import theme styles so as we can override them */
 //import '@vaadin/vaadin-lumo-styles/all-imports';
 
 

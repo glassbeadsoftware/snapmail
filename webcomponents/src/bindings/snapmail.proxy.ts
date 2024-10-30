@@ -151,6 +151,10 @@ export class SnapmailProxy extends ZomeProxy {
     return this.call('set_handle', newUsername);
   }
 
+  async getRecordAuthor(dh: AnyDhtArray): Promise<AgentArray> {
+    return this.call('get_record_author', dh);
+  }
+
   async acknowledgeMail(inmailAh: ActionArray): Promise<EntryArray> {
     return this.call('acknowledge_mail', inmailAh);
   }

@@ -3,9 +3,10 @@ import { state, customElement } from "lit/decorators.js";
 import {ContextProvider} from '@lit/context';
 import {AdminWebsocket, AppWebsocket, InstalledAppId} from "@holochain/client";
 import {DEFAULT_SNAPMAIL_DEF, IS_ELECTRON, SnapmailDvm, weClientContext} from "@snapmail/elements";
-import {HvmDef, HappElement, cellContext, delay} from "@ddd-qc/lit-happ";
-import {AppletHash, AppletView, WeaveServices} from "@lightningrodlabs/we-applet";
+import {HvmDef, HappElement, cellContext} from "@ddd-qc/lit-happ";
+import {AppletHash, AppletView, WeaveServices} from "@theweave/api";
 
+import '@vaadin/icons';
 
 const SNAPMAIL_DEFAULT_COORDINATOR_ZOME_NAME = "snapmail"
 
@@ -30,7 +31,7 @@ if (IS_ELECTRON) {
   try {
     HC_APP_PORT = Number(process.env.HC_APP_PORT);
     HC_ADMIN_PORT = Number(process.env.HC_ADMIN_PORT);
-  } catch (e) {
+  } catch(e) {
     console.log("[snapmail] HC_APP_PORT not defined")
   }
 }
@@ -85,45 +86,11 @@ export class SnapmailApp extends HappElement {
   async hvmConstructed() {
     console.log("<snapmail-app>.hvmConstructed()", this._adminWs)
 
-    // /** Authorize all zome calls */
-    // if (!this._adminWs && this._canAuthorizeZfns) {
-    //   this._adminWs = await AdminWebsocket.connect({url:new URL(`ws://localhost:${HC_ADMIN_PORT}`)});
-    //   console.log("<snapmail-app>.hvmConstructed() connect() called", this._adminWs);
-    // }
-    // if (this._adminWs && this._canAuthorizeZfns) {
-    //   await this.hvm.authorizeAllZomeCalls(this._adminWs);
-    //   console.log("<snapmail-app> Zome call authorization complete");
-    // } else {
-    //   if (!this._canAuthorizeZfns) {
-    //     console.warn("<snapmail-app> No adminWebsocket provided (Zome call authorization done)")
-    //   } else {
-    //     console.log("<snapmail-app> Zome call authorization done externally")
-    //   }
-    // }
-
-    /** Probe EntryDefs */
-    this._hasHolochainFailed = !(await this.attemptEntryDefs(5, 1000));
-
+    this._hasHolochainFailed = false
 
     /** Provide Cell Context */
     //console.log({cell: this.snapmailDvm.cell});
     new ContextProvider(this, cellContext, this.snapmailDvm.cell);
-  }
-
-
-  private async attemptEntryDefs(attempts: number, delayMs: number): Promise<boolean> {
-    while(attempts > 0) {
-      attempts -= 1;
-      const allAppEntryTypes = await this.snapmailDvm.fetchAllEntryDefs();
-      if (Object.values(allAppEntryTypes[SNAPMAIL_DEFAULT_COORDINATOR_ZOME_NAME]).length == 0) {
-        console.warn(`No entries found for ${SNAPMAIL_DEFAULT_COORDINATOR_ZOME_NAME}`);
-        await delay(delayMs);
-      } else {
-        // console.log("allAppEntryTypes", allAppEntryTypes)
-        return true;
-      }
-    }
-    return false;
   }
 
 

@@ -1,7 +1,7 @@
 import {
     createDefaultWeServicesMock,
     DevTestNames,
-    AppletViewInfo,
+
     setupDevtest,
     AssetViewInfo
 } from "@ddd-qc/we-utils";
@@ -9,7 +9,7 @@ import {EntryHash, fakeActionHash} from "@holochain/client";
 import {emptyEntryAppletView} from "@ddd-qc/we-utils/dist/mocks/renderInfoMock";
 import {snake} from "@ddd-qc/cell-proxy";
 import {createSnapmailApplet, ViewFileContext} from "./createSnapmailApplet";
-import {AppletView} from "@lightningrodlabs/we-applet";
+import {AppletView} from "@theweave/api";
 import {
     SNAPMAIL_DEFAULT_INTEGRITY_ZOME_NAME,
     SNAPMAIL_DEFAULT_ROLE_NAME,

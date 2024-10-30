@@ -1,4 +1,4 @@
-import {BlockName, BlockType} from "@lightningrodlabs/we-applet";
+import {BlockName, BlockType} from "@theweave/api";
 // import {wrapPathInSvg} from "@ddd-qc/we-utils";
 // import {mdiFileOutline, mdiFilePlus} from "@mdi/js";
 // import {FilesBlockType} from "@files/app";

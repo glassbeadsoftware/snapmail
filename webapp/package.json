@@ -6,7 +6,7 @@
   "typings": "./dist/index.d.ts",
   "scripts": {
     "lint": "eslint --ext .ts .",
-    "build": "rm -rf dist &&  tsc",
+    "build": "rm -rf dist && tsc",
     "build:watch": "tsc -w --incremental --preserveWatchOutput",
     "dist": "npm run build && rollup -c rollup.config.js",
     "start:ui-new": "concurrently --names tsc,dev-server \"npm run build:watch\" \"web-dev-server --config ./web-dev-server.config.mjs\"",

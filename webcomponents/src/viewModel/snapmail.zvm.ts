@@ -1,4 +1,4 @@
-import {AppSignalCb} from '@holochain/client';
+import {Signal, SignalCb} from '@holochain/client';
 import {delay, ZomeViewModel, AgentIdMap, ActionIdMap, AgentId, ActionId, EntryId, DhtId} from "@ddd-qc/lit-happ";
 import {SnapmailProxy} from "../bindings/snapmail.proxy";
 import {createNewPerspective, SnapmailPerspective} from "./snapmail.perspective";
@@ -70,7 +70,8 @@ export class SnapmailZvm extends ZomeViewModel {
         payload: {ReceivedMail: mailItem}
       }
       fakeAppSignal.payload = signal;
-      this._dvmParent.signalHandler(fakeAppSignal);
+      const sig: Signal = {App: fakeAppSignal};
+      this._dvmParent.signalHandler(sig);
     }
   }
 
@@ -82,7 +83,7 @@ export class SnapmailZvm extends ZomeViewModel {
 
 
   /** */
-  readonly signalHandler: AppSignalCb = (appSignal: AppSignal) => {
+  readonly signalHandler: SignalCb = (appSignal: Signal) => {
     console.log('snapmailZvm.signalHandler():', appSignal);
     //const signal: SnapmailSignal = appSignal.payload as SnapmailSignal;
     /*await */ this.probeMails();

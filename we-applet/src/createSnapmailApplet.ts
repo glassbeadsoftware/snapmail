@@ -1,11 +1,11 @@
 import {
-  decodeHashFromBase64, encodeHashToBase64, AppWebsocket,
+  encodeHashToBase64, AppWebsocket,
 } from "@holochain/client";
 //import { msg } from "@lit/localize";
 import {
   RenderInfo,
   WeaveServices,
-} from "@lightningrodlabs/we-applet";
+} from "@theweave/api";
 import {AppletViewInfo, ProfilesApi} from "@ddd-qc/we-utils";
 import {SnapmailApp} from "snapmail";
 import {destructureCloneId, ExternalAppProxy} from "@ddd-qc/cell-proxy";

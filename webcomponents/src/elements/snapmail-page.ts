@@ -1,7 +1,7 @@
 import {css, html} from "lit";
 import {property, state, customElement} from "lit/decorators.js";
 import {consume} from "@lit/context";
-import {AppSignal} from "@holochain/client";
+import {SignalType, Signal} from "@holochain/client";
 import {ProgressBar} from "@vaadin/progress-bar";
 import {Button} from "@vaadin/button";
 import {MenuBar, MenuBarItem, MenuBarItemSelectedEvent} from "@vaadin/menu-bar";
@@ -32,13 +32,14 @@ import {SnapmailPerspective} from "../viewModel/snapmail.perspective";
 import {SnapmailDvm} from "../viewModel/snapmail.dvm";
 
 import {wrapPathInSvg} from "@ddd-qc/we-utils";
-import {FrameNotification, WeaveServices} from "@lightningrodlabs/we-applet";
+import {FrameNotification, WeaveServices} from "@theweave/api";
 import {weClientContext} from "../contexts";
 import {mdiAlertOctagonOutline, mdiAlertOutline, mdiCheckCircleOutline, mdiInformationOutline, mdiCog} from "@mdi/js";
 
 import '@vaadin/vaadin-lumo-styles';
+
 import '@vaadin/icons';
-import '@vaadin/icon/theme/lumo/vaadin-icon.js';
+import '@vaadin/icon/vaadin-icon.js'
 
 import '@vaadin/button/theme/lumo/vaadin-button.js';
 import '@vaadin/combo-box/theme/lumo/vaadin-combo-box.js';
@@ -61,6 +62,7 @@ import '@vaadin/split-layout/theme/lumo/vaadin-split-layout.js';
 import '@vaadin/vertical-layout/theme/lumo/vaadin-vertical-layout.js';
 import '@vaadin/horizontal-layout/theme/lumo/vaadin-horizontal-layout.js';
 import '@vaadin/upload/theme/lumo/vaadin-upload.js';
+import {AppSignal} from "@holochain/client/lib/api/app/types";
 
 
 
@@ -134,9 +136,13 @@ export class SnapmailPage extends DnaElement<unknown, SnapmailDvm> {
 
 
   /** */
-  handleSignal(signalwrapper: AppSignal) {
+  handleSignal(signalwrapper: Signal) {
     console.log('<snapmail-page>.Received signal:', signalwrapper);
-    const signal: SnapmailSignal = signalwrapper.payload as SnapmailSignal;
+    if (!(SignalType.App in signalwrapper)) {
+      return;
+    }
+    const appSignal: AppSignal = signalwrapper.App;
+    const signal: SnapmailSignal = appSignal.payload as SnapmailSignal;
     const sender = new AgentId(signal.from);
     const canPopup = sender.b64 != this.cell.address.agentId.b64 || HAPP_BUILD_MODE == HappBuildModeType.Debug;
 
@@ -208,7 +214,7 @@ export class SnapmailPage extends DnaElement<unknown, SnapmailDvm> {
     this._dvm.dumpCallLogs();
 
     /** setup notificationHandler */
-    this._dvm.setSignalHandler((s :AppSignal) => {this.handleSignal(s)});
+    this._dvm.setSignalHandler((s: Signal) => {this.handleSignal(s)});
     /** */
     void customElements.whenDefined('vaadin-button').then(() => {
       this.handleInputElem.addEventListener("keyup", (event) => {
@@ -633,7 +639,7 @@ export class SnapmailPage extends DnaElement<unknown, SnapmailDvm> {
                                    .hidden="${!this._canHideHandleInput}"
                                    @click=${() => {this.hideHandleInput(false);}}>
                         <span>${this._myHandle}</span>
-                        <vaadin-icon icon="lumo:edit" slot="suffix"></vaadin-icon>
+                        <vaadin-icon icon="vaadin:edit" slot="suffix"></vaadin-icon>
                     </vaadin-button>
                 </abbr>
                 <!-- <vcf-tooltip id="handleDisplayTT" for="handleDisplay" position="bottom">fucking tooltip</vcf-tooltip> -->
@@ -645,12 +651,12 @@ export class SnapmailPage extends DnaElement<unknown, SnapmailDvm> {
                                title="unknown"
                                .hidden="${this._canHideHandleInput}"
                                @click=${(e) => this.setUsername(e.detail.value as string)}>
-                    <vaadin-icon icon="lumo:checkmark" slot="prefix"></vaadin-icon>
+                    <vaadin-icon icon="vaadin:check" slot="prefix"></vaadin-icon>
                 </vaadin-button>
                 <vaadin-button id="cancelHandleButton" theme="icon"
                                .hidden="${this._canHideHandleInput}"
                                @click=${() => {this.hideHandleInput(true);}}>
-                    <vaadin-icon icon="lumo:cross" slot="prefix"></vaadin-icon>
+                    <vaadin-icon icon="vaadin:close" slot="prefix"></vaadin-icon>
                 </vaadin-button>
             </div>
               

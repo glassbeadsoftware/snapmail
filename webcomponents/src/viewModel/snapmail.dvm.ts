@@ -1,5 +1,5 @@
 import { DnaViewModel, ZvmDef } from "@ddd-qc/lit-happ";
-import {AppSignalCb} from "@holochain/client";
+import {Signal, SignalCb} from "@holochain/client";
 import {SnapmailZvm} from "./snapmail.zvm";
 import {AppSignal} from "@holochain/client/lib/api/app/types";
 import {SnapmailProperties} from "../bindings/snapmail.types";
@@ -15,8 +15,8 @@ export class SnapmailDvm extends DnaViewModel {
   static readonly DEFAULT_BASE_ROLE_NAME = "rSnapmail";
   static readonly ZVM_DEFS: ZvmDef[] = [SnapmailZvm];
 
-  readonly signalHandler?: AppSignalCb = this.handleSignal;
-  _hostHandler?: AppSignalCb;
+  readonly signalHandler?: SignalCb = this.handleSignal;
+  _hostHandler?: SignalCb;
 
 
   /** QoL Helpers */
@@ -29,11 +29,11 @@ export class SnapmailDvm extends DnaViewModel {
   protected hasChanged(): boolean {return true}
 
   // TODO
-  get perspective(): void {return}
+  get perspective(): Object {return {}; }
 
 
   /** Forward signal to runtime defined host callback */
-  handleSignal(signal: AppSignal): void {
+  handleSignal(signal: Signal): void {
     //console.log("SnapmailDvm.handleSignal()", this._hostHandler);
     if (this._hostHandler) {
       this._hostHandler(signal)
@@ -41,7 +41,7 @@ export class SnapmailDvm extends DnaViewModel {
   }
 
   /** */
-  setSignalHandler(cb: AppSignalCb): void {
+  setSignalHandler(cb: SignalCb): void {
     this._hostHandler = cb;
   }
 

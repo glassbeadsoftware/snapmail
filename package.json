@@ -2,7 +2,7 @@
   "name": "Snapmail",
   "version": "0.4.0",
   "config": {
-    "hc_version": "0.4.0-dev20",
+    "hc_version": "0.4.0-dev.20",
     "zits_version": "1.16.3",
     "bin": "bin"
   },
@@ -87,7 +87,7 @@
     "clean:all"           : "npm run clean:agents & npm run clean:npm & npm run clean"
   },
   "devDependencies": {
-    "@lightningrodlabs/we-dev-cli": "0.12.0-dev.2",
+    "@theweave/cli": "0.13.0-gamma.5",
     "@types/ws": "^8.5.3",
     "bestzip": "^2.2.0",
     "concurrently": "^6.2.1",
@@ -99,13 +99,13 @@
     "typescript": "~5.2.0"
   },
   "dependencies": {
-    "@ddd-qc/cell-proxy": "=0.29.0",
-    "@ddd-qc/lit-happ": "=0.29.0",
-    "@ddd-qc/profiles-dvm": "=0.29.0",
-    "@ddd-qc/we-utils": "=0.29.0",
-    "@lightningrodlabs/we-applet": "=0.17.2",
+    "@holochain/client": "=0.18.0-dev.13",
+    "@theweave/api": "=0.2.1",
+    "@ddd-qc/cell-proxy": "=0.30.0",
+    "@ddd-qc/lit-happ": "=0.30.0",
+    "@ddd-qc/profiles-dvm": "=0.30.0",
+    "@ddd-qc/we-utils": "=0.30.2",
     "@holochain-open-dev/core-types": "0.7.0",
-    "@holochain/client": "=0.18.0-dev.4",
     "@lit/context": "1.0.1",
     "@lit/localize": "0.12.1",
     "lit": "3.0.2"

@@ -1,10 +1,8 @@
 import {
     AgentPubKeyB64, AppClient,
-    decodeHashFromBase64,
     encodeHashToBase64,
 } from "@holochain/client";
-import {AppletHash, WAL} from "@lightningrodlabs/we-applet/dist/types";
-import {WeaveServices} from "@lightningrodlabs/we-applet/dist/api";
+import {AppletHash, WAL, WeaveServices} from "@theweave/api";
 import {asCellProxy, intoHrl} from "@ddd-qc/we-utils";
 import {MailItem, SNAPMAIL_DEFAULT_ROLE_NAME, SnapmailProxy} from "@snapmail/elements";
 import {ActionId} from "@ddd-qc/cell-proxy";

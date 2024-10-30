@@ -399,7 +399,7 @@ export class SnapmailFilebox extends ZomeElement<SnapmailPerspective, SnapmailZv
                                placeholder="Search" 
                                @value-changed="${(e:TextFieldValueChangedEvent) => {this._shownItems = filterMails(this._curFolderItems, e.detail.value)}}"
             >
-              <vaadin-icon slot="prefix" icon="lumo:search"></vaadin-icon>
+              <vaadin-icon slot="prefix" icon="vaadin:search"></vaadin-icon>
             </vaadin-text-field>
           </vaadin-horizontal-layout>
     

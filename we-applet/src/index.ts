@@ -1,13 +1,12 @@
-import {DevTestNames, setup} from "@ddd-qc/we-utils";
-import {AppletServices, RecordInfo} from "@lightningrodlabs/we-applet";
+import {setup} from "@ddd-qc/we-utils";
+import {AppletServices, RecordInfo, WAL} from "@theweave/api";
 import {blockTypes} from "./appletServices/blockTypes";
 import {devtestNames, setupSnapmailEntryView} from "./devtest";
 import {getAssetInfo} from "./appletServices/getAssetInfo";
 import {search} from "./appletServices/search";
 import {createSnapmailApplet} from "./createSnapmailApplet";
 import {SnapmailEntryType} from "@snapmail/elements";
-import {AppClient, RoleName, ZomeName} from "@holochain/client";
-import {WAL} from "@lightningrodlabs/we-applet/dist/types";
+import {AppClient} from "@holochain/client";
 
 
 

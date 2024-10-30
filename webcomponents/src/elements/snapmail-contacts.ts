@@ -624,13 +624,13 @@ export class SnapmailContacts extends ZomeElement<SnapmailPerspective, SnapmailZ
                                .disabled="${this._currentGroup == SYSTEM_GROUP_LIST[0]}"
                                @click="${(e:Event) => this.onEditGroup(e)}"
                 >
-                    <vaadin-icon icon="lumo:edit" slot="suffix"></vaadin-icon>
+                    <vaadin-icon icon="vaadin:edit" slot="suffix"></vaadin-icon>
                 </vaadin-button>
                 <vaadin-text-field id="contactSearch" clear-button-visible 
                                    style="width: 35%; min-width:100px; margin-left: auto;margin-right: 3px;"
                                    placeholder="Search"
                                    @value-changed="${(e: TextFieldValueChangedEvent) => {this._shownItems = this.filterContacts(this._selectedItems, e.detail.value);}}">
-                    <vaadin-icon slot="prefix" icon="lumo:search"></vaadin-icon>
+                    <vaadin-icon slot="prefix" icon="vaadin:search"></vaadin-icon>
                 </vaadin-text-field>
             </vaadin-horizontal-layout>
             <!-- CONTACTS GRID -->

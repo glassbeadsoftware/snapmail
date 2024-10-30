@@ -24,6 +24,7 @@ export const snapmailFunctionNames: FunctionName[] = [
 	"ping_agent",
 	"create_empty_handle",
 	"set_handle",
+	"get_record_author",
 	"acknowledge_mail",
 	"commit_pending_ack",
 	"check_ack_inbox",
