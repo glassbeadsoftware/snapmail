@@ -43,7 +43,7 @@ async function setupSnapmailsMainView() {
     getAssetInfo,
     blockTypes,
     search,
-    bindAsset,
+    //bindAsset,
   };
 
   return setup(appletServices, createSnapmailApplet, devtestNames);
